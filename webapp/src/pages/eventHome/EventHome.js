@@ -28,6 +28,8 @@ import ResponseList from "../ResponseList/ResponseList";
 import ResponsePage from "../ResponsePage/ResponsePage";
 import ReviewDashboard from "../reviewDashboard";
 import { Attendance, Indemnity } from '../attendance';
+import ResponseDetails from "../ReponseDetails/ReponseDetails";
+import ReponseDetails from "../ReponseDetails/ReponseDetails";
 
 class EventInfo extends Component {
   constructor(props) {
@@ -154,11 +156,26 @@ class EventHome extends Component {
           path={`${match.path}/apply`}
           render={(props) => <Application {...props} event={event} />}
         />
+        
         <Route
           exact
           path={`${match.path}/apply/new`}
           render={(props) => <Application {...props} event={event} journalSubmissionFlag={true} /> }
         />
+
+        {/*new route */}
+        <Route
+          exact
+          path={`${match.path}/apply/view`}
+          render={(props) => <Application {...props} event={event} view={true} /> }
+        />
+
+         <Route
+          exact
+          path={`${match.path}/apply/continue/:id`}
+          render={(props) => <Application {...props} event={event} continue={true}/>}
+        />
+
         <Route
         exact
           path={`${match.path}/eventAttendance`}
@@ -244,6 +261,13 @@ class EventHome extends Component {
           path={`${match.path}/responsePage/:id`}
           render={(props) => <ResponsePage {...props} event={event} />}
         />
+        <Route
+          exact
+          path={`${match.path}/responseDetails/:id`}
+          render={(props) => <ReponseDetails {...props} event={event} />}
+        />
+
+
         <Route
           exact
           path={`${match.path}/applicationform`}

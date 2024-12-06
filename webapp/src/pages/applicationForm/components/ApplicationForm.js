@@ -7,7 +7,7 @@ import FormSelect from "../../../components/form/FormSelect";
 import FormTextArea from "../../../components/form/FormTextArea";
 import FormDate from "../../../components/form/FormDate";
 import MarkdownRenderer from "../../../components/MarkdownRenderer";
-import FormMultiFile from '../../../components/form/FormMultiFile'
+import FormMultiFile from "../../../components/form/FormMultiFile";
 import ReactToolTip from "react-tooltip";
 import { ConfirmModal } from "react-bootstrap4-modal";
 import StepZilla from "react-stepzilla";
@@ -17,13 +17,12 @@ import FormMultiCheckbox from "../../../components/form/FormMultiCheckbox";
 import FormReferenceRequest from "./ReferenceRequest";
 import Loading from "../../../components/Loading";
 import _ from "lodash";
-import { withTranslation } from 'react-i18next';
-import AnswerValue from '../../../components/answerValue'
+import { withTranslation } from "react-i18next";
+import AnswerValue from "../../../components/answerValue";
 import FormSelectOther from "../../../components/form/FormSelectOther";
 import FormMultiCheckboxOther from "../../../components/form/FormMultiCheckboxOther";
 import FormCheckbox from "../../../components/form/FormCheckbox";
 import { eventService } from "../../../services/events";
-
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
@@ -37,36 +36,36 @@ const MULTI_CHECKBOX_OTHER = "multi-checkbox-other";
 const FILE = "file";
 const DATE = "date";
 const REFERENCE_REQUEST = "reference";
-const INFORMATION = ['information', 'sub-heading']
-const MULTI_FILE = 'multi-file';
-
-
+const INFORMATION = ["information", "sub-heading"];
+const MULTI_FILE = "multi-file";
 
 /*
  * Utility functions for the feature where questions are dependent on the answers of other questions
  */
 const isEntityDependentOnAnswer = (entityToCheck) => {
   return entityToCheck.depends_on_question_id && entityToCheck.show_for_values;
-}
+};
 
 const findDependentQuestionAnswer = (entityToCheck, answers) => {
-  return answers.find(a => a && a.question_id === entityToCheck.depends_on_question_id);
-}
+  return answers.find(
+    (a) => a && a.question_id === entityToCheck.depends_on_question_id
+  );
+};
 
 const doesAnswerMatch = (entityToCheck, answer) => {
   return entityToCheck.show_for_values.indexOf(answer.value) > -1;
-}
+};
 
 const answerByQuestionKey = (key, allQuestions, answers) => {
-  let question = allQuestions.find(q => q.key === key);
+  let question = allQuestions.find((q) => q.key === key);
   if (question) {
-    let answer = answers.find(a => a.question_id === question.id);
+    let answer = answers.find((a) => a.question_id === question.id);
     if (answer) {
       return answer.value;
     }
   }
   return null;
-}
+};
 
 class FieldEditor extends React.Component {
   constructor(props) {
@@ -77,11 +76,10 @@ class FieldEditor extends React.Component {
       uploadPercentComplete: 0,
       uploadError: "",
       uploaded: false,
-    }
-
+    };
   }
 
-  handleChange = event => {
+  handleChange = (event) => {
     // Some components (datepicker, custom controls) return pass the value directly rather than via event.target.value
     const value = event && event.target ? event.target.value : event;
 
@@ -90,12 +88,12 @@ class FieldEditor extends React.Component {
     }
   };
 
-  handleCheckChange = event => {
+  handleCheckChange = (event) => {
     const value = event.target.checked;
     if (this.props.onChange) {
       this.props.onChange(this.props.question, value);
     }
-  }
+  };
 
   handleChangeDropdown = (name, dropdown) => {
     if (this.props.onChange) {
@@ -106,33 +104,36 @@ class FieldEditor extends React.Component {
   handleUploadFile = (file) => {
     this.setState({
       uploading: true,
-    })
+    });
 
     // TODO: Handle errors
-    return fileService.uploadFile(file, progressEvent => {
-      const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-      this.setState({
-        uploadPercentComplete: percentCompleted
-      });
-    }).then(response => {
-      if (response.fileId && this.props.onChange) {
-        this.props.onChange(
-          this.props.question,
-          JSON.stringify({ filename: response.fileId, rename: file.name })
+    return fileService
+      .uploadFile(file, (progressEvent) => {
+        const percentCompleted = Math.round(
+          (progressEvent.loaded * 100) / progressEvent.total
         );
-      }
-      this.setState({
-        uploaded: response.fileId !== "",
-        uploadError: response.error,
-        uploading: false
-      });
+        this.setState({
+          uploadPercentComplete: percentCompleted,
+        });
+      })
+      .then((response) => {
+        if (response.fileId && this.props.onChange) {
+          this.props.onChange(
+            this.props.question,
+            JSON.stringify({ filename: response.fileId, rename: file.name })
+          );
+        }
+        this.setState({
+          uploaded: response.fileId !== "",
+          uploadError: response.error,
+          uploading: false,
+        });
 
-      return response.fileId;
-    });
-  }
+        return response.fileId;
+      });
+  };
 
   formControl = (key, question, answer, validationError, responseId) => {
-
     switch (question.type) {
       case SHORT_TEXT:
         return (
@@ -206,8 +207,9 @@ class FieldEditor extends React.Component {
             defaultValue={answer || null}
             key={"i_" + key}
             showError={validationError}
-            errorText={validationError}/>
-        )
+            errorText={validationError}
+          />
+        );
       case MULTI_CHECKBOX:
         return (
           <FormMultiCheckbox
@@ -220,22 +222,24 @@ class FieldEditor extends React.Component {
             onChange={this.handleChange}
             key={"i_" + key}
             showError={validationError}
-            errorText={validationError} />
-        )
-        case MULTI_CHECKBOX_OTHER:
-          return (
-            <FormMultiCheckboxOther
-              id={this.id}
-              name={this.id}
-              label={question.description}
-              placeholder={question.placeholder}
-              options={question.options}
-              defaultValue={answer || ""}
-              onChange={this.handleChange}
-              key={"i_" + key}
-              showError={validationError}
-              errorText={validationError} />
-          )
+            errorText={validationError}
+          />
+        );
+      case MULTI_CHECKBOX_OTHER:
+        return (
+          <FormMultiCheckboxOther
+            id={this.id}
+            name={this.id}
+            label={question.description}
+            placeholder={question.placeholder}
+            options={question.options}
+            defaultValue={answer || ""}
+            onChange={this.handleChange}
+            key={"i_" + key}
+            showError={validationError}
+            errorText={validationError}
+          />
+        );
       case FILE:
         return (
           <FormFileUpload
@@ -296,11 +300,18 @@ class FieldEditor extends React.Component {
             errorText={validationError}
             required={question.is_required}
             options={question.options}
-            responseId={responseId} />
-        )
+            responseId={responseId}
+          />
+        );
       case INFORMATION[0]:
       case INFORMATION[1]:
-        return question.description && <div className="application-form-information">{question.description}</div>
+        return (
+          question.description && (
+            <div className="application-form-information">
+              {question.description}
+            </div>
+          )
+        );
       default:
         return (
           <p className="text-danger">
@@ -313,8 +324,14 @@ class FieldEditor extends React.Component {
   render() {
     return (
       <div className={"question"}>
-        <p className={INFORMATION.includes(this.props.question.type) ? "h3" : "h4"}>
-          {this.props.question.is_required && <span className="required-indicator">*</span>}
+        <p
+          className={
+            INFORMATION.includes(this.props.question.type) ? "h3" : "h4"
+          }
+        >
+          {this.props.question.is_required && (
+            <span className="required-indicator">*</span>
+          )}
           {this.props.question.headline}
         </p>
         {this.formControl(
@@ -339,36 +356,32 @@ class Section extends React.Component {
         .sort((a, b) => a.question.order - b.question.order),
       hasValidated: false,
       validationStale: false,
-
     };
   }
-
 
   onChange = (question, value) => {
     const newAnswer = {
       question_id: question.id,
-      value: value
+      value: value,
     };
 
-
-    const newQuestionModels = this.state.questionModels
-      .map(q => {
-        if (q.question.id !== question.id) {
-          return q;
-        }
-        return {
-          ...q,
-          validationError: this.state.hasValidated
-            ? this.validate(q, newAnswer)
-            : "",
-          answer: newAnswer
-        };
-      })
+    const newQuestionModels = this.state.questionModels.map((q) => {
+      if (q.question.id !== question.id) {
+        return q;
+      }
+      return {
+        ...q,
+        validationError: this.state.hasValidated
+          ? this.validate(q, newAnswer)
+          : "",
+        answer: newAnswer,
+      };
+    });
 
     this.setState(
       {
         questionModels: newQuestionModels,
-        validationStale: true
+        validationStale: true,
       },
       () => {
         if (this.props.changed) {
@@ -378,11 +391,10 @@ class Section extends React.Component {
     );
   };
 
-
   // validate
   validate = (questionModel, updatedAnswer) => {
     let errors = [];
-    
+
     const question = questionModel.question;
     const answer = updatedAnswer || questionModel.answer;
 
@@ -401,31 +413,32 @@ class Section extends React.Component {
     return errors.join("; ");
   };
 
-
   // isValidated
   isValidated = () => {
-    const allAnswersInSection = this.state.questionModels.map(q => q.answer);
+    const allAnswersInSection = this.state.questionModels.map((q) => q.answer);
     const validatedModels = this.state.questionModels
-      .filter(q => this.dependentQuestionFilter(q.question, allAnswersInSection))
-      .map(q => {
+      .filter((q) =>
+        this.dependentQuestionFilter(q.question, allAnswersInSection)
+      )
+      .map((q) => {
         return {
           ...q,
-          validationError: this.validate(q)
+          validationError: this.validate(q),
         };
       });
 
-    const isValid = !validatedModels.some(v => v.validationError);
+    const isValid = !validatedModels.some((v) => v.validationError);
 
     this.setState(
       {
         questionModels: validatedModels,
         hasValidated: true,
-        validationStale: false
+        validationStale: false,
       },
       () => {
         if (this.props.answerChanged) {
           this.props.answerChanged(
-            this.state.questionModels.map(q => q.answer).filter(a => a),
+            this.state.questionModels.map((q) => q.answer).filter((a) => a),
             isValid
           );
         }
@@ -438,7 +451,7 @@ class Section extends React.Component {
   handleSave = () => {
     if (this.props.save) {
       this.props.save(
-        this.state.questionModels.map(q => q.answer).filter(a => a)
+        this.state.questionModels.map((q) => q.answer).filter((a) => a)
       );
     }
   };
@@ -449,35 +462,38 @@ class Section extends React.Component {
    */
   dependentQuestionFilter = (question, sectionCurrentAnswers) => {
     if (isEntityDependentOnAnswer(question)) {
-      const answer = findDependentQuestionAnswer(question, sectionCurrentAnswers);
-      return answer ? doesAnswerMatch(question, answer) : this.props.showQuestionBasedOnSavedFormAnswers(question);
+      const answer = findDependentQuestionAnswer(
+        question,
+        sectionCurrentAnswers
+      );
+      return answer
+        ? doesAnswerMatch(question, answer)
+        : this.props.showQuestionBasedOnSavedFormAnswers(question);
     } else {
       return true;
     }
-  }
+  };
 
   render() {
-    const {
-      section,
-      questionModels,
-      hasValidated,
-      validationStale
-    } = this.state;
+    const { section, questionModels, hasValidated, validationStale } =
+      this.state;
 
-    const allAnswersInSection = questionModels.map(q => q.answer);
+    const allAnswersInSection = questionModels.map((q) => q.answer);
 
     return (
       <div className={"section"}>
         <div className={"headline"}>
           <h1>{section.name}</h1>
           <div className="description">
-            <MarkdownRenderer children={section.description}/>
+            <MarkdownRenderer children={section.description} />
           </div>
         </div>
         {questionModels &&
           questionModels
-            .filter(q => this.dependentQuestionFilter(q.question, allAnswersInSection))
-            .map(model => (
+            .filter((q) =>
+              this.dependentQuestionFilter(q.question, allAnswersInSection)
+            )
+            .map((model) => (
               <FieldEditor
                 key={"question_" + model.question.id}
                 question={model.question}
@@ -486,15 +502,15 @@ class Section extends React.Component {
                 onChange={this.onChange}
                 responseId={this.props.responseId}
               />
-            )
-            )
-        }
+            ))}
         {this.props.unsavedChanges && !this.props.isSaving && (
-          <button className="btn btn-secondary" onClick={this.handleSave} >
+          <button className="btn btn-secondary" onClick={this.handleSave}>
             {this.props.t("Save for later")}...
           </button>
         )}
-        {this.props.isSaving && <span class="saving mx-auto">{this.props.t("Saving")}...</span>}
+        {this.props.isSaving && (
+          <span class="saving mx-auto">{this.props.t("Saving")}...</span>
+        )}
         {hasValidated && !validationStale && (
           <div class="alert alert-danger alert-container">
             {this.props.t("Please fix the errors before continuing.")}
@@ -506,7 +522,6 @@ class Section extends React.Component {
 }
 
 class ConfirmationComponent extends React.Component {
-
   dependentQuestionFilter = (question, allAnswers) => {
     if (isEntityDependentOnAnswer(question)) {
       const answer = findDependentQuestionAnswer(question, allAnswers);
@@ -514,91 +529,129 @@ class ConfirmationComponent extends React.Component {
     } else {
       return true;
     }
-  }
+  };
 
   render() {
     const t = this.props.t;
 
-    const allAnswers = this.props.sectionModels && this.props.sectionModels.flatMap(s=>s.questionModels.map(q=>q.answer));
-    const allErrors = this.props.sectionModels 
-      && this.props.sectionModels.flatMap(s=>s.questionModels.filter(qm => this.dependentQuestionFilter(qm.question, allAnswers)).map(q=>q.validationError)).filter(e=>e);
+    const allAnswers =
+      this.props.sectionModels &&
+      this.props.sectionModels.flatMap((s) =>
+        s.questionModels.map((q) => q.answer)
+      );
+    const allErrors =
+      this.props.sectionModels &&
+      this.props.sectionModels
+        .flatMap((s) =>
+          s.questionModels
+            .filter((qm) =>
+              this.dependentQuestionFilter(qm.question, allAnswers)
+            )
+            .map((q) => q.validationError)
+        )
+        .filter((e) => e);
 
     return (
       <div>
         <div class="row">
           <div class="col confirmation-heading">
             <h2>{t("Review your Answers")}</h2>
-            <p>
-              {t("applicationConfirmationText")}
-            </p>
+            <p>{t("applicationConfirmationText")}</p>
 
             <div class="alert alert-warning">
-              <span class="fa fa-exclamation-triangle"></span> {t("You MUST click SUBMIT before the deadline for your application to be considered!")}
+              <span class="fa fa-exclamation-triangle"></span>{" "}
+              {t(
+                "You MUST click SUBMIT before the deadline for your application to be considered!"
+              )}
             </div>
 
             <div class="text-center">
-              {allErrors.length > 0 && <div class="alert alert-danger alert-container">
-                {t("Could not submit your application due to validation errors. Please go back and fix these any try again.")}
-              </div>}
-              {allErrors.length === 0 && <button
-                className="btn btn-primary submit-application mx-auto"
-                onClick={this.props.submit}
-                disabled={this.props.isSubmitting}
-              >
-                {t("Submit")}
-              </button>}
+              {allErrors.length > 0 && (
+                <div class="alert alert-danger alert-container">
+                  {t(
+                    "Could not submit your application due to validation errors. Please go back and fix these any try again."
+                  )}
+                </div>
+              )}
+              {allErrors.length === 0 && (
+                <button
+                  className="btn btn-primary submit-application mx-auto"
+                  onClick={this.props.submit}
+                  disabled={this.props.isSubmitting}
+                >
+                  {t("Submit")}
+                </button>
+              )}
             </div>
-
           </div>
         </div>
 
-        {this.props.sectionModels && 
-          this.props.sectionModels.filter(sm => sm.questionModels.length > 0).map(sm => {
-            return <div key={"section_" + sm.section.id}>
-              <h2>{sm.section.name}</h2>
-              {sm.questionModels &&
-                sm.questionModels.filter(qm => this.dependentQuestionFilter(qm.question, allAnswers)).map(qm => {
-                  return (
-                    qm.question && (
-                      <div className={"confirmation answer"}>
-                        <div class="row">
-                          <div class="col">
-                            <h5>{qm.question.headline}</h5>
-                          </div>
-                        </div>
-                        <div class="row">
-                          <div class="col">
-                            <p class="answer-value">
-                              <AnswerValue answer={qm.answer} question={qm.question} />
-                              {qm.validationError && <div className="alert alert-danger alert-container">{qm.validationError}</div>}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  );
-                })}
-            </div>
-          })}
-        
-        {allErrors.length > 0 && <div class="alert alert-danger alert-container">
-          {t("Could not submit your application due to validation errors. Please go back and fix these any try again.")}
-        </div>}
-        {allErrors.length === 0 && <button
-          className="btn btn-primary submit-application mx-auto"
-          onClick={this.props.submit}
-          disabled={this.props.isSubmitting}
-        >
-          {t("Submit")}
-        </button>}
+        {this.props.sectionModels &&
+          this.props.sectionModels
+            .filter((sm) => sm.questionModels.length > 0)
+            .map((sm) => {
+              return (
+                <div key={"section_" + sm.section.id}>
+                  <h2>{sm.section.name}</h2>
+                  {sm.questionModels &&
+                    sm.questionModels
+                      .filter((qm) =>
+                        this.dependentQuestionFilter(qm.question, allAnswers)
+                      )
+                      .map((qm) => {
+                        return (
+                          qm.question && (
+                            <div className={"confirmation answer"}>
+                              <div class="row">
+                                <div class="col">
+                                  <h5>{qm.question.headline}</h5>
+                                </div>
+                              </div>
+                              <div class="row">
+                                <div class="col">
+                                  <p class="answer-value">
+                                    <AnswerValue
+                                      answer={qm.answer}
+                                      question={qm.question}
+                                    />
+                                    {qm.validationError && (
+                                      <div className="alert alert-danger alert-container">
+                                        {qm.validationError}
+                                      </div>
+                                    )}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        );
+                      })}
+                </div>
+              );
+            })}
+
+        {allErrors.length > 0 && (
+          <div class="alert alert-danger alert-container">
+            {t(
+              "Could not submit your application due to validation errors. Please go back and fix these any try again."
+            )}
+          </div>
+        )}
+        {allErrors.length === 0 && (
+          <button
+            className="btn btn-primary submit-application mx-auto"
+            onClick={this.props.submit}
+            disabled={this.props.isSubmitting}
+          >
+            {t("Submit")}
+          </button>
+        )}
       </div>
     );
   }
 }
 
-
 const Confirmation = withTranslation()(ConfirmationComponent);
-
 
 class SubmittedComponent extends React.Component {
   constructor(props) {
@@ -611,13 +664,13 @@ class SubmittedComponent extends React.Component {
     };
   }
 
-  handleWithdrawOK = event => {
-    applicationFormService.withdraw(this.props.responseId).then(resp => {
+  handleWithdrawOK = (event) => {
+    applicationFormService.withdraw(this.props.responseId).then((resp) => {
       this.setState(
         {
           isError: resp.isError,
           errorMessage: resp.message,
-          withdrawModalVisible: false
+          withdrawModalVisible: false,
         },
         () => {
           if (this.props.onWithdrawn) {
@@ -628,43 +681,44 @@ class SubmittedComponent extends React.Component {
     });
   };
 
-  handleEditOK = event => {
+  handleEditOK = (event) => {
     if (this.props.onEdit) {
       this.props.onEdit();
     }
   };
 
-  handleWithdrawCancel = event => {
+  handleWithdrawCancel = (event) => {
     this.setState({
-      withdrawModalVisible: false
+      withdrawModalVisible: false,
     });
   };
 
-  handleWithdraw = event => {
+  handleWithdraw = (event) => {
     this.setState({
-      withdrawModalVisible: true
+      withdrawModalVisible: true,
     });
   };
 
-  handleEdit = event => {
+  handleEdit = (event) => {
     this.setState({
-      editAppModalVisible: true
+      editAppModalVisible: true,
     });
   };
 
-  cancelEditModal = event => {
+  cancelEditModal = (event) => {
     this.setState({
-      editAppModalVisible: false
+      editAppModalVisible: false,
     });
   };
 
   render() {
     const t = this.props.t;
-    const initialText = this.props.event && this.props.event.event_type === "CALL" 
-      ? t("Thank you for responding to the")
-      : this.props.event.event_type === "JOURNAL"
-      ? t("Thank you for submitting an article to the") 
-      : t("Thank you for applying for"); 
+    const initialText =
+      this.props.event && this.props.event.event_type === "CALL"
+        ? t("Thank you for responding to the")
+        : this.props.event.event_type === "JOURNAL"
+        ? t("Thank you for submitting an article to the")
+        : t("Thank you for applying for");
 
     return (
       <div class="submitted">
@@ -676,44 +730,72 @@ class SubmittedComponent extends React.Component {
         )}
 
         <p class="thank-you">
-          {initialText + " "} {this.props.event ? this.props.event.name : ""}. {" "}
-          {this.props.event.event_type === "JOURNAL" 
-          ? t("Your article will be reviewed by our appointed reviewers and we will get back to you as soon as possible.")
-          : t("Your application will be reviewed by our committee and we will get back to you as soon as possible.")}
+          {initialText + " "} {this.props.event ? this.props.event.name : ""}.{" "}
+          {this.props.event.event_type === "JOURNAL"
+            ? t(
+                "Your article will be reviewed by our appointed reviewers and we will get back to you as soon as possible."
+              )
+            : t(
+                "Your application will be reviewed by our committee and we will get back to you as soon as possible."
+              )}
         </p>
 
         <p class="timestamp">
-          {this.props.event.event_type === "JOURNAL" 
-          ? t("You submitted your article on") + " "
-          : t("You submitted your application on") + " "}
+          {this.props.event.event_type === "JOURNAL"
+            ? t("You submitted your article on") + " "
+            : t("You submitted your application on") + " "}
           {this.props.timestamp && this.props.timestamp.toLocaleString()}
         </p>
 
         <div class="submitted-footer">
           <button class="btn btn-danger" onClick={this.handleWithdraw}>
-            {this.props.event.event_type === "JOURNAL" 
-            ? t("Withdraw Article Submission") 
-            : t("Withdraw Application")}
+            {this.props.event.event_type === "JOURNAL"
+              ? t("Withdraw Article Submission")
+              : t("Withdraw Application")}
           </button>
         </div>
-        
-        {this.props.event.event_type === "JOURNAL" 
-        ? undefined
-        : <div class="submitted-footer">
-        <button class="btn btn-primary" onClick={this.handleEdit}>
-          {t("Edit Application")}
-        </button>
-        </div>}
+        {this.props.event.event_type === "JOURNAL" ? (
+          <div class="submitted-footer">
+            <button
+              class=" btn btn-primary"
+              onClick={() =>
+                (window.location.href = `/${this.props.event.key}/apply/new`)
+              }
+            >
+              {t("New submission")}
+            </button>
+
+            <button
+              style={{ marginLeft: "50px" }}
+              class="btn btn-secondary"
+              onClick={() =>
+                (window.location.href = `/${this.props.event.key}/apply/view`)
+              }
+            >
+              {t("View Submission(s)")}
+            </button>
+          </div>
+        ) : undefined}
+
+        {this.props.event.event_type === "JOURNAL" ? undefined : (
+          <div class="submitted-footer">
+            <button class="btn btn-primary" onClick={this.handleEdit}>
+              {t("Edit Application")}
+            </button>
+          </div>
+        )}
 
         <ConfirmModal
           visible={this.state.withdrawModalVisible}
           onOK={this.handleWithdrawOK}
           onCancel={this.handleWithdrawCancel}
           okText={t("Yes - Withdraw")}
-          cancelText={t("No - Don't withdraw")}>
-
+          cancelText={t("No - Don't withdraw")}
+        >
           <p>
-            {t("By continuing, your submitted application will go into draft state. You MUST press Submit again after you make your changes for your application to be considered in the selection.")}
+            {t(
+              "By continuing, your submitted application will go into draft state. You MUST press Submit again after you make your changes for your application to be considered in the selection."
+            )}
           </p>
         </ConfirmModal>
 
@@ -722,9 +804,11 @@ class SubmittedComponent extends React.Component {
           onOK={this.handleEditOK}
           onCancel={this.cancelEditModal}
           okText={t("Yes - Edit application")}
-          cancelText={t("No - Don't edit")}>
+          cancelText={t("No - Don't edit")}
+        >
           <p>
-            {t("Do you want to edit your application to") + " "} {this.props.event ? this.props.event.name : ""}?
+            {t("Do you want to edit your application to") + " "}{" "}
+            {this.props.event ? this.props.event.name : ""}?
           </p>
         </ConfirmModal>
       </div>
@@ -733,7 +817,6 @@ class SubmittedComponent extends React.Component {
 }
 
 const Submitted = withTranslation()(SubmittedComponent);
-
 
 class ApplicationFormInstanceComponent extends Component {
   constructor(props) {
@@ -753,55 +836,68 @@ class ApplicationFormInstanceComponent extends Component {
       startStep: 0,
       new_response: !props.response,
       outcome: props.response && props.response.outcome,
-      submitValidationErrors: []
+      submitValidationErrors: [],
     };
   }
 
-  handleSubmit = event => {
+  handleSubmit = (event) => {
     event.preventDefault();
     this.setState(
       {
-        isSubmitting: true
+        isSubmitting: true,
       },
       () => {
-        const promise = this.state.new_response 
-          ? applicationFormService.submit(this.props.formSpec.id, true, this.state.answers)
-          : applicationFormService.updateResponse(this.state.responseId, this.props.formSpec.id, true, this.state.answers);
-        
-        promise.then(resp => {
-            const submitError = resp.response_id === null && resp.status !== 422;
-            this.setState(prevState => ({
-              submitValidationErrors: resp.status === 422 && resp.errors,
-              isError: submitError,
-              errorMessage: resp.message,
-              isSubmitting: false,
-              isSubmitted: resp.response_id !== null && resp.status !== 422 && resp.is_submitted,
-              isEditing: false,
-              submittedTimestamp: resp.submitted_timestamp,
-              unsavedChanges: false,
-              new_response: false,
-              responseId: prevState.responseId || resp.response_id
-            }));
-          });
+        const promise = this.state.new_response
+          ? applicationFormService.submit(
+              this.props.formSpec.id,
+              true,
+              this.state.answers
+            )
+          : applicationFormService.updateResponse(
+              this.state.responseId,
+              this.props.formSpec.id,
+              true,
+              this.state.answers
+            );
+
+        promise.then((resp) => {
+          const submitError = resp.response_id === null && resp.status !== 422;
+
+          this.setState((prevState) => ({
+            submitValidationErrors: resp.status === 422 && resp.errors,
+            isError: submitError,
+            errorMessage: resp.message,
+            isSubmitting: false,
+            isSubmitted:
+              resp.response_id !== null &&
+              resp.status !== 422 &&
+              resp.is_submitted,
+            isEditing: false,
+            submittedTimestamp: resp.submitted_timestamp,
+            unsavedChanges: false,
+            new_response: false,
+            responseId: prevState.responseId || resp.response_id,
+          }));
+        });
       }
     );
   };
 
-  handleSave = answers => {
+  handleSave = (answers) => {
     this.setState(
-      prevState => {
+      (prevState) => {
         return {
           isSaving: true,
           answers: prevState.answers
-            .filter(a => !answers.includes(a.question_id))
-            .concat(answers)
+            .filter((a) => !answers.includes(a.question_id))
+            .concat(answers),
         };
       },
       () => {
         if (this.state.new_response) {
           applicationFormService
             .submit(this.props.formSpec.id, false, this.state.answers)
-            .then(resp => {
+            .then((resp) => {
               let submitError = resp.response_id === null;
               this.setState({
                 isError: submitError,
@@ -811,7 +907,7 @@ class ApplicationFormInstanceComponent extends Component {
                 new_response: false,
                 unsavedChanges: false,
                 isSaving: false,
-                responseId: resp.response_id
+                responseId: resp.response_id,
               });
             });
         } else {
@@ -822,7 +918,7 @@ class ApplicationFormInstanceComponent extends Component {
               false,
               this.state.answers
             )
-            .then(resp => {
+            .then((resp) => {
               let saveError = resp.response_id === null;
               this.setState({
                 isError: saveError,
@@ -830,7 +926,7 @@ class ApplicationFormInstanceComponent extends Component {
                 isSubmitted: resp.is_submitted,
                 submittedTimestamp: resp.submitted_timestamp,
                 unsavedChanges: false,
-                isSaving: false
+                isSaving: false,
               });
             });
         }
@@ -844,18 +940,26 @@ class ApplicationFormInstanceComponent extends Component {
 
   handleAnswerChanged = (answers, save) => {
     if (answers) {
-      this.setState(prevState => {
-        return {
-          answers: prevState.answers
-            .filter(a => !answers.map(a => a.question_id).includes(a.question_id))
-            .concat(answers),
-          submitValidationErrors: prevState.submitValidationErrors.filter(e => !answers.map(a => a.question_id).includes(e.question_id))
-        };
-      }, () => {
-        if (save) {
-          this.handleSave([]);
+      this.setState(
+        (prevState) => {
+          return {
+            answers: prevState.answers
+              .filter(
+                (a) =>
+                  !answers.map((a) => a.question_id).includes(a.question_id)
+              )
+              .concat(answers),
+            submitValidationErrors: prevState.submitValidationErrors.filter(
+              (e) => !answers.map((a) => a.question_id).includes(e.question_id)
+            ),
+          };
+        },
+        () => {
+          if (save) {
+            this.handleSave([]);
+          }
         }
-      });
+      );
     }
   };
 
@@ -864,7 +968,9 @@ class ApplicationFormInstanceComponent extends Component {
   };
 
   getSubmitValidationError = (q) => {
-    const validationError = this.state.submitValidationErrors.find(e => e.question_id === q.id);
+    const validationError = this.state.submitValidationErrors.find(
+      (e) => e.question_id === q.id
+    );
     if (!validationError) {
       return "";
     }
@@ -882,7 +988,7 @@ class ApplicationFormInstanceComponent extends Component {
     }
 
     return "";
-  }
+  };
 
   render() {
     const {
@@ -892,25 +998,45 @@ class ApplicationFormInstanceComponent extends Component {
       errorMessage,
       answers,
       isSubmitting,
-      outcome
+      outcome,
     } = this.state;
 
     if (isError) {
-      return <div className={"alert alert-danger alert-container"}>
-        {errorMessage}
-      </div>;
+      return (
+        <div className={"alert alert-danger alert-container"}>
+          {errorMessage}
+        </div>
+      );
     }
 
-    if (outcome === "ACCEPTED" || outcome === "REJECTED") {
-      return <div className={"alert alert-success alert-container"}>
-        {outcome === "ACCEPTED" && <div>
-          <p>{this.props.t("You have already been accepted to this event.")}</p>
-          <Link to={`/${this.props.event.key}/offer`} className="btn btn-primary">
-            {this.props.t("View Offer")}
-          </Link>
-        </div>}
-        {outcome === "REJECTED" && <p>{this.props.t("Unfortunately your application to this event has been rejected, you are not able to apply again.")}</p>}
-      </div>;
+    if (
+      (outcome === "ACCEPTED" || outcome === "REJECTED") &&
+      this.props.event.event_type !== "JOURNAL"
+    ) {
+      return (
+        <div className={"alert alert-success alert-container"}>
+          {outcome === "ACCEPTED" && (
+            <div>
+              <p>
+                {this.props.t("You have already been accepted to this event.")}
+              </p>
+              <Link
+                to={`/${this.props.event.key}/offer`}
+                className="btn btn-primary"
+              >
+                {this.props.t("View Offer")}
+              </Link>
+            </div>
+          )}
+          {outcome === "REJECTED" && (
+            <p>
+              {this.props.t(
+                "Unfortunately your application to this event has been rejected, you are not able to apply again."
+              )}
+            </p>
+          )}
+        </div>
+      );
     }
 
     if (isSubmitted && !isEditing) {
@@ -932,25 +1058,26 @@ class ApplicationFormInstanceComponent extends Component {
       } else {
         return true;
       }
-    }
+    };
 
     const sections =
       this.props.formSpec.sections &&
-      this.props.formSpec.sections.slice()
+      this.props.formSpec.sections
+        .slice()
         .filter(includeEntityDueToDependentQuestion)
         .sort((a, b) => a.order - b.order);
     const sectionModels =
       sections &&
-      sections.map(section => {
+      sections.map((section) => {
         return {
           section: section,
-          questionModels: section.questions.map(q => {
+          questionModels: section.questions.map((q) => {
             return {
               question: q,
-              answer: answers.find(a => a.question_id === q.id),
-              validationError: this.getSubmitValidationError(q)
+              answer: answers.find((a) => a.question_id === q.id),
+              validationError: this.getSubmitValidationError(q),
             };
-          })
+          }),
         };
       });
 
@@ -962,7 +1089,9 @@ class ApplicationFormInstanceComponent extends Component {
           component: (
             <Section
               key={"section_" + model.section.id}
-              showQuestionBasedOnSavedFormAnswers={includeEntityDueToDependentQuestion}
+              showQuestionBasedOnSavedFormAnswers={
+                includeEntityDueToDependentQuestion
+              }
               section={model.section}
               questionModels={model.questionModels}
               answerChanged={this.handleAnswerChanged}
@@ -974,7 +1103,7 @@ class ApplicationFormInstanceComponent extends Component {
               stepProgress={i}
               t={this.props.t}
             />
-          )
+          ),
         };
       });
 
@@ -986,7 +1115,7 @@ class ApplicationFormInstanceComponent extends Component {
           submit={this.handleSubmit}
           isSubmitting={isSubmitting}
         />
-      )
+      ),
     });
 
     return (
@@ -1004,84 +1133,200 @@ class ApplicationFormInstanceComponent extends Component {
 
           <ReactToolTip />
         </div>
-        {isSubmitting && <h2 class="submitting">{this.props.t("Saving Responses")}...</h2>}
+        {isSubmitting && (
+          <h2 class="submitting">{this.props.t("Saving Responses")}...</h2>
+        )}
       </div>
     );
   }
 }
 
-const ApplicationFormInstance = withRouter(withTranslation()(ApplicationFormInstanceComponent));
+const ApplicationFormInstance = withRouter(
+  withTranslation()(ApplicationFormInstanceComponent)
+);
 
 class ApplicationListComponent extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-    }
+    this.state = {};
   }
 
   getCandidate = (allQuestions, response) => {
-    const nominating_capacity = answerByQuestionKey("nominating_capacity", allQuestions, response.answers);
+    const nominating_capacity = answerByQuestionKey(
+      "nominating_capacity",
+      allQuestions,
+      response.answers
+    );
     if (nominating_capacity === "other") {
-      let firstname = answerByQuestionKey("nomination_firstname", allQuestions, response.answers);
-      let lastname = answerByQuestionKey("nomination_lastname", allQuestions, response.answers);
+      let firstname = answerByQuestionKey(
+        "nomination_firstname",
+        allQuestions,
+        response.answers
+      );
+      let lastname = answerByQuestionKey(
+        "nomination_lastname",
+        allQuestions,
+        response.answers
+      );
       return firstname + " " + lastname;
     }
-    return  this.props.event.event_type ==='JOURNAL' ? this.props.t("Submission") + " " + response.id : this.props.t("Self Nomination");
-  }
+    return this.props.event.event_type === "JOURNAL"
+      ? this.props.t("Submission") + " " + response.id
+      : this.props.t("Self Nomination");
+  };
 
   getStatus = (response) => {
     if (response.is_submitted) {
-      return <span>{this.props.t("Submitted")}</span>
+      return <span>{this.props.t("Submitted")}</span>;
+    } else {
+      return <span>{this.props.t("In Progress")}</span>;
     }
-    else {
-      return <span>{this.props.t("In Progress")}</span>
+  };
+
+  renderSections() {
+    const applicationForm = this.state.applicationForm;
+    const applicationData = this.state.applicationData;
+    let html = [];
+
+    // main function
+    if (applicationForm && applicationData) {
+      applicationForm.sections.forEach((section) => {
+        html.push(
+          <div key={section.name} className="section">
+            {/*Heading*/}
+            <div className="flex baseline">
+              <h3>{section.name}</h3>
+            </div>
+            {/*Q & A*/}
+            <div className="Q-A">{this.renderResponses(section)}</div>
+          </div>
+        );
+      });
     }
+
+    return html;
+  }
+  renderResponses(section) {
+    const applicationData = this.state.applicationData;
+    const questions = section.questions.map((q) => {
+      const a = applicationData.answers.find((a) => a.question_id === q.id);
+      if (q.type === "information") {
+        return <h4>{q.headline}</h4>;
+      }
+      return (
+        <div key={q.id} className="question-answer-block">
+          <p>
+            <span className="question-headline">{q.headline}</span>
+            {q.description && (
+              <span className="question-description">
+                <br />
+                {q.description}
+              </span>
+            )}
+          </p>
+          <h6>
+            <AnswerValue answer={a} question={q} />
+          </h6>
+        </div>
+      );
+    });
+    return questions;
   }
 
   getAction = (response) => {
     if (response.is_submitted) {
-      return <button className="btn btn-warning btn-sm" onClick={() => this.props.click(response)}>{this.props.t("View")}</button>
+      return (
+        <button
+          className="btn btn-warning btn-sm"
+          onClick={() =>
+            (window.location.href = `/${this.props.event.key}/responseDetails/${response.id}`)
+          }
+        >
+          {this.props.t("View")}
+        </button>
+      );
+    } else {
+      return (
+        <button
+          className="btn btn-success btn-sm"
+          onClick={() =>
+            (window.location.href = `/${this.props.event.key}/apply/continue/${response.id}`)
+          }
+        >
+          {this.props.t("Continue")}
+        </button>
+      );
     }
-    else {
-      return <button className="btn btn-success btn-sm" onClick={() => this.props.click(response)}>{this.props.t("Continue")}</button>
+  };
+
+  getOutcome = (response) => {
+    if (response.outcome) {
+      const badgeClass =
+        response.outcome === "ACCEPTED"
+          ? "badge-success"
+          : response.outcome === "REJECTED"
+          ? "badge-danger"
+          : "badge-warning";
+      return (
+        <span class={`badge badge-pill ${badgeClass}`}>{response.outcome}</span>
+      );
     }
-  }
+    return (
+      <span class="badge badge-pill badge-secondary">
+        {this.props.t("Pending")}
+      </span>
+    );
+  };
 
   render() {
-    let allQuestions = _.flatMap(this.props.formSpec.sections, s => s.questions);
-    const title = this.props.event.event_type ==='JOURNAL' ? this.props.t("Your Submissions") : this.props.t("Your Nominations");
-    let firstColumn = this.props.event.event_type ==='JOURNAL' ? this.props.t("Submission") : this.props.t("Nominee");
-    return <div>
-      <h4>{title}</h4>
-      <table class="table">
-        <thead>
-          <tr>
-            <th scope="col">{firstColumn}</th>
-            <th scope="col">{this.props.t("Status")}</th>
-            <th scope="col"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {this.props.responses.map(response => {
-            return <tr key={"response_" + response.id}>
-              <td>{this.getCandidate(allQuestions, response)}</td>
-              <td>{this.getStatus(response)}</td>
-              <td>{this.getAction(response)}</td>
+    let allQuestions = _.flatMap(
+      this.props.formSpec.sections,
+      (s) => s.questions
+    );
+    const title =
+      this.props.event.event_type === "JOURNAL"
+        ? this.props.t("Your Submissions")
+        : this.props.t("Your Nominations");
+    let firstColumn =
+      this.props.event.event_type === "JOURNAL"
+        ? this.props.t("Submission")
+        : this.props.t("Nominee");
+    return (
+      <div>
+        <h4>{title}</h4>
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">{firstColumn}</th>
+              <th scope="col">{this.props.t("Status")}</th>
+              <th scope="col">{this.props.t("Results")}</th>
+              <th scope="col"></th>
             </tr>
-          })}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {this.props.responses.map((response) => {
+              return (
+                <tr key={"response_" + response.id}>
+                  <td>{this.getCandidate(allQuestions, response)}</td>
+                  <td>{this.getStatus(response)}</td>
+                  <td>{this.getOutcome(response)}</td>
+                  <td>{this.getAction(response)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
   }
 }
 
-
 const ApplicationList = withRouter(withTranslation()(ApplicationListComponent));
-
 
 class ApplicationForm extends Component {
   constructor(props) {
     super(props);
+
     this.state = {
       isLoading: true,
       isError: false,
@@ -1089,8 +1334,11 @@ class ApplicationForm extends Component {
       formSpec: null,
       responses: [],
       selectedResponse: null,
-      journalSubmissionFlag: false
-    }
+      listselectedResponse: null,
+      journalSubmissionFlag: false,
+      continue: false,
+      view: false,
+    };
   }
 
   componentDidMount() {
@@ -1098,38 +1346,54 @@ class ApplicationForm extends Component {
     Promise.all([
       applicationFormService.getForEvent(eventId),
       applicationFormService.getResponse(eventId),
-      eventService.getEvent(eventId)
-    ]).then(responses => {
+      eventService.getEvent(eventId),
+    ]).then((responses) => {
       const [formResponse, responseResponse, eventResponse] = responses;
-      const selectFirstResponse = formResponse && formResponse.formSpec && !formResponse.formSpec.nominations && responseResponse.response.length > 0;
+      const selectFirstResponse =
+        formResponse &&
+        formResponse.formSpec &&
+        !formResponse.formSpec.nominations &&
+        responseResponse.response.length > 0;
+
       this.setState({
         formSpec: formResponse.formSpec,
         responses: responseResponse.response,
         isError: formResponse.formSpec === null || responseResponse.error,
-        errorMessage: (formResponse.error + " " + responseResponse.error).trim(),
+        errorMessage: (
+          formResponse.error +
+          " " +
+          responseResponse.error
+        ).trim(),
         isLoading: false,
-        selectedResponse: selectFirstResponse ? responseResponse.response[0] : null,
+        selectedResponse: selectFirstResponse
+          ? responseResponse.response[0]
+          : null,
         responseSelected: selectFirstResponse,
-        event: eventResponse.event
+        listselectedResponse: selectFirstResponse
+          ? responseResponse.response
+          : null,
+        event: eventResponse.event,
       });
     });
-    
   }
 
-  responseSelected = response => {
+  responseSelected = (response) => {
     this.setState({
       selectedResponse: response,
-      responseSelected: true
+      responseSelected: true,
     });
-  }
+  };
 
   newNomination = () => {
     this.setState({
-      responseSelected: true
+      responseSelected: true,
     });
-  }
+  };
 
-  
+  newSubmission = () => {
+    window.location.href = `/${this.props.event.key}/apply/new`;
+  };
+
   render() {
     const {
       isLoading,
@@ -1138,34 +1402,105 @@ class ApplicationForm extends Component {
       formSpec,
       responses,
       selectedResponse,
-      responseSelected} = this.state;
+      responseSelected,
+      listselectedResponse,
+    } = this.state;
 
     if (isLoading) {
-      return (<Loading />);
+      return <Loading />;
     }
 
     if (isError) {
-      return <div className={"alert alert-danger alert-container"}>{errorMessage}</div>;
+      return (
+        <div className={"alert alert-danger alert-container"}>
+          {errorMessage}
+        </div>
+      );
     }
-    
-    if (this.props.event.event_type === 'JOURNAL' && this.props.journalSubmissionFlag) {
-      return <ApplicationFormInstance
-      formSpec={formSpec}
-      response={null}
-      event={this.props.event} />
-    }
-    else if (formSpec.nominations && responses.length > 0 && !responseSelected) {
-      let newForm = this.state.event.event_type ==='JOURNAL' ? this.props.t("New Submission") + " " : this.props.t("New Nomination") + " ";
-      return <div>
-          <ApplicationList responses={responses} event={this.state.event} formSpec={formSpec} click={this.responseSelected} /><br />
-          <button className="btn btn-primary" onClick={() => this.newNomination()}>{newForm} &gt;</button>
-    </div>
-    }
-    else {
-      return <ApplicationFormInstance
-        formSpec={formSpec}
-        response={selectedResponse}
-        event={this.props.event} />
+
+    if (this.props.event.event_type === "JOURNAL") {
+      if (this.props.journalSubmissionFlag) {
+        return (
+          <ApplicationFormInstance
+            formSpec={formSpec}
+            response={selectedResponse.is_submitted ? null : selectedResponse}
+            event={this.props.event}
+          />
+        );
+      }
+      if (this.props.view) {
+        let newForm = this.props.t("New Submission");
+
+        return (
+          <div>
+            <ApplicationList
+              responses={responses}
+              event={this.state.event}
+              formSpec={formSpec}
+              click={this.responseSelected}
+            />
+            <br />
+            <button
+              className="btn btn-primary"
+              onClick={() => this.newSubmission()}
+            >
+              {newForm} &gt;
+            </button>
+          </div>
+        );
+      }
+      if (this.props.continue) {
+        return (
+          <ApplicationFormInstance
+            formSpec={formSpec}
+            response={listselectedResponse.find(
+              (item) => item.id === parseInt(this.props.match.params.id)
+            )}
+            event={this.props.event}
+          />
+        );
+      }
+      return (
+        <ApplicationFormInstance
+          formSpec={formSpec}
+          response={selectedResponse}
+          event={this.props.event}
+        />
+      );
+    } else if (
+      formSpec.nominations &&
+      responses.length > 0 &&
+      !responseSelected
+    ) {
+      let newForm =
+        this.state.event.event_type === "JOURNAL"
+          ? this.props.t("New Submission") + " "
+          : this.props.t("New Nomination") + " ";
+      return (
+        <div>
+          <ApplicationList
+            responses={responses}
+            event={this.state.event}
+            formSpec={formSpec}
+            click={this.responseSelected}
+          />
+          <br />
+          <button
+            className="btn btn-primary"
+            onClick={() => this.newNomination()}
+          >
+            {newForm} &gt;
+          </button>
+        </div>
+      );
+    } else {
+      return (
+        <ApplicationFormInstance
+          formSpec={formSpec}
+          response={selectedResponse}
+          event={this.props.event}
+        />
+      );
     }
   }
 }

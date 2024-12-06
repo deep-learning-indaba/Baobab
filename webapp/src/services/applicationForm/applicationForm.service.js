@@ -85,6 +85,7 @@ function submit(applicationFormId, isSubmitted, answers) {
 
     return axios.post(baseUrl + `/api/v1/response`, response, {headers: authHeader()})
       .then(resp=> {
+        console.log()
         return {
           response_id: resp.data.id,
           is_submitted: resp.data.is_submitted,
