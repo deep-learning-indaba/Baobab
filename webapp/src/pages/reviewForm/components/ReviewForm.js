@@ -204,9 +204,13 @@ const ReviewForm = (props) => {
             active: currentStage !== 1 ? true : false
           })
           setCreateMode(true);
+          console.log(event);
+          
         }
+
       })
     }
+ 
   }, [currentStage])
 
   const addSection = () => {

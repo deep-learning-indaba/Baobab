@@ -720,6 +720,8 @@ class SubmittedComponent extends React.Component {
         ? t("Thank you for submitting an article to the")
         : t("Thank you for applying for");
 
+        
+
     return (
       <div class="submitted">
         <h2>{t("Thank you for applying!")}</h2>
@@ -1273,7 +1275,7 @@ class ApplicationListComponent extends Component {
     }
     return (
       <span class="badge badge-pill badge-secondary">
-        {this.props.t("Pending")}
+        {this.props.t("PENDING")}
       </span>
     );
   };
@@ -1348,6 +1350,8 @@ class ApplicationForm extends Component {
       applicationFormService.getResponse(eventId),
       eventService.getEvent(eventId),
     ]).then((responses) => {
+      console.log(responses);
+      
       const [formResponse, responseResponse, eventResponse] = responses;
       const selectFirstResponse =
         formResponse &&
@@ -1429,8 +1433,7 @@ class ApplicationForm extends Component {
         );
       }
       if (this.props.view) {
-        let newForm = this.props.t("New Submission");
-
+        
         return (
           <div>
             <ApplicationList
@@ -1444,7 +1447,7 @@ class ApplicationForm extends Component {
               className="btn btn-primary"
               onClick={() => this.newSubmission()}
             >
-              {newForm} &gt;
+              {this.props.t("New Submission")} &gt;
             </button>
           </div>
         );
@@ -1463,7 +1466,7 @@ class ApplicationForm extends Component {
       return (
         <ApplicationFormInstance
           formSpec={formSpec}
-          response={selectedResponse}
+          response={null}
           event={this.props.event}
         />
       );

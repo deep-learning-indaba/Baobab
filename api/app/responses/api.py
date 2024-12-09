@@ -123,8 +123,9 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         responses = response_repository.get_all_for_user_application(current_user_id, form.id)
 
         # TODO: Link outcomes to responses rather than events to cater for multiple submissions.
-        outcome = outcome_repository.get_latest_by_user_for_event(current_user_id, event_id)
         for response in responses:
+            outcome = outcome_repository.get_latest_by_user_for_event_response(current_user_id,response.id, event_id)
+            # get_latest_by_user_for_event(current_user_id, event_id)
             response.outcome = outcome
 
         return marshal(responses, ResponseAPI.response_fields), 200
@@ -146,8 +147,8 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         user = user_repository.get_by_id(user_id)
         responses = response_repository.get_all_for_user_application(user_id, application_form_id)
 
-        if not application_form.nominations and len(responses) < 0:
-            return errors.RESPONSE_ALREADY_SUBMITTED
+        # if not application_form.nominations and len(responses) > 0:
+        #     return errors.RESPONSE_ALREADY_SUBMITTED
 
         response = Response(application_form_id, user_id, language)
         response_repository.save(response)

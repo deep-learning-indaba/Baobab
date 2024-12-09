@@ -53,6 +53,7 @@ class ResponsePage extends Component {
       tagsService.getTagList(this.props.event.id),
       reviewService.getReviewAssignments(this.props.event.id),
     ]).then((responses) => {
+ 
       this.setState(
         {
           eventLanguages: responses[0].event
@@ -131,7 +132,7 @@ class ResponsePage extends Component {
         return (
           <span>
             <span class="badge badge-pill badge-success">Submitted</span>{" "}
-            {this.formatDate(data.started_timestamp)}
+            {this.formatDate(data.submitted_timestamp)}
           </span>
         );
       }
@@ -200,8 +201,9 @@ class ResponsePage extends Component {
 
   getOutcome() {
     outcomeService
-      .getOutcome(this.props.event.id, this.state.applicationData.user_id)
+      .getOutcome(this.props.event.id, this.state.applicationData.user_id,this.props.match.params.id)
       .then((response) => {
+        console.log(this.props);
         if (response.status === 200) {
           const newOutcome = {
             timestamp: response.outcome.timestamp,
@@ -224,6 +226,7 @@ class ResponsePage extends Component {
     outcomeService
       .assignOutcome(
         this.state.applicationData.user_id,
+        this.props.match.params.id,
         this.props.event.id,
         selectedOutcome
       )
@@ -239,7 +242,7 @@ class ResponsePage extends Component {
             confirmModalVisible: false,
           });
         } else {
-          this.setState({ erorr: response.error });
+          this.setState({ error: response.error });
         }
       });
   }
@@ -265,6 +268,7 @@ class ResponsePage extends Component {
       confirmModalVisible: false,
     });
     this.submitOutcome(this.state.pendingOutcome);
+    
   };
 
   handleConfirmationCancel = (event) => {

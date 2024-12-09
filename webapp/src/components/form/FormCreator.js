@@ -147,7 +147,8 @@ const FormCreator = ({
         />
       {homeRedirect && <Redirect to={`/${eventKey}`} />}
       {errorResponse ? (
-        <div className='tooltiptext-error response-error'>
+        // tooltiptext-error response-error
+        <div className='alert alert-danger alert-container'>
           <Trans i18nKey='errorResponse' className='response-error'>{{errorResponse}}</Trans>
         </div>
       ) : (

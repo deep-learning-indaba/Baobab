@@ -2,12 +2,13 @@ import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import { applicationFormService } from "../../services/applicationForm";
-
+import "./ResponseDetails.css";
 import Loading from "../../components/Loading";
 import _ from "lodash";
 import { withTranslation } from "react-i18next";
 import AnswerValue from "../../components/answerValue";
 import { eventService } from "../../services/events";
+import moment from "moment";
 
 class ReponseDetails extends Component {
   constructor(props) {
@@ -16,6 +17,8 @@ class ReponseDetails extends Component {
       applicationData: null,
       applicationForm: null,
       isLoading: true,
+      outcome: null,
+      error: false,
     };
   }
 
@@ -26,13 +29,16 @@ class ReponseDetails extends Component {
       applicationFormService.getResponse(eventId),
       eventService.getEvent(eventId),
     ]).then((responses) => {
-      console.log(responses);
       this.setState({
         applicationForm: responses[0].formSpec,
         applicationData: responses[1].response.find(
           (item) => item.id === parseInt(this.props.match.params.id)
         ),
+        outcome: responses[1].response.find(
+          (item) => item.id === parseInt(this.props.match.params.id)
+        ).outcome,
         isLoading: false,
+        error: responses[0].error || responses[1].error || responses[2].error,
       });
     });
   }
@@ -91,55 +97,99 @@ class ReponseDetails extends Component {
     this.props.history.goBack();
   }
 
+  formatDate = (dateString) => {
+    return moment(dateString).format("D MMM YYYY, H:mm:ss [(UTC)]");
+  };
+
+  applicationStatus() {
+    const data = this.state.applicationData;
+    if (data) {
+      const unsubmitted = !data.is_submitted && !data.is_withdrawn;
+      const submitted = data.is_submitted;
+      const withdrawn = data.is_withdrawn;
+
+      if (unsubmitted) {
+        return (
+          <span>
+            <span class="badge badge-pill badge-secondary">Unsubmitted</span>{" "}
+            {this.formatDate(data.started_timestamp)}
+          </span>
+        );
+      }
+      if (submitted) {
+        return (
+          <span>
+            <span class="badge badge-pill badge-success">Submitted</span>{" "}
+            {this.formatDate(data.submitted_timestamp)}
+          </span>
+        );
+      }
+      if (withdrawn) {
+        return (
+          <span>
+            <span class="badge badge-pill badge-danger">Withdrawn</span>{" "}
+            {this.formatDate(data.started_timestamp)}
+          </span>
+        );
+      }
+    }
+  }
+
+  outcomeStatus() {
+    const data = this.state.applicationData;
+    console.log("data");
+    console.log(data);
+
+    if (data.outcome) {
+      const badgeClass =
+        data.outcome === "ACCEPTED"
+          ? "badge-success"
+          : data.outcome === "REJECTED"
+          ? "badge-danger"
+          : "badge-warning";
+
+      return (
+        <span>
+          <span className={`badge badge-pill ${badgeClass}`}>
+            {data.outcome}
+          </span>{" "}
+          {/* {this.formatDate(this.state.outcome.timestamp)} */}
+        </span>
+      );
+    } else {
+
+      return (
+        <span>
+          <span className={`badge badge-pill badge-secondary`}>{"Pending ..."}</span>
+        </span>
+      );
+    }
+  }
   render() {
-    const { applicationData, isLoading } = this.state;
+    const { applicationData, isLoading, outcome, error } = this.state;
     if (isLoading) {
       return <Loading />;
     }
 
     return (
       <div className="table-wrapper response-page">
-        {/* API Error
-                {error &&
-                    <div className="alert alert-danger" role="alert">
-                        <p>{JSON.stringify(error)}</p>
-                    </div>
-                }
+        {error && (
+          <div className="alert alert-danger" role="alert">
+            <p>{JSON.stringify(error)}</p>
+          </div>
+        )}
 
-                {this.renderReviewerModal()}
-                {this.renderDeleteTagModal()}
-                {this.renderDeleteReviewerModal()} */}
-
-        {/* Headings */}
-        {/* {applicationData &&
-                    <div className="headings-lower">
-                        <div className="user-details">
-                            <h2>{applicationData.user_title} {applicationData.firstname} {applicationData.lastname}</h2>
-                            <p>{t("Language")}: {applicationData.language}</p>
-                            <div className="tags">
-                                {this.renderTags()}
-                                <span className="btn badge badge-add" onClick={() => this.setTagSelectorVisible()}>{t("Add tag")}</span>
-
-                            </div>
-
-                        </div>
-
-                        {/* User details Right Tab */}
-        {/* <div>
-                            <div className="user-details right">
-                                <label>{t('Application Status')}</label> <p>{this.applicationStatus()}</p>
-                                <label>{t('Application Outcome')}</label> <p>{this.outcomeStatus()}</p>
-                                <button className="btn btn-secondary" onClick={((e) => this.goBack(e))}>{t('Go Back')}</button>
-                            </div>
-
-                        </div>
-                    </div>
-                } */}
-
+        <div className="headings-lower">
+          <div className="user-details right">
+            <label>{this.props.t("Application Status")}</label>{" "}
+            <p>{this.applicationStatus()}</p>
+            <label>{this.props.t("Application Outcome")}</label>{" "}
+            <p>{this.outcomeStatus()}</p>
+          </div>
+        </div>
         {/*Response Data*/}
         {applicationData && (
           <div className="response-details">
-
             {this.renderSections()}
             <br />
             <div>
@@ -150,7 +200,6 @@ class ReponseDetails extends Component {
                 {this.props.t("Go Back")}
               </button>
             </div>
-
           </div>
         )}
       </div>
