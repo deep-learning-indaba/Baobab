@@ -200,7 +200,7 @@ const ReviewForm = (props) => {
             isOpen: props.event.is_review_open,
             eventId: event.event.id,
             stage: currentStage,
-            deadline: event.event.review_close,//"2024-12-05T23:59:59"
+            deadline: event.event.review_close,
             active: currentStage !== 1 ? true : false
           })
           setCreateMode(true);

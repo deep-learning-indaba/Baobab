@@ -28,7 +28,6 @@ import ResponseList from "../ResponseList/ResponseList";
 import ResponsePage from "../ResponsePage/ResponsePage";
 import ReviewDashboard from "../reviewDashboard";
 import { Attendance, Indemnity } from '../attendance';
-import ResponseDetails from "../ReponseDetails/ReponseDetails";
 import ReponseDetails from "../ReponseDetails/ReponseDetails";
 
 class EventInfo extends Component {
