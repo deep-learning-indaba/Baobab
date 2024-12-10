@@ -285,6 +285,20 @@ class EventStatus extends Component {
     }
   };
 
+  applicationOpeningStatus = (event) => {
+    return {
+      title: this.props.t("Applications Opening Soon"),
+      titleClass: "text-warning",
+      longText:
+        this.props.t("Applications for") +
+        ` ${event.name} ` +
+        this.props.t("will open on") +
+        ` ${event.application_open_date}. ` +
+        this.props.t("Please check back later to apply."),
+      shortText: this.props.t(`Applications will be opened on ${event.application_open_date}`),
+    };
+  };
+
   buildMiniConfUrl = (event) => {
     const link =
       "https://" +
@@ -410,6 +424,12 @@ class EventStatus extends Component {
 
     if (event.status.outcome_status) {
       return this.outcomeStatus(event);
+    }
+
+    if (event.is_event_opening) {
+      console.log("----------");
+      console.log(event);
+      return this.applicationOpeningStatus(event);
     }
 
     return this.applicationClosedStatus(event);
