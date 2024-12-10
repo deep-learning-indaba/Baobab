@@ -427,8 +427,6 @@ class EventStatus extends Component {
     }
 
     if (event.is_event_opening) {
-      console.log("----------");
-      console.log(event);
       return this.applicationOpeningStatus(event);
     }
 
