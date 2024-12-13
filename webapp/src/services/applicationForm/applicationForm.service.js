@@ -76,16 +76,15 @@ function getResponse(eventId) {
     });
 }
 
-function submit(applicationFormId, isSubmitted, answers) {
+function submit(applicationFormId, isSubmitted, answers,parent_id) {
     let response = {
       "application_form_id": applicationFormId,
       "is_submitted": isSubmitted,
-      "answers": answers
+      "answers": answers,
+      "parent_id": parent_id==null?null:parent_id
     }
-
     return axios.post(baseUrl + `/api/v1/response`, response, {headers: authHeader()})
       .then(resp=> {
-        console.log()
         return {
           response_id: resp.data.id,
           is_submitted: resp.data.is_submitted,

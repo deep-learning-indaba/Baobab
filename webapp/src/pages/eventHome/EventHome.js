@@ -162,6 +162,12 @@ class EventHome extends Component {
           render={(props) => <Application {...props} event={event} journalSubmissionFlag={true} /> }
         />
 
+        <Route
+          exact
+          path={`${match.path}/apply/new/parent/:id`}
+          render={(props) => <Application {...props} event={event} journalSubmissionFlag={true} /> }
+        />
+
         {/*new route */}
         <Route
           exact

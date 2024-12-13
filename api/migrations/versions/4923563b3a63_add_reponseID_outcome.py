@@ -18,7 +18,7 @@ import sqlalchemy as sa
 def upgrade():
     op.add_column(
         'outcome',
-        sa.Column('response_id', sa.Integer(), nullable=False)
+        sa.Column('response_id', sa.Integer(), nullable=True)
     )
 
     op.create_foreign_key(

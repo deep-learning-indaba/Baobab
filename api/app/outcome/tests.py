@@ -57,18 +57,18 @@ class OutcomeApiTest(ApiTestCase):
     def test_repository_get_latest_by_user_for_event(self):
         """Test that repository method gets the correct latest outcome for a user."""
         self.seed_static_data()
-        result = outcome_repository.get_latest_by_user_for_event(self.test_user1.id, self.event1.id)
+        result = outcome_repository.get_latest_by_user_for_event_response(self.test_user1.id,None, self.event1.id)
         self.assertEqual(result.id, self.event1_user1_outcome2.id)
         self.assertEqual(result.status, Status.ACCEPTED)
 
-        result = outcome_repository.get_latest_by_user_for_event(self.test_user2.id, self.event1.id)
+        result = outcome_repository.get_latest_by_user_for_event_response(self.test_user2.id,None, self.event1.id)
         self.assertEqual(result.id, self.event1_user2_outcome.id)
         self.assertEqual(result.status, Status.REJECTED)
 
     def test_get_all_by_user_for_event(self):
         """Test that repository method gets all outcomes for a user."""
         self.seed_static_data()
-        result = outcome_repository.get_all_by_user_for_event(self.test_user1.id, self.event1.id)
+        result = outcome_repository.get_all_by_user_for_event_response(self.test_user1.id,None, self.event1.id)
         self.assertEqual(len(result), 2)
         self.assertCountEqual([o.id for o in result], [self.event1_user1_outcome1.id, self.event1_user1_outcome2.id])
     
@@ -138,7 +138,7 @@ class OutcomeApiTest(ApiTestCase):
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 201)
 
-        outcomes = outcome_repository.get_all_by_user_for_event(self.test_user1_id, self.event2.id)
+        outcomes = outcome_repository.get_all_by_user_for_event_response(self.test_user1_id,None, self.event2.id)
         outcomes = list(sorted(outcomes, key=lambda o: o.timestamp))
         print(outcomes)
 

@@ -59,7 +59,7 @@ def get_event_status(event_id, user_id):
     else:
         application_status = 'Not Submitted'
 
-    outcome = outcome_repository.get_latest_by_user_for_event(user_id, event_id)
+    outcome = outcome_repository.get_latest_by_user_for_event_response(user_id,None, event_id)
     if outcome is None:
         outcome_status = None
     else:

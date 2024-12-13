@@ -105,7 +105,7 @@ class OfferApiTest(ApiTestCase):
         self.assertEqual(response.status_code, 201)
         self.assertFalse(data['payment_required'])
 
-        outcome = outcome_repository.get_latest_by_user_for_event(OFFER_DATA['user_id'], OFFER_DATA['event_id'])
+        outcome = outcome_repository.get_latest_by_user_for_event_response(OFFER_DATA['user_id'],None, OFFER_DATA['event_id'])
         self.assertEqual(outcome.status, Status.ACCEPTED)
 
     def test_create_offer_with_template(self):

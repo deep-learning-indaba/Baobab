@@ -66,11 +66,7 @@ class EventStatus extends Component {
       const applyLink = `${event.key}/apply`
       const submissionLink = `${event.key}/apply/new`
       const viewLink=`${event.key}/apply/view`
-      console.log(event);
-      console.log(event.status.application_status);
-      console.log(event.key);
-      
-      
+          
       if (event.status.application_status === "Submitted") {
         if (event.event_type === "JOURNAL") {
             return {

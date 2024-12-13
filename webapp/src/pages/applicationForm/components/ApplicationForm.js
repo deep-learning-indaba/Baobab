@@ -839,6 +839,7 @@ class ApplicationFormInstanceComponent extends Component {
       new_response: !props.response,
       outcome: props.response && props.response.outcome,
       submitValidationErrors: [],
+      parent_id: this.props.match.params.id==null ? null : this.props.match.params.id,
     };
   }
 
@@ -853,7 +854,8 @@ class ApplicationFormInstanceComponent extends Component {
           ? applicationFormService.submit(
               this.props.formSpec.id,
               true,
-              this.state.answers
+              this.state.answers,
+              this.state.parent_id
             )
           : applicationFormService.updateResponse(
               this.state.responseId,
@@ -898,7 +900,7 @@ class ApplicationFormInstanceComponent extends Component {
       () => {
         if (this.state.new_response) {
           applicationFormService
-            .submit(this.props.formSpec.id, false, this.state.answers)
+            .submit(this.props.formSpec.id, false, this.state.answers,this.state.parent_id)
             .then((resp) => {
               let submitError = resp.response_id === null;
               this.setState({
@@ -1177,6 +1179,30 @@ class ApplicationListComponent extends Component {
       : this.props.t("Self Nomination");
   };
 
+  getParent = (allQuestions, response) => {
+    const nominating_capacity = answerByQuestionKey(
+      "nominating_capacity",
+      allQuestions,
+      response.answers
+    );
+    if (nominating_capacity === "other") {
+      let firstname = answerByQuestionKey(
+        "nomination_firstname",
+        allQuestions,
+        response.answers
+      );
+      let lastname = answerByQuestionKey(
+        "nomination_lastname",
+        allQuestions,
+        response.answers
+      );
+      return firstname + " " + lastname;
+    }
+    return this.props.event.event_type === "JOURNAL"
+      ? response.parent_id==null?this.props.t("  ") :this.props.t("Submission") + " " + response.parent_id
+      : this.props.t("Self Nomination");
+  };
+
   getStatus = (response) => {
     if (response.is_submitted) {
       return <span>{this.props.t("Submitted")}</span>;
@@ -1300,6 +1326,7 @@ class ApplicationListComponent extends Component {
           <thead>
             <tr>
               <th scope="col">{firstColumn}</th>
+              <th scope="col">{this.props.t("Following")}</th>
               <th scope="col">{this.props.t("Status")}</th>
               <th scope="col">{this.props.t("Results")}</th>
               <th scope="col"></th>
@@ -1310,6 +1337,7 @@ class ApplicationListComponent extends Component {
               return (
                 <tr key={"response_" + response.id}>
                   <td>{this.getCandidate(allQuestions, response)}</td>
+                  <td>{this.getParent(allQuestions, response)}</td>
                   <td>{this.getStatus(response)}</td>
                   <td>{this.getOutcome(response)}</td>
                   <td>{this.getAction(response)}</td>

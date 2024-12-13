@@ -160,7 +160,7 @@ class OfferAPI(OfferMixin, restful.Resource):
         if existing_offer:
             return errors.DUPLICATE_OFFER
 
-        existing_outcome = outcome_repository.get_latest_by_user_for_event(user_id, event_id)
+        existing_outcome = outcome_repository.get_latest_by_user_for_event_response(user_id,None, event_id)
         if existing_outcome:
             if existing_outcome.status == Status.REJECTED:
                 return errors.CANDIDATE_REJECTED
