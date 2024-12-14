@@ -581,6 +581,11 @@
     "You have paid your registration fee, thank you": "Vous avez payé vos frais d'inscription, merci.",
     "Offer for": "Offre pour",
     "Filter by name or email": "Filtrer par nom ou email",
-    "Filter by candidate response": "Filtrer par réponse du candidat"
+    "Filter by candidate response": "Filtrer par réponse du candidat",
+    "Applications for":"Les candidatures pour",
+    "will open on": "ouvriront le",
+    "will close on": "fermeront le ",
+    "Please check back later to apply": "Veuillez revenir plus tard pour postuler",
+    "Applications will be opened on": "Les candidatures seront ouvertes le"
 }
 
