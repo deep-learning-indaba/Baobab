@@ -203,7 +203,6 @@ class ResponsePage extends Component {
     outcomeService
       .getOutcome(this.props.event.id, this.state.applicationData.user_id,this.props.match.params.id)
       .then((response) => {
-        console.log(this.props);
         if (response.status === 200) {
           const newOutcome = {
             timestamp: response.outcome.timestamp,
@@ -247,14 +246,6 @@ class ResponsePage extends Component {
       });
   }
 
-  openConfirmationModal = (outcome, message) => {
-    this.setState({
-      confirmModalVisible: true,
-      pendingOutcome: outcome,
-      confirmationMessage: message,
-    });
-  };
-
   handleConfirmation = (outcome, message) => {
     this.setState({
       confirmModalVisible: true,
@@ -287,7 +278,7 @@ class ResponsePage extends Component {
           this.handleConfirmation(outcome, message)
         }
       >
-        {label}
+        {this.props.t(label)}
       </button>
     );
   }
@@ -341,7 +332,7 @@ class ResponsePage extends Component {
               "REJECT_W_ENCOURAGEMENT",
               "Reject with Encouragement to Resubmit",
               "btn-warning",
-              "Are you sure you want to REJECT WITH ENCOURAGEMENT TO RESUBMIT??"
+              "Are you sure you want to REJECT WITH ENCOURAGEMENT TO RESUBMIT?"
             )
           );
         }

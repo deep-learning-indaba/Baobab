@@ -768,8 +768,7 @@ class SubmittedComponent extends React.Component {
             </button>
 
             <button
-              style={{ marginLeft: "50px" }}
-              class="btn btn-secondary"
+              class="btn btn-secondary shift_button"
               onClick={() =>
                 (window.location.href = `/${this.props.event.key}/apply/view`)
               }
@@ -839,7 +838,7 @@ class ApplicationFormInstanceComponent extends Component {
       new_response: !props.response,
       outcome: props.response && props.response.outcome,
       submitValidationErrors: [],
-      parent_id: this.props.match.params.id==null ? null : this.props.match.params.id,
+      parent_id: this.props.match.params.id || null,
     };
   }
 
@@ -1198,10 +1197,8 @@ class ApplicationListComponent extends Component {
       );
       return firstname + " " + lastname;
     }
-    return this.props.event.event_type === "JOURNAL"
-      ? response.parent_id==null?this.props.t("  ") :this.props.t("Submission") + " " + response.parent_id
-      : this.props.t("Self Nomination");
-  };
+    return this.props.event.event_type === "JOURNAL" 
+    ? (response.parent_id ? this.props.t(`Submission ${response.parent_id}`): this.props.t(" ")) : this.props.t("Self Nomination")};
 
   getStatus = (response) => {
     if (response.is_submitted) {
@@ -1377,9 +1374,7 @@ class ApplicationForm extends Component {
       applicationFormService.getForEvent(eventId),
       applicationFormService.getResponse(eventId),
       eventService.getEvent(eventId),
-    ]).then((responses) => {
-      console.log(responses);
-      
+    ]).then((responses) => { 
       const [formResponse, responseResponse, eventResponse] = responses;
       const selectFirstResponse =
         formResponse &&

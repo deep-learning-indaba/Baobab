@@ -2,13 +2,12 @@ import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import { applicationFormService } from "../../services/applicationForm";
-import "./ResponseDetails.css";
 import Loading from "../../components/Loading";
-import _, { has } from "lodash";
 import { withTranslation } from "react-i18next";
 import AnswerValue from "../../components/answerValue";
 import { eventService } from "../../services/events";
 import moment from "moment";
+import "./ResponseDetails.css";
 
 class ReponseDetails extends Component {
   constructor(props) {
@@ -36,9 +35,6 @@ class ReponseDetails extends Component {
         applicationData: responses[1].response.find(
           (item) => item.id === parseInt(this.props.match.params.id)
         ),
-        outcome: responses[1].response.find(
-          (item) => item.id === parseInt(this.props.match.params.id)
-        ).outcome,
         isLoading: false,
         error: responses[0].error || responses[1].error || responses[2].error,
       });
@@ -139,8 +135,6 @@ class ReponseDetails extends Component {
 
   outcomeStatus() {
     const data = this.state.applicationData;
-    console.log("data");
-    console.log(data);
 
     if (data.outcome) {
       const badgeClass =
@@ -155,7 +149,6 @@ class ReponseDetails extends Component {
           <span className={`badge badge-pill ${badgeClass}`}>
             {data.outcome}
           </span>{" "}
-          {/* {this.formatDate(this.state.outcome.timestamp)} */}
         </span>
       );
     } else {
@@ -169,111 +162,83 @@ class ReponseDetails extends Component {
     }
   }
 
-  // linkRelatedElements(data) {
-  //   // Create a map to store elements by their id for quick lookup
-  //   const elementMap = data.reduce((map, element) => {
-  //     map[element.id] = element;
-  //     return map;
-  //   }, {});
-
-  //   // Create a result object to store related elements chain for each id
-  //   const relatedElements = {};
-
-  //   function getChain(element, visited = new Set()) {
-  //     if (!element || visited.has(element.id)) return [];
-  //     visited.add(element.id);
-  //     const chain = [element];
-
-  //     // Get parent chain if parent exists
-  //     if (element.parent_id !== null && elementMap[element.parent_id]) {
-  //       chain.push(...getChain(elementMap[element.parent_id], visited));
-  //     }
-
-  //     // Get children chain for all elements that have this element as parent
-  //     data.forEach((child) => {
-  //       if (child.parent_id === element.id) {
-  //         chain.push(...getChain(child, visited));
-  //       }
-  //     });
-
-  //     return chain;
-  //   }
-
-  //   data.forEach((element) => {
-  //     const currentId = element.id;
-  //     if (!relatedElements[currentId]) {
-  //       relatedElements[currentId] = getChain(element);
-  //     }
-  //   });
-
-  //   // Remove duplicate entries from related elements arrays
-  //   Object.keys(relatedElements).forEach((id) => {
-  //     relatedElements[id] = Array.from(new Set(relatedElements[id]));
-  //   });
-
-  //   return relatedElements;
-  // }
-
-   getChainById(data, id) {
+  getChainById = (data, id) => {
     const elementMap = data.reduce((map, element) => {
-        map[element.id] = element;
-        return map;
+      map[element.id] = element;
+      return map;
     }, {});
 
     function getChain(element, visited = new Set()) {
-        if (!element || visited.has(element.id)) return [];
-        visited.add(element.id);
+      if (!element || visited.has(element.id)) return [];
+      visited.add(element.id);
 
-        const chain = [element];
-        if (element.parent_id !== null && elementMap[element.parent_id]) {
-            chain.push(...getChain(elementMap[element.parent_id], visited));
+      const chain = [element];
+      if (element.parent_id !== null && elementMap[element.parent_id]) {
+        chain.push(...getChain(elementMap[element.parent_id], visited));
+      }
+      data.forEach((child) => {
+        if (child.parent_id === element.id) {
+          chain.push(...getChain(child, visited));
         }
-        data.forEach(child => {
-            if (child.parent_id === element.id) {
-                chain.push(...getChain(child, visited));
-            }
-        });
+      });
 
-        return chain;
+      return chain;
     }
 
     if (!elementMap[id]) {
-        return [];
+      return [];
     }
-    
+
     const result = getChain(elementMap[id]);
-    return result
-}
+    result.sort((a, b) => a.id - b.id);
 
-hasAcceptedStatus(chain) {
-  return chain.some(element => element.outcome === 'ACCEPTED');
-}
+    return result;
+  };
 
-getLastId(data) {
-  if (!data || data.length === 0) return null;
-  let lastId = null;
-  data.forEach(element => {
+  hasAcceptedStatus = (chain) => {
+    return chain.some((element) => element.outcome === "ACCEPTED");
+  };
+
+  getLastId = (data) => {
+    if (!data || data.length === 0) return null;
+    let lastId = null;
+    data.forEach((element) => {
       if (lastId === null || element.id > lastId) {
-          lastId = element.id;
+        lastId = element.id;
       }
-  });
-  return lastId;
-}
+    });
+    return lastId;
+  };
+  getSubmissionList = (applications) => {
+    if (!applications || applications.length === 0) {
+      return <p>No submissions available.</p>;
+    }
+
+    return (
+      <div id="application-list" className="application-list">
+        <h3> Related Submissions</h3>
+        <ul className="application-list_items">
+          {applications.map((application) => (
+            <li key={application.id} className="application-list_item">
+              <a
+                href={`/${this.props.event.key}/responseDetails/${application.id}`}
+                className="application-list_link"
+              >
+                {this.props.t(`Submission ${application.id}`)}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+
   render() {
-    const { applicationData, isLoading, outcome, error, all_responses } =
-      this.state;
+    const { applicationData, isLoading, error, all_responses } = this.state;
     if (isLoading) {
       return <Loading />;
     }
-    console.log(all_responses);
-    const result = this.getChainById(all_responses,this.props.match.params.id).filter(element => element.id !== parseInt(this.props.match.params.id));
-    console.log(result);
-    console.log(this.hasAcceptedStatus(result));
-    console.log('last id');
-    console.log(this.getLastId(result));
-    
-    
-
+    const result = this.getChainById(all_responses, this.props.match.params.id);
     return (
       <div className="table-wrapper response-page">
         {error && (
@@ -290,7 +255,7 @@ getLastId(data) {
             <p>{this.outcomeStatus()}</p>
           </div>
         </div>
-        {/*Response Data*/}
+
         {applicationData && (
           <div className="response-details">
             {this.renderSections()}
@@ -302,20 +267,29 @@ getLastId(data) {
               >
                 {this.props.t("Go Back")}
               </button>
-              {!this.hasAcceptedStatus(result) &&
+              {
                 <button
-                className="btn btn-primary"
-                onClick={() =>
-                  (window.location.href = `/${this.props.event.key}/apply/new/parent/${applicationData.id}`)
-                }
-              >
-                {this.props.t("New submission")}
-              </button>
+                  className="btn btn-primary shift_button"
+                  onClick={() =>
+                    (window.location.href = `/${
+                      this.props.event.key
+                    }/apply/new/${this.getLastId(result)}`)
+                  }
+                  disabled={this.hasAcceptedStatus(result)}
+                >
+                  {this.props.t("New submission")}
+                </button>
               }
-              
             </div>
           </div>
         )}
+        <div className="response-details">
+          {this.getSubmissionList(
+            result.filter(
+              (element) => element.id !== parseInt(this.props.match.params.id)
+            )
+          )}
+        </div>
       </div>
     );
   }

@@ -164,15 +164,8 @@ class EventHome extends Component {
 
         <Route
           exact
-          path={`${match.path}/apply/new/parent/:id`}
+          path={`${match.path}/apply/new/:id`}
           render={(props) => <Application {...props} event={event} journalSubmissionFlag={true} /> }
-        />
-
-        {/*new route */}
-        <Route
-          exact
-          path={`${match.path}/apply/view`}
-          render={(props) => <Application {...props} event={event} view={true} /> }
         />
 
          <Route
@@ -181,6 +174,11 @@ class EventHome extends Component {
           render={(props) => <Application {...props} event={event} continue={true}/>}
         />
 
+        <Route
+          exact
+          path={`${match.path}/apply/view`}
+          render={(props) => <Application {...props} event={event} view={true} /> }
+        />
         <Route
         exact
           path={`${match.path}/eventAttendance`}

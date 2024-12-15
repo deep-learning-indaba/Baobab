@@ -32,8 +32,6 @@ function getOutcome(event_id, user_id,response_id){
 }
 
 function assignOutcome(user_id,response_id, event_id, outcome){
-  console.log("user_id", outcome);
-  
   return axios
         .post(baseUrl + "/api/v1/outcome", event_id, { 
             "headers": authHeader(),

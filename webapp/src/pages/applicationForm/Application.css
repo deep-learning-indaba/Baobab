@@ -222,3 +222,7 @@ ol.progtrckr li.progtrckr-done:hover:before {
     display: inline;
   }
 }
+
+.shift_button {
+  margin-left: 50px;
+}

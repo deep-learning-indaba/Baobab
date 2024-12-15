@@ -125,6 +125,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         # TODO: Link outcomes to responses rather than events to cater for multiple submissions.
         for response in responses:
             outcome = outcome_repository.get_latest_by_user_for_event_response(current_user_id,response.id, event_id)
+
             response.outcome = outcome
 
         return marshal(responses, ResponseAPI.response_fields), 200
@@ -136,12 +137,8 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         is_submitted = args['is_submitted']
         application_form_id = args['application_form_id']
         language = args['language']
-        
-        if args['parent_id']!=None:
-            parent_id=args['parent_id']
-        else:
-            parent_id=None
-
+        parent_id = args.get('parent_id', None) 
+  
         if len(language) != 2:
             language = 'en'  # Fallback to English if language doesn't look like an ISO 639-1 code
 
@@ -152,8 +149,8 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         user = user_repository.get_by_id(user_id)
         responses = response_repository.get_all_for_user_application(user_id, application_form_id)
 
-        if not application_form.nominations and len(responses) > 0:
-            return errors.RESPONSE_ALREADY_SUBMITTED
+        # if not application_form.nominations and len(responses) > 0:
+        #     return errors.RESPONSE_ALREADY_SUBMITTED
 
         response = Response(application_form_id, user_id, language,parent_id)
         response_repository.save(response)
@@ -630,5 +627,5 @@ class ResponseExportAPI(restful.Resource):
                 as_attachment=True, 
                 attachment_filename=f"response_{response.id}.zip"
             )
-    
+
 
