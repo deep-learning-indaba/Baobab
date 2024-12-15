@@ -910,5 +910,3 @@ class ResponsePage extends Component {
 }
 
 export default withTranslation()(ResponsePage);
-
-
