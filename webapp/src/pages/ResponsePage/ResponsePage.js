@@ -297,7 +297,7 @@ class ResponsePage extends Component {
         const outcome= this.state.outcome.status ==='ACCEPTED'?this.props.t("ACCEPTED"):this.state.outcome.status ==='REJECTED'?
             this.props.t("REJECTED"):this.state.outcome.status ==='ACCEPT_W_REVISION'?
             this.props.t("ACCEPTED WITH REVISION"):this.state.outcome.status ==='REJECT_W_ENCOURAGEMENT'?
-            this.props.t("REJECTED WITH ENCOURAGEMENT"):this.props.t("REVIEWING");
+            this.props.t("REJECTED WITH ENCOURAGEMENT TO RESUMIT"):this.props.t("REVIEWING");
   
         return (
           <span>

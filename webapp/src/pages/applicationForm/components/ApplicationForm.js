@@ -1272,7 +1272,7 @@ class ApplicationListComponent extends Component {
         const outcome= response.outcome==='ACCEPTED'?this.props.t("ACCEPTED"):response.outcome==='REJECTED'?
         this.props.t("REJECTED"):response.outcome==='ACCEPT_W_REVISION'?
         this.props.t("ACCEPTED WITH REVISION"):response.outcome==='REJECT_W_ENCOURAGEMENT'?
-        this.props.t("REJECTED WITH ENCOURAGEMENT"):this.props.t("REVIEWING");
+        this.props.t("REJECTED WITH ENCOURAGEMENT TO RESUMIT"):this.props.t("REVIEWING");
       return (
         <span class={`badge badge-pill ${badgeClass}`}>{outcome}</span>
       );
