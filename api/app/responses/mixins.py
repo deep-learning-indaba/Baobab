@@ -10,6 +10,7 @@ class ResponseMixin(object):
     post_req_parser.add_argument('answers', type=list, required=True, location='json')
     post_req_parser.add_argument('language', type=str, required=True)
     post_req_parser.add_argument('parent_id', type=int, required=True)
+    post_req_parser.add_argument('multiple_submission', type=bool, required=True)
 
     put_req_parser = reqparse.RequestParser()
     put_req_parser.add_argument('id', type=int, required=True)

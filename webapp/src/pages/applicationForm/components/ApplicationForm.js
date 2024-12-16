@@ -24,6 +24,8 @@ import FormMultiCheckboxOther from "../../../components/form/FormMultiCheckboxOt
 import FormCheckbox from "../../../components/form/FormCheckbox";
 import { eventService } from "../../../services/events";
 import moment from "moment";
+import { Redirect } from 'react-router-dom';
+
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
@@ -839,7 +841,8 @@ class ApplicationFormInstanceComponent extends Component {
       new_response: !props.response,
       outcome: props.response && props.response.outcome,
       submitValidationErrors: [],
-      parent_id: this.props.match.params.id || null,
+      parent_id: props.match.params.id || null,
+      allow_multiple_submission:props.event.event_type === "JOURNAL" ? true : false
     };
   }
 
@@ -855,7 +858,8 @@ class ApplicationFormInstanceComponent extends Component {
               this.props.formSpec.id,
               true,
               this.state.answers,
-              this.state.parent_id
+              this.state.parent_id,
+              this.state.allow_multiple_submission
             )
           : applicationFormService.updateResponse(
               this.state.responseId,
@@ -899,8 +903,9 @@ class ApplicationFormInstanceComponent extends Component {
       },
       () => {
         if (this.state.new_response) {
+          
           applicationFormService
-            .submit(this.props.formSpec.id, false, this.state.answers,this.state.parent_id)
+            .submit(this.props.formSpec.id, false, this.state.answers,this.state.parent_id,this.state.allow_multiple_submission)
             .then((resp) => {
               let submitError = resp.response_id === null;
               this.setState({
@@ -1264,8 +1269,12 @@ class ApplicationListComponent extends Component {
           : response.outcome === "REJECTED"
           ? "badge-danger"
           : "badge-warning";
+        const outcome= response.outcome==='ACCEPTED'?this.props.t("ACCEPTED"):response.outcome==='REJECTED'?
+        this.props.t("REJECTED"):response.outcome==='ACCEPT_W_REVISION'?
+        this.props.t("ACCEPTED WITH REVISION"):response.outcome==='REJECT_W_ENCOURAGEMENT'?
+        this.props.t("REJECTED WITH ENCOURAGEMENT"):this.props.t("REVIEWING");
       return (
-        <span class={`badge badge-pill ${badgeClass}`}>{response.outcome}</span>
+        <span class={`badge badge-pill ${badgeClass}`}>{outcome}</span>
       );
     }
     return (
@@ -1552,12 +1561,15 @@ class ApplicationForm extends Component {
         );
       }
       if (this.props.continue) {
+        const response = listselectedResponse.find(
+          (item) => item.id === parseInt(this.props.match.params.id));
+          if (response == null || response.outcome != null) {
+            return <Redirect to={`/${this.props.event.key}/apply`} />
+          }
         return (
           <ApplicationFormInstance
             formSpec={formSpec}
-            response={listselectedResponse.find(
-              (item) => item.id === parseInt(this.props.match.params.id)
-            )}
+            response={response}
             event={this.props.event}
           />
         );

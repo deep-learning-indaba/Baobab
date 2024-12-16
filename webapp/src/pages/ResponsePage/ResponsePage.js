@@ -282,23 +282,27 @@ class ResponsePage extends Component {
       </button>
     );
   }
+
   
   outcomeStatus() {
     const data = this.state.applicationData;
-  
     if (data) {
       if (this.state.outcome.status && this.state.outcome.status !== "REVIEW") {
-        const badgeClass =
-          this.state.outcome.status === "ACCEPTED"
+        const badgeClass = this.state.outcome.status === "ACCEPTED"
             ? "badge-success"
             : this.state.outcome.status === "REJECTED"
             ? "badge-danger"
             : "badge-warning";
+
+        const outcome= this.state.outcome.status ==='ACCEPTED'?this.props.t("ACCEPTED"):this.state.outcome.status ==='REJECTED'?
+            this.props.t("REJECTED"):this.state.outcome.status ==='ACCEPT_W_REVISION'?
+            this.props.t("ACCEPTED WITH REVISION"):this.state.outcome.status ==='REJECT_W_ENCOURAGEMENT'?
+            this.props.t("REJECTED WITH ENCOURAGEMENT"):this.props.t("REVIEWING");
   
         return (
           <span>
             <span className={`badge badge-pill ${badgeClass}`}>
-              {this.state.outcome.status}
+              {outcome}
             </span>{" "}
             {this.formatDate(this.state.outcome.timestamp)}
           </span>
@@ -846,7 +850,7 @@ class ResponsePage extends Component {
                 <label>{t("Application Status")}</label>{" "}
                 <p>{this.applicationStatus()}</p>
                 <label>{t("Application Outcome")}</label>{" "}
-                <p>{this.outcomeStatus()}</p>
+                <p>{this.outcomeStatus(applicationData)}</p>
                 <button
                   className="btn btn-secondary"
                   onClick={(e) => this.goBack(e)}

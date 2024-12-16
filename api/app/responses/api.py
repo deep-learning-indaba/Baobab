@@ -137,7 +137,9 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         is_submitted = args['is_submitted']
         application_form_id = args['application_form_id']
         language = args['language']
-        parent_id = args.get('parent_id', None) 
+        parent_id = args.get('parent_id', None)
+        allow_multiple_submissions = args['multiple_submission']
+        print(args)
   
         if len(language) != 2:
             language = 'en'  # Fallback to English if language doesn't look like an ISO 639-1 code
@@ -149,8 +151,8 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         user = user_repository.get_by_id(user_id)
         responses = response_repository.get_all_for_user_application(user_id, application_form_id)
 
-        # if not application_form.nominations and len(responses) > 0:
-        #     return errors.RESPONSE_ALREADY_SUBMITTED
+        if  not allow_multiple_submissions and len(responses) > 0:
+            return errors.RESPONSE_ALREADY_SUBMITTED
 
         response = Response(application_form_id, user_id, language,parent_id)
         response_repository.save(response)

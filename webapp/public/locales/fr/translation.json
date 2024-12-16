@@ -591,5 +591,9 @@
   "Reject with Encouragement to Resubmit": "Rejeter avec encouragement à resoumettre",
   "Yes - Confirm": "Oui - Confirmer",
   "No - Don't confirm": "Non - Ne pas confirmer",
-  "PENDING": "EN ATTENTE"
+  "PENDING": "EN ATTENTE",
+  "REVISION": "REVISION",
+  "ACCEPTED WITH REVISION": "ACCEPTE AVEC REVISION",
+  "REJECTED WITH ENCOURAGEMENT": "REJECTÉ AVEC ENCOURAGEMENT",
+  "REVIEWING": "EN REVUE"
 }

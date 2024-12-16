@@ -131,34 +131,28 @@ class ReponseDetails extends Component {
     }
   }
 
-  outcomeStatus() {
-    const data = this.state.applicationData;
-
-    if (data.outcome) {
+  outcomeStatus= (response) => {
+    if (response.outcome) {
       const badgeClass =
-        data.outcome === "ACCEPTED"
+        response.outcome === "ACCEPTED"
           ? "badge-success"
-          : data.outcome === "REJECTED"
+          : response.outcome === "REJECTED"
           ? "badge-danger"
           : "badge-warning";
-
+        const outcome= response.outcome==='ACCEPTED'?this.props.t("ACCEPTED"):response.outcome==='REJECTED'?
+        this.props.t("REJECTED"):response.outcome==='ACCEPT_W_REVISION'?
+        this.props.t("ACCEPTED WITH REVISION"):response.outcome==='REJECT_W_ENCOURAGEMENT'?
+        this.props.t("REJECTED WITH ENCOURAGEMENT"):this.props.t("REVIEWING");
       return (
-        <span>
-          <span className={`badge badge-pill ${badgeClass}`}>
-            {data.outcome}
-          </span>{" "}
-        </span>
-      );
-    } else {
-      return (
-        <span>
-          <span className={`badge badge-pill badge-secondary`}>
-            {this.props.t("PENDING")}
-          </span>
-        </span>
+        <span class={`badge badge-pill ${badgeClass}`}>{outcome}</span>
       );
     }
-  }
+    return (
+      <span class="badge badge-pill badge-secondary">
+        {this.props.t("PENDING")}
+      </span>
+    );
+  };
 
   getChainById = (data, id) => {
     const elementMap = data.reduce((map, element) => {
@@ -244,7 +238,7 @@ class ReponseDetails extends Component {
             <label>{this.props.t("Application Status")}</label>{" "}
             <p>{this.applicationStatus()}</p>
             <label>{this.props.t("Application Outcome")}</label>{" "}
-            <p>{this.outcomeStatus()}</p>
+            <p>{this.outcomeStatus(applicationData)}</p>
           </div>
         </div>
 
