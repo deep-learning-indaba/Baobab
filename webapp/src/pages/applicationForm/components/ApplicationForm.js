@@ -1358,12 +1358,7 @@ class ApplicationListComponent extends Component {
             <span className="chain-toggle-icon">{this.state.expandedChains && this.state.expandedChains[chain.id] ? "▲" : "▼"}</span>
           </td>
         </tr>
-        {/* {this.state.expandedChains && this.state.expandedChains[chain.id] && (
-          <>
-            {renderEntireChain(chain)}
-            {renderResubmitButton(chain)}
-          </>
-        )} */}
+ 
         {this.state.expandedChains && this.state.expandedChains[chain.id] && 
           this.renderEntireChain(chain)
         }
