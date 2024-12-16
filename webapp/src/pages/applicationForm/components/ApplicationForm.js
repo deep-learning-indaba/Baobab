@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component,Fragment } from "react";
 import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import { applicationFormService } from "../../../services/applicationForm";
@@ -23,6 +23,7 @@ import FormSelectOther from "../../../components/form/FormSelectOther";
 import FormMultiCheckboxOther from "../../../components/form/FormMultiCheckboxOther";
 import FormCheckbox from "../../../components/form/FormCheckbox";
 import { eventService } from "../../../services/events";
+import moment from "moment";
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
@@ -1154,51 +1155,25 @@ class ApplicationListComponent extends Component {
     this.state = {};
   }
 
-  getCandidate = (allQuestions, response) => {
-    const nominating_capacity = answerByQuestionKey(
-      "nominating_capacity",
-      allQuestions,
-      response.answers
-    );
-    if (nominating_capacity === "other") {
-      let firstname = answerByQuestionKey(
-        "nomination_firstname",
-        allQuestions,
-        response.answers
-      );
-      let lastname = answerByQuestionKey(
-        "nomination_lastname",
-        allQuestions,
-        response.answers
-      );
-      return firstname + " " + lastname;
-    }
-    return this.props.event.event_type === "JOURNAL"
-      ? this.props.t("Submission") + " " + response.id
-      : this.props.t("Self Nomination");
+  formatDate = (dateString) => {
+    return moment(dateString).format("D MMM YYYY, H:mm:ss [(UTC)]");
   };
 
-  getParent = (allQuestions, response) => {
-    const nominating_capacity = answerByQuestionKey(
-      "nominating_capacity",
-      allQuestions,
-      response.answers
-    );
+
+  getCandidate = (allQuestions, response) => {
+    const nominating_capacity = answerByQuestionKey("nominating_capacity", allQuestions, response.answers);
     if (nominating_capacity === "other") {
-      let firstname = answerByQuestionKey(
-        "nomination_firstname",
-        allQuestions,
-        response.answers
-      );
-      let lastname = answerByQuestionKey(
-        "nomination_lastname",
-        allQuestions,
-        response.answers
-      );
+      let firstname = answerByQuestionKey("nomination_firstname", allQuestions, response.answers);
+      let lastname = answerByQuestionKey("nomination_lastname", allQuestions, response.answers);
       return firstname + " " + lastname;
     }
-    return this.props.event.event_type === "JOURNAL" 
-    ? (response.parent_id ? this.props.t(`Submission ${response.parent_id}`): this.props.t(" ")) : this.props.t("Self Nomination")};
+    return  this.props.event.event_type ==='JOURNAL' ? this.props.t("Submission") + " " + response.id : this.props.t("Self Nomination");
+  }
+
+
+  getSubmission = (response) => {
+    return this.props.t("Submission") + " - " + (response.is_submitted==true?this.formatDate(response.submitted_timestamp):this.formatDate(response.started_timestamp))
+  };
 
   getStatus = (response) => {
     if (response.is_submitted) {
@@ -1213,24 +1188,21 @@ class ApplicationListComponent extends Component {
     const applicationData = this.state.applicationData;
     let html = [];
 
-    // main function
     if (applicationForm && applicationData) {
       applicationForm.sections.forEach((section) => {
         html.push(
           <div key={section.name} className="section">
-            {/*Heading*/}
             <div className="flex baseline">
               <h3>{section.name}</h3>
             </div>
-            {/*Q & A*/}
             <div className="Q-A">{this.renderResponses(section)}</div>
           </div>
         );
       });
     }
-
     return html;
   }
+
   renderResponses(section) {
     const applicationData = this.state.applicationData;
     const questions = section.questions.map((q) => {
@@ -1303,6 +1275,97 @@ class ApplicationListComponent extends Component {
     );
   };
 
+  newSubmission = (id) => {
+    window.location.href = `/${this.props.event.key}/apply/new/${id}`;
+  };
+
+  getLastResponse = (response) => {
+    if (response.children.length === 0) return response;
+    return this.getLastResponse(response.children[response.children.length - 1]);
+  };
+
+  buildResponseChains = (responses) => {
+    const responseMap = responses.reduce((map, response) => {
+      map[response.id] = { ...response, children: [] };
+      return map;
+    }, {});
+    
+    const chains = [];
+    
+    responses.forEach((response) => {
+      if (response.parent_id !== null && responseMap[response.parent_id]) {
+        responseMap[response.parent_id].children.push(responseMap[response.id]);
+      } else {
+        chains.push(responseMap[response.id]);
+      }
+    });
+    
+    return chains.sort((a, b) => this.getLastResponse(b).id - this.getLastResponse(a).id);
+  };
+
+  toggleChain = (chainId) => {
+    this.setState((prevState) => {
+      const expandedChains = prevState.expandedChains ? { ...prevState.expandedChains } : {};
+      expandedChains[chainId] = !expandedChains[chainId];
+      return { expandedChains };
+    });
+  };
+
+  renderResubmitButton = (chain) => {
+    const lastResponse = this.getLastResponse(chain);
+    if (lastResponse.outcome !== 'ACCEPTED' && lastResponse.outcome !== null) {
+      return (
+        <tr>
+          <td colSpan="6" className="resubmit-button-container">
+            <button onClick={() => this.newSubmission(lastResponse.id)} className="btn btn-primary">{this.props.t("Resubmit")}</button>
+          </td>
+        </tr>
+      );
+    }
+    return null;
+  };
+
+  renderEntireChain = (response) => {
+    const children = response.children.slice().reverse();
+    return (
+      <Fragment key={response.id}>
+        {children.map((childResponse) => this.renderEntireChain(childResponse))}
+        <tr key={response.id} className="response-row">
+          <td>{this.getSubmission(response)}</td>
+          <td>{this.getStatus(response)}</td>
+          <td>{this.getOutcome(response)}</td>
+          <td>{this.getAction(response)}</td>
+        </tr>
+      </Fragment>
+    );
+  };
+
+  renderResponseChain = (chain) => {
+    return (
+      <Fragment key={chain.id}>
+        <tr onClick={() => this.toggleChain(chain.id)} className="chain-header">
+          <td colSpan="5" className="chain-header-title">
+            <strong>{this.props.t("Submission")} {this.formatDate(chain.started_timestamp)}</strong>
+            <span className="chain-toggle-icon">{this.state.expandedChains && this.state.expandedChains[chain.id] ? "▲" : "▼"}</span>
+          </td>
+        </tr>
+        {/* {this.state.expandedChains && this.state.expandedChains[chain.id] && (
+          <>
+            {renderEntireChain(chain)}
+            {renderResubmitButton(chain)}
+          </>
+        )} */}
+        {this.state.expandedChains && this.state.expandedChains[chain.id] && 
+          this.renderEntireChain(chain)
+        }
+        {this.renderResubmitButton(chain)}
+      </Fragment>
+    );
+    
+  };
+
+
+ 
   render() {
     let allQuestions = _.flatMap(
       this.props.formSpec.sections,
@@ -1316,35 +1379,47 @@ class ApplicationListComponent extends Component {
       this.props.event.event_type === "JOURNAL"
         ? this.props.t("Submission")
         : this.props.t("Nominee");
-    return (
-      <div>
-        <h4>{title}</h4>
-        <table class="table">
+
+        
+    if (this.props.event.event_type =='JOURNAL') {
+      const responseChains = this.buildResponseChains(this.props.responses);
+      return ( 
+        <div className="response-chains-container">
+        <h4 className="response-chains-title">{title}</h4>
+        <table className="table response-chains-table">
           <thead>
             <tr>
-              <th scope="col">{firstColumn}</th>
-              <th scope="col">{this.props.t("Following")}</th>
-              <th scope="col">{this.props.t("Status")}</th>
-              <th scope="col">{this.props.t("Results")}</th>
-              <th scope="col"></th>
+              <th scope="col" colSpan="5" className="response-chains-header">{firstColumn}</th>
             </tr>
           </thead>
           <tbody>
-            {this.props.responses.map((response) => {
-              return (
-                <tr key={"response_" + response.id}>
-                  <td>{this.getCandidate(allQuestions, response)}</td>
-                  <td>{this.getParent(allQuestions, response)}</td>
-                  <td>{this.getStatus(response)}</td>
-                  <td>{this.getOutcome(response)}</td>
-                  <td>{this.getAction(response)}</td>
-                </tr>
-              );
-            })}
+            {responseChains.map((chain, index) => this.renderResponseChain(chain, index))}
           </tbody>
         </table>
       </div>
-    );
+      );
+    }
+    return <div>
+    <h4>{title}</h4>
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">{firstColumn}</th>
+          <th scope="col">{this.props.t("Status")}</th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {this.props.responses.map(response => {
+          return <tr key={"response_" + response.id}>
+            <td>{this.getCandidate(allQuestions, response)}</td>
+            <td>{this.getStatus(response)}</td>
+            <td>{this.getAction(response)}</td>
+          </tr>
+        })}
+      </tbody>
+    </table>
+  </div>;
   }
 }
 
@@ -1466,6 +1541,7 @@ class ApplicationForm extends Component {
               click={this.responseSelected}
             />
             <br />
+            <hr/>
             <button
               className="btn btn-primary"
               onClick={() => this.newSubmission()}
@@ -1511,6 +1587,7 @@ class ApplicationForm extends Component {
             click={this.responseSelected}
           />
           <br />
+
           <button
             className="btn btn-primary"
             onClick={() => this.newNomination()}

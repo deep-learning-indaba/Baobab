@@ -378,6 +378,7 @@ class ResponseListAPI(restful.Resource):
         language = args['language']
 
         responses = response_repository.get_all_for_event(event_id, not include_unsubmitted)
+        
 
         review_config = review_configuration_repository.get_configuration_for_event(event_id)
         required_reviewers = 1 if review_config is None else review_config.num_reviews_required + review_config.num_optional_reviews

@@ -331,6 +331,8 @@ const ApplicationForm = (props) => {
       </>
     )
   }
+  console.log(props.event);
+  
 
   return (
     <FormCreator

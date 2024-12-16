@@ -590,5 +590,6 @@
   "Accept with Minor Revision": "Accepter avec des révisions mineures",
   "Reject with Encouragement to Resubmit": "Rejeter avec encouragement à resoumettre",
   "Yes - Confirm": "Oui - Confirmer",
-  "No - Don't confirm": "Non - Ne pas confirmer"
+  "No - Don't confirm": "Non - Ne pas confirmer",
+  "PENDING": "EN ATTENTE"
 }

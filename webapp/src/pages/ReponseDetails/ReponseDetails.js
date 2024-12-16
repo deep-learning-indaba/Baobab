@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
-import { Link } from "react-router-dom";
 import { applicationFormService } from "../../services/applicationForm";
 import Loading from "../../components/Loading";
 import { withTranslation } from "react-i18next";
@@ -37,8 +36,10 @@ class ReponseDetails extends Component {
         ),
         isLoading: false,
         error: responses[0].error || responses[1].error || responses[2].error,
+
       });
     });
+    
   }
 
   renderSections() {
@@ -46,16 +47,13 @@ class ReponseDetails extends Component {
     const applicationData = this.state.applicationData;
     let html = [];
 
-    // main function
     if (applicationForm && applicationData) {
       applicationForm.sections.forEach((section) => {
         html.push(
           <div key={section.name} className="section">
-            {/*Heading*/}
             <div className="flex baseline">
               <h3>{section.name}</h3>
             </div>
-            {/*Q & A*/}
             <div className="Q-A">{this.renderResponses(section)}</div>
           </div>
         );
@@ -155,7 +153,7 @@ class ReponseDetails extends Component {
       return (
         <span>
           <span className={`badge badge-pill badge-secondary`}>
-            {"Pending ..."}
+            {this.props.t("PENDING")}
           </span>
         </span>
       );
@@ -190,41 +188,25 @@ class ReponseDetails extends Component {
     }
 
     const result = getChain(elementMap[id]);
-    result.sort((a, b) => a.id - b.id);
-
+    result.sort((a, b) => b.id - a.id);
     return result;
   };
 
-  hasAcceptedStatus = (chain) => {
-    return chain.some((element) => element.outcome === "ACCEPTED");
-  };
-
-  getLastId = (data) => {
-    if (!data || data.length === 0) return null;
-    let lastId = null;
-    data.forEach((element) => {
-      if (lastId === null || element.id > lastId) {
-        lastId = element.id;
-      }
-    });
-    return lastId;
-  };
   getSubmissionList = (applications) => {
     if (!applications || applications.length === 0) {
       return <p>No submissions available.</p>;
     }
-
     return (
       <div id="application-list" className="application-list">
         <h3> Related Submissions</h3>
         <ul className="application-list_items">
-          {applications.map((application) => (
+          {applications.map((application,index) => (
             <li key={application.id} className="application-list_item">
               <a
                 href={`/${this.props.event.key}/responseDetails/${application.id}`}
                 className="application-list_link"
               >
-                {this.props.t(`Submission ${application.id}`)}
+                {this.props.t(`Submission`) + " " + this.formatDate(application.submitted_timestamp)}
               </a>
             </li>
           ))}
@@ -233,12 +215,22 @@ class ReponseDetails extends Component {
     );
   };
 
+  getLastResponse(response) {
+    const lastResponse = response[0];
+    if (lastResponse.outcome!=null && lastResponse.outcome !== 'ACCEPTED') {
+        return true;
+    }
+    return false;
+}
+
+
   render() {
     const { applicationData, isLoading, error, all_responses } = this.state;
     if (isLoading) {
       return <Loading />;
     }
-    const result = this.getChainById(all_responses, this.props.match.params.id);
+    const chain_responses = this.getChainById(all_responses, this.props.match.params.id);
+
     return (
       <div className="table-wrapper response-page">
         {error && (
@@ -273,9 +265,9 @@ class ReponseDetails extends Component {
                   onClick={() =>
                     (window.location.href = `/${
                       this.props.event.key
-                    }/apply/new/${this.getLastId(result)}`)
+                    }/apply/new/${chain_responses[0].id}`)
                   }
-                  disabled={this.hasAcceptedStatus(result)}
+                  disabled={!this.getLastResponse(chain_responses)}
                 >
                   {this.props.t("New submission")}
                 </button>
@@ -285,7 +277,7 @@ class ReponseDetails extends Component {
         )}
         <div className="response-details">
           {this.getSubmissionList(
-            result.filter(
+            chain_responses.filter(
               (element) => element.id !== parseInt(this.props.match.params.id)
             )
           )}

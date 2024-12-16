@@ -226,3 +226,68 @@ ol.progtrckr li.progtrckr-done:hover:before {
 .shift_button {
   margin-left: 50px;
 }
+
+.response-chains-container {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.response-chains-title {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 28px;
+  color: #333;
+  font-weight: bold;
+}
+
+.response-chains-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.response-chains-header {
+  padding: 15px;
+  font-size: 20px;
+  background-color: #007bff;
+  color: #fff;
+  text-align: left;
+}
+
+.chain-header {
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.chain-header-title {
+  padding: 15px;
+  font-weight: bold;
+  font-size: 18px;
+  border-bottom: 2px solid #007bff;
+}
+
+.chain-toggle-icon {
+  float: right;
+  font-size: 18px;
+}
+
+.response-row {
+  background-color: #ffffff;
+  border-bottom: 1px solid #dcdcdc;
+  transition: background-color 0.3s ease;
+}
+
+.resubmit-button-container {
+  text-align: center;
+  padding: 15px;
+  background-color: #f9f9f9;
+}
+
+.btn.btn-primary {
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+}  
