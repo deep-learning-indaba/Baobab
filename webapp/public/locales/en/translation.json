@@ -597,8 +597,6 @@
     "ACCEPTED WITH REVISION": "ACCEPTED WITH REVISION",
     "REJECTED WITH ENCOURAGEMENT TO RESUMIT": "REJECTED WITH ENCOURAGEMENT TO RESUMIT",
     "REVIEWING": "REVIEWING",
-    "Unsubmitted": "Unsubmitted",
-    "Submitted": "Submitted",
-    "Withdrawn": "Withdrawn"
+    "Unsubmitted": "Unsubmitted"
 
 }
