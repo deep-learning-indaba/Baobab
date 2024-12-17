@@ -165,7 +165,7 @@ class EventHome extends Component {
         <Route
           exact
           path={`${match.path}/apply/new/:id`}
-          render={(props) => <Application {...props} event={event} journalSubmissionFlag={true} /> }
+          render={(props) => <Application {...props} event={event} chain={true} /> }
         />
 
          <Route

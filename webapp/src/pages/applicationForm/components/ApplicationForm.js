@@ -16,7 +16,7 @@ import { fileService } from "../../../services/file/file.service";
 import FormMultiCheckbox from "../../../components/form/FormMultiCheckbox";
 import FormReferenceRequest from "./ReferenceRequest";
 import Loading from "../../../components/Loading";
-import _ from "lodash";
+import _, { chain } from "lodash";
 import { withTranslation } from "react-i18next";
 import AnswerValue from "../../../components/answerValue";
 import FormSelectOther from "../../../components/form/FormSelectOther";
@@ -844,6 +844,8 @@ class ApplicationFormInstanceComponent extends Component {
       parent_id: props.match.params.id || null,
       allow_multiple_submission:props.event.event_type === "JOURNAL" ? true : false
     };
+  
+    
   }
 
   handleSubmit = (event) => {
@@ -1444,6 +1446,7 @@ class ApplicationForm extends Component {
       journalSubmissionFlag: false,
       continue: false,
       view: false,
+      chain: false,
     };
   }
 
@@ -1555,11 +1558,28 @@ class ApplicationForm extends Component {
           </div>
         );
       }
+      if (this.props.chain) {
+        const isIdAndNotParent=(listResponse, id) =>{
+          const isIdPresent = listResponse.some(entry => entry.id === id);
+          const isNotAParent = !listResponse.some(entry => entry.parent_id === id);
+          return isIdPresent && isNotAParent;
+      }
+          if (!isIdAndNotParent(responses, parseInt(this.props.match.params.id))) {
+            return <Redirect to={`/${this.props.event.key}/apply/view`} />
+          }
+        return (
+          <ApplicationFormInstance
+            formSpec={formSpec}
+            response={null}
+            event={this.props.event}
+          />
+        );
+      }
       if (this.props.continue) {
         const response = listselectedResponse.find(
           (item) => item.id === parseInt(this.props.match.params.id));
           if (response == null || response.outcome != null) {
-            return <Redirect to={`/${this.props.event.key}/apply`} />
+            return <Redirect to={`/${this.props.event.key}/apply/view`} />
           }
         return (
           <ApplicationFormInstance
