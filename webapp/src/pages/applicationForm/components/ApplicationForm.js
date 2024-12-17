@@ -79,10 +79,11 @@ class FieldEditor extends React.Component {
       uploadPercentComplete: 0,
       uploadError: "",
       uploaded: false,
-    };
+    }
+
   }
 
-  handleChange = (event) => {
+  handleChange = event => {
     // Some components (datepicker, custom controls) return pass the value directly rather than via event.target.value
     const value = event && event.target ? event.target.value : event;
 
@@ -91,12 +92,12 @@ class FieldEditor extends React.Component {
     }
   };
 
-  handleCheckChange = (event) => {
+  handleCheckChange = event => {
     const value = event.target.checked;
     if (this.props.onChange) {
       this.props.onChange(this.props.question, value);
     }
-  };
+  }
 
   handleChangeDropdown = (name, dropdown) => {
     if (this.props.onChange) {
@@ -107,36 +108,33 @@ class FieldEditor extends React.Component {
   handleUploadFile = (file) => {
     this.setState({
       uploading: true,
-    });
+    })
 
     // TODO: Handle errors
-    return fileService
-      .uploadFile(file, (progressEvent) => {
-        const percentCompleted = Math.round(
-          (progressEvent.loaded * 100) / progressEvent.total
-        );
-        this.setState({
-          uploadPercentComplete: percentCompleted,
-        });
-      })
-      .then((response) => {
-        if (response.fileId && this.props.onChange) {
-          this.props.onChange(
-            this.props.question,
-            JSON.stringify({ filename: response.fileId, rename: file.name })
-          );
-        }
-        this.setState({
-          uploaded: response.fileId !== "",
-          uploadError: response.error,
-          uploading: false,
-        });
-
-        return response.fileId;
+    return fileService.uploadFile(file, progressEvent => {
+      const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+      this.setState({
+        uploadPercentComplete: percentCompleted
       });
-  };
+    }).then(response => {
+      if (response.fileId && this.props.onChange) {
+        this.props.onChange(
+          this.props.question,
+          JSON.stringify({ filename: response.fileId, rename: file.name })
+        );
+      }
+      this.setState({
+        uploaded: response.fileId !== "",
+        uploadError: response.error,
+        uploading: false
+      });
+
+      return response.fileId;
+    });
+  }
 
   formControl = (key, question, answer, validationError, responseId) => {
+
     switch (question.type) {
       case SHORT_TEXT:
         return (
@@ -210,9 +208,8 @@ class FieldEditor extends React.Component {
             defaultValue={answer || null}
             key={"i_" + key}
             showError={validationError}
-            errorText={validationError}
-          />
-        );
+            errorText={validationError}/>
+        )
       case MULTI_CHECKBOX:
         return (
           <FormMultiCheckbox
@@ -225,24 +222,22 @@ class FieldEditor extends React.Component {
             onChange={this.handleChange}
             key={"i_" + key}
             showError={validationError}
-            errorText={validationError}
-          />
-        );
-      case MULTI_CHECKBOX_OTHER:
-        return (
-          <FormMultiCheckboxOther
-            id={this.id}
-            name={this.id}
-            label={question.description}
-            placeholder={question.placeholder}
-            options={question.options}
-            defaultValue={answer || ""}
-            onChange={this.handleChange}
-            key={"i_" + key}
-            showError={validationError}
-            errorText={validationError}
-          />
-        );
+            errorText={validationError} />
+        )
+        case MULTI_CHECKBOX_OTHER:
+          return (
+            <FormMultiCheckboxOther
+              id={this.id}
+              name={this.id}
+              label={question.description}
+              placeholder={question.placeholder}
+              options={question.options}
+              defaultValue={answer || ""}
+              onChange={this.handleChange}
+              key={"i_" + key}
+              showError={validationError}
+              errorText={validationError} />
+          )
       case FILE:
         return (
           <FormFileUpload
@@ -303,18 +298,11 @@ class FieldEditor extends React.Component {
             errorText={validationError}
             required={question.is_required}
             options={question.options}
-            responseId={responseId}
-          />
-        );
+            responseId={responseId} />
+        )
       case INFORMATION[0]:
       case INFORMATION[1]:
-        return (
-          question.description && (
-            <div className="application-form-information">
-              {question.description}
-            </div>
-          )
-        );
+        return question.description && <div className="application-form-information">{question.description}</div>
       default:
         return (
           <p className="text-danger">
@@ -327,14 +315,8 @@ class FieldEditor extends React.Component {
   render() {
     return (
       <div className={"question"}>
-        <p
-          className={
-            INFORMATION.includes(this.props.question.type) ? "h3" : "h4"
-          }
-        >
-          {this.props.question.is_required && (
-            <span className="required-indicator">*</span>
-          )}
+        <p className={INFORMATION.includes(this.props.question.type) ? "h3" : "h4"}>
+          {this.props.question.is_required && <span className="required-indicator">*</span>}
           {this.props.question.headline}
         </p>
         {this.formControl(
@@ -359,32 +341,36 @@ class Section extends React.Component {
         .sort((a, b) => a.question.order - b.question.order),
       hasValidated: false,
       validationStale: false,
+
     };
   }
+
 
   onChange = (question, value) => {
     const newAnswer = {
       question_id: question.id,
-      value: value,
+      value: value
     };
 
-    const newQuestionModels = this.state.questionModels.map((q) => {
-      if (q.question.id !== question.id) {
-        return q;
-      }
-      return {
-        ...q,
-        validationError: this.state.hasValidated
-          ? this.validate(q, newAnswer)
-          : "",
-        answer: newAnswer,
-      };
-    });
+
+    const newQuestionModels = this.state.questionModels
+      .map(q => {
+        if (q.question.id !== question.id) {
+          return q;
+        }
+        return {
+          ...q,
+          validationError: this.state.hasValidated
+            ? this.validate(q, newAnswer)
+            : "",
+          answer: newAnswer
+        };
+      })
 
     this.setState(
       {
         questionModels: newQuestionModels,
-        validationStale: true,
+        validationStale: true
       },
       () => {
         if (this.props.changed) {
@@ -394,10 +380,11 @@ class Section extends React.Component {
     );
   };
 
+
   // validate
   validate = (questionModel, updatedAnswer) => {
     let errors = [];
-
+    
     const question = questionModel.question;
     const answer = updatedAnswer || questionModel.answer;
 
@@ -416,32 +403,31 @@ class Section extends React.Component {
     return errors.join("; ");
   };
 
+
   // isValidated
   isValidated = () => {
-    const allAnswersInSection = this.state.questionModels.map((q) => q.answer);
+    const allAnswersInSection = this.state.questionModels.map(q => q.answer);
     const validatedModels = this.state.questionModels
-      .filter((q) =>
-        this.dependentQuestionFilter(q.question, allAnswersInSection)
-      )
-      .map((q) => {
+      .filter(q => this.dependentQuestionFilter(q.question, allAnswersInSection))
+      .map(q => {
         return {
           ...q,
-          validationError: this.validate(q),
+          validationError: this.validate(q)
         };
       });
 
-    const isValid = !validatedModels.some((v) => v.validationError);
+    const isValid = !validatedModels.some(v => v.validationError);
 
     this.setState(
       {
         questionModels: validatedModels,
         hasValidated: true,
-        validationStale: false,
+        validationStale: false
       },
       () => {
         if (this.props.answerChanged) {
           this.props.answerChanged(
-            this.state.questionModels.map((q) => q.answer).filter((a) => a),
+            this.state.questionModels.map(q => q.answer).filter(a => a),
             isValid
           );
         }
@@ -454,7 +440,7 @@ class Section extends React.Component {
   handleSave = () => {
     if (this.props.save) {
       this.props.save(
-        this.state.questionModels.map((q) => q.answer).filter((a) => a)
+        this.state.questionModels.map(q => q.answer).filter(a => a)
       );
     }
   };
@@ -465,38 +451,35 @@ class Section extends React.Component {
    */
   dependentQuestionFilter = (question, sectionCurrentAnswers) => {
     if (isEntityDependentOnAnswer(question)) {
-      const answer = findDependentQuestionAnswer(
-        question,
-        sectionCurrentAnswers
-      );
-      return answer
-        ? doesAnswerMatch(question, answer)
-        : this.props.showQuestionBasedOnSavedFormAnswers(question);
+      const answer = findDependentQuestionAnswer(question, sectionCurrentAnswers);
+      return answer ? doesAnswerMatch(question, answer) : this.props.showQuestionBasedOnSavedFormAnswers(question);
     } else {
       return true;
     }
-  };
+  }
 
   render() {
-    const { section, questionModels, hasValidated, validationStale } =
-      this.state;
+    const {
+      section,
+      questionModels,
+      hasValidated,
+      validationStale
+    } = this.state;
 
-    const allAnswersInSection = questionModels.map((q) => q.answer);
+    const allAnswersInSection = questionModels.map(q => q.answer);
 
     return (
       <div className={"section"}>
         <div className={"headline"}>
           <h1>{section.name}</h1>
           <div className="description">
-            <MarkdownRenderer children={section.description} />
+            <MarkdownRenderer children={section.description}/>
           </div>
         </div>
         {questionModels &&
           questionModels
-            .filter((q) =>
-              this.dependentQuestionFilter(q.question, allAnswersInSection)
-            )
-            .map((model) => (
+            .filter(q => this.dependentQuestionFilter(q.question, allAnswersInSection))
+            .map(model => (
               <FieldEditor
                 key={"question_" + model.question.id}
                 question={model.question}
@@ -505,15 +488,15 @@ class Section extends React.Component {
                 onChange={this.onChange}
                 responseId={this.props.responseId}
               />
-            ))}
+            )
+            )
+        }
         {this.props.unsavedChanges && !this.props.isSaving && (
-          <button className="btn btn-secondary" onClick={this.handleSave}>
+          <button className="btn btn-secondary" onClick={this.handleSave} >
             {this.props.t("Save for later")}...
           </button>
         )}
-        {this.props.isSaving && (
-          <span class="saving mx-auto">{this.props.t("Saving")}...</span>
-        )}
+        {this.props.isSaving && <span class="saving mx-auto">{this.props.t("Saving")}...</span>}
         {hasValidated && !validationStale && (
           <div class="alert alert-danger alert-container">
             {this.props.t("Please fix the errors before continuing.")}
@@ -525,6 +508,7 @@ class Section extends React.Component {
 }
 
 class ConfirmationComponent extends React.Component {
+
   dependentQuestionFilter = (question, allAnswers) => {
     if (isEntityDependentOnAnswer(question)) {
       const answer = findDependentQuestionAnswer(question, allAnswers);
@@ -532,123 +516,83 @@ class ConfirmationComponent extends React.Component {
     } else {
       return true;
     }
-  };
+  }
 
   render() {
     const t = this.props.t;
 
-    const allAnswers =
-      this.props.sectionModels &&
-      this.props.sectionModels.flatMap((s) =>
-        s.questionModels.map((q) => q.answer)
-      );
-    const allErrors =
-      this.props.sectionModels &&
-      this.props.sectionModels
-        .flatMap((s) =>
-          s.questionModels
-            .filter((qm) =>
-              this.dependentQuestionFilter(qm.question, allAnswers)
-            )
-            .map((q) => q.validationError)
-        )
-        .filter((e) => e);
+    const allAnswers = this.props.sectionModels && this.props.sectionModels.flatMap(s=>s.questionModels.map(q=>q.answer));
+    const allErrors = this.props.sectionModels 
+      && this.props.sectionModels.flatMap(s=>s.questionModels.filter(qm => this.dependentQuestionFilter(qm.question, allAnswers)).map(q=>q.validationError)).filter(e=>e);
 
     return (
       <div>
         <div class="row">
           <div class="col confirmation-heading">
             <h2>{t("Review your Answers")}</h2>
-            <p>{t("applicationConfirmationText")}</p>
+            <p>
+              {t("applicationConfirmationText")}
+            </p>
 
             <div class="alert alert-warning">
-              <span class="fa fa-exclamation-triangle"></span>{" "}
-              {t(
-                "You MUST click SUBMIT before the deadline for your application to be considered!"
-              )}
+              <span class="fa fa-exclamation-triangle"></span> {t("You MUST click SUBMIT before the deadline for your application to be considered!")}
             </div>
 
             <div class="text-center">
-              {allErrors.length > 0 && (
-                <div class="alert alert-danger alert-container">
-                  {t(
-                    "Could not submit your application due to validation errors. Please go back and fix these any try again."
-                  )}
-                </div>
-              )}
-              {allErrors.length === 0 && (
-                <button
-                  className="btn btn-primary submit-application mx-auto"
-                  onClick={this.props.submit}
-                  disabled={this.props.isSubmitting}
-                >
-                  {t("Submit")}
-                </button>
-              )}
+              {allErrors.length > 0 && <div class="alert alert-danger alert-container">
+                {t("Could not submit your application due to validation errors. Please go back and fix these any try again.")}
+              </div>}
+              {allErrors.length === 0 && <button
+                className="btn btn-primary submit-application mx-auto"
+                onClick={this.props.submit}
+                disabled={this.props.isSubmitting}
+              >
+                {t("Submit")}
+              </button>}
             </div>
+
           </div>
         </div>
 
-        {this.props.sectionModels &&
-          this.props.sectionModels
-            .filter((sm) => sm.questionModels.length > 0)
-            .map((sm) => {
-              return (
-                <div key={"section_" + sm.section.id}>
-                  <h2>{sm.section.name}</h2>
-                  {sm.questionModels &&
-                    sm.questionModels
-                      .filter((qm) =>
-                        this.dependentQuestionFilter(qm.question, allAnswers)
-                      )
-                      .map((qm) => {
-                        return (
-                          qm.question && (
-                            <div className={"confirmation answer"}>
-                              <div class="row">
-                                <div class="col">
-                                  <h5>{qm.question.headline}</h5>
-                                </div>
-                              </div>
-                              <div class="row">
-                                <div class="col">
-                                  <p class="answer-value">
-                                    <AnswerValue
-                                      answer={qm.answer}
-                                      question={qm.question}
-                                    />
-                                    {qm.validationError && (
-                                      <div className="alert alert-danger alert-container">
-                                        {qm.validationError}
-                                      </div>
-                                    )}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          )
-                        );
-                      })}
-                </div>
-              );
-            })}
-
-        {allErrors.length > 0 && (
-          <div class="alert alert-danger alert-container">
-            {t(
-              "Could not submit your application due to validation errors. Please go back and fix these any try again."
-            )}
-          </div>
-        )}
-        {allErrors.length === 0 && (
-          <button
-            className="btn btn-primary submit-application mx-auto"
-            onClick={this.props.submit}
-            disabled={this.props.isSubmitting}
-          >
-            {t("Submit")}
-          </button>
-        )}
+        {this.props.sectionModels && 
+          this.props.sectionModels.filter(sm => sm.questionModels.length > 0).map(sm => {
+            return <div key={"section_" + sm.section.id}>
+              <h2>{sm.section.name}</h2>
+              {sm.questionModels &&
+                sm.questionModels.filter(qm => this.dependentQuestionFilter(qm.question, allAnswers)).map(qm => {
+                  return (
+                    qm.question && (
+                      <div className={"confirmation answer"}>
+                        <div class="row">
+                          <div class="col">
+                            <h5>{qm.question.headline}</h5>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col">
+                            <p class="answer-value">
+                              <AnswerValue answer={qm.answer} question={qm.question} />
+                              {qm.validationError && <div className="alert alert-danger alert-container">{qm.validationError}</div>}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  );
+                })}
+            </div>
+          })}
+        
+        {allErrors.length > 0 && <div class="alert alert-danger alert-container">
+          {t("Could not submit your application due to validation errors. Please go back and fix these any try again.")}
+        </div>}
+        {allErrors.length === 0 && <button
+          className="btn btn-primary submit-application mx-auto"
+          onClick={this.props.submit}
+          disabled={this.props.isSubmitting}
+        >
+          {t("Submit")}
+        </button>}
       </div>
     );
   }
@@ -667,13 +611,13 @@ class SubmittedComponent extends React.Component {
     };
   }
 
-  handleWithdrawOK = (event) => {
-    applicationFormService.withdraw(this.props.responseId).then((resp) => {
+  handleWithdrawOK = event => {
+    applicationFormService.withdraw(this.props.responseId).then(resp => {
       this.setState(
         {
           isError: resp.isError,
           errorMessage: resp.message,
-          withdrawModalVisible: false,
+          withdrawModalVisible: false
         },
         () => {
           if (this.props.onWithdrawn) {
@@ -684,46 +628,43 @@ class SubmittedComponent extends React.Component {
     });
   };
 
-  handleEditOK = (event) => {
+  handleEditOK = event => {
     if (this.props.onEdit) {
       this.props.onEdit();
     }
   };
 
-  handleWithdrawCancel = (event) => {
+  handleWithdrawCancel = event => {
     this.setState({
-      withdrawModalVisible: false,
+      withdrawModalVisible: false
     });
   };
 
-  handleWithdraw = (event) => {
+  handleWithdraw = event => {
     this.setState({
-      withdrawModalVisible: true,
+      withdrawModalVisible: true
     });
   };
 
-  handleEdit = (event) => {
+  handleEdit = event => {
     this.setState({
-      editAppModalVisible: true,
+      editAppModalVisible: true
     });
   };
 
-  cancelEditModal = (event) => {
+  cancelEditModal = event => {
     this.setState({
-      editAppModalVisible: false,
+      editAppModalVisible: false
     });
   };
 
   render() {
     const t = this.props.t;
-    const initialText =
-      this.props.event && this.props.event.event_type === "CALL"
-        ? t("Thank you for responding to the")
-        : this.props.event.event_type === "JOURNAL"
-        ? t("Thank you for submitting an article to the")
-        : t("Thank you for applying for");
-
-        
+    const initialText = this.props.event && this.props.event.event_type === "CALL" 
+      ? t("Thank you for responding to the")
+      : this.props.event.event_type === "JOURNAL"
+      ? t("Thank you for submitting an article to the") 
+      : t("Thank you for applying for"); 
 
     return (
       <div class="submitted">
@@ -735,71 +676,44 @@ class SubmittedComponent extends React.Component {
         )}
 
         <p class="thank-you">
-          {initialText + " "} {this.props.event ? this.props.event.name : ""}.{" "}
-          {this.props.event.event_type === "JOURNAL"
-            ? t(
-                "Your article will be reviewed by our appointed reviewers and we will get back to you as soon as possible."
-              )
-            : t(
-                "Your application will be reviewed by our committee and we will get back to you as soon as possible."
-              )}
+          {initialText + " "} {this.props.event ? this.props.event.name : ""}. {" "}
+          {this.props.event.event_type === "JOURNAL" 
+          ? t("Your article will be reviewed by our appointed reviewers and we will get back to you as soon as possible.")
+          : t("Your application will be reviewed by our committee and we will get back to you as soon as possible.")}
         </p>
 
         <p class="timestamp">
-          {this.props.event.event_type === "JOURNAL"
-            ? t("You submitted your article on") + " "
-            : t("You submitted your application on") + " "}
+          {this.props.event.event_type === "JOURNAL" 
+          ? t("You submitted your article on") + " "
+          : t("You submitted your application on") + " "}
           {this.props.timestamp && this.props.timestamp.toLocaleString()}
         </p>
 
         <div class="submitted-footer">
           <button class="btn btn-danger" onClick={this.handleWithdraw}>
-            {this.props.event.event_type === "JOURNAL"
-              ? t("Withdraw Article Submission")
-              : t("Withdraw Application")}
+            {this.props.event.event_type === "JOURNAL" 
+            ? t("Withdraw Article Submission") 
+            : t("Withdraw Application")}
           </button>
         </div>
-        {this.props.event.event_type === "JOURNAL" ? (
-          <div class="submitted-footer">
-            <button
-              class=" btn btn-primary"
-              onClick={() =>
-                (window.location.href = `/${this.props.event.key}/apply/new`)
-              }
-            >
-              {t("New submission")}
-            </button>
-
-            <button
-              class="btn btn-secondary shift_button"
-              onClick={() =>
-                (window.location.href = `/${this.props.event.key}/apply/view`)
-              }
-            >
-              {t("View Submission(s)")}
-            </button>
-          </div>
-        ) : undefined}
-
-        {this.props.event.event_type === "JOURNAL" ? undefined : (
-          <div class="submitted-footer">
-            <button class="btn btn-primary" onClick={this.handleEdit}>
-              {t("Edit Application")}
-            </button>
-          </div>
-        )}
+        
+        {this.props.event.event_type === "JOURNAL" 
+        ? undefined
+        : <div class="submitted-footer">
+        <button class="btn btn-primary" onClick={this.handleEdit}>
+          {t("Edit Application")}
+        </button>
+        </div>}
 
         <ConfirmModal
           visible={this.state.withdrawModalVisible}
           onOK={this.handleWithdrawOK}
           onCancel={this.handleWithdrawCancel}
           okText={t("Yes - Withdraw")}
-          cancelText={t("No - Don't withdraw")}
-        >
+          cancelText={t("No - Don't withdraw")}>
+
           <p>
-            {t(
-              "By continuing, your submitted application will go into draft state. You MUST press Submit again after you make your changes for your application to be considered in the selection."
-            )}
+            {t("By continuing, your submitted application will go into draft state. You MUST press Submit again after you make your changes for your application to be considered in the selection.")}
           </p>
         </ConfirmModal>
 
@@ -808,11 +722,9 @@ class SubmittedComponent extends React.Component {
           onOK={this.handleEditOK}
           onCancel={this.cancelEditModal}
           okText={t("Yes - Edit application")}
-          cancelText={t("No - Don't edit")}
-        >
+          cancelText={t("No - Don't edit")}>
           <p>
-            {t("Do you want to edit your application to") + " "}{" "}
-            {this.props.event ? this.props.event.name : ""}?
+            {t("Do you want to edit your application to") + " "} {this.props.event ? this.props.event.name : ""}?
           </p>
         </ConfirmModal>
       </div>
@@ -894,6 +806,7 @@ class ApplicationFormInstanceComponent extends Component {
   };
 
   handleSave = (answers) => {
+
     this.setState(
       (prevState) => {
         return {
