@@ -107,29 +107,27 @@ class ReponseDetails extends Component {
       if (unsubmitted) {
         return (
           <span>
-            <span class="badge badge-pill badge-secondary">Unsubmitted</span>{" "}
-            {this.formatDate(data.started_timestamp)}
+            <span class="badge badge-pill badge-secondary">{this.props.t('Unsubmitted')}</span>{this.formatDate(data.started_timestamp)}
           </span>
         );
       }
       if (submitted) {
         return (
           <span>
-            <span class="badge badge-pill badge-success">Submitted</span>{" "}
-            {this.formatDate(data.submitted_timestamp)}
+            <span class="badge badge-pill badge-success">{this.props.t('Submitted')}</span>{this.formatDate(data.submitted_timestamp)}
           </span>
         );
       }
       if (withdrawn) {
         return (
           <span>
-            <span class="badge badge-pill badge-danger">Withdrawn</span>{" "}
-            {this.formatDate(data.started_timestamp)}
+            <span class="badge badge-pill badge-danger">{this.props.t('Withdrawn')}</span>{this.formatDate(data.started_timestamp)}
           </span>
         );
       }
     }
   }
+
 
   outcomeStatus= (response) => {
     if (response.outcome) {

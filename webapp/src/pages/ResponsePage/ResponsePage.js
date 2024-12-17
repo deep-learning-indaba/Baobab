@@ -123,24 +123,21 @@ class ResponsePage extends Component {
       if (unsubmitted) {
         return (
           <span>
-            <span class="badge badge-pill badge-secondary">Unsubmitted</span>{" "}
-            {this.formatDate(data.started_timestamp)}
+            <span class="badge badge-pill badge-secondary">{this.props.t('Unsubmitted')}</span>{this.formatDate(data.started_timestamp)}
           </span>
         );
       }
       if (submitted) {
         return (
           <span>
-            <span class="badge badge-pill badge-success">Submitted</span>{" "}
-            {this.formatDate(data.submitted_timestamp)}
+            <span class="badge badge-pill badge-success">{this.props.t('Submitted')}</span>{this.formatDate(data.submitted_timestamp)}
           </span>
         );
       }
       if (withdrawn) {
         return (
           <span>
-            <span class="badge badge-pill badge-danger">Withdrawn</span>{" "}
-            {this.formatDate(data.started_timestamp)}
+            <span class="badge badge-pill badge-danger">{this.props.t('Withdrawn')}</span>{this.formatDate(data.started_timestamp)}
           </span>
         );
       }
@@ -148,56 +145,52 @@ class ResponsePage extends Component {
   }
 
   renderReviewResponse(review_response, section) {
-    const questions = section.review_questions.map((q) => {
-      const a = review_response.scores.find(
-        (a) => a.review_question_id === q.id
-      );
+    const questions = section.review_questions.map(q => {
+        const a = review_response.scores.find(a => a.review_question_id === q.id);
 
-      if (a) {
-        return (
-          <div>
-            <div key={q.question_id} className="question-answer-block">
-              <p>
-                <span className="question-headline">{q.headline}</span>
-                {q.description && a && (
-                  <span className="question-description">
-                    <br />
-                    {q.description}
-                  </span>
-                )}
-              </p>
-              <h6>
-                <AnswerValue answer={a} question={q} />
-              </h6>
-            </div>
-          </div>
-        );
-      }
+        if (a) {
+            return (
+                <div key={q.id} className="question-answer-block">
+                    <p>
+                        <span className="question-headline">{q.headline}</span>
+                        {q.description && <span className="question-description"><br />{q.description}</span>}
+                    </p>
+                    <h6><AnswerValue answer={a} question={q} /></h6>
+                </div>
+            );
+        }
+        return null;
     });
+
     return questions;
-  }
+}
+
 
   // Render Reviews
   renderCompleteReviews() {
     if (this.state.reviewResponses.length) {
-      const reviews = this.state.reviewResponses.map((val) => {
-        return (
-          <div className="section">
-            <h4 className="reviewer-section">
-              {this.props.t(
-                val.reviewer_user_firstname + " " + val.reviewer_user_lastname
-              )}
-            </h4>
-            {this.renderReviewResponse(
-              val,
-              this.state.reviewForm.review_sections[0]
-            )}
-          </div>
-        );
-      });
-      return reviews;
+        const reviews = this.state.reviewResponses.map(val => {
+
+            return (
+                <div key={val.id} className="review-container">
+                    <h4 className="reviewer-section">
+                        {this.props.t(val.reviewer_user_firstname + " " + val.reviewer_user_lastname)}
+                    </h4>
+                    {this.state.reviewForm.review_sections.map(section => (
+                        <div key={section.id} className="section">
+                            <h5>{section.headline}</h5>
+                            {this.renderReviewResponse(val, section)}
+                        </div>
+                    ))}
+                </div>
+            );
+        });
+
+        return reviews;
     }
-  }
+
+    return <p>No reviews available</p>;
+}
 
   getOutcome() {
     outcomeService
