@@ -294,7 +294,7 @@ class EventStatus extends Component {
         ` ${event.name} ` +
         this.props.t("will open on") +
         ` ${event.application_open_date}. ` +
-        this.props.t("Please check back later to apply."),
+        this.props.t("Please check back later to apply"),
       shortText: this.props.t(`Applications will be opened on ${event.application_open_date}`),
     };
   };
