@@ -62,6 +62,7 @@ def event_info(user_id, event, status, language):
         'key': event.key,
         'start_date': event.start_date.strftime("%d %B %Y"),
         'end_date': event.end_date.strftime("%d %B %Y") if event.end_date is not None else None,
+        'application_open_date': event.application_open.strftime("%d %B %Y") if event.application_open is not None else None,
         'application_close_date': event.application_close.strftime("%d %B %Y") if event.application_close is not None else None,
         'status': status_info(status),
         'email_from': event.email_from,
@@ -415,7 +416,6 @@ class EventsAPI(restful.Resource):
             status = None if user_id == 0 else event_status.get_event_status(event.id, user_id)
             returnEvents.append(event_info(user_id, event, status, language))
             language = request.args['language']
-
         return returnEvents, 200
 
 
