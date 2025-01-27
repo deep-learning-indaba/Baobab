@@ -328,20 +328,21 @@ class ResponsePage extends Component {
             this.renderConfirmationButton(
               "REJECT_W_ENCOURAGEMENT",
               "Reject with Encouragement to Resubmit",
-              "btn-warning",
+              "btn-danger",
               "Are you sure you want to REJECT WITH ENCOURAGEMENT TO RESUBMIT?"
             )
           );
         }
-  
-        buttons.push(
-          this.renderConfirmationButton(
-            "REJECTED",
-            "Reject",
-            "btn-danger",
-            "Are you sure you want to REJECT this submission?"
-          )
-        );
+        if (event_type !== "JOURNAL") {
+          buttons.push(
+            this.renderConfirmationButton(
+              "REJECT",
+              "Reject",
+              "btn-danger",
+              "Are you sure you want to REJECT this submission?"
+            )
+          );
+        }
   
         if (event_type === "EVENT") {
           buttons.push(

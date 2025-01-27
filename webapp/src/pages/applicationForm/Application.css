@@ -263,9 +263,9 @@ ol.progtrckr li.progtrckr-done:hover:before {
 }
 
 .chain-header-title {
-  padding: 15px;
+  padding: 15px 10px;
   font-weight: bold;
-  font-size: 18px;
+  font-size: 20px;
   border-bottom: 2px solid #007bff;
 }
 
@@ -291,3 +291,67 @@ ol.progtrckr li.progtrckr-done:hover:before {
   font-size: 16px;
   border-radius: 5px;
 }  
+
+.custom-button {
+  width: 100px;
+  height: 40px;
+  font-size: 14px;
+}
+
+
+.resubmit-container {
+  display: flex;
+  align-items: center; 
+  gap: 40px; 
+}
+
+.resubmit-container i {
+  font-size: 16px; 
+}
+
+.resubmit-container button {
+  padding: 8px 16px; 
+  font-size: 14px; 
+  border: none;
+  border-radius: 4px;
+  background-color: #007bff; 
+  color: #fff; 
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.resubmit-container button:hover {
+  background-color: #0056b3; 
+}
+
+table {
+  width: 100%; 
+  table-layout: auto;
+  border-collapse: collapse; 
+}
+
+td, th {
+  padding: 8px 12px; 
+  text-align: left;
+  vertical-align: middle;
+}
+
+.response-row td:nth-child(1) { 
+  width: 30%;
+}
+
+.response-row td:nth-child(2) { 
+  width: 15%;
+  text-align: center;
+}
+
+.response-row td:nth-child(3) {
+  width: 40%;
+  text-align: center;
+}
+
+.response-row td:nth-child(4) { 
+  width: 15%;
+  text-align: center; 
+}
+

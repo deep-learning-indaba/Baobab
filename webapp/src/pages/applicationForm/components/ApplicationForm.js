@@ -658,6 +658,10 @@ class SubmittedComponent extends React.Component {
     });
   };
 
+  viewsubmission = ()=> {
+     window.location.href = `/${this.props.event.key}/apply/view`;
+  }
+
   render() {
     const t = this.props.t;
     const initialText = this.props.event && this.props.event.event_type === "CALL" 
@@ -698,11 +702,15 @@ class SubmittedComponent extends React.Component {
         </div>
         
         {this.props.event.event_type === "JOURNAL" 
-        ? undefined
+        ? <div class="submitted-footer">
+            <button class="btn btn-secondary" onClick={this.viewsubmission}>
+              {t("View Submission(s)")}
+            </button>
+        </div>
         : <div class="submitted-footer">
-        <button class="btn btn-primary" onClick={this.handleEdit}>
-          {t("Edit Application")}
-        </button>
+            <button class="btn btn-primary" onClick={this.handleEdit}>
+              {t("Edit Application")}
+            </button>
         </div>}
 
         <ConfirmModal
@@ -1092,6 +1100,10 @@ class ApplicationListComponent extends Component {
 
 
   getSubmission = (response) => {
+    console.log('answer');
+    
+    console.log(response);
+    
     return this.props.t("Submission") + " - " + (response.is_submitted==true?this.formatDate(response.submitted_timestamp):this.formatDate(response.started_timestamp))
   };
 
@@ -1154,7 +1166,7 @@ class ApplicationListComponent extends Component {
     if (response.is_submitted) {
       return (
         <button
-          className="btn btn-warning btn-sm"
+          className="btn btn-warning btn-sm custom-button"
           onClick={() =>
             (window.location.href = `/${this.props.event.key}/responseDetails/${response.id}`)
           }
@@ -1165,7 +1177,7 @@ class ApplicationListComponent extends Component {
     } else {
       return (
         <button
-          className="btn btn-success btn-sm"
+          className="btn btn-success btn-sm custom-button"
           onClick={() =>
             (window.location.href = `/${this.props.event.key}/apply/continue/${response.id}`)
           }
@@ -1175,15 +1187,15 @@ class ApplicationListComponent extends Component {
       );
     }
   };
-
+  
   getOutcome = (response) => {
     if (response.outcome) {
       const badgeClass =
         response.outcome === "ACCEPTED"
           ? "badge-success"
           : response.outcome === "REJECTED"
-          ? "badge-danger"
-          : "badge-warning";
+          ? "badge-danger "
+          : "badge-warning ";
         const outcome= response.outcome==='ACCEPTED'?this.props.t("ACCEPTED"):response.outcome==='REJECTED'?
         this.props.t("REJECTED"):response.outcome==='ACCEPT_W_REVISION'?
         this.props.t("ACCEPTED WITH REVISION"):response.outcome==='REJECT_W_ENCOURAGEMENT'?
@@ -1237,18 +1249,24 @@ class ApplicationListComponent extends Component {
 
   renderResubmitButton = (chain) => {
     const lastResponse = this.getLastResponse(chain);
-    if (lastResponse.outcome !== 'ACCEPTED' && lastResponse.outcome !== null) {
+
+    if (lastResponse && lastResponse.outcome && lastResponse.outcome !== 'ACCEPTED') {
       return (
-        <tr>
-          <td colSpan="6" className="resubmit-button-container">
-            <button onClick={() => this.newSubmission(lastResponse.id)} className="btn btn-primary">{this.props.t("Resubmit")}</button>
-          </td>
-        </tr>
+        <div className="resubmit-bar">
+          <button 
+            onClick={() => this.newSubmission(lastResponse.id)} 
+            className="btn btn-primary resubmit-button"
+          >
+            {this.props.t("Resubmit")}
+          </button>
+        </div>
       );
     }
+  
     return null;
   };
-
+  
+  
   renderEntireChain = (response) => {
     const children = response.children.slice().reverse();
     return (
@@ -1268,19 +1286,32 @@ class ApplicationListComponent extends Component {
     return (
       <Fragment key={chain.id}>
         <tr onClick={() => this.toggleChain(chain.id)} className="chain-header">
-          <td colSpan="5" className="chain-header-title">
+          <td colSpan="5" className="chain-header-title" >
+            <span className="chain-toggle-icon">
+              {this.state.expandedChains && this.state.expandedChains[chain.id] ? (
+                <div className="resubmit-container">
+                  {this.renderResubmitButton(chain)}
+                  <i className="fas fa-chevron-up" />
+                </div>
+              ) 
+              : (
+                <div className="resubmit-container">
+                  {this.renderResubmitButton(chain)}
+                  <i className="fas fa-chevron-down" />
+                </div>
+              )
+              }
+
+            </span>
             <strong>{this.props.t("Submission")} {this.formatDate(chain.started_timestamp)}</strong>
-            <span className="chain-toggle-icon">{this.state.expandedChains && this.state.expandedChains[chain.id] ? "▲" : "▼"}</span>
           </td>
         </tr>
- 
         {this.state.expandedChains && this.state.expandedChains[chain.id] && 
           this.renderEntireChain(chain)
         }
-        {this.renderResubmitButton(chain)}
       </Fragment>
     );
-    
+
   };
 
 
@@ -1454,20 +1485,22 @@ class ApplicationForm extends Component {
         
         return (
           <div>
+            {/* <br /> */}
+            <hr/>
+            <button
+              className="btn btn-primary"
+              onClick={() => this.newSubmission()}
+              >
+              {this.props.t("New Submission")} &gt;
+            </button>
+              <hr/>
             <ApplicationList
               responses={responses}
               event={this.state.event}
               formSpec={formSpec}
               click={this.responseSelected}
             />
-            <br />
-            <hr/>
-            <button
-              className="btn btn-primary"
-              onClick={() => this.newSubmission()}
-            >
-              {this.props.t("New Submission")} &gt;
-            </button>
+            
           </div>
         );
       }

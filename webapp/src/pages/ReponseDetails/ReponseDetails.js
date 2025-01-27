@@ -90,7 +90,7 @@ class ReponseDetails extends Component {
     return questions;
   }
   goBack() {
-    this.props.history.goBack();
+    window.location.href = `/${this.props.event.key}/apply/view`;
   }
 
   formatDate = (dateString) => {
@@ -244,12 +244,15 @@ class ReponseDetails extends Component {
           <div className="response-details">
             {this.renderSections()}
             <br />
-            <div>
+            
+          </div>
+        )}
+        <div className="response-details">
               <button
                 className="btn btn-secondary"
-                onClick={(e) => this.goBack(e)}
+                onClick={() => this.goBack()}
               >
-                {this.props.t("Go Back")}
+                {this.props.t("View Submission(s)")}
               </button>
               {
                 <button
@@ -265,8 +268,6 @@ class ReponseDetails extends Component {
                 </button>
               }
             </div>
-          </div>
-        )}
         <div className="response-details">
           {this.getSubmissionList(
             chain_responses.filter(
