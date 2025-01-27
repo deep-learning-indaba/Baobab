@@ -587,6 +587,21 @@
     "will close on": "fermeront le ",
     "Please check back later to apply": "Veuillez revenir plus tard pour postuler",
     "Applications will be opened on": "Les candidatures seront ouvertes le",
-    "Applications Opening Soon":"Ouverture prochaine des candidatures"
+    "Applications Opening Soon":"Ouverture prochaine des candidatures",
+    "Are you sure you want to ACCEPT this submission?": "Êtes-vous sûr de vouloir ACCEPTER cette soumission ?",
+    "Are you sure you want to ACCEPT WITH MINOR REVISION?": "Êtes-vous sûr de vouloir ACCEPTER AVEC DES RÉVISIONS MINEURES ?",
+    "Are you sure you want to REJECT this submission?": "Êtes-vous sûr de vouloir REJETER cette soumission ?",
+    "Are you sure you want to REJECT WITH ENCOURAGEMENT TO RESUBMIT?": "Êtes-vous sûr de vouloir REJETER AVEC ENCOURAGEMENT À RÉSOUMETTRE ?",
+    "Are you sure you want to WAITLIST this submission?": "Êtes-vous sûr de vouloir METTRE EN LISTE D'ATTENTE cette soumission ?",
+    "Accept with Minor Revision": "Accepter avec des révisions mineures",
+    "Reject with Encouragement to Resubmit": "Rejeter avec encouragement à resoumettre",
+    "Yes - Confirm": "Oui - Confirmer",
+    "No - Don't confirm": "Non - Ne pas confirmer",
+    "PENDING": "EN ATTENTE",
+    "REVISION": "REVISION",
+    "ACCEPTED WITH REVISION": "ACCEPTE AVEC REVISION",
+    "REJECTED WITH ENCOURAGEMENT TO RESUMIT": "REJECTÉ AVEC ENCOURAGEMENT DE RESOUMETTRE",
+    "REVIEWING": "EN REVUE",
+    "Unsubmitted": "Non soumis"
 }
 
