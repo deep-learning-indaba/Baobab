@@ -588,5 +588,20 @@
     "will close on": "will close on",
     "Please check back later to apply": "Please check back later to apply",
     "Applications will be opened on": "Applications will be opened on",
-    "Applications Opening Soon": "Applications Opening Soon"
+    "Applications Opening Soon": "Applications Opening Soon",
+    "Are you sure you want to ACCEPT this submission?": "Are you sure you want to ACCEPT this submission?",
+    "Are you sure you want to ACCEPT WITH MINOR REVISION?": "Are you sure you want to ACCEPT WITH MINOR REVISION?",
+    "Are you sure you want to REJECT this submission?": "Are you sure you want to REJECT this submission?",
+    "Are you sure you want to REJECT WITH ENCOURAGEMENT TO RESUBMIT?": "Are you sure you want to REJECT WITH ENCOURAGEMENT TO RESUBMIT?",
+    "Are you sure you want to WAITLIST this submission?": "Are you sure you want to WAITLIST this submission?",
+    "Accept with Minor Revision": "Accept with Minor Revision",
+    "Reject with Encouragement to Resubmit": "Reject with Encouragement to Resubmit",
+    "Yes - Confirm":"Yes - Confirm",
+    "No - Don't confirm":"No - Don't confirm",
+    "PENDING": "PENDING",
+    "REVISION": "REVISION",
+    "ACCEPTED WITH REVISION": "ACCEPTED WITH REVISION",
+    "REJECTED WITH ENCOURAGEMENT TO RESUMIT": "REJECTED WITH ENCOURAGEMENT TO RESUMIT",
+    "REVIEWING": "REVIEWING",
+    "Unsubmitted": "Unsubmitted"
 }
