@@ -15,7 +15,6 @@ from app import LOGGER
 from app import db
 from app.utils import errors
 from app.utils import misc
-from app.responses.repository import ResponseRepository as response_repository
 
 
 def _extract_status(outcome):
@@ -110,9 +109,6 @@ class OutcomeAPI(restful.Resource):
         if not user:
             return errors.USER_NOT_FOUND
         
-        response = response_repository.get_by_id_and_user_id(args['response_id'],args['user_id'])
-        if not response:
-            return errors.RESPONSE_NOT_FOUND
 
         try:
             status = Status[args['outcome']]
