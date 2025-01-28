@@ -5,7 +5,6 @@ Revises: 48d559146efd
 Create Date: 2025-01-29 00:54:20.105588
 
 """
-
 # revision identifiers, used by Alembic.
 revision = '3fe861d70b76'
 down_revision = '48d559146efd'
