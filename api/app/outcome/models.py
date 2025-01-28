@@ -23,11 +23,15 @@ class Outcome(db.Model):
     user = db.relationship('AppUser', foreign_keys=[user_id])
     updated_by_user = db.relationship('AppUser', foreign_keys=[updated_by_user_id])
 
+    response_id = db.Column(db.Integer(), db.ForeignKey('response.id'), nullable=True)
+    response = db.relationship('Response', foreign_keys=[response_id])
+
     def __init__(self,
                  event_id,
                  user_id,
                  status,
-                 updated_by_user_id
+                 updated_by_user_id,
+                 response_id
                  ):
         self.event_id = event_id
         self.user_id = user_id
@@ -35,6 +39,7 @@ class Outcome(db.Model):
         self.timestamp = datetime.now()
         self.latest = True
         self.updated_by_user_id = updated_by_user_id
+        self.response_id = response_id
 
     def reset_latest(self):
         self.latest = False
