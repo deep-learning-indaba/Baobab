@@ -28,6 +28,7 @@ import ResponseList from "../ResponseList/ResponseList";
 import ResponsePage from "../ResponsePage/ResponsePage";
 import ReviewDashboard from "../reviewDashboard";
 import { Attendance, Indemnity } from '../attendance';
+import ReponseDetails from "../ReponseDetails/ReponseDetails";
 
 class EventInfo extends Component {
   constructor(props) {
@@ -276,6 +277,30 @@ class EventHome extends Component {
           exact
           path={`${match.path}/offerAdmin`}
           render={(props) => <OfferAdmin {...props} event={event} organisation={this.props.organisation}/>}
+        />
+        
+        <Route
+          exact
+          path={`${match.path}/apply/new/:id`}
+          render={(props) => <Application {...props} event={event} chain={true} /> }
+        />
+
+         <Route
+          exact
+          path={`${match.path}/apply/continue/:id`}
+          render={(props) => <Application {...props} event={event} continue={true}/>}
+        />
+
+        <Route
+          exact
+          path={`${match.path}/apply/view`}
+          render={(props) => <Application {...props} event={event} view={true} /> }
+        />
+        
+        <Route
+          exact
+          path={`${match.path}/responseDetails/:id`}
+          render={(props) => <ReponseDetails {...props} event={event} />}
         />
 
       </div>
