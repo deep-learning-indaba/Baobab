@@ -72,6 +72,8 @@ class EventStatus extends Component {
   applicationStatus = (event) => {
     const applyLink = `${event.key}/apply`;
     const submissionLink = `${event.key}/apply/new`;
+    const viewLink=`${event.key}/apply/view`;
+
     if (event.status.application_status === "Submitted") {
       if (event.event_type === "JOURNAL") {
         return {
@@ -79,7 +81,7 @@ class EventStatus extends Component {
           longText: this.props.t("You have submitted your article."),
           shortText: this.props.t("View Submission(s)"),
           linkClass: "btn-secondary",
-          link: applyLink,
+          link: viewLink,
           submissionShortText: this.props.t("New submission"),
           submissionLinkClass: "btn-primary",
           submissionLink: submissionLink,
@@ -97,6 +99,19 @@ class EventStatus extends Component {
         };
       }
     } else if (event.status.application_status === "Withdrawn") {
+      if (event.event_type === "JOURNAL"){
+        return {
+            titleClass: "text-success",
+            longText: this.props.t("You have submitted your article."),
+            shortText: this.props.t("View Submission(s)"),
+            linkClass: 'btn-secondary',
+            link: viewLink,
+            submissionShortText: this.props.t("New submission"),
+            submissionLinkClass: "btn-primary",
+            submissionLink: submissionLink
+        }
+    }
+    else{
       return {
         title: this.props.t("Application Withdrawn"),
         titleClass: "text-danger",
@@ -109,7 +124,7 @@ class EventStatus extends Component {
         shortText: this.props.t("Re-apply"),
         linkClass: "btn-warning",
         link: applyLink,
-      };
+      }};
     } else if (event.status.application_status === "Not Submitted") {
       return {
         title: this.props.t("In Progress"),
