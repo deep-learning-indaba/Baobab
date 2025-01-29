@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, Fragment } from "react";
 import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import { applicationFormService } from "../../../services/applicationForm";
@@ -16,13 +16,15 @@ import { fileService } from "../../../services/file/file.service";
 import FormMultiCheckbox from "../../../components/form/FormMultiCheckbox";
 import FormReferenceRequest from "./ReferenceRequest";
 import Loading from "../../../components/Loading";
-import _ from "lodash";
+import _ , { chain } from "lodash";
 import { withTranslation } from 'react-i18next';
 import AnswerValue from '../../../components/answerValue'
 import FormSelectOther from "../../../components/form/FormSelectOther";
 import FormMultiCheckboxOther from "../../../components/form/FormMultiCheckboxOther";
 import FormCheckbox from "../../../components/form/FormCheckbox";
 import { eventService } from "../../../services/events";
+import moment from "moment";
+import { Redirect } from 'react-router-dom';
 
 
 const baseUrl = process.env.REACT_APP_API_URL;
@@ -658,6 +660,10 @@ class SubmittedComponent extends React.Component {
     });
   };
 
+  viewsubmission = ()=> {
+    window.location.href = `/${this.props.event.key}/apply/view`;
+ }
+
   render() {
     const t = this.props.t;
     const initialText = this.props.event && this.props.event.event_type === "CALL" 
@@ -698,12 +704,16 @@ class SubmittedComponent extends React.Component {
         </div>
         
         {this.props.event.event_type === "JOURNAL" 
-        ? undefined
+        ? <div class="submitted-footer">
+            <button class="btn btn-secondary" onClick={this.viewsubmission}>
+              {t("View Submission(s)")}
+            </button>
+          </div>
         : <div class="submitted-footer">
-        <button class="btn btn-primary" onClick={this.handleEdit}>
-          {t("Edit Application")}
-        </button>
-        </div>}
+            <button class="btn btn-primary" onClick={this.handleEdit}>
+              {t("Edit Application")}
+            </button>
+          </div>}
 
         <ConfirmModal
           visible={this.state.withdrawModalVisible}
@@ -753,7 +763,9 @@ class ApplicationFormInstanceComponent extends Component {
       startStep: 0,
       new_response: !props.response,
       outcome: props.response && props.response.outcome,
-      submitValidationErrors: []
+      submitValidationErrors: [],
+      parent_id: props.match.params.id || null,
+      allow_multiple_submission:props.event.event_type === "JOURNAL" ? true : false
     };
   }
 
@@ -800,7 +812,7 @@ class ApplicationFormInstanceComponent extends Component {
       () => {
         if (this.state.new_response) {
           applicationFormService
-            .submit(this.props.formSpec.id, false, this.state.answers)
+            .submit(this.props.formSpec.id, false, this.state.answers, this.state.parent_id, this.state.allow_multiple_submission)
             .then(resp => {
               let submitError = resp.response_id === null;
               this.setState({
@@ -1040,38 +1052,256 @@ class ApplicationListComponent extends Component {
 
   getAction = (response) => {
     if (response.is_submitted) {
-      return <button className="btn btn-warning btn-sm" onClick={() => this.props.click(response)}>{this.props.t("View")}</button>
-    }
-    else {
-      return <button className="btn btn-success btn-sm" onClick={() => this.props.click(response)}>{this.props.t("Continue")}</button>
+      return (
+        <button
+          className="btn btn-warning btn-sm custom-button"
+          onClick={() =>
+            (window.location.href = `/${this.props.event.key}/responseDetails/${response.id}`)
+          }
+        >
+          {this.props.t("View")}
+        </button>
+      );
+    } else {
+      return (
+        <button
+          className="btn btn-success btn-sm custom-button"
+          onClick={() =>
+            (window.location.href = `/${this.props.event.key}/apply/continue/${response.id}`)
+          }
+        >
+          {this.props.t("Continue")}
+        </button>
+      );
     }
   }
+
+  formatDate = (dateString) => {
+    return moment(dateString).format("D MMM YYYY, H:mm:ss [(UTC)]");
+  };
+
+  getSubmission = (response) => {
+    return this.props.t("Submission") + " - " + (response.is_submitted==true?this.formatDate(response.submitted_timestamp):this.formatDate(response.started_timestamp))
+  };
+
+  renderSections() {
+    const applicationForm = this.state.applicationForm;
+    const applicationData = this.state.applicationData;
+    let html = [];
+
+    if (applicationForm && applicationData) {
+      applicationForm.sections.forEach((section) => {
+        html.push(
+          <div key={section.name} className="section">
+            <div className="flex baseline">
+              <h3>{section.name}</h3>
+            </div>
+            <div className="Q-A">{this.renderResponses(section)}</div>
+          </div>
+        );
+      });
+    }
+    return html;
+  }
+
+  renderResponses(section) {
+    const applicationData = this.state.applicationData;
+    const questions = section.questions.map((q) => {
+      const a = applicationData.answers.find((a) => a.question_id === q.id);
+      if (q.type === "information") {
+        return <h4>{q.headline}</h4>;
+      }
+      return (
+        <div key={q.id} className="question-answer-block">
+          <p>
+            <span className="question-headline">{q.headline}</span>
+            {q.description && (
+              <span className="question-description">
+                <br />
+                {q.description}
+              </span>
+            )}
+          </p>
+          <h6>
+            <AnswerValue answer={a} question={q} />
+          </h6>
+        </div>
+      );
+    });
+    return questions;
+  }
+
+  getOutcome = (response) => {
+    if (response.outcome) {
+      const badgeClass =
+        response.outcome === "ACCEPTED"
+          ? "badge-success"
+          : response.outcome === "REJECTED"
+          ? "badge-danger "
+          : "badge-warning ";
+        const outcome= response.outcome==='ACCEPTED'?this.props.t("ACCEPTED"):response.outcome==='REJECTED'?
+        this.props.t("REJECTED"):response.outcome==='ACCEPT_W_REVISION'?
+        this.props.t("ACCEPTED WITH REVISION"):response.outcome==='REJECT_W_ENCOURAGEMENT'?
+        this.props.t("REJECTED WITH ENCOURAGEMENT TO RESUMIT"):this.props.t("REVIEWING");
+      return (
+        <span class={`badge badge-pill ${badgeClass}`}>{outcome}</span>
+      );
+    }
+    return (
+      <span class="badge badge-pill badge-secondary">
+        {this.props.t("PENDING")}
+      </span>
+    );
+  };
+
+  newSubmission = (id) => {
+    window.location.href = `/${this.props.event.key}/apply/new/${id}`;
+  };
+
+  getLastResponse = (response) => {
+    if (response.children.length === 0) return response;
+    return this.getLastResponse(response.children[response.children.length - 1]);
+  };
+
+  buildResponseChains = (responses) => {
+    const responseMap = responses.reduce((map, response) => {
+      map[response.id] = { ...response, children: [] };
+      return map;
+    }, {});
+    
+    const chains = [];
+    
+    responses.forEach((response) => {
+      if (response.parent_id !== null && responseMap[response.parent_id]) {
+        responseMap[response.parent_id].children.push(responseMap[response.id]);
+      } else {
+        chains.push(responseMap[response.id]);
+      }
+    });
+    
+    return chains.sort((a, b) => this.getLastResponse(b).id - this.getLastResponse(a).id);
+  };
+
+  toggleChain = (chainId) => {
+    this.setState((prevState) => {
+      const expandedChains = prevState.expandedChains ? { ...prevState.expandedChains } : {};
+      expandedChains[chainId] = !expandedChains[chainId];
+      return { expandedChains };
+    });
+  };
+
+  renderResubmitButton = (chain) => {
+    const lastResponse = this.getLastResponse(chain);
+
+    if (lastResponse && lastResponse.outcome && lastResponse.outcome !== 'ACCEPTED') {
+      return (
+        <div className="resubmit-bar">
+          <button 
+            onClick={() => this.newSubmission(lastResponse.id)} 
+            className="btn btn-primary resubmit-button"
+          >
+            {this.props.t("Resubmit")}
+          </button>
+        </div>
+      );
+    }
+  
+    return null;
+  };
+  
+  
+  renderEntireChain = (response) => {
+    const children = response.children.slice().reverse();
+    return (
+      <Fragment key={response.id}>
+        {children.map((childResponse) => this.renderEntireChain(childResponse))}
+        <tr key={response.id} className="response-row">
+          <td>{this.getSubmission(response)}</td>
+          <td>{this.getStatus(response)}</td>
+          <td>{this.getOutcome(response)}</td>
+          <td>{this.getAction(response)}</td>
+        </tr>
+      </Fragment>
+    );
+  };
+
+  renderResponseChain = (chain) => {
+    return (
+      <Fragment key={chain.id}>
+        <tr onClick={() => this.toggleChain(chain.id)} className="chain-header">
+          <td colSpan="5" className="chain-header-title" >
+            <span className="chain-toggle-icon">
+              {this.state.expandedChains && this.state.expandedChains[chain.id] ? (
+                <div className="resubmit-container">
+                  {this.renderResubmitButton(chain)}
+                  <i className="fas fa-chevron-up" />
+                </div>
+              ) 
+              : (
+                <div className="resubmit-container">
+                  {this.renderResubmitButton(chain)}
+                  <i className="fas fa-chevron-down" />
+                </div>
+              )
+              }
+
+            </span>
+            <strong>{this.props.t("Submission")} {this.formatDate(chain.started_timestamp)}</strong>
+          </td>
+        </tr>
+        {this.state.expandedChains && this.state.expandedChains[chain.id] && 
+          this.renderEntireChain(chain)
+        }
+      </Fragment>
+    );
+
+  };
+
 
   render() {
     let allQuestions = _.flatMap(this.props.formSpec.sections, s => s.questions);
     const title = this.props.event.event_type ==='JOURNAL' ? this.props.t("Your Submissions") : this.props.t("Your Nominations");
-    let firstColumn = this.props.event.event_type ==='JOURNAL' ? this.props.t("Submission") : this.props.t("Nominee");
-    return <div>
-      <h4>{title}</h4>
-      <table class="table">
-        <thead>
-          <tr>
-            <th scope="col">{firstColumn}</th>
-            <th scope="col">{this.props.t("Status")}</th>
-            <th scope="col"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {this.props.responses.map(response => {
-            return <tr key={"response_" + response.id}>
-              <td>{this.getCandidate(allQuestions, response)}</td>
-              <td>{this.getStatus(response)}</td>
-              <td>{this.getAction(response)}</td>
+    let firstColumn = this.props.event.event_type ==='JOURNAL' ? this.props.t("Submission") : this.props.t("Nominee");\
+
+    if (this.props.event.event_type =='JOURNAL') {
+      const responseChains = this.buildResponseChains(this.props.responses);
+      return ( 
+        <div className="response-chains-container">
+        <h4 className="response-chains-title">{title}</h4>
+        <table className="table response-chains-table">
+          <thead>
+            <tr>
+              <th scope="col" colSpan="5" className="response-chains-header">{firstColumn}</th>
             </tr>
-          })}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {responseChains.map((chain, index) => this.renderResponseChain(chain, index))}
+          </tbody>
+        </table>
+      </div>
+      );
+    }
+    return <div>
+    <h4>{title}</h4>
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">{firstColumn}</th>
+          <th scope="col">{this.props.t("Status")}</th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {this.props.responses.map(response => {
+          return <tr key={"response_" + response.id}>
+            <td>{this.getCandidate(allQuestions, response)}</td>
+            <td>{this.getStatus(response)}</td>
+            <td>{this.getAction(response)}</td>
+          </tr>
+        })}
+      </tbody>
+    </table>
+  </div>;
   }
 }
 
@@ -1089,7 +1319,11 @@ class ApplicationForm extends Component {
       formSpec: null,
       responses: [],
       selectedResponse: null,
-      journalSubmissionFlag: false
+      journalSubmissionFlag: false,
+      listselectedResponse: null,
+      continue: false,
+      view: false,
+      chain: false,
     }
   }
 
@@ -1129,7 +1363,10 @@ class ApplicationForm extends Component {
     });
   }
 
-  
+  newSubmission = () => {
+    window.location.href = `/${this.props.event.key}/apply/new`;
+  };
+
   render() {
     const {
       isLoading,
@@ -1138,7 +1375,8 @@ class ApplicationForm extends Component {
       formSpec,
       responses,
       selectedResponse,
-      responseSelected} = this.state;
+      responseSelected,
+      listselectedResponse,} = this.state;
 
     if (isLoading) {
       return (<Loading />);
@@ -1148,24 +1386,112 @@ class ApplicationForm extends Component {
       return <div className={"alert alert-danger alert-container"}>{errorMessage}</div>;
     }
     
-    if (this.props.event.event_type === 'JOURNAL' && this.props.journalSubmissionFlag) {
-      return <ApplicationFormInstance
-      formSpec={formSpec}
-      response={null}
-      event={this.props.event} />
-    }
-    else if (formSpec.nominations && responses.length > 0 && !responseSelected) {
-      let newForm = this.state.event.event_type ==='JOURNAL' ? this.props.t("New Submission") + " " : this.props.t("New Nomination") + " ";
-      return <div>
-          <ApplicationList responses={responses} event={this.state.event} formSpec={formSpec} click={this.responseSelected} /><br />
-          <button className="btn btn-primary" onClick={() => this.newNomination()}>{newForm} &gt;</button>
-    </div>
-    }
-    else {
-      return <ApplicationFormInstance
-        formSpec={formSpec}
-        response={selectedResponse}
-        event={this.props.event} />
+    if (this.props.event.event_type === "JOURNAL") {
+      if (this.props.journalSubmissionFlag) {
+        return (
+          <ApplicationFormInstance
+            formSpec={formSpec}
+            response={selectedResponse.is_submitted ? null : selectedResponse}
+            event={this.props.event}
+          />
+        );
+      }
+      if (this.props.view) {
+        
+        return (
+          <div>
+            {/* <br /> */}
+            <hr/>
+            <button
+              className="btn btn-primary"
+              onClick={() => this.newSubmission()}
+              >
+              {this.props.t("New Submission")} &gt;
+            </button>
+              <hr/>
+            <ApplicationList
+              responses={responses}
+              event={this.state.event}
+              formSpec={formSpec}
+              click={this.responseSelected}
+            />
+            
+          </div>
+        );
+      }
+      if (this.props.chain) {
+        const isIdAndNotParent=(listResponse, id) =>{
+          const isIdPresent = listResponse.some(entry => entry.id === id);
+          const isNotAParent = !listResponse.some(entry => entry.parent_id === id);
+          return isIdPresent && isNotAParent;
+      }
+          if (!isIdAndNotParent(responses, parseInt(this.props.match.params.id))) {
+            return <Redirect to={`/${this.props.event.key}/apply/view`} />
+          }
+        return (
+          <ApplicationFormInstance
+            formSpec={formSpec}
+            response={null}
+            event={this.props.event}
+          />
+        );
+      }
+      if (this.props.continue) {
+        const response = listselectedResponse.find(
+          (item) => item.id === parseInt(this.props.match.params.id));
+          if (response == null || response.outcome != null) {
+            return <Redirect to={`/${this.props.event.key}/apply/view`} />
+          }
+        return (
+          <ApplicationFormInstance
+            formSpec={formSpec}
+            response={response}
+            event={this.props.event}
+          />
+        );
+      }
+      return (
+        <ApplicationFormInstance
+          formSpec={formSpec}
+          response={null}
+          event={this.props.event}
+        />
+      );
+    } else if (
+      formSpec.nominations &&
+      responses.length > 0 &&
+      !responseSelected
+    ) {
+      let newForm =
+        this.state.event.event_type === "JOURNAL"
+          ? this.props.t("New Submission") + " "
+          : this.props.t("New Nomination") + " ";
+      return (
+        <div>
+          <ApplicationList
+            responses={responses}
+            event={this.state.event}
+            formSpec={formSpec}
+            click={this.responseSelected}
+          />
+          <br />
+
+          <button
+            className="btn btn-primary"
+            onClick={() => this.newNomination()}
+          >
+            {newForm} &gt;
+          </button>
+        </div>
+      );
+    } else {
+      return (
+        <ApplicationFormInstance
+          formSpec={formSpec}
+          response={selectedResponse}
+          event={this.props.event}
+        />
+      );
     }
   }
 }
