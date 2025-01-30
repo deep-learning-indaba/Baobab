@@ -338,7 +338,7 @@ td, th {
 }
 
 .response-row td:nth-child(1) { 
-  width: 30%;
+  width: 40%;
 }
 
 .response-row td:nth-child(2) { 
@@ -347,7 +347,7 @@ td, th {
 }
 
 .response-row td:nth-child(3) {
-  width: 40%;
+  width: 30%;
   text-align: center;
 }
 

@@ -152,39 +152,89 @@ class ReponseDetails extends Component {
     );
   };
 
-  getChainById = (data, id) => {
-    const elementMap = data.reduce((map, element) => {
-      map[element.id] = element;
-      return map;
-    }, {});
+    getChainById = (data, id) => {
+        const elementMap = data.reduce((map, element) => {
+            map[element.id] = element;
+            return map;
+        }, {});
+    
+        if (!elementMap[id]) return [];
 
-    function getChain(element, visited = new Set()) {
-      if (!element || visited.has(element.id)) return [];
-      visited.add(element.id);
-
-      const chain = [element];
-      if (element.parent_id !== null && elementMap[element.parent_id]) {
-        chain.push(...getChain(elementMap[element.parent_id], visited));
-      }
-      data.forEach((child) => {
-        if (child.parent_id === element.id) {
-          chain.push(...getChain(child, visited));
+        function getParentChain(element, chain = []) {
+            if (!element || chain.some(e => e.id === element.id)) return chain;
+            chain.unshift(element); 
+            if (element.parent_id !== null && elementMap[element.parent_id]) {
+                return getParentChain(elementMap[element.parent_id], chain);
+            }
+            return chain;
         }
-      });
+    
+     
+        function getChildChain(element, visited = new Set(), chain = []) {
+            if (!element || visited.has(element.id)) return;
+            visited.add(element.id);
+            chain.push(element);
+    
+            data
+                .filter(child => child.parent_id === element.id)
+                .sort((a, b) => a.id - b.id)
+                .forEach(child => getChildChain(child, visited, chain));
+        }
+    
+    
+        let parentChain = getParentChain(elementMap[id]); 
+        let childChain = [];
+        let visited = new Set();
+    
+        getChildChain(elementMap[id], visited, childChain); 
+    
+        
+        let finalChain = [...parentChain, ...childChain.slice(1)];
+    
+        finalChain = finalChain.map((element, index) => ({
+            ...element,
+            chain_number: index + 1
+        }));
+    
+        // Trier par ordre décroissant de l'id
+        return finalChain.sort((a, b) => a.id - b.id);
+    };
+    
+    // getChainById = (data, id) => {
+    //     const elementMap = data.reduce((map, element) => {
+    //       map[element.id] = element;
+    //       return map;
+    //     }, {});
+    
+    //     function getChain(element, visited = new Set()) {
+    //       if (!element || visited.has(element.id)) return [];
+    //       visited.add(element.id);
+    
+    //       const chain = [element];
+    //       if (element.parent_id !== null && elementMap[element.parent_id]) {
+    //         chain.push(...getChain(elementMap[element.parent_id], visited));
+    //       }
+    //       data.forEach((child) => {
+    //         if (child.parent_id === element.id) {
+    //           chain.push(...getChain(child, visited));
+    //         }
+    //       });
+    
+    //       return chain;
+    //     }
+    
+    //     if (!elementMap[id]) {
+    //       return [];
+    //     }
+    
+    //     const result = getChain(elementMap[id]);
+    //     result.sort((a, b) => b.id - a.id);
+    //     return result;
+    //   };
+    
 
-      return chain;
-    }
-
-    if (!elementMap[id]) {
-      return [];
-    }
-
-    const result = getChain(elementMap[id]);
-    result.sort((a, b) => b.id - a.id);
-    return result;
-  };
-
-  getSubmissionList = (applications) => {
+    getSubmissionList = (applications) => {
+     
     if (!applications || applications.length === 0) {
       return <p>No submissions available.</p>;
     }
@@ -198,7 +248,9 @@ class ReponseDetails extends Component {
                 href={`/${this.props.event.key}/responseDetails/${application.id}`}
                 className="application-list_link"
               >
-                {this.props.t(`Submission`) + " " + this.formatDate(application.submitted_timestamp)}
+                {/* {this.props.t(`Submission`) + " " + this.formatDate(application.submitted_timestamp)} */}
+                <strong>({application.chain_number}) {application.answers[0].value}</strong>
+
               </a>
             </li>
           ))}
@@ -207,8 +259,8 @@ class ReponseDetails extends Component {
     );
   };
 
-  getLastResponse(response) {
-    const lastResponse = response[0];
+  getLastResponse(response) {    
+    const lastResponse = response.at(-1);;
     if (lastResponse.outcome!=null && lastResponse.outcome !== 'ACCEPTED') {
         return true;
     }
@@ -222,6 +274,8 @@ class ReponseDetails extends Component {
       return <Loading />;
     }
     const chain_responses = this.getChainById(all_responses, this.props.match.params.id);
+    
+    
 
     return (
       <div className="table-wrapper response-page">
@@ -264,7 +318,7 @@ class ReponseDetails extends Component {
                   }
                   disabled={!this.getLastResponse(chain_responses)}
                 >
-                  {this.props.t("New submission")}
+                  {this.props.t("Resubmit an article")}
                 </button>
               }
             </div>

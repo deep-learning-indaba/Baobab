@@ -1081,7 +1081,7 @@ class ApplicationListComponent extends Component {
   };
 
   getSubmission = (response) => {
-    return this.props.t("Submission") + " - " + (response.is_submitted==true?this.formatDate(response.submitted_timestamp):this.formatDate(response.started_timestamp))
+       return response.answers[0].value
   };
 
   renderSections() {
@@ -1200,7 +1200,7 @@ class ApplicationListComponent extends Component {
             onClick={() => this.newSubmission(lastResponse.id)} 
             className="btn btn-primary resubmit-button"
           >
-            {this.props.t("Resubmit")}
+            {this.props.t("Resubmit an article")}
           </button>
         </div>
       );
@@ -1216,7 +1216,7 @@ class ApplicationListComponent extends Component {
       <Fragment key={response.id}>
         {children.map((childResponse) => this.renderEntireChain(childResponse))}
         <tr key={response.id} className="response-row">
-          <td>{this.getSubmission(response)}</td>
+          <td><strong>{this.getSubmission(response)}</strong></td>
           <td>{this.getStatus(response)}</td>
           <td>{this.getOutcome(response)}</td>
           <td>{this.getAction(response)}</td>
@@ -1226,6 +1226,7 @@ class ApplicationListComponent extends Component {
   };
 
   renderResponseChain = (chain) => {
+    
     return (
       <Fragment key={chain.id}>
         <tr onClick={() => this.toggleChain(chain.id)} className="chain-header">
@@ -1246,7 +1247,7 @@ class ApplicationListComponent extends Component {
               }
 
             </span>
-            <strong>{this.props.t("Submission")} {this.formatDate(chain.started_timestamp)}</strong>
+            <strong>{chain.answers[0].value}</strong>
           </td>
         </tr>
         {this.state.expandedChains && this.state.expandedChains[chain.id] && 
@@ -1261,7 +1262,7 @@ class ApplicationListComponent extends Component {
   render() {
     let allQuestions = _.flatMap(this.props.formSpec.sections, s => s.questions);
     const title = this.props.event.event_type ==='JOURNAL' ? this.props.t("Your Submissions") : this.props.t("Your Nominations");
-    let firstColumn = this.props.event.event_type ==='JOURNAL' ? this.props.t("Submission") : this.props.t("Nominee");\
+    let firstColumn = this.props.event.event_type ==='JOURNAL' ? this.props.t("Submission") : this.props.t("Nominee");
 
     if (this.props.event.event_type =='JOURNAL') {
       const responseChains = this.buildResponseChains(this.props.responses);
@@ -1406,7 +1407,7 @@ class ApplicationForm extends Component {
               className="btn btn-primary"
               onClick={() => this.newSubmission()}
               >
-              {this.props.t("New Submission")} &gt;
+              {this.props.t("Start a new submission")} &gt;
             </button>
               <hr/>
             <ApplicationList
