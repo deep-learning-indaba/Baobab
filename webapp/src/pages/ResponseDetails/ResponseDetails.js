@@ -7,6 +7,7 @@ import AnswerValue from "../../components/answerValue";
 import { eventService } from "../../services/events";
 import moment from "moment";
 import "./ResponseDetails.css";
+import { reviewService } from '../../services/reviews/review.service';
 
 class ReponseDetails extends Component {
   constructor(props) {
@@ -27,6 +28,7 @@ class ReponseDetails extends Component {
       applicationFormService.getForEvent(eventId),
       applicationFormService.getResponse(eventId),
       eventService.getEvent(eventId),
+      reviewService.getReviewAssignments(this.props.event.id)
     ]).then((responses) => {
       this.setState({
         applicationForm: responses[0].formSpec,
@@ -41,8 +43,36 @@ class ReponseDetails extends Component {
     });
 
   }
+   getReviewResponses(applicationData) {
+    
+    
+          reviewService.getResponseReviewAdmin(applicationData.id, this.props.event.id)
+              .then(resp => {
+                  if (resp.error) {
+                      this.setState({
+                          error: resp.error
+                      });
+                  }
+                  if(resp.form) {
+                      this.setState( {
+                          reviewResponses: resp.form.review_responses,
+                          reviewForm: resp.form.review_form,
+                          isLoading: false,
+                          
+                          error: resp.error
+                       });
+                  }
+              });
+      }
 
   renderSections() {
+    console.log('details');
+    
+    console.log(this.state.reviewResponses);
+    console.log('-------');
+    console.log(this.state.applicationData);
+    
+    
     const applicationForm = this.state.applicationForm;
     const applicationData = this.state.applicationData;
     let html = [];
@@ -196,42 +226,9 @@ class ReponseDetails extends Component {
             chain_number: index + 1
         }));
     
-        // Trier par ordre décroissant de l'id
         return finalChain.sort((a, b) => a.id - b.id);
     };
-    
-    // getChainById = (data, id) => {
-    //     const elementMap = data.reduce((map, element) => {
-    //       map[element.id] = element;
-    //       return map;
-    //     }, {});
-    
-    //     function getChain(element, visited = new Set()) {
-    //       if (!element || visited.has(element.id)) return [];
-    //       visited.add(element.id);
-    
-    //       const chain = [element];
-    //       if (element.parent_id !== null && elementMap[element.parent_id]) {
-    //         chain.push(...getChain(elementMap[element.parent_id], visited));
-    //       }
-    //       data.forEach((child) => {
-    //         if (child.parent_id === element.id) {
-    //           chain.push(...getChain(child, visited));
-    //         }
-    //       });
-    
-    //       return chain;
-    //     }
-    
-    //     if (!elementMap[id]) {
-    //       return [];
-    //     }
-    
-    //     const result = getChain(elementMap[id]);
-    //     result.sort((a, b) => b.id - a.id);
-    //     return result;
-    //   };
-    
+ 
 
     getSubmissionList = (applications) => {
      
@@ -301,7 +298,7 @@ class ReponseDetails extends Component {
 
           </div>
         )}
-        <div className="response-details">
+        {/* <div className="response-details">
               <button
                 className="btn btn-secondary"
                 onClick={() => this.goBack()}
@@ -321,7 +318,7 @@ class ReponseDetails extends Component {
                   {this.props.t("Resubmit an article")}
                 </button>
               }
-            </div>
+        </div> */}
         <div className="response-details">
           {this.getSubmissionList(
             chain_responses.filter(
