@@ -248,7 +248,7 @@ class ReponseDetails extends Component {
                 href={`/${this.props.event.key}/responseDetails/${application.id}`}
                 className="application-list_link"
               >
-                {/* {this.props.t(`Submission`) + " " + this.formatDate(application.submitted_timestamp)} */}
+               
                 <strong>({application.chain_number}) {application.answers[0].value}</strong>
 
               </a>
