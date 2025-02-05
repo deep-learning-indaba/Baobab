@@ -11,6 +11,8 @@ import { tagsService } from '../../services/tags/tags.service';
 import { responsesService } from '../../services/responses/responses.service';
 import AnswerValue from "../../components/answerValue";
 import { ConfirmModal } from "react-bootstrap4-modal";
+import Modal from 'react-bootstrap4-modal';
+
 import moment from 'moment'
 import { getDownloadURL } from '../../utils/files';
 import TagSelectorDialog from '../../components/TagSelectorDialog';
@@ -39,6 +41,7 @@ class ResponsePage extends Component {
             confirmModalVisible: false,
             pendingOutcome: "",
             confirmationMessage: "",
+            comment: "",
         }
     };
 
@@ -248,6 +251,7 @@ class ResponsePage extends Component {
     }
     outcomeStatus() {
         const data = this.state.applicationData;
+        const name = data.user_title + " " + data.firstname + " " + data.lastname;
         if (data) {
         if (this.state.outcome.status && this.state.outcome.status !== "REVIEW") {
             const badgeClass = this.state.outcome.status === "ACCEPTED"
@@ -325,7 +329,8 @@ class ResponsePage extends Component {
                 );
 
         }
-    
+        // console.log(this.sta); {applicationData.user_title} {applicationData.firstname} {applicationData.lastname}
+        
         return (
             <div className="user-details">
             {buttons.map((button, index) => (
@@ -333,15 +338,111 @@ class ResponsePage extends Component {
                 {button}
                 </div>
             ))}
-            <ConfirmModal
-                visible={this.state.confirmModalVisible}
-                onOK={this.handleConfirmationOK}
-                onCancel={this.handleConfirmationCancel}
-                okText={this.props.t("Yes - Confirm")}
-                cancelText={this.props.t("No - Don't confirm")}
+           {this.state.event_type==='JOURNAL'?
+           <Modal
+            visible={this.state.confirmModalVisible}
+            onCancel={this.handleConfirmationCancel}
+            dialogClassName="modal-xl"
             >
-                <p>{this.props.t(this.state.confirmationMessage)}</p>
-            </ConfirmModal>
+  
+            <div className="modal-header">
+                <h5 className="modal-title">{this.props.t("Response Letter")}</h5>
+                <button type="button" className="close" onClick={this.handleConfirmationCancel}>
+                &times;
+                </button>
+            </div>
+
+            <div className="modal-body">
+                <div className="letter">
+
+                <div className="letter-body">
+                    <p className="greeting">
+                    {this.props.t("Dear")} { name || "User"},
+                    </p>
+                    <p className="greeting">
+                    {this.props.t(
+                        "We are pleased to acknowledge the receipt of your application. Your submission has been carefully reviewed by our team, and we appreciate the time and effort you have invested."
+                    )}
+                    </p>
+                    <p className="greeting">
+                    {this.props.t(
+                        "Below is a summary of the key details and evaluations of your application."
+                    )}
+                    </p>
+
+                    {/* Application Sections */}
+                    <div className="application-status">
+                        <p className="greeting">
+                        {this.state.comment}
+                        </p>
+                        </div>
+                    {/* <textarea className="comment-box" placeholder="Comment (optional)" value={} disabled required></textarea> */}
+
+
+                    <p className="greeting">
+                    {this.props.t(
+                        "Our team has conducted a thorough review of your application. Below, you will find our detailed feedback and recommendations."
+                    )}
+                    </p>
+
+                    {/* Review Sections */}
+                    <div className="review-sections">{this.renderCompleteReviews()}</div>
+                    
+
+                    {/* Application Status Section */}
+                    <div className="application-status">
+                    <h5>{this.props.t("Application Status")}</h5>
+                    <p className="greeting">
+                        {this.props.t(
+                        "Based on our review, your application status is as follows:"
+                        )}
+                    </p>
+                    <p className="status">{this.state.pendingOutcome}</p>
+                    {/* <p>
+                        {this.props.t(
+                        "If any further action is required, we will notify you promptly."
+                        )}
+                    </p> */}
+                    </div>
+
+                    <p className="greeting">
+                    {this.props.t(
+                        "Please note that our decision is based on a comprehensive analysis of your submission. We highly value your engagement and encourage you to reach out if you have any questions or require further clarification."
+                    )}
+                    </p>
+                </div>
+
+                {/* Letter Footer */}
+                <div className="letter-footer">
+                    <p>{this.props.t("Best regards")},</p>
+                    <p>{this.props.t("JAISD Team")}</p>
+                </div>
+                </div>
+            </div>
+
+            <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={this.handleConfirmationCancel}>
+                {this.props.t("No - Don't confirm")}
+                </button>
+                <button className="btn btn-primary" onClick={this.handleConfirmationOK}>
+                {this.props.t("Yes - Confirm")}
+                </button>
+            </div>
+            </Modal>
+            :
+            
+            <ConfirmModal
+            visible={this.state.confirmModalVisible}
+            onOK={this.handleConfirmationOK}
+            onCancel={this.handleConfirmationCancel}
+            okText={this.props.t("Yes - Confirm")}
+            cancelText={this.props.t("No - Don't confirm")}
+        >
+            <p>{this.props.t(this.state.confirmationMessage)}</p>
+        </ConfirmModal>
+            }
+
+
             </div>
         );
         }
@@ -685,6 +786,21 @@ class ResponsePage extends Component {
         })
     }
 
+    handleCommentChange = (event) => {
+        this.setState({ comment: event.target.value });
+      };
+    
+      renderComment = () => {
+        return (
+          <textarea
+            className="comment-box small-text"
+            placeholder="Comment (optional)"
+            value={this.state.comment}
+            onChange={this.handleCommentChange}
+          />
+        );
+      };
+
     render() {
         const { applicationData, error, isLoading } = this.state;
         // Translation
@@ -739,6 +855,10 @@ class ResponsePage extends Component {
                     </div>
                 }
 
+                {this.state.event_type ==='JOURNAL' && <div className="response-details">
+                <h3>{t('Reviews Summary')}</h3>
+                    {this.renderComment()}
+                </div>}
 
                 {/*Response Data*/}
                 {applicationData &&

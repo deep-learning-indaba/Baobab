@@ -192,7 +192,7 @@ Congratulations! You've been selected for {event_name}!
 Please follow the link below to see details and accept your offer: {host}/offer
 You have up until {expiry_date} to accept the offer, otherwise we will automatically allocate your spot to someone else.
 
-If you are unable to accept the offer for any reason, please do let us know by visiting {host}/offer, clicking "Reject" and filling in the reason. 
+If you are unable to accept the offer for any   reason, please do let us know by visiting {host}/offer, clicking "Reject" and filling in the reason. 
 We will read all of these and if there is anything we can do to accommodate you, we may extend you a new offer in a subsequent round.
 
 If you have any queries, please contact us at {event_email_from}

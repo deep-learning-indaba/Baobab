@@ -406,3 +406,295 @@ font-size: 15px;
 .question-answer-block .question-headline {
     color: #666;
 }
+
+.submission-container {
+    text-align: center;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    width: 200px;
+}
+
+.progress-label {
+    display: block;
+    font-size: 14px;
+    color: #666;
+}
+
+.progress-value {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.upload-box {
+    border: 2px dashed #aaa;
+    padding: 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-bottom: 15px;
+}
+
+
+.file-input {
+    display: none;
+}
+
+.comment-box {
+    width: 100%;
+    height: 60px;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+
+/* Response Details Buttons */
+/* Style général de la lettre agrandie avec barre de défilement discrète */
+.letter {
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  max-width: 800px;       /* largeur maximale agrandie */
+  width: 90%;             /* occupe 90% de la largeur de l'écran */
+  margin: 20px auto;
+  padding: 20px 30px;
+  font-family: 'Arial', sans-serif;
+  color: #333;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-height: 80vh;       /* Limite la hauteur de la lettre pour activer le défilement */
+  overflow-y: auto;       /* Active le défilement vertical */
+
+  /* Pour Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #aaa #f9f9f9;
+}
+
+/* Personnalisation de la barre de défilement pour les navigateurs basés sur WebKit (Chrome, Safari) */
+.letter::-webkit-scrollbar {
+  width: 6px; /* largeur très discrète */
+}
+
+.letter::-webkit-scrollbar-track {
+  background: #f9f9f9; /* couleur du fond de la barre */
+}
+
+.letter::-webkit-scrollbar-thumb {
+  background-color: #aaa; /* couleur de la "poignée" */
+  border-radius: 3px;     /* arrondir la poignée */
+}
+
+/* En-tête de la lettre */
+.letter-header {
+  text-align: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e3e3e3;
+  padding-bottom: 15px;
+}
+
+.letter-header h2 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.letter-header .date,
+.letter-header .recipient {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #7f8c8d;
+}
+
+/* Corps de la lettre */
+.letter-body {
+  margin-top: 20px;
+  line-height: 1.6;
+}
+
+.letter-body .greeting {
+  font-size: 18px;
+  margin-bottom: 15px;
+}
+
+/* Sections d'application et de revues */
+.application-sections,
+.review-sections {
+  margin: 20px 0;
+  padding: 15px;
+  border: 1px solid #e3e3e3;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+.application-sections .section,
+.review-sections .section,
+.review-container {
+  margin-bottom: 15px;
+}
+
+.section h3,
+.section h5 {
+  margin: 10px 0;
+  color: #34495e;
+  font-size: 20px;
+}
+
+/* Style pour les conteneurs de revues */
+.review-container {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+}
+
+.review-container h4 {
+  margin-bottom: 10px;
+  font-size: 18px;
+  color: #2c3e50;
+}
+
+/* Pied de la lettre */
+.letter-footer {
+  text-align: center;
+  margin-top: 30px;
+  border-top: 1px solid #e3e3e3;
+  padding-top: 15px;
+  font-size: 16px;
+  color: #2c3e50;
+}
+
+/* Style de la zone de commentaire (désactivée ici) */
+.comment-box {
+  width: 100%;
+  height: 80px;
+  margin-bottom: 15px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+  background-color: #f2f2f2;
+  color: #888;
+}
+
+
+/* Style des boutons */
+/* Conteneur principal de la lettre */
+.letter {
+    width: 95%; /* Utilise presque toute la largeur du modal */
+    max-width: 1100px; /* Empêche qu’elle devienne trop grande sur grands écrans */
+    max-height: 80vh; /* Optimisation de la hauteur */
+    padding: 30px;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.15);
+    overflow-y: auto; /* Active le défilement vertical si nécessaire */
+    margin: auto; /* Centre la lettre horizontalement */
+    scrollbar-width: thin; /* Barre de défilement discrète pour Firefox */
+    scrollbar-color: #bbb transparent; /* Couleur douce */
+  }
+  
+  /* Barre de défilement discrète pour Webkit (Chrome, Safari) */
+  .letter::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .letter::-webkit-scrollbar-thumb {
+    background: #bbb; /* Couleur douce */
+    border-radius: 4px;
+  }
+  
+  .letter::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  /* En-tête de la lettre */
+  .letter-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .letter-header h2 {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .letter-header .date {
+    font-size: 1.1rem;
+    color: #666;
+  }
+  
+  /* Corps de la lettre */
+  .letter-body {
+    font-size: 1.3rem;
+    line-height: 1.8;
+    text-align: justify;
+    padding-right: 14px; /* Évite que le texte colle à la barre de scroll */
+  }
+  
+  /* Sections de contenu */
+  .application-sections, .review-sections {
+    background: #f8f8f8;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+  
+  .application-sections h4, .review-sections h4 {
+    font-size: 1.5rem;
+    color: #007bff;
+    margin-bottom: 15px;
+  }
+  
+  /* Pied de la lettre */
+  .letter-footer {
+    text-align: left;
+    margin-top: 20px;
+    font-weight: bold;
+    color: #333;
+  }
+  
+  /* Ajustement responsive */
+  @media (max-width: 768px) {
+    .letter {
+      width: 98%;
+      max-height: 70vh;
+    }
+  
+    .letter-header h2 {
+      font-size: 1.7rem;
+    }
+  
+    .letter-body {
+      font-size: 1.1rem;
+    }
+  }
+  
+  .application-status {
+    background-color: #f8f9fa; /* Couleur de fond légère */
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 20px;
+    border: 1px solid #ddd;
+  }
+  
+  .application-status h5 {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+  }
+  
+  .application-status p {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 5px;
+  }
+  
+  .application-status .status {
+    font-size: 18px;
+    font-weight: bold;
+    color: #007bff; /* Bleu pour attirer l'attention */
+  }
+  
