@@ -7,7 +7,7 @@ import AnswerValue from "../../components/answerValue";
 import { eventService } from "../../services/events";
 import moment from "moment";
 import "./ResponseDetails.css";
-import { reviewService } from '../../services/reviews/review.service';
+import { reviewService } from "../../services/reviews/review.service";
 
 class ReponseDetails extends Component {
   constructor(props) {
@@ -28,7 +28,7 @@ class ReponseDetails extends Component {
       applicationFormService.getForEvent(eventId),
       applicationFormService.getResponse(eventId),
       eventService.getEvent(eventId),
-      reviewService.getReviewAssignments(this.props.event.id)
+      reviewService.getReviewAssignments(this.props.event.id),
     ]).then((responses) => {
       this.setState({
         applicationForm: responses[0].formSpec,
@@ -38,41 +38,37 @@ class ReponseDetails extends Component {
         ),
         isLoading: false,
         error: responses[0].error || responses[1].error || responses[2].error,
-
       });
     });
-
   }
-   getReviewResponses(applicationData) {
-    
-    
-          reviewService.getResponseReviewAdmin(applicationData.id, this.props.event.id)
-              .then(resp => {
-                  if (resp.error) {
-                      this.setState({
-                          error: resp.error
-                      });
-                  }
-                  if(resp.form) {
-                      this.setState( {
-                          reviewResponses: resp.form.review_responses,
-                          reviewForm: resp.form.review_form,
-                          isLoading: false,
-                          
-                          error: resp.error
-                       });
-                  }
-              });
-      }
+  getReviewResponses(applicationData) {
+    reviewService
+      .getResponseReviewAdmin(applicationData.id, this.props.event.id)
+      .then((resp) => {
+        if (resp.error) {
+          this.setState({
+            error: resp.error,
+          });
+        }
+        if (resp.form) {
+          this.setState({
+            reviewResponses: resp.form.review_responses,
+            reviewForm: resp.form.review_form,
+            isLoading: false,
+
+            error: resp.error,
+          });
+        }
+      });
+  }
 
   renderSections() {
-    console.log('details');
-    
+    console.log("details");
+
     console.log(this.state.reviewResponses);
-    console.log('-------');
+    console.log("-------");
     console.log(this.state.applicationData);
-    
-    
+
     const applicationForm = this.state.applicationForm;
     const applicationData = this.state.applicationData;
     let html = [];
@@ -137,29 +133,37 @@ class ReponseDetails extends Component {
       if (unsubmitted) {
         return (
           <span>
-            <span class="badge badge-pill badge-secondary">{this.props.t('Unsubmitted')}</span>{this.formatDate(data.started_timestamp)}
+            <span class="badge badge-pill badge-secondary">
+              {this.props.t("Unsubmitted")}
+            </span>
+            {this.formatDate(data.started_timestamp)}
           </span>
         );
       }
       if (submitted) {
         return (
           <span>
-            <span class="badge badge-pill badge-success">{this.props.t('Submitted')}</span>{this.formatDate(data.submitted_timestamp)}
+            <span class="badge badge-pill badge-success">
+              {this.props.t("Submitted")}
+            </span>
+            {this.formatDate(data.submitted_timestamp)}
           </span>
         );
       }
       if (withdrawn) {
         return (
           <span>
-            <span class="badge badge-pill badge-danger">{this.props.t('Withdrawn')}</span>{this.formatDate(data.started_timestamp)}
+            <span class="badge badge-pill badge-danger">
+              {this.props.t("Withdrawn")}
+            </span>
+            {this.formatDate(data.started_timestamp)}
           </span>
         );
       }
     }
   }
 
-
-  outcomeStatus= (response) => {
+  outcomeStatus = (response) => {
     if (response.outcome) {
       const badgeClass =
         response.outcome === "ACCEPTED"
@@ -167,13 +171,17 @@ class ReponseDetails extends Component {
           : response.outcome === "REJECTED"
           ? "badge-danger"
           : "badge-warning";
-        const outcome= response.outcome==='ACCEPTED'?this.props.t("ACCEPTED"):response.outcome==='REJECTED'?
-        this.props.t("REJECTED"):response.outcome==='ACCEPT_W_REVISION'?
-        this.props.t("ACCEPTED WITH REVISION"):response.outcome==='REJECT_W_ENCOURAGEMENT'?
-        this.props.t("REJECTED WITH ENCOURAGEMENT TO RESUMIT"):this.props.t("REVIEWING");
-      return (
-        <span class={`badge badge-pill ${badgeClass}`}>{outcome}</span>
-      );
+      const outcome =
+        response.outcome === "ACCEPTED"
+          ? this.props.t("ACCEPTED")
+          : response.outcome === "REJECTED"
+          ? this.props.t("REJECTED")
+          : response.outcome === "ACCEPT_W_REVISION"
+          ? this.props.t("ACCEPTED WITH REVISION")
+          : response.outcome === "REJECT_W_ENCOURAGEMENT"
+          ? this.props.t("REJECTED WITH ENCOURAGEMENT TO RESUMIT")
+          : this.props.t("REVIEWING");
+      return <span class={`badge badge-pill ${badgeClass}`}>{outcome}</span>;
     }
     return (
       <span class="badge badge-pill badge-secondary">
@@ -182,56 +190,51 @@ class ReponseDetails extends Component {
     );
   };
 
-    getChainById = (data, id) => {
-        const elementMap = data.reduce((map, element) => {
-            map[element.id] = element;
-            return map;
-        }, {});
-    
-        if (!elementMap[id]) return [];
+  getChainById = (data, id) => {
+    const elementMap = data.reduce((map, element) => {
+      map[element.id] = element;
+      return map;
+    }, {});
 
-        function getParentChain(element, chain = []) {
-            if (!element || chain.some(e => e.id === element.id)) return chain;
-            chain.unshift(element); 
-            if (element.parent_id !== null && elementMap[element.parent_id]) {
-                return getParentChain(elementMap[element.parent_id], chain);
-            }
-            return chain;
-        }
-    
-     
-        function getChildChain(element, visited = new Set(), chain = []) {
-            if (!element || visited.has(element.id)) return;
-            visited.add(element.id);
-            chain.push(element);
-    
-            data
-                .filter(child => child.parent_id === element.id)
-                .sort((a, b) => a.id - b.id)
-                .forEach(child => getChildChain(child, visited, chain));
-        }
-    
-    
-        let parentChain = getParentChain(elementMap[id]); 
-        let childChain = [];
-        let visited = new Set();
-    
-        getChildChain(elementMap[id], visited, childChain); 
-    
-        
-        let finalChain = [...parentChain, ...childChain.slice(1)];
-    
-        finalChain = finalChain.map((element, index) => ({
-            ...element,
-            chain_number: index + 1
-        }));
-    
-        return finalChain.sort((a, b) => a.id - b.id);
-    };
- 
+    if (!elementMap[id]) return [];
 
-    getSubmissionList = (applications) => {
-     
+    function getParentChain(element, chain = []) {
+      if (!element || chain.some((e) => e.id === element.id)) return chain;
+      chain.unshift(element);
+      if (element.parent_id !== null && elementMap[element.parent_id]) {
+        return getParentChain(elementMap[element.parent_id], chain);
+      }
+      return chain;
+    }
+
+    function getChildChain(element, visited = new Set(), chain = []) {
+      if (!element || visited.has(element.id)) return;
+      visited.add(element.id);
+      chain.push(element);
+
+      data
+        .filter((child) => child.parent_id === element.id)
+        .sort((a, b) => a.id - b.id)
+        .forEach((child) => getChildChain(child, visited, chain));
+    }
+
+    let parentChain = getParentChain(elementMap[id]);
+    let childChain = [];
+    let visited = new Set();
+
+    getChildChain(elementMap[id], visited, childChain);
+
+    let finalChain = [...parentChain, ...childChain.slice(1)];
+
+    finalChain = finalChain.map((element, index) => ({
+      ...element,
+      chain_number: index + 1,
+    }));
+
+    return finalChain.sort((a, b) => a.id - b.id);
+  };
+
+  getSubmissionList = (applications) => {
     if (!applications || applications.length === 0) {
       return <p>No submissions available.</p>;
     }
@@ -239,15 +242,15 @@ class ReponseDetails extends Component {
       <div id="application-list" className="application-list">
         <h3> Related Submissions</h3>
         <ul className="application-list_items">
-          {applications.map((application,index) => (
+          {applications.map((application, index) => (
             <li key={application.id} className="application-list_item">
               <a
                 href={`/${this.props.event.key}/responseDetails/${application.id}`}
                 className="application-list_link"
               >
-               
-                <strong>({application.chain_number}) {application.answers[0].value}</strong>
-
+                <strong>
+                  ({application.chain_number}) {application.answers[0].value}
+                </strong>
               </a>
             </li>
           ))}
@@ -256,23 +259,23 @@ class ReponseDetails extends Component {
     );
   };
 
-  getLastResponse(response) {    
-    const lastResponse = response.at(-1);;
-    if (lastResponse.outcome!=null && lastResponse.outcome !== 'ACCEPTED') {
-        return true;
+  getLastResponse(response) {
+    const lastResponse = response.at(-1);
+    if (lastResponse.outcome != null && lastResponse.outcome !== "ACCEPTED") {
+      return true;
     }
     return false;
-}
-
+  }
 
   render() {
     const { applicationData, isLoading, error, all_responses } = this.state;
     if (isLoading) {
       return <Loading />;
     }
-    const chain_responses = this.getChainById(all_responses, this.props.match.params.id);
-    
-    
+    const chain_responses = this.getChainById(
+      all_responses,
+      this.props.match.params.id
+    );
 
     return (
       <div className="table-wrapper response-page">
@@ -295,30 +298,24 @@ class ReponseDetails extends Component {
           <div className="response-details">
             {this.renderSections()}
             <br />
-
           </div>
         )}
-        {/* <div className="response-details">
-              <button
-                className="btn btn-secondary"
-                onClick={() => this.goBack()}
-              >
-                {this.props.t("View Submission(s)")}
-              </button>
-              {
-                <button
-                  className="btn btn-primary shift_button"
-                  onClick={() =>
-                    (window.location.href = `/${
-                      this.props.event.key
-                    }/apply/new/${chain_responses[0].id}`)
-                  }
-                  disabled={!this.getLastResponse(chain_responses)}
-                >
-                  {this.props.t("Resubmit an article")}
-                </button>
+        <div className="response-details">
+          <button className="btn btn-secondary" onClick={() => this.goBack()}>
+            {this.props.t("View Submission(s)")}
+          </button>
+          {
+            <button
+              className="btn btn-primary shift_button"
+              onClick={() =>
+                (window.location.href = `/${this.props.event.key}/apply/new/${chain_responses[0].id}`)
               }
-        </div> */}
+              disabled={!this.getLastResponse(chain_responses)}
+            >
+              {this.props.t("Resubmit an article")}
+            </button>
+          }
+        </div>
         <div className="response-details">
           {this.getSubmissionList(
             chain_responses.filter(
