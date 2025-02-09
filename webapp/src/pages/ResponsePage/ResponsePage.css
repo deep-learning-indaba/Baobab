@@ -446,6 +446,8 @@ font-size: 15px;
     margin-bottom: 15px;
     border-radius: 5px;
     border: 1px solid #ccc;
+    color: #212529 !important;
+    font-size: 17px;
 }
 
 

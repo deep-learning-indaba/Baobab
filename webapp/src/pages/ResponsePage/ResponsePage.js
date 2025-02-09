@@ -329,7 +329,7 @@ class ResponsePage extends Component {
                 );
 
         }
-        // console.log(this.sta); {applicationData.user_title} {applicationData.firstname} {applicationData.lastname}
+        console.log(this.state);
         
         return (
             <div className="user-details">
@@ -357,7 +357,7 @@ class ResponsePage extends Component {
 
                 <div className="letter-body">
                     <p className="greeting">
-                    {this.props.t("Dear")} { name || "User"},
+                    {this.props.t("Dear")} { name},
                     </p>
                     <p className="greeting">
                     {this.props.t(
@@ -376,9 +376,7 @@ class ResponsePage extends Component {
                         {this.state.comment}
                         </p>
                         </div>
-                    {/* <textarea className="comment-box" placeholder="Comment (optional)" value={} disabled required></textarea> */}
-
-
+                
                     <p className="greeting">
                     {this.props.t(
                         "Our team has conducted a thorough review of your application. Below, you will find our detailed feedback and recommendations."
@@ -397,7 +395,10 @@ class ResponsePage extends Component {
                         "Based on our review, your application status is as follows:"
                         )}
                     </p>
-                    <p className="status">{this.state.pendingOutcome}</p>
+                    <p className="status">{this.state.pendingOutcome ==='ACCEPTED'?this.props.t("ACCEPTED"):this.state.pendingOutcome ==='REJECTED'?
+                this.props.t("REJECTED"):this.state.pendingOutcome ==='ACCEPT_W_REVISION'?
+                this.props.t("ACCEPTED WITH REVISION"):this.state.pendingOutcome ==='REJECT_W_ENCOURAGEMENT'?
+                this.props.t("REJECTED WITH ENCOURAGEMENT TO RESUMIT"):this.props.t("REVIEWING")}</p>
                     {/* <p>
                         {this.props.t(
                         "If any further action is required, we will notify you promptly."
@@ -412,11 +413,11 @@ class ResponsePage extends Component {
                     </p>
                 </div>
 
-                {/* Letter Footer */}
+                 
                 <div className="letter-footer">
                     <p>{this.props.t("Best regards")},</p>
-                    <p>{this.props.t("JAISD Team")}</p>
-                </div>
+                    {/* <p>{this.props.t("JAISD Team")}</p> */}
+                </div> 
                 </div>
             </div>
 
@@ -794,7 +795,7 @@ class ResponsePage extends Component {
         return (
           <textarea
             className="comment-box small-text"
-            placeholder="Comment (optional)"
+            placeholder="Review summary ..."
             value={this.state.comment}
             onChange={this.handleCommentChange}
           />
@@ -855,11 +856,7 @@ class ResponsePage extends Component {
                     </div>
                 }
 
-                {this.state.event_type ==='JOURNAL' && <div className="response-details">
-                <h3>{t('Reviews Summary')}</h3>
-                    {this.renderComment()}
-                </div>}
-
+     
                 {/*Response Data*/}
                 {applicationData &&
                     <div className="response-details">
@@ -896,6 +893,10 @@ class ResponsePage extends Component {
                         )}
                     </div>
                 }
+                 {this.state.event_type ==='JOURNAL' && <div className="response-details">
+                            <h3>{t('Reviews Summary')}</h3>
+                                {this.renderComment()}
+                    </div>}
 
                 <TagSelectorDialog
                     tags={this.state.filteredTagList}
