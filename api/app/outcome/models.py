@@ -26,6 +26,7 @@ class Outcome(db.Model):
     response_id = db.Column(db.Integer(), db.ForeignKey('response.id'), nullable=True)
     response = db.relationship('Response', foreign_keys=[response_id])
     
+    
 
     def __init__(self,
                  event_id,

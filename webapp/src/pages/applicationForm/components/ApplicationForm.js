@@ -1081,6 +1081,10 @@ class ApplicationListComponent extends Component {
   };
 
   getSubmission = (response) => {
+    console.log('respnse');
+    console.log(response);
+    
+    
        return response.answers[0].value
   };
 

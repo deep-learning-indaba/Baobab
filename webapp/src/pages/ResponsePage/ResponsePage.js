@@ -148,6 +148,8 @@ class ResponsePage extends Component {
     
 
     renderCompleteReviews() {
+        console.log(this.state.reviewResponses);
+        
         if (this.state.reviewResponses.length) {
             const reviews = this.state.reviewResponses.map(val => {
     
@@ -384,7 +386,9 @@ class ResponsePage extends Component {
                     </p>
 
                     {/* Review Sections */}
-                    <div className="review-sections">{this.renderCompleteReviews()}</div>
+                    <div className="review-sections">
+                        {this.renderCompleteReviews()}
+                    </div>
                     
 
                     {/* Application Status Section */}
@@ -415,7 +419,7 @@ class ResponsePage extends Component {
 
                  
                 <div className="letter-footer">
-                    <p>{this.props.t("Best regards")},</p>
+                    <p>{this.props.t("Kind Regards,")},</p>
                     {/* <p>{this.props.t("JAISD Team")}</p> */}
                 </div> 
                 </div>

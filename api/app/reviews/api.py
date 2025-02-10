@@ -632,7 +632,7 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
 
     def get_eligible_response_ids(self, event_id, reviewer_user_id, num_reviews, reviews_required, tags):
         candidate_responses = review_repository.get_candidate_responses(event_id, reviewer_user_id, reviews_required)
-        # Filter by tags
+        # Filter by tags 
         if tags:
             filtered_candidates_responses = []
             for response in candidate_responses:
