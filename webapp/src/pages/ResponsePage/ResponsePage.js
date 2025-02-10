@@ -14,6 +14,7 @@ import { ConfirmModal } from "react-bootstrap4-modal";
 import moment from 'moment'
 import { getDownloadURL } from '../../utils/files';
 import TagSelectorDialog from '../../components/TagSelectorDialog';
+import Loading from "../../components/Loading";
 
 class ResponsePage extends Component {
     constructor(props) {
@@ -35,6 +36,9 @@ class ResponsePage extends Component {
             assignableTagTypes: ["RESPONSE"],
             reviewResponses: [],
             outcome: {'status':null,'timestamp':null},
+            confirmModalVisible: false,
+            pendingOutcome: "",
+            confirmationMessage: "",
         }
     };
 
@@ -166,7 +170,7 @@ class ResponsePage extends Component {
     }
     
     getOutcome() {
-        outcomeService.getOutcome(this.props.event.id, this.state.applicationData.user_id).then(response => {
+        outcomeService.getOutcome(this.props.event.id, this.state.applicationData.user_id,this.props.match.params.id).then(response => {
             if (response.status === 200) {
                 const newOutcome = {
                     timestamp: response.outcome.timestamp,
@@ -189,7 +193,7 @@ class ResponsePage extends Component {
     };
 
     submitOutcome(selectedOutcome) {
-        outcomeService.assignOutcome(this.state.applicationData.user_id, this.props.event.id, selectedOutcome).then(response => {
+        outcomeService.assignOutcome(this.state.applicationData.user_id, this.props.event.id, selectedOutcome, this.props.match.params.id).then(response => {
             if (response.status === 201) {
                 const newOutcome = {
                     timestamp: response.outcome.timestamp,
@@ -197,7 +201,8 @@ class ResponsePage extends Component {
                 };
 
                 this.setState({
-                    outcome: newOutcome
+                    outcome: newOutcome,
+                    confirmModalVisible: false,
                 });
             } else {
                 this.setState({erorr: response.error});
@@ -205,107 +210,143 @@ class ResponsePage extends Component {
         });
     }
 
+    handleConfirmation = (outcome, message) => {
+    this.setState({
+      confirmModalVisible: true,
+      pendingOutcome: outcome,
+      confirmationMessage: message,
+        });
+    };
+
+    handleConfirmationOK = (event) => {
+        this.setState({
+        confirmModalVisible: false,
+        });
+        this.submitOutcome(this.state.pendingOutcome);
+        
+    };
+
+    handleConfirmationCancel = (event) => {
+        this.setState({
+        confirmModalVisible: false,
+        });
+    };
+
+    renderConfirmationButton(outcome, label, className, message) {
+        return (
+        <button
+            type="button"
+            className={`btn ${className}`}
+            id={outcome.toLowerCase()}
+            onClick={(e) =>
+            this.handleConfirmation(outcome, message)
+            }
+        >
+            {this.props.t(label)}
+        </button>
+        );
+    }
     outcomeStatus() {
         const data = this.state.applicationData;
-        
         if (data) {
+        if (this.state.outcome.status && this.state.outcome.status !== "REVIEW") {
+            const badgeClass = this.state.outcome.status === "ACCEPTED"
+                ? "badge-success"
+                : this.state.outcome.status === "REJECTED"
+                ? "badge-danger"
+                : "badge-warning";
 
-            if (this.state.outcome.status && this.state.outcome.status !== 'REVIEW') {
-                if (this.state.outcome.status === 'ACCEPTED') {
-                    return <span><span class="badge badge-pill badge-success">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
-                } else if (this.state.outcome.status === 'REJECTED') {
-                    return <span><span class="badge badge-pill badge-danger">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
-                } else {
-                    return <span><span class="badge badge-pill badge-warning">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
-                }
-            };
+            const outcome= this.state.outcome.status ==='ACCEPTED'?this.props.t("ACCEPTED"):this.state.outcome.status ==='REJECTED'?
+                this.props.t("REJECTED"):this.state.outcome.status ==='ACCEPT_W_REVISION'?
+                this.props.t("ACCEPTED WITH REVISION"):this.state.outcome.status ==='REJECT_W_ENCOURAGEMENT'?
+                this.props.t("REJECTED WITH ENCOURAGEMENT TO RESUMIT"):this.props.t("REVIEWING");
+    
+            return (
+            <span>
+                <span className={`badge badge-pill ${badgeClass}`}>
+                {outcome}
+                </span>{" "}
+                {this.formatDate(this.state.outcome.timestamp)}
+            </span>
+            );
+        }
+    
+        const { event_type } = this.state;
+        const buttons = [];
+    
+        if (event_type === "JOURNAL" || event_type === "CALL" || event_type === "EVENT") {
+            buttons.push(
+            this.renderConfirmationButton(
+                "ACCEPTED",
+                "Accept",
+                "btn-success",
+                "Are you sure you want to ACCEPT this submission?"
+            )
+            );
+    
+            if (event_type === "JOURNAL") {
+            buttons.push(
+                this.renderConfirmationButton(
+                "ACCEPT_W_REVISION",
+                "Accept with Minor Revision",
+                "btn-warning",
+                "Are you sure you want to ACCEPT WITH MINOR REVISION?"
+                )
+            );
+            buttons.push(
+                this.renderConfirmationButton(
+                "REJECT_W_ENCOURAGEMENT",
+                "Reject with Encouragement to Resubmit",
+                "btn-warning",
+                "Are you sure you want to REJECT WITH ENCOURAGEMENT TO RESUBMIT?"
+                )
+            );
+            
+            }
+    
+            if (event_type === "EVENT") {
+            buttons.push(
+                this.renderConfirmationButton(
+                "WAITLIST",
+                "Waitlist",
+                "btn-warning",
+                "Are you sure you want to WAITLIST this submission?"
+                )
+            );
+            }
+          
+            buttons.push(
+                    this.renderConfirmationButton(
+                    "REJECTED",
+                    "Reject",
+                    "btn-danger",
+                    "Are you sure you want to REJECT this submission?"
+                    )
+                );
 
-            if (this.state.event_type === 'JOURNAL') {
-                return <div className='user-details'>
-                    <div className="user-details">
-                        <button
-                            type="button"
-                            class="btn btn-success"
-                            id="accept"
-                            onClick={(e) => this.submitOutcome('ACCEPTED')}>
-                            Accept
-                        </button>
-                    </div>
-                    <div className="user-details">
-                        <button
-                            type="button"
-                            class="btn btn-warning"
-                            id="accept"
-                            onClick={(e) => this.submitOutcome('ACCEPT_W_REVISION')}>
-                            Accept with Minor Revision
-                        </button>
-                    </div>
-                    <div className="user-details">
-                        <button
-                            type="button"
-                            class="btn btn-warning"
-                            id="reject with encouragement"
-                            onClick={(e) => this.submitOutcome('REJECT_W_ENCOURAGEMENT')}>
-                            Reject with Encouragement to Resubmit
-                        </button>
-                    </div>    
-                    <div className="user-details">
-                        <button
-                            type="button"
-                            class="btn btn-danger"
-                            id="reject"
-                            onClick={(e) => this.submitOutcome('REJECTED')}>
-                            Reject
-                        </button>
-                    </div>    
+        }
+    
+        return (
+            <div className="user-details">
+            {buttons.map((button, index) => (
+                <div key={index} className="user-details">
+                {button}
                 </div>
-            }
-            else if (this.state.event_type === 'CALL') {
-                return <div className='user-details'>
-                    <div className="user-details">
-                        <button
-                            type="button"
-                            class="btn btn-success"
-                            id="accept"
-                            onClick={(e) => this.submitOutcome('ACCEPTED')}>
-                            Accept
-                        </button>
-                    </div>
-                    <div className="user-details">
-                        <button
-                            type="button"
-                            class="btn btn-danger"
-                            id="reject"
-                            onClick={(e) => this.submitOutcome('REJECTED')}>
-                            Reject
-                        </button>
-                    </div>    
-                </div>
-            }
-            else if (this.state.event_type === 'EVENT') {
-                return <div className='user-details'>
-                    <div className="user-details">
-                        <button
-                            type="button"
-                            class="btn btn-danger"
-                            id="reject"
-                            onClick={(e) => this.submitOutcome('REJECTED')}>
-                            Reject
-                        </button>
-                    </div>    
-                    <div className="user-details">
-                    <button
-                        type="button"
-                        class="btn btn-warning"
-                        id="waitlist"
-                        onClick={(e) => this.submitOutcome('WAITLIST')}>
-                        Waitlist
-                    </button>
-                </div>
-                </div>
-            }
-        };
-    };
+            ))}
+            <ConfirmModal
+                visible={this.state.confirmModalVisible}
+                onOK={this.handleConfirmationOK}
+                onCancel={this.handleConfirmationCancel}
+                okText={this.props.t("Yes - Confirm")}
+                cancelText={this.props.t("No - Don't confirm")}
+            >
+                <p>{this.props.t(this.state.confirmationMessage)}</p>
+            </ConfirmModal>
+            </div>
+        );
+        }
+    }
+    
 
     // Render Sections
     renderSections() {
