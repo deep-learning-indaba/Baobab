@@ -329,8 +329,6 @@ font-size: 15px;
     color: #e8a64a;
 }
 
-
-/* Response Details Section and Sub-Sections */
 .response-details {
     margin-top: 20px;
     width: 100%;
@@ -353,7 +351,6 @@ font-size: 15px;
     margin-bottom: 0.75em;
 }
 
-/* Q&A Sections */
 .Q-A {
     display: flex;
     flex-wrap: wrap;
@@ -390,7 +387,6 @@ font-size: 15px;
 }
 
 
-/* Response Details Type Face */
 .response-details h3 {
     color: hsl(213deg 16% 49%);
     margin: 0;
@@ -450,43 +446,38 @@ font-size: 15px;
     font-size: 17px;
 }
 
-
-/* Response Details Buttons */
-/* Style général de la lettre agrandie avec barre de défilement discrète */
 .letter {
   background-color: #ffffff;
   border: 1px solid #ddd;
   border-radius: 8px;
-  max-width: 800px;       /* largeur maximale agrandie */
-  width: 90%;             /* occupe 90% de la largeur de l'écran */
+  max-width: 800px;       
+  width: 90%;             
   margin: 20px auto;
   padding: 20px 30px;
   font-family: 'Arial', sans-serif;
   color: #333;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  max-height: 80vh;       /* Limite la hauteur de la lettre pour activer le défilement */
-  overflow-y: auto;       /* Active le défilement vertical */
+  max-height: 80vh;       
+  overflow-y: auto;       
 
-  /* Pour Firefox */
+
   scrollbar-width: thin;
   scrollbar-color: #aaa #f9f9f9;
 }
 
-/* Personnalisation de la barre de défilement pour les navigateurs basés sur WebKit (Chrome, Safari) */
 .letter::-webkit-scrollbar {
-  width: 6px; /* largeur très discrète */
+  width: 6px; 
 }
 
 .letter::-webkit-scrollbar-track {
-  background: #f9f9f9; /* couleur du fond de la barre */
+  background: #f9f9f9;
 }
 
 .letter::-webkit-scrollbar-thumb {
-  background-color: #aaa; /* couleur de la "poignée" */
-  border-radius: 3px;     /* arrondir la poignée */
+  background-color: #aaa; 
+  border-radius: 3px;     
 }
 
-/* En-tête de la lettre */
 .letter-header {
   text-align: center;
   margin-bottom: 20px;
@@ -508,7 +499,6 @@ font-size: 15px;
   color: #7f8c8d;
 }
 
-/* Corps de la lettre */
 .letter-body {
   margin-top: 20px;
   line-height: 1.6;
@@ -519,7 +509,6 @@ font-size: 15px;
   margin-bottom: 15px;
 }
 
-/* Sections d'application et de revues */
 .application-sections,
 .review-sections {
   margin: 20px 0;
@@ -542,7 +531,6 @@ font-size: 15px;
   font-size: 20px;
 }
 
-/* Style pour les conteneurs de revues */
 .review-container {
   padding: 10px;
   border: 1px solid #ccc;
@@ -556,7 +544,6 @@ font-size: 15px;
   color: #2c3e50;
 }
 
-/* Pied de la lettre */
 .letter-footer {
   text-align: center;
   margin-top: 30px;
@@ -566,7 +553,6 @@ font-size: 15px;
   color: #2c3e50;
 }
 
-/* Style de la zone de commentaire (désactivée ici) */
 .comment-box {
   width: 100%;
   height: 200px;
@@ -576,13 +562,9 @@ font-size: 15px;
   border-radius: 4px;
   resize: vertical;
   background-color: #f2f2f2;
-  /* color: #888; */
   color: #212529 !important;
 }
 
-
-/* Style des boutons */
-/* Conteneur principal de la lettre */
 .letter {
     width: 95%;
     max-width: 1100px;
@@ -609,8 +591,7 @@ font-size: 15px;
   .letter::-webkit-scrollbar-track {
     background: transparent;
   }
-  
-  /* En-tête de la lettre */
+ 
   .letter-header {
     text-align: center;
     margin-bottom: 20px;
@@ -649,7 +630,7 @@ font-size: 15px;
     margin-bottom: 15px;
   }
   
-  /* Pied de la lettre */
+  
   .letter-footer {
     text-align: left;
     margin-top: 20px;
@@ -657,7 +638,7 @@ font-size: 15px;
     color: #333;
   }
   
-  /* Ajustement responsive */
+
   @media (max-width: 768px) {
     .letter {
       width: 98%;
