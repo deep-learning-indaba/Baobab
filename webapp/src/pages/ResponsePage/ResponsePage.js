@@ -42,6 +42,7 @@ class ResponsePage extends Component {
             pendingOutcome: "",
             confirmationMessage: "",
             comment: "",
+            isCommentEmpty: false
         }
     };
 
@@ -237,20 +238,38 @@ class ResponsePage extends Component {
         });
     };
 
+
+    handleConfirmationClick = (outcome, message) => {
+        const { comment } = this.state;
+        if (this.state.event_type==='JOURNAL') {
+            
+            if (!comment || !comment.trim()) {
+                this.setState({ isCommentEmpty: true });
+                alert("The review summary field is required.");
+                return;
+            }
+            
+            this.setState({ isCommentEmpty: false });
+        }
+        this.handleConfirmation(outcome, message);
+      };
+
     renderConfirmationButton(outcome, label, className, message) {
         return (
-        <button
+          <button
             type="button"
             className={`btn ${className}`}
             id={outcome.toLowerCase()}
-            onClick={(e) =>
-            this.handleConfirmation(outcome, message)
-            }
-        >
+            onClick={() => this.handleConfirmationClick(outcome, message)}
+          >
             {this.props.t(label)}
-        </button>
+          </button>
         );
-    }
+      }
+      
+      
+
+      
     outcomeStatus() {
         const data = this.state.applicationData;
         const name = data.user_title + " " + data.firstname + " " + data.lastname;
@@ -403,11 +422,6 @@ class ResponsePage extends Component {
                 this.props.t("REJECTED"):this.state.pendingOutcome ==='ACCEPT_W_REVISION'?
                 this.props.t("ACCEPTED WITH REVISION"):this.state.pendingOutcome ==='REJECT_W_ENCOURAGEMENT'?
                 this.props.t("REJECTED WITH ENCOURAGEMENT TO RESUMIT"):this.props.t("REVIEWING")}</p>
-                    {/* <p>
-                        {this.props.t(
-                        "If any further action is required, we will notify you promptly."
-                        )}
-                    </p> */}
                     </div>
 
                     <p className="greeting">
@@ -419,8 +433,7 @@ class ResponsePage extends Component {
 
                  
                 <div className="letter-footer">
-                    <p>{this.props.t("Kind Regards,")},</p>
-                    {/* <p>{this.props.t("JAISD Team")}</p> */}
+                    <p>{this.props.t("Kind Regards")},</p>
                 </div> 
                 </div>
             </div>
@@ -792,19 +805,28 @@ class ResponsePage extends Component {
     }
 
     handleCommentChange = (event) => {
-        this.setState({ comment: event.target.value });
+        this.setState({ comment: event.target.value ,isCommentEmpty: false});
+        
       };
     
-      renderComment = () => {
+    
+
+    renderComment = () => {
         return (
           <textarea
-            className="comment-box small-text"
+            className={`comment-box small-text ${
+              this.state.isCommentEmpty ? "empty-comment" : ""
+            }`}
             placeholder="Review summary ..."
-            value={this.state.comment}
+            value={this.state.outcome.status}
             onChange={this.handleCommentChange}
+            readOnly={this.state.outcome.status !== null}
+            
           />
         );
       };
+      
+      
 
     render() {
         const { applicationData, error, isLoading } = this.state;
@@ -859,6 +881,11 @@ class ResponsePage extends Component {
                         </div>
                     </div>
                 }
+                {this.state.event_type ==='JOURNAL' && 
+                <div className="response-details">
+                            <h3>{t('Reviews Summary')}</h3>
+                                {this.renderComment()}
+                </div>}
 
      
                 {/*Response Data*/}
@@ -897,10 +924,7 @@ class ResponsePage extends Component {
                         )}
                     </div>
                 }
-                 {this.state.event_type ==='JOURNAL' && <div className="response-details">
-                            <h3>{t('Reviews Summary')}</h3>
-                                {this.renderComment()}
-                    </div>}
+               
 
                 <TagSelectorDialog
                     tags={this.state.filteredTagList}

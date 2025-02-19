@@ -1,8 +1,15 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { withTranslation } from "react-i18next";
-
+import { ConfirmModal } from "react-bootstrap4-modal";
 class EventStatus extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      open: false,
+      currentLink: ""
+    };
+  }
   unknownStatus = (status_name, status) => {
     return {
       title: "ERROR",
@@ -448,33 +455,84 @@ class EventStatus extends Component {
     return this.applicationClosedStatus(event);
   };
 
-  renderButton = (definition) => {
-    if (definition.link && this.props.submissionLink) {
-      return (
-        <div className="inline-btn-container">
-          <div className="inline-btn-container">
-            <a
-              href={definition.submissionLink}
-              className={"btn " + definition.submissionLinkClass}
-            >
-              {definition.submissionShortText}
-            </a>
-          </div>
-          <div className="inline-btn-container">
-            <a href={definition.link} className={"btn " + definition.linkClass}>
-              {definition.shortText}
-            </a>
-          </div>
-        </div>
-      );
-    } else {
-      return (
-        <a href={definition.link} className={"btn " + definition.linkClass}>
-          {definition.shortText}
-        </a>
-      );
-    }
+  // renderButton = (definition) => {
+  //   if (definition.link && this.props.submissionLink) {
+  //     return (
+  //       <div className="inline-btn-container">
+  //         <div className="inline-btn-container">
+  //           <a
+  //             href={definition.submissionLink}
+  //             className={"btn " + definition.submissionLinkClass}
+  //           >
+  //             {definition.submissionShortText}
+  //           </a>
+  //         </div>
+  //         <div className="inline-btn-container">
+  //           <a href={definition.link} className={"btn " + definition.linkClass}>
+  //             {definition.shortText}
+  //           </a>
+  //         </div>
+  //       </div>
+  //     );
+  //   } else {
+  //     return (
+  //       <a href={definition.link} className={"btn " + definition.linkClass}>
+  //         {definition.shortText}
+  //       </a>
+  //     );
+  //   }
+  // };
+  
+  handleOpenModal = (link) => {
+    this.setState({ currentLink: link, open: true });
   };
+  handleCloseModal = (link) => {
+    this.setState({ open: false });
+  };
+
+  handleConfirm = () => {
+    window.location.href = this.state.currentLink;
+  };
+
+  renderButton=(definition)=>{
+    return (
+      <>
+        {definition.link && this.props.submissionLink ? (
+          <div className="inline-btn-container">
+            <div className="inline-btn-container">
+              <button
+                className={"btn " + definition.submissionLinkClass}
+                onClick={() => this.handleOpenModal(definition.submissionLink)}
+              >
+                {definition.submissionShortText}
+              </button>
+            </div>
+            <div className="inline-btn-container">
+             <a href={definition.link} className={"btn " + definition.linkClass}>
+              {definition.shortText}
+             </a>
+           </div>
+          </div>
+        ) : (
+          <a href={definition.link} className={"btn " + definition.linkClass}>
+           {definition.shortText}
+         </a>
+        )}
+
+        <ConfirmModal
+                    visible={this.state.open}
+                    onOK={this.handleConfirm}
+                    onCancel={this.handleCloseModal}
+                    okText={this.props.t("Yes - Confirm")}
+                    cancelText={this.props.t("No - Don't confirm")}
+                >
+                    <p>{this.props.t('When you selecting this your are creating a new file for submitting your article \n \n Are you sure you want to continue?')}</p>
+          </ConfirmModal>
+      </>
+    );
+  }
+  
+  
   render() {
     const definition = this.mapStatus(this.props.event);
     if (this.props.longForm) {

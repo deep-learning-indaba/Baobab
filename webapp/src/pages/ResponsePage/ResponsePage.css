@@ -569,40 +569,40 @@ font-size: 15px;
 /* Style de la zone de commentaire (désactivée ici) */
 .comment-box {
   width: 100%;
-  height: 80px;
+  height: 200px;
   margin-bottom: 15px;
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
   resize: vertical;
   background-color: #f2f2f2;
-  color: #888;
+  /* color: #888; */
+  color: #212529 !important;
 }
 
 
 /* Style des boutons */
 /* Conteneur principal de la lettre */
 .letter {
-    width: 95%; /* Utilise presque toute la largeur du modal */
-    max-width: 1100px; /* Empêche qu’elle devienne trop grande sur grands écrans */
-    max-height: 80vh; /* Optimisation de la hauteur */
+    width: 95%;
+    max-width: 1100px;
+    max-height: 80vh;
     padding: 30px;
     border-radius: 10px;
     background: #fff;
     box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.15);
-    overflow-y: auto; /* Active le défilement vertical si nécessaire */
-    margin: auto; /* Centre la lettre horizontalement */
-    scrollbar-width: thin; /* Barre de défilement discrète pour Firefox */
-    scrollbar-color: #bbb transparent; /* Couleur douce */
+    overflow-y: auto; 
+    margin: auto; 
+    scrollbar-width: thin; 
+    scrollbar-color: #bbb transparent; 
   }
   
-  /* Barre de défilement discrète pour Webkit (Chrome, Safari) */
   .letter::-webkit-scrollbar {
     width: 6px;
   }
   
   .letter::-webkit-scrollbar-thumb {
-    background: #bbb; /* Couleur douce */
+    background: #bbb;
     border-radius: 4px;
   }
   
@@ -627,15 +627,15 @@ font-size: 15px;
     color: #666;
   }
   
-  /* Corps de la lettre */
+  
   .letter-body {
     font-size: 1.3rem;
     line-height: 1.8;
     text-align: justify;
-    padding-right: 14px; /* Évite que le texte colle à la barre de scroll */
+    padding-right: 14px; 
   }
   
-  /* Sections de contenu */
+ 
   .application-sections, .review-sections {
     background: #f8f8f8;
     padding: 20px;
@@ -674,7 +674,7 @@ font-size: 15px;
   }
   
   .application-status {
-    background-color: #f8f9fa; /* Couleur de fond légère */
+    background-color: #f8f9fa; 
     padding: 15px;
     border-radius: 8px;
     margin-top: 20px;
@@ -697,6 +697,11 @@ font-size: 15px;
   .application-status .status {
     font-size: 18px;
     font-weight: bold;
-    color: #007bff; /* Bleu pour attirer l'attention */
+    color: #007bff; 
+  }
+  
+
+  .empty-comment {
+    border: 1px solid red;
   }
   
