@@ -25,6 +25,8 @@ class Outcome(db.Model):
 
     response_id = db.Column(db.Integer(), db.ForeignKey('response.id'), nullable=True)
     response = db.relationship('Response', foreign_keys=[response_id])
+
+    review_summary = db.Column(db.String(250), nullable=True)
     
     
 
@@ -33,7 +35,8 @@ class Outcome(db.Model):
                  user_id,
                  status,
                  updated_by_user_id,
-                 response_id
+                 response_id,
+                 review_summary
                  ):
         self.event_id = event_id
         self.user_id = user_id
@@ -42,6 +45,7 @@ class Outcome(db.Model):
         self.latest = True
         self.updated_by_user_id = updated_by_user_id
         self.response_id = response_id
+        self.review_summary = review_summary
 
     def reset_latest(self):
         self.latest = False

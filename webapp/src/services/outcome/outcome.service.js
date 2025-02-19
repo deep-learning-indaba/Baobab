@@ -31,7 +31,7 @@ function getOutcome(event_id, user_id,response_id){
       });
 }
 
-function assignOutcome(user_id, event_id, outcome, response_id){
+function assignOutcome(user_id, event_id, outcome, response_id,review_summary){
   return axios
         .post(baseUrl + "/api/v1/outcome", event_id, { 
             "headers": authHeader(),
@@ -39,7 +39,8 @@ function assignOutcome(user_id, event_id, outcome, response_id){
                 outcome: outcome,
                 event_id: event_id,
                 user_id: user_id,
-                response_id: response_id
+                response_id: response_id,
+                review_summary: review_summary
             }
         })
       .then(function (response){

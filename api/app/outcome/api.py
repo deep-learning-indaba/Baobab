@@ -26,6 +26,7 @@ outcome_fields = {
     'id': fields.Integer,
     'status': fields.String(attribute=_extract_status),
     'timestamp': fields.DateTime(dt_format='iso8601'),
+    'review_summary': fields.String,
 }
 
 user_fields = {
@@ -63,7 +64,7 @@ outcome_list_fields = {
     'timestamp': fields.DateTime(dt_format='iso8601'),
     'user': fields.Nested(user_fields),
     'updated_by_user': fields.Nested(user_fields),
-    'response': fields.Nested(response_fields),
+    'response': fields.Nested(response_fields)
 }
 
 class OutcomeAPI(restful.Resource):
@@ -99,6 +100,7 @@ class OutcomeAPI(restful.Resource):
         req_parser.add_argument('user_id', type=int, required=True)
         req_parser.add_argument('outcome', type=str, required=True)
         req_parser.add_argument('response_id', type=int, required=True)
+        req_parser.add_argument('review_summary', type=str, required=True)
         args = req_parser.parse_args()
 
         event = event_repository.get_by_id(event_id)
@@ -127,7 +129,8 @@ class OutcomeAPI(restful.Resource):
                     args['user_id'],
                     status,
                     g.current_user['id'],
-                    args['response_id'])
+                    args['response_id'],
+                    args['review_summary'])
 
             outcome_repository.add(outcome)
             db.session.commit()

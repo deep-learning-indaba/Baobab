@@ -526,7 +526,7 @@ class EventStatus extends Component {
                     okText={this.props.t("Yes - Confirm")}
                     cancelText={this.props.t("No - Don't confirm")}
                 >
-                    <p>{this.props.t('When you selecting this your are creating a new file for submitting your article \n \n Are you sure you want to continue?')}</p>
+                    <p>{this.props.t('When you selecting this your are creating a new file for submitting your article \n Are you sure you want to continue?')}</p>
           </ConfirmModal>
       </>
     );

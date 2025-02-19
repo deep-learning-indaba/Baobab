@@ -37,11 +37,11 @@ class ResponsePage extends Component {
             tagList: [],
             assignableTagTypes: ["RESPONSE"],
             reviewResponses: [],
-            outcome: {'status':null,'timestamp':null},
+            outcome: {'status':null,'timestamp':null, 'review_summary':null},
             confirmModalVisible: false,
             pendingOutcome: "",
             confirmationMessage: "",
-            comment: "",
+            review_summary: "",
             isCommentEmpty: false
         }
     };
@@ -181,6 +181,7 @@ class ResponsePage extends Component {
                 const newOutcome = {
                     timestamp: response.outcome.timestamp,
                     status: response.outcome.status,
+                    review_summary: response.outcome.review_summary
                 };
                 this.setState(
                     {
@@ -199,11 +200,12 @@ class ResponsePage extends Component {
     };
 
     submitOutcome(selectedOutcome) {
-        outcomeService.assignOutcome(this.state.applicationData.user_id, this.props.event.id, selectedOutcome, this.props.match.params.id).then(response => {
+        outcomeService.assignOutcome(this.state.applicationData.user_id, this.props.event.id, selectedOutcome, this.props.match.params.id,this.state.review_summary).then(response => {
             if (response.status === 201) {
                 const newOutcome = {
                     timestamp: response.outcome.timestamp,
                     status: response.outcome.status,
+                    review_summary: response.outcome.review_summary
                 };
 
                 this.setState({
@@ -240,10 +242,10 @@ class ResponsePage extends Component {
 
 
     handleConfirmationClick = (outcome, message) => {
-        const { comment } = this.state;
+        const { review_summary } = this.state;
         if (this.state.event_type==='JOURNAL') {
             
-            if (!comment || !comment.trim()) {
+            if (!review_summary || !review_summary.trim()) {
                 this.setState({ isCommentEmpty: true });
                 alert("The review summary field is required.");
                 return;
@@ -394,7 +396,7 @@ class ResponsePage extends Component {
                     {/* Application Sections */}
                     <div className="application-status">
                         <p className="greeting">
-                        {this.state.comment}
+                        {this.state.review_summary}
                         </p>
                         </div>
                 
@@ -805,7 +807,7 @@ class ResponsePage extends Component {
     }
 
     handleCommentChange = (event) => {
-        this.setState({ comment: event.target.value ,isCommentEmpty: false});
+        this.setState({ review_summary: event.target.value ,isCommentEmpty: false});
         
       };
     
