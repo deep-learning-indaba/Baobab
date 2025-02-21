@@ -27,6 +27,7 @@ class Outcome(db.Model):
     response = db.relationship('Response', foreign_keys=[response_id])
 
     review_summary = db.Column(db.String(250), nullable=True)
+
     
     
 

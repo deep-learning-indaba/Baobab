@@ -149,8 +149,7 @@ class ResponsePage extends Component {
     
 
     renderCompleteReviews() {
-        console.log(this.state.reviewResponses);
-        
+
         if (this.state.reviewResponses.length) {
             const reviews = this.state.reviewResponses.map(val => {
     
@@ -174,10 +173,36 @@ class ResponsePage extends Component {
     
         return <p>No reviews available</p>;
     }
+
+    renderJournalReviews() {
+        const { reviewResponses, reviewForm } = this.state;
+        const { t } = this.props;
+    
+        if (!reviewResponses.length) {
+            return <p>{t("No reviews available")}</p>;
+        }
+    
+        return reviewResponses.map((val, index) => (
+            <div key={val.id} className="review-container">
+                <h4 className="reviewer-section">
+                    {t("Reviewer ") + (index + 1)}
+                </h4>
+                {reviewForm.review_sections.map(section => (
+                    <div key={section.id} className="section">
+                        <h5>{section.headline}</h5>
+                        {this.renderReviewResponse(val, section)}
+                    </div>
+                ))}
+            </div>
+        ));
+    }
+    
     
     getOutcome() {
         outcomeService.getOutcome(this.props.event.id, this.state.applicationData.user_id,this.props.match.params.id).then(response => {
             if (response.status === 200) {
+                console.log(response);
+                
                 const newOutcome = {
                     timestamp: response.outcome.timestamp,
                     status: response.outcome.status,
@@ -199,14 +224,15 @@ class ResponsePage extends Component {
         });
     };
 
-    submitOutcome(selectedOutcome) {
-        outcomeService.assignOutcome(this.state.applicationData.user_id, this.props.event.id, selectedOutcome, this.props.match.params.id,this.state.review_summary).then(response => {
+    submitOutcome(selectedOutcome,review_summary) {
+        outcomeService.assignOutcome(this.state.applicationData.user_id, this.props.event.id, selectedOutcome, this.props.match.params.id,review_summary).then(response => {
             if (response.status === 201) {
                 const newOutcome = {
                     timestamp: response.outcome.timestamp,
                     status: response.outcome.status,
                     review_summary: response.outcome.review_summary
                 };
+
 
                 this.setState({
                     outcome: newOutcome,
@@ -230,7 +256,7 @@ class ResponsePage extends Component {
         this.setState({
         confirmModalVisible: false,
         });
-        this.submitOutcome(this.state.pendingOutcome);
+        this.submitOutcome(this.state.pendingOutcome,this.state.review_summary);
         
     };
 
@@ -408,7 +434,7 @@ class ResponsePage extends Component {
 
                     {/* Review Sections */}
                     <div className="review-sections">
-                        {this.renderCompleteReviews()}
+                        {this.renderJournalReviews()}
                     </div>
                     
 
@@ -767,7 +793,7 @@ class ResponsePage extends Component {
         if (!this.state.reviewResponses || !this.state.applicationData) {
             return <div></div>
         }
-        return < ReviewModal
+        return <ReviewModal
             handlePost={(data) => this.postReviewerService(data)}
             response={this.state.applicationData}
             reviewers={this.state.availableReviewers.filter(r => !this.state.applicationData.reviewers.some(rr => rr.reviewer_user_id === r.reviewer_user_id))}
@@ -820,11 +846,12 @@ class ResponsePage extends Component {
               this.state.isCommentEmpty ? "empty-comment" : ""
             }`}
             placeholder="Review summary ..."
-            value={this.state.outcome.status}
+            value={this.state.outcome.review_summary}
             onChange={this.handleCommentChange}
             readOnly={this.state.outcome.status !== null}
             
           />
+          
         );
       };
       

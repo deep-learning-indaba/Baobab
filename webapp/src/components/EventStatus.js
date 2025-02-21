@@ -133,6 +133,18 @@ class EventStatus extends Component {
         link: applyLink,
       }};
     } else if (event.status.application_status === "Not Submitted") {
+      if (event.event_type === "JOURNAL") {
+        return {
+          titleClass: "text-success",
+          longText: this.props.t("You have submitted your article."),
+          shortText: this.props.t("View Submission(s)"),
+          linkClass: "btn-secondary",
+          link: viewLink,
+          submissionShortText: this.props.t("New submission"),
+          submissionLinkClass: "btn-primary",
+          submissionLink: submissionLink,
+        };
+      } else {
       return {
         title: this.props.t("In Progress"),
         titleClass: "text-warning",
@@ -143,6 +155,7 @@ class EventStatus extends Component {
         linkClass: "btn-primary",
         link: applyLink,
       };
+    }
     } else {
       if (event.event_type === "JOURNAL") {
         return {
@@ -455,38 +468,10 @@ class EventStatus extends Component {
     return this.applicationClosedStatus(event);
   };
 
-  // renderButton = (definition) => {
-  //   if (definition.link && this.props.submissionLink) {
-  //     return (
-  //       <div className="inline-btn-container">
-  //         <div className="inline-btn-container">
-  //           <a
-  //             href={definition.submissionLink}
-  //             className={"btn " + definition.submissionLinkClass}
-  //           >
-  //             {definition.submissionShortText}
-  //           </a>
-  //         </div>
-  //         <div className="inline-btn-container">
-  //           <a href={definition.link} className={"btn " + definition.linkClass}>
-  //             {definition.shortText}
-  //           </a>
-  //         </div>
-  //       </div>
-  //     );
-  //   } else {
-  //     return (
-  //       <a href={definition.link} className={"btn " + definition.linkClass}>
-  //         {definition.shortText}
-  //       </a>
-  //     );
-  //   }
-  // };
-  
   handleOpenModal = (link) => {
     this.setState({ currentLink: link, open: true });
   };
-  handleCloseModal = (link) => {
+  handleCloseModal = () => {
     this.setState({ open: false });
   };
 
@@ -519,15 +504,33 @@ class EventStatus extends Component {
          </a>
         )}
 
-        <ConfirmModal
-                    visible={this.state.open}
-                    onOK={this.handleConfirm}
-                    onCancel={this.handleCloseModal}
-                    okText={this.props.t("Yes - Confirm")}
-                    cancelText={this.props.t("No - Don't confirm")}
-                >
-                    <p>{this.props.t('When you selecting this your are creating a new file for submitting your article \n Are you sure you want to continue?')}</p>
-          </ConfirmModal>
+       <ConfirmModal
+          visible={this.state.open}
+          onOK={this.handleConfirm}
+          onCancel={this.handleCloseModal}
+          title={this.props.t("Confirmation")}
+          okText={this.props.t("Yes - Confirm")}
+          cancelText={this.props.t("No - Cancel")}
+      >
+          <div style={{ lineHeight: "1.6", textAlign: "justify", padding: "10px" }}>
+              <p>
+                  {this.props.t(
+                      "📢 You are about to create a new submission for your topic."
+                  )}
+              </p>
+              <p>
+                  {this.props.t(
+                      "🗂️ This submission will be linked to your topic and will allow you to group related articles. You will be able to consult or resubmit them later."
+                  )}
+              </p>
+              <p style={{ fontWeight: "bold" }}>
+                  {this.props.t("❓ Are you sure you want to proceed?")}
+              </p>
+          </div>
+      </ConfirmModal>
+
+
+
       </>
     );
   }

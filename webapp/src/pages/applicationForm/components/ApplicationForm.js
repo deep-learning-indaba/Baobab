@@ -1081,11 +1081,9 @@ class ApplicationListComponent extends Component {
   };
 
   getSubmission = (response) => {
-    console.log('respnse');
-    console.log(response);
-    
-    
-       return response.answers[0].value
+    let allQuestions = _.flatMap(this.props.formSpec.sections, s => s.questions);
+    const title_submission = answerByQuestionKey("title_submission", allQuestions, response.answers);
+    return title_submission  // response.answers[0].value
   };
 
   renderSections() {
@@ -1197,24 +1195,42 @@ class ApplicationListComponent extends Component {
   renderResubmitButton = (chain) => {
     const lastResponse = this.getLastResponse(chain);
 
-    if (lastResponse && lastResponse.outcome && lastResponse.outcome !== 'ACCEPTED') {
-      return (
-        <div className="resubmit-bar">
-          <button 
-            onClick={() => this.newSubmission(lastResponse.id)} 
-            className="btn btn-primary resubmit-button"
-          >
-            {this.props.t("Resubmit an article")}
-          </button>
-        </div>
-      );
+    if (!lastResponse) return null;
+
+    const { is_submitted, outcome, id } = lastResponse;
+    const { event, t } = this.props;
+
+    if (!is_submitted) {
+        return (
+          <div className="resubmit-bar">
+            <button
+                className="btn btn-success resubmit-button"
+                onClick={() => (window.location.href = `/${event.key}/apply/continue/${id}`)}
+            >
+                {t("Continue")}
+            </button>
+          </div>
+        );
     }
-  
+
+    if (outcome && outcome !== 'ACCEPTED') {
+        return (
+            <div className="resubmit-bar">
+                <button 
+                    onClick={() => this.newSubmission(id)} 
+                    className="btn btn-primary resubmit-button"
+                >
+                    {t("Resubmit an article")}
+                </button>
+            </div>
+        );
+    }
+
     return null;
-  };
-  
-  
+};
+
   renderEntireChain = (response) => {
+    
     const children = response.children.slice().reverse();
     return (
       <Fragment key={response.id}>
@@ -1329,6 +1345,7 @@ class ApplicationForm extends Component {
       continue: false,
       view: false,
       chain: false,
+      open: false,
     }
   }
 
@@ -1372,6 +1389,19 @@ class ApplicationForm extends Component {
   newSubmission = () => {
     window.location.href = `/${this.props.event.key}/apply/new`;
   };
+  
+  handleOpenModal = () => {
+    this.setState({ open: true });
+  };
+
+  handleCloseModal = () => {
+    this.setState({ open: false });
+  };
+  
+  handleConfirm = () => {
+    this.handleCloseModal();
+    this.newSubmission();
+  };
 
   render() {
     const {
@@ -1410,10 +1440,36 @@ class ApplicationForm extends Component {
             <hr/>
             <button
               className="btn btn-primary"
-              onClick={() => this.newSubmission()}
+              onClick={() => this.handleOpenModal()}
               >
               {this.props.t("Start a new submission")} &gt;
             </button>
+            
+            <ConfirmModal
+              visible={this.state.open}
+              onOK={this.handleConfirm}
+              onCancel={this.handleCloseModal}
+              title={this.props.t("Confirmation")}
+              okText={this.props.t("Yes - Confirm")}
+              cancelText={this.props.t("No - Cancel")}
+          >
+          <div style={{ lineHeight: "1.6", textAlign: "justify", padding: "10px" }}>
+              <p>
+                  {this.props.t(
+                      "📢 You are about to create a new submission for your topic."
+                  )}
+              </p>
+              <p>
+                  {this.props.t(
+                      "🗂️ This submission will be linked to your topic and will allow you to group related articles. You will be able to consult or resubmit them later."
+                  )}
+              </p>
+              <p style={{ fontWeight: "bold" }}>
+                  {this.props.t("❓ Are you sure you want to proceed?")}
+              </p>
+          </div>
+      </ConfirmModal>
+
               <hr/>
             <ApplicationList
               responses={responses}
