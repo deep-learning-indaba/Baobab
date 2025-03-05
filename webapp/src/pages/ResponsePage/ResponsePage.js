@@ -76,11 +76,13 @@ class ResponsePage extends Component {
                         reviewResponses: resp.form.review_responses,
                         reviewForm: resp.form.review_form,
                         isLoading: false,
+                        
                         error: resp.error
                      });
                 }
             });
     }
+    
 
     // Misc Functions
 
@@ -114,42 +116,55 @@ class ResponsePage extends Component {
         };
     };
 
+
+
     renderReviewResponse(review_response, section) {
         const questions = section.review_questions.map(q => {
             const a = review_response.scores.find(a => a.review_question_id === q.id);
 
             if (a) {
-                return <div>
-            <div key={q.question_id} className="question-answer-block">
-                <p><span className="question-headline">{q.headline}</span>
-                    {q.description && a && <span className="question-description"><br/>{q.description}</span>}
-                </p>
-                <h6><AnswerValue answer={a} question={q} /></h6>
-            </div>
-            </div>
-            }
-            
-            
-        });
-        return questions
-    };
-    
-    // Render Reviews
-    renderCompleteReviews(){
-        if (this.state.reviewResponses.length) {
-                const reviews = this.state.reviewResponses.map(val => {
-                    return <div className="section">
-                            <h4
-                                className="reviewer-section" >
-                                {this.props.t(val.reviewer_user_firstname + " " + val.reviewer_user_lastname)}
-                            </h4>
-                        {this.renderReviewResponse(val, this.state.reviewForm.review_sections[0])}
+                return (
+                    <div key={q.id} className="question-answer-block">
+                        <p>
+                            <span className="question-headline">{q.headline}</span>
+                            {q.description && <span className="question-description"><br />{q.description}</span>}
+                        </p>
+                        <h6><AnswerValue answer={a} question={q} /></h6>
                     </div>
-                });
-                return reviews
+                );
             }
+            return null;
+        });
+    
+        return questions;
     }
+    
 
+    renderCompleteReviews() {
+        if (this.state.reviewResponses.length) {
+            const reviews = this.state.reviewResponses.map(val => {
+    
+                return (
+                    <div key={val.id} className="review-container">
+                        <h4 className="reviewer-section">
+                            {this.props.t(val.reviewer_user_firstname + " " + val.reviewer_user_lastname)}
+                        </h4>
+                        {this.state.reviewForm.review_sections.map(section => (
+                            <div key={section.id} className="section">
+                                <h5>{section.headline}</h5>
+                                {this.renderReviewResponse(val, section)}
+                            </div>
+                        ))}
+                    </div>
+                );
+            });
+    
+            return reviews;
+        }
+    
+        return <p>No reviews available</p>;
+    }
+    
     getOutcome() {
         outcomeService.getOutcome(this.props.event.id, this.state.applicationData.user_id).then(response => {
             if (response.status === 200) {
