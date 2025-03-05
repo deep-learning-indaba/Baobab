@@ -9,6 +9,7 @@ export const reviewService = {
   submit,
   getReviewAssignments,
   assignReviews,
+  removeReviews,
   getReviewSummary,
   getReviewHistory,
   getReviewList,
@@ -181,6 +182,35 @@ function assignReviews(eventId, reviewerUserEmail, numReviews, tags) {
     })
     .then(function(response) {
       return {
+        error: ""
+      };
+    })
+    .catch(function(error) {
+      return {
+        error:
+          error.response && error.response.data
+            ? error.response.data.message
+            : error.message
+      };
+    });
+}
+
+function removeReviews(eventId, reviewerUserEmail, numReviews, tags) {
+  let removal = {
+    event_id: eventId,
+    reviewer_user_email: reviewerUserEmail,
+    num_reviews: numReviews,
+    tags: tags
+  };
+
+  return axios
+    .delete(baseUrl + "/api/v1/reviewassignment", {
+      headers: authHeader(),
+      params: removal
+    })
+    .then(function(response) {
+      return {
+        removed: response.data.num_deleted,
         error: ""
       };
     })

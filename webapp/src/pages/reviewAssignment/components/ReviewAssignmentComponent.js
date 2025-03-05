@@ -94,6 +94,43 @@ class ReviewAssignmentComponent extends Component {
       );
   }
 
+  removeReviewers = (email, toRemove) => {
+    this.setState({ loading: true });
+
+    // Remove the reviews
+    const tags = this.state.tags.filter(tag => tag.active).map(tag => tag.id);
+    reviewService.removeReviews(this.props.event ? this.props.event.id : 0, email, toRemove, tags).then(
+      result => {
+        // Get updated reviewers, with updated allocations
+        this.setState({
+          error: result.error
+        })
+        return reviewService.getReviewAssignments(this.props.event ? this.props.event.id : 0)
+      },
+    ).then(
+      result => {
+        this.setState(prevState => ({
+          loading: false,
+          reviewers: result.reviewers,
+          filteredReviewers: this.filterReviewers(result.reviewers, this.state.tags),
+          error: prevState.error + result.error
+        }));
+        const tags = this.state.tags.filter(tag => tag.active).map(tag => tag.id);
+        return reviewService.getReviewSummary(this.props.event ? this.props.event.id : 0, tags);
+      },
+      error => this.setState({ error, loading: false })
+    )
+      .then(
+        result => {
+          this.setState(prevState => ({
+            reviewSummary: result.reviewSummary,
+            error: prevState.error + result.error
+          }));
+        },
+        error => this.setState({ error, loading: false })
+      );
+  }
+
   renderEditable = cellInfo => {
     return (
       <div
@@ -127,13 +164,24 @@ class ReviewAssignmentComponent extends Component {
     );
   }
 
-  renderButton = cellInfo => {
+  renderAssignButton = cellInfo => {
     return (
       <button
         className="btn btn-primary btn-sm"
         onClick={() => this.assignReviewers(cellInfo.row.email, cellInfo.row.reviews_to_assign)}
         disabled={!Number.isInteger(cellInfo.row.reviews_to_assign)}>
         {this.props.t("Assign")}
+      </button>
+    )
+  }
+
+  renderRemoveButton = cellInfo => {
+    return (
+      <button
+        className="btn btn-primary btn-sm"
+        onClick={() => this.removeReviewers(cellInfo.row.email, cellInfo.row.reviews_to_remove)}
+        disabled={!Number.isInteger(cellInfo.row.reviews_to_remove)}>
+        {this.props.t("Remove")}
       </button>
     )
   }
@@ -285,8 +333,16 @@ class ReviewAssignmentComponent extends Component {
       Cell: this.renderEditable
     }, {
       Header: t("Assign"),
-      Cell: this.renderButton
-    }];
+      Cell: this.renderAssignButton
+    }, {
+      Header: t("No. to Remove"),
+      accessor: 'reviews_to_remove',
+      Cell: this.renderEditable
+    }, {
+      Header: t("Remove"),
+      Cell: this.renderRemoveButton
+    }
+  ];
 
     return (
       <section className="review-assignment-wrapper">
