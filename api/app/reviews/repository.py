@@ -215,17 +215,19 @@ class ReviewRepository():
                         .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
                         .filter(ReviewForm.application_form_id == event_id, ReviewForm.active == True)
                         .join(Response, ReviewResponse.response_id == Response.id)
-                        .join(AppUser, Response.user_id == AppUser.id))
+                        .join(AppUser, Response.user_id == AppUser.id)
+                        .all())
         return reviews
 
     @staticmethod
     def get_review_list(reviewer_user_id, event_id):
-        reviews = (db.session.query(Response, ReviewResponse)
+        reviews = (db.session.query(Response, ResponseReviewer, ReviewResponse)
                         .join(ResponseReviewer, Response.id == ResponseReviewer.response_id)
                         .filter_by(reviewer_user_id=reviewer_user_id)
                         .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)
                         .filter_by(event_id=event_id)
-                        .outerjoin(ReviewResponse, and_(Response.id == ReviewResponse.response_id, ReviewResponse.reviewer_user_id==reviewer_user_id)))
+                        .outerjoin(ReviewResponse, and_(Response.id == ReviewResponse.response_id, ReviewResponse.reviewer_user_id==reviewer_user_id))
+                        .all())
         return reviews
 
     @staticmethod
