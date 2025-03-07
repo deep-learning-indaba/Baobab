@@ -26,7 +26,7 @@ class Outcome(db.Model):
     response_id = db.Column(db.Integer(), db.ForeignKey('response.id'), nullable=True)
     response = db.relationship('Response', foreign_keys=[response_id])
 
-    review_summary = db.Column(db.String(250), nullable=True)
+    review_summary = db.Column(db.String(), nullable=True)
 
     
     

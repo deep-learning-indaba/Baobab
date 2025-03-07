@@ -473,6 +473,7 @@ class EventStatus extends Component {
   };
   handleCloseModal = () => {
     this.setState({ open: false });
+    window.location.href = `/${this.props.event.key}/apply/view`;
   };
 
   handleConfirm = () => {
@@ -513,20 +514,41 @@ class EventStatus extends Component {
           cancelText={this.props.t("No - Cancel")}
       >
           <div style={{ lineHeight: "1.6", textAlign: "justify", padding: "10px" }}>
-              <p>
-                  {this.props.t(
-                      "📢 You are about to create a new submission for your topic."
-                  )}
-              </p>
-              <p>
-                  {this.props.t(
-                      "🗂️ This submission will be linked to your topic and will allow you to group related articles. You will be able to consult or resubmit them later."
-                  )}
-              </p>
-              <p style={{ fontWeight: "bold" }}>
-                  {this.props.t("❓ Are you sure you want to proceed?")}
-              </p>
-          </div>
+            <p>
+                {this.props.t(
+                    "📢 You are about to submit a "
+                )}
+                <strong>{this.props.t("completely new article.")}</strong>
+            </p>
+            <p>
+                {this.props.t(
+                    "🗂️ If you are making a "
+                )}
+                <strong>{this.props.t("resubmission to an article ")}</strong>
+
+                {this.props.t(
+                    "under review, please do so using the "
+                )}
+                <strong>{this.props.t("Resubmit button")}</strong>
+
+                {this.props.t(
+                    " next to the latest version of the article you submitted."
+                )}
+            </p>
+            <p>
+                {this.props.t(
+                    "🗂️ The "
+                )}
+                <strong>{this.props.t("Resubmit button")}</strong>
+                {this.props.t(
+                    " will only be available after the article has been reviewed."
+                )}
+            </p>
+            <p style={{ fontWeight: "bold" }}>
+                {this.props.t("❓ Would you like to proceed?")}
+            </p>
+        </div>
+
       </ConfirmModal>
 
 

@@ -406,52 +406,42 @@ class ResponsePage extends Component {
 
                 <div className="letter-body">
                     <p className="greeting">
-                    {this.props.t("Dear")} { name},
+                    {this.props.t("Dear")} {name},
                     </p>
                     <p className="greeting">
-                    {this.props.t(
-                        "We are pleased to acknowledge the receipt of your application. Your submission has been carefully reviewed by our team, and we appreciate the time and effort you have invested."
-                    )}
-                    </p>
-                    <p className="greeting">
-                    {this.props.t(
-                        "Below is a summary of the key details and evaluations of your application."
+                    {this.props.t("Thank you for your submission of ")}{name} 
+                    {this.props.t(" to The Journal of Artificial Intelligence for Sustainable Development. Please find below a meta review summary, followed by the reviewer(s)’s feedback."
                     )}
                     </p>
 
-                    {/* Application Sections */}
                     <div className="application-status">
+                        <h5>{this.props.t("Meta-review")}</h5>
                         <p className="greeting">
                         {this.state.review_summary}
                         </p>
-                        </div>
-                
-                    <p className="greeting">
-                    {this.props.t(
-                        "Our team has conducted a thorough review of your application. Below, you will find our detailed feedback and recommendations."
-                    )}
-                    </p>
-
-                    {/* Review Sections */}
-                    <div className="review-sections">
-                        {this.renderJournalReviews()}
                     </div>
                     
 
-                    {/* Application Status Section */}
-                    <div className="application-status">
-                    <h5>{this.props.t("Application Status")}</h5>
+                     {/* Application Status Section */}
+                     <div className="application-status">
+                    <h5>{this.props.t("Decision")}</h5>
                     <p className="greeting">
                         {this.props.t(
                         "Based on our review, your application status is as follows:"
                         )}
                     </p>
                     <p className="status">{this.state.pendingOutcome ==='ACCEPTED'?this.props.t("ACCEPTED"):this.state.pendingOutcome ==='REJECTED'?
-                this.props.t("REJECTED"):this.state.pendingOutcome ==='ACCEPT_W_REVISION'?
-                this.props.t("ACCEPTED WITH REVISION"):this.state.pendingOutcome ==='REJECT_W_ENCOURAGEMENT'?
-                this.props.t("REJECTED WITH ENCOURAGEMENT TO RESUMIT"):this.props.t("REVIEWING")}</p>
+                        this.props.t("REJECTED"):this.state.pendingOutcome ==='ACCEPT_W_REVISION'?
+                        this.props.t("ACCEPTED WITH REVISION"):this.state.pendingOutcome ==='REJECT_W_ENCOURAGEMENT'?
+                        this.props.t("REJECTED WITH ENCOURAGEMENT TO RESUMIT"):this.props.t("REVIEWING")}</p>
                     </div>
 
+                    {/* Review Sections */}
+                    <div className="review-sections">
+                    <h5>{this.props.t("Review(s)")}</h5>
+                        {this.renderJournalReviews()}
+                    </div>
+                    
                     <p className="greeting">
                     {this.props.t(
                         "Please note that our decision is based on a comprehensive analysis of your submission. We highly value your engagement and encourage you to reach out if you have any questions or require further clarification."
@@ -840,6 +830,10 @@ class ResponsePage extends Component {
     
 
     renderComment = () => {
+        // if (this.state.outcome.status === null) {
+        //   return null;
+            
+        // }
         return (
           <textarea
             className={`comment-box small-text ${

@@ -44,3 +44,16 @@
   .shift_button{
     margin-left: 30px;
   }
+
+  .buttons-container {
+    display: flex;
+    flex-direction: column; 
+    justify-content: flex-end;
+    gap: 10px; 
+    align-items: flex-end; 
+  }
+  .buttons-container button {
+    width: 100%;
+    min-width: 200px;
+    box-sizing: border-box;
+  }

@@ -18,7 +18,7 @@ import sqlalchemy as sa
 def upgrade():
     op.add_column(
         'outcome',
-        sa.Column('review_summary', sa.String(250), nullable=True)
+        sa.Column('review_summary', sa.String(), nullable=True)
     )
 
 def downgrade():

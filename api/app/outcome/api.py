@@ -4,17 +4,24 @@ import flask_restful as restful
 from flask import g, request
 from sqlalchemy.exc import SQLAlchemyError
 
+
 from app.outcome.models import Outcome, Status
 from app.outcome.repository import OutcomeRepository as outcome_repository
 from app.events.repository import EventRepository as event_repository
 from app.users.repository import UserRepository as user_repository
 from app.utils.emailer import email_user
 
+from app.responses.repository import ResponseRepository as response_repository
+from app.utils import errors, strings
+from app.reviews.repository import ReviewRepository as review_repository
+from app.events.models import EventType
+
 from app.utils.auth import auth_required, event_admin_required
 from app import LOGGER
 from app import db
 from app.utils import errors
 from app.utils import misc
+from app.reviews.api import ReviewResponseDetailListAPI
 
 
 def _extract_status(outcome):
@@ -92,6 +99,8 @@ class OutcomeAPI(restful.Resource):
         except: 
             LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
+        
+    
 
     @event_admin_required
     @marshal_with(outcome_fields)
@@ -104,6 +113,7 @@ class OutcomeAPI(restful.Resource):
         args = req_parser.parse_args()
 
         event = event_repository.get_by_id(event_id)
+
         if not event:
             return errors.EVENT_NOT_FOUND
 
@@ -135,16 +145,41 @@ class OutcomeAPI(restful.Resource):
             outcome_repository.add(outcome)
             db.session.commit()
 
-            if (status == Status.REJECTED or status == Status.WAITLIST):  # Email will be sent with offer for accepted candidates  
-                email_user(
-                    'outcome-rejected' if status == Status.REJECTED else 'outcome-waitlist',
-                    template_parameters=dict(
-                        host=misc.get_baobab_host()
-                    ),
-                    event=event,
-                    user=user,
-                )
+            if (event.event_type==EventType.JOURNAL):
+                response = response_repository.get_by_id_and_user_id(outcome.response_id, outcome.user_id)
+                submission_title=strings.answer_by_question_key('submission_title', response.application_form, response.answers)
+                review_form = review_repository.get_review_form(outcome.event_id)
+                response_reviews = (review_repository.get_all_review_responses_by_response(review_form.id, outcome.response_id))
+                serialized_reviews =  [ReviewResponseDetailListAPI._serialise_review_response(response, user.user_primaryLanguage) for response in response_reviews]
 
+                question_answer_summary = strings.build_review_email_body(serialized_reviews, user.user_primaryLanguage, review_form)
+                email_user(
+                        'response-journal',
+                        template_parameters=dict(
+                            summary=outcome.review_summary,
+                            outcome=outcome.status.value,
+                            submission_title=submission_title,
+                            reviewers_contents=question_answer_summary,
+                        ), 
+                        subject_parameters=dict(
+                            submission_title=submission_title,
+                        ),
+                        event=event,
+                        user=user,
+                    )
+
+            else:
+                if (status == Status.REJECTED or status == Status.WAITLIST):  # Email will be sent with offer for accepted candidates  
+                    email_user(
+                        'outcome-rejected' if status == Status.REJECTED else 'outcome-waitlist',
+                        template_parameters=dict(
+                            host=misc.get_baobab_host()
+                        ),
+                        event=event,
+                        user=user,
+                    )
+            
+            
             return outcome, 201
 
         except SQLAlchemyError as e:
@@ -153,6 +188,7 @@ class OutcomeAPI(restful.Resource):
         except: 
             LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
+        
 
 
 class OutcomeListAPI(restful.Resource):

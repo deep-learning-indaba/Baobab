@@ -195,44 +195,10 @@ class ReponseDetails extends Component {
             ...element,
             chain_number: index + 1
         }));
-    
-        // Trier par ordre décroissant de l'id
+ 
         return finalChain.sort((a, b) => a.id - b.id);
     };
     
-    // getChainById = (data, id) => {
-    //     const elementMap = data.reduce((map, element) => {
-    //       map[element.id] = element;
-    //       return map;
-    //     }, {});
-    
-    //     function getChain(element, visited = new Set()) {
-    //       if (!element || visited.has(element.id)) return [];
-    //       visited.add(element.id);
-    
-    //       const chain = [element];
-    //       if (element.parent_id !== null && elementMap[element.parent_id]) {
-    //         chain.push(...getChain(elementMap[element.parent_id], visited));
-    //       }
-    //       data.forEach((child) => {
-    //         if (child.parent_id === element.id) {
-    //           chain.push(...getChain(child, visited));
-    //         }
-    //       });
-    
-    //       return chain;
-    //     }
-    
-    //     if (!elementMap[id]) {
-    //       return [];
-    //     }
-    
-    //     const result = getChain(elementMap[id]);
-    //     result.sort((a, b) => b.id - a.id);
-    //     return result;
-    //   };
-    
-
     getSubmissionList = (applications) => {
      
     if (!applications || applications.length === 0) {
@@ -261,7 +227,7 @@ class ReponseDetails extends Component {
 
   getLastResponse(response) {    
     const lastResponse = response.at(-1);;
-    if (lastResponse.outcome!=null && lastResponse.outcome !== 'ACCEPTED') {
+    if (lastResponse.outcome!=null && lastResponse.outcome !== 'ACCEPTED'&& lastResponse.outcome !== 'REJECTED') {
         return true;
     }
     return false;
@@ -270,12 +236,13 @@ class ReponseDetails extends Component {
 
   render() {
     const { applicationData, isLoading, error, all_responses } = this.state;
+    
     if (isLoading) {
       return <Loading />;
     }
+    console.log(applicationData);
+    
     const chain_responses = this.getChainById(all_responses, this.props.match.params.id);
-    
-    
 
     return (
       <div className="table-wrapper response-page">
@@ -292,6 +259,39 @@ class ReponseDetails extends Component {
             <label>{this.props.t("Application Outcome")}</label>{" "}
             <p>{this.outcomeStatus(applicationData)}</p>
           </div>
+
+          <div className="buttons-container">
+            <button
+                className="btn btn-primary shift_button"
+                onClick={() =>
+                  (window.location.href = `/${
+                    this.props.event.key
+                  }/apply/new/${chain_responses[0].id}`)
+                }
+                disabled={!this.getLastResponse(chain_responses)}
+              >
+                {this.props.t("Resubmit an article")}
+              </button>
+
+            <button
+              className="btn btn-secondary"
+              onClick={() => this.goBack()}
+            >
+              {this.props.t("View Submission(s)")}
+            </button>
+            
+          </div>
+        </div>
+        <div className="response-details">
+         <div className="section">
+            <div className="flex baseline">
+              <h3>{this.props.t('Review Summary')}</h3>
+            </div>
+            <div className="question-answer-block">
+
+            <div className="Q-A">{applicationData.review_summary}</div>
+            </div>
+          </div>
         </div>
 
         {applicationData && (
@@ -301,27 +301,7 @@ class ReponseDetails extends Component {
 
           </div>
         )}
-        <div className="response-details">
-              <button
-                className="btn btn-secondary"
-                onClick={() => this.goBack()}
-              >
-                {this.props.t("View Submission(s)")}
-              </button>
-              {
-                <button
-                  className="btn btn-primary shift_button"
-                  onClick={() =>
-                    (window.location.href = `/${
-                      this.props.event.key
-                    }/apply/new/${chain_responses[0].id}`)
-                  }
-                  disabled={!this.getLastResponse(chain_responses)}
-                >
-                  {this.props.t("Resubmit an article")}
-                </button>
-              }
-            </div>
+        
         <div className="response-details">
           {this.getSubmissionList(
             chain_responses.filter(

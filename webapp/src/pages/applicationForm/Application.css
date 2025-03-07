@@ -338,11 +338,11 @@ td, th {
 }
 
 .response-row td:nth-child(1) { 
-  width: 40%;
+  width: 35%;
 }
 
 .response-row td:nth-child(2) { 
-  width: 15%;
+  width: 20%;
   text-align: center;
 }
 

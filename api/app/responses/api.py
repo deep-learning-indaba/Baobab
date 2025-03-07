@@ -29,6 +29,11 @@ def _extract_outcome_status(response):
         return None
     return response.outcome.status.name
 
+def _extract_review_summary(response):
+    if not hasattr(response, "review_summary") or not isinstance(response.outcome, Outcome):
+        return None
+    return response.outcome.review_summary
+
 
 class ResponseAPI(ResponseMixin, restful.Resource):
 
@@ -50,7 +55,8 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         'answers': fields.List(fields.Nested(answer_fields)),
         'language': fields.String,
         'parent_id': fields.Integer(default=None),
-        'outcome': fields.String(attribute=_extract_outcome_status)
+        'outcome': fields.String(attribute=_extract_outcome_status),
+        'review_summary': fields.String(attribute=_extract_review_summary)
     }
 
     def find_answer(self, question_id: int, answers: Sequence[Answer]) -> Optional[Answer]:
@@ -126,6 +132,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         for response in responses:
             outcome = outcome_repository.get_latest_by_user_for_event(current_user_id, event_id, response.id)
             response.outcome = outcome
+            response.review_summary = outcome
 
         return marshal(responses, ResponseAPI.response_fields), 200
 
@@ -296,20 +303,39 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         try:
             question_answer_summary = strings.build_response_email_body(answers, user.user_primaryLanguage, application_form)
 
+
             if event.has_specific_translation(user.user_primaryLanguage):
                 event_description = event.get_description(user.user_primaryLanguage)
             else:
                 event_description = event.get_description('en')
+            
+            if (event.event_type==EventType.JOURNAL):
+                response = response_repository.get_by_id_and_user_id(response.response_id, user.user_id)
+                submission_title=strings.answer_by_question_key('submission_title', response.application_form, response.answers)
+                
+                emailer.email_user(
+                    'submitting-article-journal',
+                    template_parameters=dict(
+                        event_description=event_description,
+                        question_answer_summary=question_answer_summary,
+                    ),
+                    submission_title=submission_title,
+                    event=event,
+                    user=user
+                )
+                pass
 
-            emailer.email_user(
-                'confirmation-response-call' if event.event_type == EventType.CALL else 'confirmation-response',
-                template_parameters=dict(
-                    event_description=event_description,
-                    question_answer_summary=question_answer_summary,
-                ),
-                event=event,
-                user=user
-            )
+            else:
+
+                emailer.email_user(
+                    'confirmation-response-call' if event.event_type == EventType.CALL else 'confirmation-response',
+                    template_parameters=dict(
+                        event_description=event_description,
+                        question_answer_summary=question_answer_summary,
+                    ),
+                    event=event,
+                    user=user
+                )
 
         except Exception as e:
             LOGGER.error('Could not send confirmation email for response with id : {response_id} due to: {e}'.format(response_id=response.id, e=e))
