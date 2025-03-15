@@ -149,3 +149,4 @@ INDEMNITY_NOT_FOUND = ({'message': "The event does not have an indemnity form"},
 INDEMNITY_NOT_SIGNED = ({'message': "Indemnity form has not been signed"}, 400)
 NOT_A_GUEST = ({'message': "You are not a confirmed guest of this event."}, 404)
 EVENT_FEE_REQUIRED = ({'message': "Event fee id is required for when payment is required."}, 400)
+DELETE_INVITED_GUEST_FAILED = ({'message': "Failed to delete invited guest."}, 500)
