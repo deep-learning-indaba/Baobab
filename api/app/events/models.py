@@ -292,6 +292,9 @@ class Event(db.Model):
     def is_event_opening(self):
         return check_opening(self.start_date)
 
+    def remove_event_role(self, event_role_id):
+        self.event_roles = [role for role in self.event_roles if role.id != event_role_id]
+
 
 class EventTranslation(db.Model):
 

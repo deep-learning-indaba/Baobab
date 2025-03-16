@@ -692,3 +692,52 @@ class EventFeeAPI(EventFeeMixin, restful.Resource):
         event_repository.save()
 
         return event_fee, 200
+
+event_role_fields = {
+    'id': fields.Integer,
+    'event_id': fields.Integer,
+    'role': fields.String,
+    'user_id': fields.Integer,
+    'user': fields.String(attribute='user.full_name')
+}
+
+class EventRoleAPI(EventsMixin, restful.Resource):
+    @event_admin_required
+    def get(self, event_id):
+        args = self.get_parser.parse_args()
+        
+        event = event_repository.get_by_id(event_id)
+        if not event:
+            return EVENT_NOT_FOUND
+        
+        return marshal(event.event_roles, event_role_fields), 200
+
+    @event_admin_required
+    def post(self, event_id):
+        args = self.post_parser.parse_args()
+        event_id = args['event_id']
+        user_id = g.current_user['id']
+        role = args['role']
+        
+        event = event_repository.get_by_id(event_id)
+        if not event:
+            return EVENT_NOT_FOUND
+        
+        event.add_event_role(role, user_id)
+        event_repository.save()
+        return marshal(event.event_roles, event_role_fields), 200
+
+    @event_admin_required
+    def delete(self, event_id):
+        args = self.delete_parser.parse_args()
+        event_id = args['event_id']
+        event_role_id = args['event_role_id']
+        user_id = g.current_user['id']
+        
+        event = event_repository.get_by_id(event_id)
+        if not event:
+            return EVENT_NOT_FOUND
+        
+        event.remove_event_role(event_role_id)
+        event_repository.save()
+        return marshal(event.event_roles, event_role_fields), 200
