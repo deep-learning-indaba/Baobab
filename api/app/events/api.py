@@ -701,7 +701,7 @@ event_role_fields = {
     'user': fields.String(attribute='user.full_name')
 }
 
-class EventRoleAPI(EventsMixin, restful.Resource):
+class EventRoleAPI(EventRoleMixin, restful.Resource):
     @event_admin_required
     def get(self, event_id):
         args = self.get_parser.parse_args()
@@ -736,7 +736,6 @@ class EventRoleAPI(EventsMixin, restful.Resource):
         args = self.delete_parser.parse_args()
         event_id = args['event_id']
         event_role_id = args['event_role_id']
-        user_id = g.current_user['id']
         
         event = event_repository.get_by_id(event_id)
         if not event:
