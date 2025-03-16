@@ -716,14 +716,18 @@ class EventRoleAPI(EventsMixin, restful.Resource):
     def post(self, event_id):
         args = self.post_parser.parse_args()
         event_id = args['event_id']
-        user_id = g.current_user['id']
         role = args['role']
-        
+        email = args['email']
+
         event = event_repository.get_by_id(event_id)
         if not event:
             return EVENT_NOT_FOUND
-        
-        event.add_event_role(role, user_id)
+
+        user = user_repository.get_by_email(email, event.organisation_id)
+        if not user:
+            return USER_NOT_FOUND
+
+        event.add_event_role(role, user.id)
         event_repository.save()
         return marshal(event.event_roles, event_role_fields), 200
 
