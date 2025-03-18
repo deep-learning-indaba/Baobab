@@ -12,11 +12,23 @@ import { responsesService } from '../../services/responses/responses.service';
 import AnswerValue from "../../components/answerValue";
 import { ConfirmModal } from "react-bootstrap4-modal";
 import Modal from 'react-bootstrap4-modal';
+import _ from "lodash";
 
 import moment from 'moment'
 import { getDownloadURL } from '../../utils/files';
 import TagSelectorDialog from '../../components/TagSelectorDialog';
 import Loading from "../../components/Loading";
+
+const answerByQuestionKey = (key, allQuestions, answers) => {
+    let question = allQuestions.find(q => q.key === key);
+    if (question) {
+      let answer = answers.find(a => a.question_id === question.id);
+      if (answer) {
+        return answer.value;
+      }
+    }
+    return null;
+  }
 
 class ResponsePage extends Component {
     constructor(props) {
@@ -201,7 +213,6 @@ class ResponsePage extends Component {
     getOutcome() {
         outcomeService.getOutcome(this.props.event.id, this.state.applicationData.user_id,this.props.match.params.id).then(response => {
             if (response.status === 200) {
-                console.log(response);
                 
                 const newOutcome = {
                     timestamp: response.outcome.timestamp,
@@ -273,7 +284,7 @@ class ResponsePage extends Component {
             
             if (!review_summary || !review_summary.trim()) {
                 this.setState({ isCommentEmpty: true });
-                alert("The review summary field is required.");
+                alert(this.props.t("The review summary field is required."));
                 return;
             }
             
@@ -300,7 +311,12 @@ class ResponsePage extends Component {
       
     outcomeStatus() {
         const data = this.state.applicationData;
+
         const name = data.user_title + " " + data.firstname + " " + data.lastname;
+
+        let allQuestions = _.flatMap(this.state.applicationForm.sections , s => s.questions);
+        const submission_title = answerByQuestionKey("submission_title", allQuestions, data.answers);
+        
         if (data) {
         if (this.state.outcome.status && this.state.outcome.status !== "REVIEW") {
             const badgeClass = this.state.outcome.status === "ACCEPTED"
@@ -378,7 +394,7 @@ class ResponsePage extends Component {
                 );
 
         }
-        console.log(this.state);
+
         
         return (
             <div className="user-details">
@@ -409,7 +425,9 @@ class ResponsePage extends Component {
                     {this.props.t("Dear")} {name},
                     </p>
                     <p className="greeting">
-                    {this.props.t("Thank you for your submission of ")}{name} 
+
+                    {this.props.t("Thank you for your submission of ")}
+                    <strong>{submission_title}</strong>
                     {this.props.t(" to The Journal of Artificial Intelligence for Sustainable Development. Please find below a meta review summary, followed by the reviewer(s)’s feedback."
                     )}
                     </p>
@@ -425,33 +443,24 @@ class ResponsePage extends Component {
                      {/* Application Status Section */}
                      <div className="application-status">
                     <h5>{this.props.t("Decision")}</h5>
-                    <p className="greeting">
-                        {this.props.t(
-                        "Based on our review, your application status is as follows:"
-                        )}
-                    </p>
                     <p className="status">{this.state.pendingOutcome ==='ACCEPTED'?this.props.t("ACCEPTED"):this.state.pendingOutcome ==='REJECTED'?
                         this.props.t("REJECTED"):this.state.pendingOutcome ==='ACCEPT_W_REVISION'?
                         this.props.t("ACCEPTED WITH REVISION"):this.state.pendingOutcome ==='REJECT_W_ENCOURAGEMENT'?
-                        this.props.t("REJECTED WITH ENCOURAGEMENT TO RESUMIT"):this.props.t("REVIEWING")}</p>
+                        this.props.t("REJECTED WITH ENCOURAGEMENT TO RESUMIT"):this.props.t("REVIEWING")}
+                    </p>
                     </div>
 
                     {/* Review Sections */}
-                    <div className="review-sections">
+                    <div className="application-status">
                     <h5>{this.props.t("Review(s)")}</h5>
                         {this.renderJournalReviews()}
                     </div>
-                    
-                    <p className="greeting">
-                    {this.props.t(
-                        "Please note that our decision is based on a comprehensive analysis of your submission. We highly value your engagement and encourage you to reach out if you have any questions or require further clarification."
-                    )}
-                    </p>
                 </div>
 
                  
                 <div className="letter-footer">
                     <p>{this.props.t("Kind Regards")},</p>
+                    <p>{this.props.t("The JAISD editorial board")}</p>
                 </div> 
                 </div>
             </div>
@@ -631,7 +640,7 @@ class ResponsePage extends Component {
     
         responsesService.removeTag(applicationData.id, tagToRemove, this.props.event.id)
         .then(resp => {
-            console.log(resp);
+
           if (resp.status === 200) {
             this.setState({
                 removeTagModalVisible: false,
@@ -808,7 +817,6 @@ class ResponsePage extends Component {
     };
 
     addTag = (response) => {
-        console.log(response);
         const tagIds = response.tags.map(t=>t.id);
         this.setState({
           tagSelectorVisible: true,

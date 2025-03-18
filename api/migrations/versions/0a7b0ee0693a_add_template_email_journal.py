@@ -67,8 +67,8 @@ def upgrade():
 
     template = """Cher/Cher(e) {title} {firstname} {lastname},
 
-    Merci pour votre soumission de {submission_title} à The Journal of Artificial Intelligence for Sustainable Development.  
-    Vous trouverez ci-dessous un résumé de la méta-évaluation, suivi des commentaires des relecteurs.  
+    Merci pour votre soumission de {submission_title} au Journal de l'intelligence artificielle pour le développement durable.  
+    Vous trouverez ci-dessous un résumé de la méta-évaluation, suivi des commentaires des réviseurs.  
 
     **Méta-évaluation**  
     {summary}  
@@ -80,7 +80,7 @@ def upgrade():
     {reviewers_contents}  
 
     Cordialement,  
-    Le comité éditorial du JAISD"""
+    Le comité de redaction du JAISD"""
 
     session.add(
         EmailTemplate(

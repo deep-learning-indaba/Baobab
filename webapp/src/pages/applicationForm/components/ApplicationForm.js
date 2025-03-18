@@ -1038,7 +1038,7 @@ class ApplicationListComponent extends Component {
       let lastname = answerByQuestionKey("nomination_lastname", allQuestions, response.answers);
       return firstname + " " + lastname;
     }
-    return  this.props.event.event_type ==='JOURNAL' ? this.props.t("Submission") + " " + response.id : this.props.t("Self Nomination");
+    return  this.props.event.event_type ==='JOURNAL' ? this.props.t("Submissions") + " " + response.id : this.props.t("Self Nomination");
   }
 
   getStatus = (response) => {
@@ -1246,9 +1246,6 @@ class ApplicationListComponent extends Component {
   };
 
   renderResponseChain = (chain) => {
-    console.log('chain');
-    
-    console.log(chain);
     
     return (
       <Fragment key={chain.id}>
@@ -1457,44 +1454,31 @@ class ApplicationForm extends Component {
               okText={this.props.t("Yes - Confirm")}
               cancelText={this.props.t("No - Cancel")}
           >
-          <div style={{ lineHeight: "1.6", textAlign: "justify", padding: "10px" }}>
-            <p>
-                {this.props.t(
-                    "📢 You are about to submit a "
-                )}
-                <strong>{this.props.t("completely new article.")}</strong>
-            </p>
-            <p>
-                {this.props.t(
-                    "🗂️ If you are making a "
-                )}
-                <strong>{this.props.t("resubmission to an article ")}</strong>
+            <div style={{ lineHeight: "1.6", textAlign: "justify", padding: "10px" }}>
+              <p>
+                  📢 {this.props.t("You are about to submit a ")}
+                  <strong>{this.props.t("completely new article.")}</strong>
+              </p>
+              <p>
+                  🗂️ {this.props.t("If you are making a ")}
+                    <strong>{this.props.t("resubmission to an article ")}</strong>
+                      {this.props.t("under review, please do so using the ")}
+                    <strong>{this.props.t("Resubmit button ")}</strong>
+                    {this.props.t("next to the latest version of the article you submitted.")}
+              </p>
 
-                {this.props.t(
-                    "under review, please do so using the "
-                )}
-                <strong>{this.props.t("Resubmit button")}</strong>
+              <p>
+                  🗂️ {this.props.t("The ")}
+                      <strong>{this.props.t("Resubmit button ")}</strong>
+                      {this.props.t("will only be available after the article has been reviewed.")}
+              </p>
+              <p style={{ fontWeight: "bold" }}>
+                  ❓ {this.props.t("Would you like to proceed?")}
+              </p>
+            </div>  
+            </ConfirmModal>
 
-                {this.props.t(
-                    " next to the latest version of the article you submitted."
-                )}
-            </p>
-            <p>
-                {this.props.t(
-                    "🗂️ The "
-                )}
-                <strong>{this.props.t("Resubmit button")}</strong>
-                {this.props.t(
-                    " will only be available after the article has been reviewed."
-                )}
-            </p>
-            <p style={{ fontWeight: "bold" }}>
-                {this.props.t("❓ Would you like to proceed?")}
-            </p>
-        </div>
-      </ConfirmModal>
-
-              <hr/>
+            <hr/>
             <ApplicationList
               responses={responses}
               event={this.state.event}
@@ -1502,7 +1486,7 @@ class ApplicationForm extends Component {
               click={this.responseSelected}
             />
             
-          </div>
+        </div>
         );
       }
       if (this.props.chain) {

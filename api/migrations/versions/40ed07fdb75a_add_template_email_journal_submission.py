@@ -60,7 +60,7 @@ The JAISD editorial board"""
     {question_answer_summary}  
 
     Cordialement,  
-    Le comité éditorial du JAISD
+    Le comité de redaction du JAISD
     """
 
 

@@ -206,7 +206,7 @@ class ReponseDetails extends Component {
     }
     return (
       <div id="application-list" className="application-list">
-        <h3> Related Submissions</h3>
+        <h3>{this.props.t("Related Submissions")}</h3>
         <ul className="application-list_items">
           {applications.map((application,index) => (
             <li key={application.id} className="application-list_item">
@@ -240,7 +240,6 @@ class ReponseDetails extends Component {
     if (isLoading) {
       return <Loading />;
     }
-    console.log(applicationData);
     
     const chain_responses = this.getChainById(all_responses, this.props.match.params.id);
 
@@ -285,11 +284,11 @@ class ReponseDetails extends Component {
         <div className="response-details">
          <div className="section">
             <div className="flex baseline">
-              <h3>{this.props.t('Review Summary')}</h3>
+              <h3>{this.props.t('Reviews Summary')}</h3>
             </div>
             <div className="question-answer-block">
 
-            <div className="Q-A">{applicationData.review_summary}</div>
+            <div className="Q-A">{applicationData.review_summary || this.props.t("No available")}</div>
             </div>
           </div>
         </div>
