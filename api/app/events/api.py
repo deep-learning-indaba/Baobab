@@ -8,7 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.email_template.repository import EmailRepository as email_repository
 from app.events.models import Event, EventRole, EventFee
-from app.events.mixins import EventsMixin, EventsKeyMixin, EventMixin, EventFeeMixin
+from app.events.mixins import EventsMixin, EventsKeyMixin, EventMixin, EventFeeMixin, EventRoleMixin
 from app.users.models import AppUser
 from app.users.repository import UserRepository as user_repository
 from app.applicationModel.models import ApplicationForm
@@ -29,7 +29,9 @@ from app.utils.errors import (
     EVENT_MUST_CONTAIN_TRANSLATION,
     EVENT_TRANSLATION_MISMATCH,
     STRIPE_SETUP_INCOMPLETE,
-    EVENT_MUST_HAVE_DATES
+    EVENT_MUST_HAVE_DATES,
+    EVENT_ROLE_NOT_FOUND,
+    USER_NOT_FOUND
 )
 
 from app.utils.auth import auth_optional, auth_required, event_admin_required
@@ -740,6 +742,10 @@ class EventRoleAPI(EventRoleMixin, restful.Resource):
         event = event_repository.get_by_id(event_id)
         if not event:
             return EVENT_NOT_FOUND
+        
+        event_role = event.event_roles.filter(EventRole.id == event_role_id).first()
+        if not event_role:
+            return EVENT_ROLE_NOT_FOUND
         
         event.remove_event_role(event_role_id)
         event_repository.save()

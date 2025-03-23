@@ -584,4 +584,7 @@
     "Filter by name or email": "Filter by name or email",
     "Filter by candidate response": "Filter by candidate response",
     "removed_guest": "Removed {{guestName}} from the guest list",
-    "remove_guest_confirmation": "Are you sure you want to remove {{guestName}} from the guest list?"
+    "remove_guest_confirmation": "Are you sure you want to remove {{guestName}} from the guest list?",
+    "Registration Volunteer": "Registration Volunteer",
+    "Event Treasurer": "Event Treasurer"
+}

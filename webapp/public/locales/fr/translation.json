@@ -583,4 +583,7 @@
     "Filter by name or email": "Filtrer par nom ou email",
     "Filter by candidate response": "Filtrer par réponse du candidat",
     "removed_guest": "Retiré {{guestName}} de la liste des invités",
-    "remove_guest_confirmation": "Êtes-vous sûr de vouloir retirer {{guestName}} de la liste des invités?"
+    "remove_guest_confirmation": "Êtes-vous sûr de vouloir retirer {{guestName}} de la liste des invités?",
+    "Registration Volunteer": "Volontaire d'inscription",
+    "Event Treasurer": "Trésorier de l'événement"
+}
