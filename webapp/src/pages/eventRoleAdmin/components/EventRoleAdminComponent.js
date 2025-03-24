@@ -2,20 +2,26 @@ import React, { Component } from 'react';
 import { eventService } from "../../../services/events";
 import { withRouter } from 'react-router-dom';
 import { withTranslation } from 'react-i18next';
+import Loading from "../../../components/Loading";
 
 class EventRoleAdminComponent extends Component {
 
     constructor(props) {
         super(props);
         this.state = {
-            eventRoles: []
+            eventRoles: [],
+            isLoading: true,
+            error: "",
+            userNotFound: false
         };
     }
 
     componentDidMount() {
         eventService.getEventRoles(this.props.event.id).then(result => {
             this.setState({
-                eventRoles: result.eventRoles
+                eventRoles: result.eventRoles,
+                isLoading: false,
+                error: result.error
             });
         });
     }
@@ -34,22 +40,35 @@ class EventRoleAdminComponent extends Component {
         const role = e.target.role.value;
         eventService.addEventRole(this.props.event.id, email, role).then(result => {
             this.setState({
-                eventRoles: result.eventRoles
+                eventRoles: result.eventRoles,
+                userNotFound: result.error === "No user exists with that email"
             });
         });
     }
     
     render() {
+        if (this.state.isLoading) {
+            return <Loading />;
+        }
+
+        if (this.state.error && !this.state.userNotFound) {
+            return (
+                <div className={"alert alert-danger alert-container"}>
+                    {JSON.stringify(this.state.error)}
+                </div>
+            );
+        }
+
         return (
-        <div className="container mt-4">
-            <h1 className="mb-4">Event Role Admin</h1>
+        <div className="container-fluid mt-4">
+            <h1 style={{textAlign: 'left'}} className="mb-4">{this.props.t("Event Role Admin")}</h1>
             <div className="card mb-4">
                 <div className="card-header">
-                    <h2 className="mb-0">Event Role List</h2>
+                    <h2 style={{textAlign: 'left'}} className="mb-0">{this.props.t("Event Role List")}</h2>
                 </div>
                 <div className="card-body">
                     <div className="table-responsive">
-                        <table className="table table-striped table-hover">
+                        <table className="table table-striped table-hover w-100">
                             <thead className="thead-dark">
                             <tr>
                                 <th>Role</th>
@@ -58,10 +77,10 @@ class EventRoleAdminComponent extends Component {
                             </tr>
                             </thead>
                             <tbody>
-                            {this.state.eventRoles.map(role => (
+                            {this.state.eventRoles && this.state.eventRoles.map(role => (
                                 <tr key={role.id}>
                                     <td>{role.role}</td>
-                                    <td>{role.user.full_name}</td>
+                                    <td>{role.user}</td>
                                     <td>
                                         <button 
                                             className="btn btn-danger btn-sm"
@@ -78,7 +97,7 @@ class EventRoleAdminComponent extends Component {
             </div>
             <div className="card">
                 <div className="card-header">
-                    <h2 className="mb-0">Add Event Role</h2>
+                    <h2 style={{textAlign: 'left'}} className="mb-0">{this.props.t("Add Event Role")}</h2>
                 </div>
                 <div className="card-body">
                     <form onSubmit={this.onAddRole}>
@@ -105,6 +124,11 @@ class EventRoleAdminComponent extends Component {
                         </div>
                         <button type="submit" className="btn btn-primary">{this.props.t("Add Role")}</button>
                     </form>
+                    {this.state.userNotFound && (
+                        <div className="alert alert-warning mt-3">
+                            {this.props.t("User not found")}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

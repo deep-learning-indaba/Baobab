@@ -586,5 +586,10 @@
     "removed_guest": "Removed {{guestName}} from the guest list",
     "remove_guest_confirmation": "Are you sure you want to remove {{guestName}} from the guest list?",
     "Registration Volunteer": "Registration Volunteer",
-    "Event Treasurer": "Event Treasurer"
+    "Event Treasurer": "Event Treasurer",
+    "Event Roles": "Event Roles",
+    "Add Event Role": "Add Event Role",
+    "Event Role List": "Event Role List",
+    "User Email": "User Email",
+    "User not found": "User not found"
 }

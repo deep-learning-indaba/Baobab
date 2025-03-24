@@ -706,8 +706,6 @@ event_role_fields = {
 class EventRoleAPI(EventRoleMixin, restful.Resource):
     @event_admin_required
     def get(self, event_id):
-        args = self.get_parser.parse_args()
-        
         event = event_repository.get_by_id(event_id)
         if not event:
             return EVENT_NOT_FOUND
