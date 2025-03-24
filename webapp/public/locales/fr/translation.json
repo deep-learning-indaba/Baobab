@@ -582,6 +582,15 @@
     "Offer for": "Offre pour",
     "Filter by name or email": "Filtrer par nom ou email",
     "Filter by candidate response": "Filtrer par réponse du candidat",
+    "removed_guest": "Retiré {{guestName}} de la liste des invités",
+    "remove_guest_confirmation": "Êtes-vous sûr de vouloir retirer {{guestName}} de la liste des invités?",
+    "Registration Volunteer": "Volontaire d'inscription",
+    "Event Treasurer": "Trésorier de l'événement",
+    "Event Roles": "Rôles de l'événement",
+    "Add Event Role": "Ajouter un rôle de l'événement",
+    "Event Role List": "Liste des rôles de l'événement",
+    "User Email": "Email de l'utilisateur",
+    "User not found": "Utilisateur non trouvé",
     "Applications for":"Les candidatures pour",
     "will open on": "ouvriront le",
     "will close on": "fermeront le ",
@@ -589,4 +598,3 @@
     "Applications will be opened on": "Les candidatures seront ouvertes le",
     "Applications Opening Soon":"Ouverture prochaine des candidatures"
 }
-

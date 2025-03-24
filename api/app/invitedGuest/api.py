@@ -10,7 +10,7 @@ from flask import g
 
 from app.users.models import AppUser, PasswordReset
 from app.invitedGuest.models import InvitedGuest
-from app.utils.errors import EVENT_NOT_FOUND, USER_NOT_FOUND, ADD_INVITED_GUEST_FAILED, INVITED_GUEST_FOR_EVENT_EXISTS, FORBIDDEN, INVITED_GUEST_EMAIL_FAILED, INVITED_GUEST_NOT_FOUND
+from app.utils.errors import EVENT_NOT_FOUND, USER_NOT_FOUND, ADD_INVITED_GUEST_FAILED, INVITED_GUEST_FOR_EVENT_EXISTS, FORBIDDEN, INVITED_GUEST_EMAIL_FAILED, INVITED_GUEST_NOT_FOUND, DELETE_INVITED_GUEST_FAILED
 from app.invitedGuest.mixins import InvitedGuestMixin, InvitedGuestListMixin, InvitedGuestTagMixin
 from app.users import api as UserAPI
 from app.users.mixins import SignupMixin
@@ -109,22 +109,13 @@ class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
         if not event:
             return EVENT_NOT_FOUND
 
-        existingInvitedGuest = db.session.query(InvitedGuest).filter(
-            InvitedGuest.event_id == event_id).filter(InvitedGuest.user_id == user.id).first()
+        existingInvitedGuest = invited_guest_repository.get_for_event_and_user(event_id, user.id)
 
         if existingInvitedGuest:
             return INVITED_GUEST_FOR_EVENT_EXISTS
 
-        invitedGuest = InvitedGuest(
-            event_id=event_id,
-            user_id=user.id,
-            role=role
-        )
-
-        db.session.add(invitedGuest)
-
         try:
-            db.session.commit()
+            invitedGuest = invited_guest_repository.add_invited_guest(event_id, user.id, role)
         except IntegrityError:
             LOGGER.error(
                 "Failed to add invited guest: {}".format(email))
@@ -148,6 +139,42 @@ class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
                 return INVITED_GUEST_EMAIL_FAILED
 
         return invitedGuest_info(invitedGuest, user), 201
+
+    @auth_required
+    @event_admin_required
+    def delete(self, event_id):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('invited_guest_id', type=int, required=True)
+        args = req_parser.parse_args()
+        invited_guest_id = args['invited_guest_id']
+
+        invited_guest = invited_guest_repository.get_by_id(invited_guest_id)
+        role = invited_guest.role
+        if not invited_guest:
+            return INVITED_GUEST_NOT_FOUND
+
+        event = event_repository.get_by_id(event_id)
+        user = user_repository.get_by_id(invited_guest.user_id)
+
+        try:
+            invited_guest_repository.delete_invited_guest(invited_guest_id)
+        except Exception as e:
+            LOGGER.error('Failed to delete invited guest with user Id {}, due to {}'.format(user.id, e))
+            return DELETE_INVITED_GUEST_FAILED
+
+        try:
+            email_user(
+                'guest-removal',
+                template_parameters=dict(
+                    event_email=event.email_from,
+                    role=role
+                ),
+                event=event,
+                user=user)
+        except Exception as e:
+            LOGGER.error('Failed to send removal email to guest with user Id {}, due to {}'.format(user.id, e))
+
+        return {"invited_guest_id": invited_guest_id}, 200
 
 class InvitedGuestTagAPI(restful.Resource, InvitedGuestTagMixin):
     @event_admin_required

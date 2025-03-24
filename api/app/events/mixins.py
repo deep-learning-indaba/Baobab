@@ -54,3 +54,13 @@ class EventFeeMixin(object):
     delete_parser = reqparse.RequestParser()
     delete_parser.add_argument('event_id', type=int, required=True)
     delete_parser.add_argument('event_fee_id', type=int, required=True)
+
+class EventRoleMixin(object):
+    delete_parser = reqparse.RequestParser()
+    delete_parser.add_argument('event_id', type=int, required=True)
+    delete_parser.add_argument('event_role_id', type=int, required=True)
+
+    post_parser = reqparse.RequestParser()
+    post_parser.add_argument('event_id', type=int, required=True)
+    post_parser.add_argument('role', type=str, required=True)
+    post_parser.add_argument('email', type=str, required=True)
