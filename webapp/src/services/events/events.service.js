@@ -8,7 +8,9 @@ export const eventService = {
   create,
   update,
   getEvents,
-  getByKey
+  getByKey,
+  getEventRoles,
+  deleteEventRole
 };
 
 export function getEvent(event_id) {
@@ -167,6 +169,48 @@ function getByKey(event_key) {
     .catch(function(error) {
       return {
         event: null,
+        error:
+          error.response && error.response.data
+            ? error.response.data.message
+            : error.message,
+        statusCode: error.response && error.response.status
+      };
+    });
+}
+
+function getEventRoles(event_id) {
+  return axios.get(baseUrl + `/api/v1/event-roles?event_id=${event_id}`, { headers: authHeader() })
+    .then(response => {
+      return {
+        eventRoles: response.data,
+        error: "",
+        statusCode: response.status
+      };
+    })
+    .catch(error => {
+      return {
+        eventRoles: null,
+        error:
+          error.response && error.response.data
+            ? error.response.data.message
+            : error.message,
+        statusCode: error.response && error.response.status
+      };
+    });
+}
+
+function deleteEventRole(event_id, event_role_id) {
+  return axios.delete(baseUrl + `/api/v1/event-roles?event_id=${event_id}&event_role_id=${event_role_id}`, { headers: authHeader() })
+    .then(response => {
+      return {
+        eventRoles: response.data,
+        error: "",  
+        statusCode: response.status
+      };
+    })
+    .catch(error => {
+      return {
+        eventRoles: null,
         error:
           error.response && error.response.data
             ? error.response.data.message

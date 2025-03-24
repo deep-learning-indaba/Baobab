@@ -20,7 +20,7 @@ class ValidationError(str, enum.Enum):
 
 class Response(db.Model):
     __tablename__ = "response"
-    
+
     id = db.Column(db.Integer(), primary_key=True)
     application_form_id = db.Column(db.Integer(), db.ForeignKey("application_form.id"), nullable=False)
     user_id = db.Column(db.Integer(), db.ForeignKey("app_user.id"), nullable=False)
@@ -38,6 +38,11 @@ class Response(db.Model):
                                                                              "Answer.is_active==True)")
     response_tags = db.relationship('ResponseTag')
     reviewers = db.relationship('ResponseReviewer')
+
+    __table_args__ = (
+        db.Index("response_application_form_lookup", "application_form_id",
+        postgresql_where=is_submitted.is_(True)),
+    )
 
     def __init__(self, application_form_id, user_id, language, parent_id=None):
         self.application_form_id = application_form_id

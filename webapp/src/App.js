@@ -190,6 +190,13 @@ class EventNav extends Component {
                     >
                       {t('Invoices')}
                     </NavLink>
+                    <NavLink
+                      to={`/${this.props.eventKey}/eventRoleAdmin`}
+                      className="dropdown-item"
+                      onClick={this.props.toggleMenu}
+                    >
+                      {t('Event Roles')}
+                    </NavLink>
                   <h6 className='dropdown-submenu-header'>Form Settings</h6>
                   <NavLink
                     to={`/${this.props.eventKey}/applicationform`}
