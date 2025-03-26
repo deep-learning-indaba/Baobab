@@ -7,7 +7,7 @@ class EventStatus extends Component {
     super(props);
     this.state = {
       open: false,
-      currentLink: ""
+      currentLink: "",
     };
   }
   unknownStatus = (status_name, status) => {
@@ -79,7 +79,7 @@ class EventStatus extends Component {
   applicationStatus = (event) => {
     const applyLink = `${event.key}/apply`;
     const submissionLink = `${event.key}/apply/new`;
-    const viewLink=`${event.key}/apply/view`;
+    const viewLink = `${event.key}/apply/view`;
 
     if (event.status.application_status === "Submitted") {
       if (event.event_type === "JOURNAL") {
@@ -106,32 +106,32 @@ class EventStatus extends Component {
         };
       }
     } else if (event.status.application_status === "Withdrawn") {
-      if (event.event_type === "JOURNAL"){
+      if (event.event_type === "JOURNAL") {
         return {
-            titleClass: "text-success",
-            longText: this.props.t("You have submitted your article."),
-            shortText: this.props.t("View Submission(s)"),
-            linkClass: 'btn-secondary',
-            link: viewLink,
-            submissionShortText: this.props.t("New submission"),
-            submissionLinkClass: "btn-primary",
-            submissionLink: submissionLink
-        }
-    }
-    else{
-      return {
-        title: this.props.t("Application Withdrawn"),
-        titleClass: "text-danger",
-        longText:
-          this.props.t(
-            "Your application has been withdrawn, you will not be considered for"
-          ) +
-          ` ${event.name} ` +
-          this.props.t("unless you re-submit by the deadline."),
-        shortText: this.props.t("Re-apply"),
-        linkClass: "btn-warning",
-        link: applyLink,
-      }};
+          titleClass: "text-success",
+          longText: this.props.t("You have submitted your article."),
+          shortText: this.props.t("View Submission(s)"),
+          linkClass: "btn-secondary",
+          link: viewLink,
+          submissionShortText: this.props.t("New submission"),
+          submissionLinkClass: "btn-primary",
+          submissionLink: submissionLink,
+        };
+      } else {
+        return {
+          title: this.props.t("Application Withdrawn"),
+          titleClass: "text-danger",
+          longText:
+            this.props.t(
+              "Your application has been withdrawn, you will not be considered for"
+            ) +
+            ` ${event.name} ` +
+            this.props.t("unless you re-submit by the deadline."),
+          shortText: this.props.t("Re-apply"),
+          linkClass: "btn-warning",
+          link: applyLink,
+        };
+      }
     } else if (event.status.application_status === "Not Submitted") {
       if (event.event_type === "JOURNAL") {
         return {
@@ -145,17 +145,17 @@ class EventStatus extends Component {
           submissionLink: submissionLink,
         };
       } else {
-      return {
-        title: this.props.t("In Progress"),
-        titleClass: "text-warning",
-        longText: this.props.t(
-          `You have not yet submitted your application, you must do so before the deadline to be considered`
-        ),
-        shortText: this.props.t("Continue"),
-        linkClass: "btn-primary",
-        link: applyLink,
-      };
-    }
+        return {
+          title: this.props.t("In Progress"),
+          titleClass: "text-warning",
+          longText: this.props.t(
+            `You have not yet submitted your application, you must do so before the deadline to be considered`
+          ),
+          shortText: this.props.t("Continue"),
+          linkClass: "btn-primary",
+          link: applyLink,
+        };
+      }
     } else {
       if (event.event_type === "JOURNAL") {
         return {
@@ -330,7 +330,9 @@ class EventStatus extends Component {
         this.props.t("will open on") +
         ` ${event.application_open_date}. ` +
         this.props.t("Please check back later to apply"),
-      shortText: this.props.t(`Applications will be opened on ${event.application_open_date}`),
+      shortText: this.props.t(
+        `Applications will be opened on ${event.application_open_date}`
+      ),
     };
   };
 
@@ -480,7 +482,7 @@ class EventStatus extends Component {
     window.location.href = this.state.currentLink;
   };
 
-  renderButton=(definition)=>{
+  renderButton = (definition) => {
     return (
       <>
         {definition.link && this.props.submissionLink ? (
@@ -494,57 +496,61 @@ class EventStatus extends Component {
               </button>
             </div>
             <div className="inline-btn-container">
-             <a href={definition.link} className={"btn " + definition.linkClass}>
-              {definition.shortText}
-             </a>
-           </div>
+              <a
+                href={definition.link}
+                className={"btn " + definition.linkClass}
+              >
+                {definition.shortText}
+              </a>
+            </div>
           </div>
         ) : (
           <a href={definition.link} className={"btn " + definition.linkClass}>
-           {definition.shortText}
-         </a>
+            {definition.shortText}
+          </a>
         )}
 
-       <ConfirmModal
+        <ConfirmModal
           visible={this.state.open}
           onOK={this.handleConfirm}
           onCancel={this.handleCloseModal}
           title={this.props.t("Confirmation")}
           okText={this.props.t("Yes - Confirm")}
           cancelText={this.props.t("No - Cancel")}
-      >
-          <div style={{ lineHeight: "1.6", textAlign: "justify", padding: "10px" }}>
-              <p>
-                  📢 {this.props.t("You are about to submit a ")}
-                  <strong>{this.props.t("completely new article.")}</strong>
-              </p>
-              <p>
-                  🗂️ {this.props.t("If you are making a ")}
-                    <strong>{this.props.t("resubmission to an article ")}</strong>
-                      {this.props.t("under review, please do so using the ")}
-                    <strong>{this.props.t("Resubmit button ")}</strong>
-                    {this.props.t("next to the latest version of the article you submitted.")}
-              </p>
+        >
+          <div
+            style={{ lineHeight: "1.6", textAlign: "justify", padding: "10px" }}
+          >
+            <p>
+            &gt; {this.props.t("You are about to submit a ")}
+              <strong>{this.props.t("completely new article.")}</strong>
+            </p>
+            <p>
+              &gt; {this.props.t("If you are making a ")}
+              <strong>{this.props.t("resubmission to an article ")}</strong>
+              {this.props.t("under review, please do so using the ")}
+              <strong>{this.props.t("Resubmit button ")}</strong>
+              {this.props.t(
+                "next to the latest version of the article you submitted."
+              )}
+            </p>
 
-              <p>
-                  🗂️ {this.props.t("The ")}
-                      <strong>{this.props.t("Resubmit button ")}</strong>
-                      {this.props.t("will only be available after the article has been reviewed.")}
-              </p>
-              <p style={{ fontWeight: "bold" }}>
-                  ❓ {this.props.t("Would you like to proceed?")}
-              </p>
-            </div> 
-
-      </ConfirmModal>
-
-
-
+            <p>
+              &gt; {this.props.t("The ")}
+              <strong>{this.props.t("Resubmit button ")}</strong>
+              {this.props.t(
+                "will only be available after the article has been reviewed."
+              )}
+            </p>
+            <p style={{ fontWeight: "bold" }}>
+            &gt; {this.props.t("Would you like to proceed?")}
+            </p>
+          </div>
+        </ConfirmModal>
       </>
     );
-  }
-  
-  
+  };
+
   render() {
     const definition = this.mapStatus(this.props.event);
     if (this.props.longForm) {

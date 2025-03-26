@@ -28,8 +28,6 @@ class Outcome(db.Model):
 
     review_summary = db.Column(db.String(), nullable=True)
 
-    
-    
 
     def __init__(self,
                  event_id,

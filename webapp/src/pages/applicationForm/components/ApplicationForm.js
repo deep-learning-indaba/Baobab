@@ -1456,11 +1456,11 @@ class ApplicationForm extends Component {
           >
             <div style={{ lineHeight: "1.6", textAlign: "justify", padding: "10px" }}>
               <p>
-                  📢 {this.props.t("You are about to submit a ")}
+                 &gt; {this.props.t("You are about to submit a ")}
                   <strong>{this.props.t("completely new article.")}</strong>
               </p>
               <p>
-                  🗂️ {this.props.t("If you are making a ")}
+                  &gt; {this.props.t("If you are making a ")}
                     <strong>{this.props.t("resubmission to an article ")}</strong>
                       {this.props.t("under review, please do so using the ")}
                     <strong>{this.props.t("Resubmit button ")}</strong>
@@ -1468,12 +1468,12 @@ class ApplicationForm extends Component {
               </p>
 
               <p>
-                  🗂️ {this.props.t("The ")}
+              &gt; {this.props.t("The ")}
                       <strong>{this.props.t("Resubmit button ")}</strong>
                       {this.props.t("will only be available after the article has been reviewed.")}
               </p>
               <p style={{ fontWeight: "bold" }}>
-                  ❓ {this.props.t("Would you like to proceed?")}
+              &gt; {this.props.t("Would you like to proceed?")}
               </p>
             </div>  
             </ConfirmModal>
