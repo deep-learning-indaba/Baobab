@@ -82,17 +82,6 @@ def build_response_email_body(answers, language, application_form):
 
     return stringified_summary
 
-def answer_by_question_key(key, application_form, answers):
-    all_questions = [q for section in application_form.sections for q in section.questions]
-    
-    question = next((q for q in all_questions if q.key == key), None)
-    
-    if question:
-        answer = next((a for a in answers if a.question_id == question.id), None)
-        if answer:
-            return answer.value
-    
-    return None
 
 
 def build_response_html_app_info(response, language):
@@ -174,19 +163,14 @@ def build_review_email_body(review_responses, language, review_form):
 
     return summary_str
 
-def _find_question(question_id, all_questions):
-    for question in all_questions:
-        if question.id == question_id:
-            return question
-    return None
-
-def _find_answer(question, scores):
-    if not question:
-        return None
-    found = next(
-        (score for score in scores if score["review_question_id"] == question.id),
-        None
-    )
-    if found:
-        return found.get("value")
+def answer_by_question_key(key, application_form, answers):
+    all_questions = [q for section in application_form.sections for q in section.questions]
+    
+    question = next((q for q in all_questions if q.key == key), None)
+    
+    if question:
+        answer = next((a for a in answers if a.question_id == question.id), None)
+        if answer:
+            return answer.value
+    
     return None

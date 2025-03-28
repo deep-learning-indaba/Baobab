@@ -309,10 +309,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                 event_description = event.get_description('en')
             
             if (event.event_type==EventType.JOURNAL):
-                print(response)
-                response = response_repository.get_by_id_and_user_id(response.response_id, user.user_id)
-                submission_title=strings.answer_by_question_key('submission_title', response.application_form, response.answers)
-                
+                submission_title=strings.answer_by_question_key('submission_title', response.application_form, response.answers)                
                 emailer.email_user(
                     'submitting-article-journal',
                     template_parameters=dict(

@@ -149,7 +149,13 @@ class OutcomeAPI(restful.Resource):
                 response = response_repository.get_by_id_and_user_id(outcome.response_id, outcome.user_id)
                 submission_title=strings.answer_by_question_key('submission_title', response.application_form, response.answers)
                 review_form = review_repository.get_review_form(outcome.event_id)
-                response_reviews = (review_repository.get_all_review_responses_by_response(review_form.id, outcome.response_id))
+
+                if review_form is not None:
+                    response_reviews = review_repository.get_all_review_responses_by_response(review_form.id, outcome.response_id)
+                else:
+        
+                    raise ValueError(errors.REVIEW_FORM_NOT_FOUND)
+                
                 serialized_reviews =  [ReviewResponseDetailListAPI._serialise_review_response(response, user.user_primaryLanguage) for response in response_reviews]
 
                 question_answer_summary = strings.build_review_email_body(serialized_reviews, user.user_primaryLanguage, review_form)
