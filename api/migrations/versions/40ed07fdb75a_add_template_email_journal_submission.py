@@ -76,4 +76,7 @@ The JAISD editorial board"""
     session.commit()
 
 def downgrade():
-    op.execute("""DELETE FROM email_template WHERE key = 'submitting-article-journal'""")
+    Base.metadata.bind = op.get_bind()
+    session = orm.Session(bind=Base.metadata.bind)
+    session.query(EmailTemplate).filter_by(key='submitting-article-journal').delete()
+    session.commit()

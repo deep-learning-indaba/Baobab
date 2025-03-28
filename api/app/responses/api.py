@@ -303,13 +303,13 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         try:
             question_answer_summary = strings.build_response_email_body(answers, user.user_primaryLanguage, application_form)
 
-
             if event.has_specific_translation(user.user_primaryLanguage):
                 event_description = event.get_description(user.user_primaryLanguage)
             else:
                 event_description = event.get_description('en')
             
             if (event.event_type==EventType.JOURNAL):
+                print(response)
                 response = response_repository.get_by_id_and_user_id(response.response_id, user.user_id)
                 submission_title=strings.answer_by_question_key('submission_title', response.application_form, response.answers)
                 
@@ -319,11 +319,13 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                         event_description=event_description,
                         question_answer_summary=question_answer_summary,
                     ),
-                    submission_title=submission_title,
+                     subject_parameters=dict(
+                            submission_title=submission_title,
+                        ),
                     event=event,
                     user=user
                 )
-                pass
+                
 
             else:
 

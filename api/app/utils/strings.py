@@ -83,14 +83,6 @@ def build_response_email_body(answers, language, application_form):
     return stringified_summary
 
 def answer_by_question_key(key, application_form, answers):
-    """
-    Recherche la réponse associée à une question donnée par sa clé.
-    
-    :param key: Clé de la question recherchée.
-    :param application_form: Formulaire d'application contenant les sections et questions.
-    :param answers: Dictionnaire des réponses fournies.
-    :return: Valeur de la réponse si trouvée, sinon None.
-    """
     all_questions = [q for section in application_form.sections for q in section.questions]
     
     question = next((q for q in all_questions if q.key == key), None)
@@ -147,11 +139,6 @@ def build_response_html_answers(answers, language, application_form):
 
 
 def build_review_email_body(review_responses, language, review_form):
-    """
-    Build a string summary of all reviews for a particular response,
-    similar to build_response_email_body, but without dependencies.
-    """
-
     summary_str = ""
     for idx, review_response in enumerate(review_responses, start=1):
         summary_str += f"Reviewer {idx}\n\n"
@@ -201,6 +188,5 @@ def _find_answer(question, scores):
         None
     )
     if found:
-        # If your code expects a raw "value" or something else, adapt here:
         return found.get("value")
     return None
