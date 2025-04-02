@@ -838,10 +838,6 @@ class ResponsePage extends Component {
     
 
     renderComment = () => {
-        // if (this.state.outcome.status === null) {
-        //   return null;
-            
-        // }
         return (
           <textarea
             className={`comment-box small-text ${
