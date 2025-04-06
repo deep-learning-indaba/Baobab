@@ -36,14 +36,35 @@ user_fields = {
     'user_title': fields.String
 }
 
+
+answer_fields = {
+    'id': fields.Integer,
+    'question_id': fields.Integer,
+    'question': fields.String(attribute='question.headline'),
+    'value': fields.String(attribute='value_display'),
+    'question_type': fields.String(attribute='question.type')
+}
+
+response_fields = {
+    'id': fields.Integer,
+    'application_form_id': fields.Integer,
+    'user_id': fields.Integer,
+    'is_submitted': fields.Boolean,
+    'submitted_timestamp': fields.DateTime(dt_format='iso8601'),
+    'is_withdrawn': fields.Boolean,
+    'withdrawn_timestamp': fields.DateTime(dt_format='iso8601'),
+    'started_timestamp': fields.DateTime(dt_format='iso8601'),
+    'answers': fields.List(fields.Nested(answer_fields))
+}
+
 outcome_list_fields = {
     'id': fields.Integer,
     'status': fields.String(attribute=_extract_status),
     'timestamp': fields.DateTime(dt_format='iso8601'),
     'user': fields.Nested(user_fields),
-    'updated_by_user': fields.Nested(user_fields)
+    'updated_by_user': fields.Nested(user_fields),
+    'response': fields.Nested(response_fields),
 }
-
 
 class OutcomeAPI(restful.Resource):
     @event_admin_required
@@ -51,12 +72,14 @@ class OutcomeAPI(restful.Resource):
     def get(self, event_id):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('user_id', type=int, required=True)
+        req_parser.add_argument('response_id', type=int, required=True)
         args = req_parser.parse_args()
 
         user_id = args['user_id']
+        response_id=args['response_id']
 
         try:
-            outcome = outcome_repository.get_latest_by_user_for_event(user_id, event_id)
+            outcome = outcome_repository.get_latest_by_user_for_event(user_id, event_id,response_id)
             if not outcome:
                 return errors.OUTCOME_NOT_FOUND
             
@@ -75,6 +98,7 @@ class OutcomeAPI(restful.Resource):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('user_id', type=int, required=True)
         req_parser.add_argument('outcome', type=str, required=True)
+        req_parser.add_argument('response_id', type=int, required=True)
         args = req_parser.parse_args()
 
         event = event_repository.get_by_id(event_id)
@@ -84,6 +108,7 @@ class OutcomeAPI(restful.Resource):
         user = user_repository.get_by_id(args['user_id'])
         if not user:
             return errors.USER_NOT_FOUND
+        
 
         try:
             status = Status[args['outcome']]
@@ -92,7 +117,7 @@ class OutcomeAPI(restful.Resource):
 
         try:
             # Set existing outcomes to no longer be the latest outcome
-            existing_outcomes = outcome_repository.get_all_by_user_for_event(args['user_id'], event_id)
+            existing_outcomes = outcome_repository.get_all_by_user_for_event(args['user_id'], event_id, args['response_id'])
             for existing_outcome in existing_outcomes:
                 existing_outcome.reset_latest()
 
@@ -101,7 +126,8 @@ class OutcomeAPI(restful.Resource):
                     event_id,
                     args['user_id'],
                     status,
-                    g.current_user['id'])
+                    g.current_user['id'],
+                    args['response_id'])
 
             outcome_repository.add(outcome)
             db.session.commit()
