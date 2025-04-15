@@ -426,7 +426,7 @@ class EventStatus extends Component {
       return this.outcomeStatus(event);
     }
 
-    if (event.is_event_opening) {
+    if (event.is_application_opening) {
       return this.applicationOpeningStatus(event);
     }
 
