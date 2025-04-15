@@ -100,8 +100,8 @@ class ApplicationResponseReportAPI(restful.Resource):
                 page = 1
             if per_page < 1:
                 per_page = 25
-            if per_page > 1000:
-                per_page = 1000
+            if per_page > 10000:
+                per_page = 10000
         except ValueError:
             return errors.INVALID_INPUT_MALFORMED_PAGINATION
 
@@ -145,8 +145,8 @@ class ReviewReportAPI(restful.Resource):
                 page = 1
             if per_page < 1:
                 per_page = 25
-            if per_page > 1000:
-                per_page = 1000
+            if per_page > 10000:
+                per_page = 10000
         except ValueError:
             return errors.INVALID_INPUT_MALFORMED_PAGINATION
 
