@@ -129,11 +129,45 @@ class ReviewReportAPI(restful.Resource):
     @event_admin_required
     @translatable
     def get(self, event_id: int, language: str):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('page', type=int, required=False)
+        req_parser.add_argument('per_page', type=int, required=False)
+        req_args = req_parser.parse_args()
+
         app_form = ApplicationFormRepository.get_by_event_id(event_id)
         if not app_form:
             return errors.APPLICATION_FORM_NOT_FOUND
-        reviews = ReportingRepository.get_reviews_for_form(app_form.id, language)
-        return [review_info(review) for review in reviews]
+
+        try:
+            page = req_args['page'] or 1
+            per_page = req_args['per_page'] or 25
+            if page < 1:
+                page = 1
+            if per_page < 1:
+                per_page = 25
+            if per_page > 100:
+                per_page = 100
+        except ValueError:
+            return errors.INVALID_INPUT_MALFORMED_PAGINATION
+
+        paginated_reviews = ReportingRepository.get_reviews_for_form(
+            application_form_id=app_form.id, 
+            language=language,
+            page=page,
+            per_page=per_page
+        )
+        
+        results = [review_info(review) for review in paginated_reviews.items]
+
+        return {
+            'pagination': {
+                'page': paginated_reviews.page,
+                'per_page': paginated_reviews.per_page,
+                'total': paginated_reviews.total,
+                'pages': paginated_reviews.pages
+            },
+            'results': results
+        }
 
 class RegistrationsReportAPI(restful.Resource):
     

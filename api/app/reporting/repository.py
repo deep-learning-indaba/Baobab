@@ -29,12 +29,12 @@ class ReportingRepository():
         return paginated_responses
     
     @staticmethod
-    def get_reviews_for_form(application_form_id: int, language: str):
-        """Get all reviews for an application form."""
+    def get_reviews_for_form(application_form_id: int, language: str, page: int, per_page: int):
+        """Get a paginated list of reviews for an application form."""
         Applicant = aliased(AppUser)
         Reviewer = aliased(AppUser)
 
-        reviews = (
+        query = (
             db.session.query(ReviewScore, ReviewResponse, ReviewSectionTranslation, ReviewQuestionTranslation, 
                              Applicant.id.label("applicant_id"), 
                              Applicant.email.label("applicant_email"),
@@ -57,6 +57,8 @@ class ReportingRepository():
             .join(Response, ReviewResponse.response_id == Response.id)
             .join(Applicant, Response.user_id == Applicant.id)
             .join(Reviewer, ReviewResponse.reviewer_user_id == Reviewer.id)
-            .all())
+        )
         
-        return reviews
+        paginated_reviews = query.paginate(page=page, per_page=per_page, error_out=False)
+
+        return paginated_reviews
