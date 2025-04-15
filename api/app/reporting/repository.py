@@ -8,9 +8,9 @@ from sqlalchemy.orm import aliased
 class ReportingRepository():
 
     @staticmethod
-    def get_applications_for_form(application_form_id: int, language: str):
-        """Get all applications for an application form."""
-        responses = (
+    def get_applications_for_form(application_form_id: int, language: str, page: int, per_page: int):
+        """Get a paginated list of applications for an application form."""
+        query = (
             db.session.query(Answer, Response, Question, QuestionTranslation, Section, SectionTranslation, AppUser)
             .filter_by(is_active=True)
             .join(Response, Answer.response_id == Response.id)
@@ -22,9 +22,11 @@ class ReportingRepository():
             .join(SectionTranslation, Section.id == SectionTranslation.section_id)
             .filter_by(language=language)
             .join(AppUser, Response.user_id == AppUser.id)
-            .all())
+        )
 
-        return responses
+        paginated_responses = query.paginate(page=page, per_page=per_page, error_out=False)
+
+        return paginated_responses
     
     @staticmethod
     def get_reviews_for_form(application_form_id: int, language: str):
