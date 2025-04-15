@@ -591,5 +591,11 @@
     "Add Event Role": "Add Event Role",
     "Event Role List": "Event Role List",
     "User Email": "User Email",
-    "User not found": "User not found"
+    "User not found": "User not found",
+    "Applications for":"Applications for",
+    "will open on": "will open on",
+    "will close on": "will close on",
+    "Please check back later to apply": "Please check back later to apply",
+    "Applications will be opened on": "Applications will be opened on",
+    "Applications Opening Soon": "Applications Opening Soon"
 }

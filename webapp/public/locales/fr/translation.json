@@ -569,11 +569,11 @@
     "Due Date": "Date d'échéance",
     "Currency": "Devise",
     "Amount": "Montant",
-    "paid": "Payé",
+    "paid": "payé",
     "Paid": "Payé",
-    "unpaid": "Non payé",
+    "unpaid": "non payé",
     "Unpaid": "Non payé",
-    "canceled": "Annulé",
+    "canceled": "annulé",
     "overdue": "En retard",
     "Mark Paid": "Marquer comme payé",
     "confirmInvoicePaid": "Êtes-vous sûr de vouloir marquer la facture {{selectedInvoiceNumber}} comme payée?",
@@ -590,5 +590,11 @@
     "Add Event Role": "Ajouter un rôle de l'événement",
     "Event Role List": "Liste des rôles de l'événement",
     "User Email": "Email de l'utilisateur",
-    "User not found": "Utilisateur non trouvé"
+    "User not found": "Utilisateur non trouvé",
+    "Applications for":"Les candidatures pour",
+    "will open on": "ouvriront le",
+    "will close on": "fermeront le ",
+    "Please check back later to apply": "Veuillez revenir plus tard pour postuler",
+    "Applications will be opened on": "Les candidatures seront ouvertes le",
+    "Applications Opening Soon":"Ouverture prochaine des candidatures"
 }
