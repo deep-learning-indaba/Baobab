@@ -154,7 +154,7 @@ class OutcomeAPI(restful.Resource):
                     response_reviews = review_repository.get_all_review_responses_by_response(review_form.id, outcome.response_id)
                 else:
         
-                    raise ValueError(errors.REVIEW_FORM_NOT_FOUND)
+                    raise errors.REVIEW_FORM_NOT_FOUND
                 
                 serialized_reviews =  [ReviewResponseDetailListAPI._serialise_review_response(response, user.user_primaryLanguage) for response in response_reviews]
 
