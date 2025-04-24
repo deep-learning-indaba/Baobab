@@ -49,6 +49,10 @@ class FormSelect extends React.Component {
                 ? "select-control is-invalid"
                 : "select-control"
             }
+            styles={{
+              // Fixes the overlapping problem of the component
+              menu: provided => ({ ...provided, zIndex: 9999 })
+            }}
           />
         </FormGroup>
       </div>
