@@ -56,10 +56,6 @@
   margin-bottom: 3em;
 }
 
-.select-control {
-  z-index: 100;
-}
-
 .select-control.is-invalid {
   border-color: #dc3545;
   padding-right: 5rem;
