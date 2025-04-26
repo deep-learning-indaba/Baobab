@@ -522,7 +522,7 @@
     "Save Tag": "Save Tag",
     "We are pleased to offer you the following grants": "We are pleased to offer you the following grants",
     "I accept this grant": "I accept this grant",
-    "Unfortunately we are unable to award you any grants for this event": "Unfortunately we are unable to award you any grants for this event",
+    "Please note that this offer does not include any grants. We appreciate your understanding.": "UPlease note that this offer does not include any grants. We appreciate your understanding.",
     "We are pleased to offer you a place at": "We are pleased to offer you a place at",
     "Please see the details of this offer below" : "Please see the details of this offer below",
     "Offer Details": "Offer Details",
@@ -597,5 +597,6 @@
     "will close on": "will close on",
     "Please check back later to apply": "Please check back later to apply",
     "Applications will be opened on": "Applications will be opened on",
-    "Applications Opening Soon": "Applications Opening Soon"
+    "Applications Opening Soon": "Applications Opening Soon",
+    "Invitation letter is not yet available, please check again at a later date.": "Invitation letter is not yet available, please check again at a later date."
 }
