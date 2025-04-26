@@ -10,7 +10,8 @@ export const registrationService = {
   getGuestRegistration,
   submitGuestResponse,
   getGuestRegistrationResponse,
-  requestInvitationLetter
+  requestInvitationLetter,
+  invitationLetterAvailable
 };
 
 function getRegistrationForm(eventId, offerId) {
@@ -194,5 +195,25 @@ function requestInvitationLetter(user, event_id) {
           ? error.response.data.message
           : error.message
         };
+    });
+}
+
+
+function invitationLetterAvailable(event_id) {
+  return axios
+    .get(baseUrl + `/api/v1/invitation-letter/available?event_id=${event_id}`, {
+      headers: authHeader()
+    })
+    .then(response => {
+      return response;
+    })
+    .catch(error => {
+      return {
+        available: false,
+        status: error.response ? error.response.status : null,
+        error: error.response && error.response.data
+          ? error.response.data.message
+          : error.message
+      };
     });
 }

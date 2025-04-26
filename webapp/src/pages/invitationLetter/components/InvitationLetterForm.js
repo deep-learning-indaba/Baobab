@@ -13,6 +13,9 @@ import FormSelect from "../../../components/form/FormSelect";
 import { getCountries } from "../../../utils/validation/contentHelpers";
 import Address from "./Address.js";
 import { registrationService } from "../../../services/registration";
+import Loading from "../../../components/Loading";
+import { withRouter } from "react-router";
+import { withTranslation } from 'react-i18next';
 
 const fieldValidations = [
   ruleRunner(validationFields.passportNumber, requiredText),
@@ -41,8 +44,11 @@ class InvitationLetterForm extends Component {
         bringingAPoster: false
       },
       loading: false,
+      loadingPage: true,
       showWorkAddress: false,
-      errors: []
+      errors: [],
+      available: false,
+      error: null
     };
   }
 
@@ -64,9 +70,21 @@ class InvitationLetterForm extends Component {
   }
 
   componentWillMount() {
-    getCountries.then(result => {
+    Promise.all([
+      getCountries,
+      registrationService.invitationLetterAvailable(this.props.event ? this.props.event.id : 0)
+    ]).then(([countriesResult, availableResponse]) => {
       this.setState({
-        countryOptions: this.checkOptionsList(result)
+        countryOptions: this.checkOptionsList(countriesResult),
+        loadingPage: false,
+        available: availableResponse.data.available
+      });
+    }).catch(error => {
+      this.setState({
+        loadingPage: false,
+        error: error.response && error.response.data
+          ? error.response.data.message
+          : error.message
       });
     });
   }
@@ -302,13 +320,23 @@ class InvitationLetterForm extends Component {
     } = this.state.user;
 
     const {
+      loadingPage,
       loading,
       errors,
       showErrors,
       error,
       showWorkAddress,
-      countryOptions
+      countryOptions,
+      available
     } = this.state;
+
+    if (loadingPage) {
+      return <Loading />;
+    }
+
+    if (!available) {
+      return <div className="alert alert-warning">{this.props.t("Invitation letter is not yet available, please check again at a later date.")}</div>;
+    }
 
     const nationalityValue = this.getContentValue(
       this.state.countryOptions,
@@ -518,4 +546,4 @@ class InvitationLetterForm extends Component {
   }
 }
 
-export default InvitationLetterForm;
+export default withRouter(withTranslation()(InvitationLetterForm));

@@ -249,7 +249,7 @@ class Offer extends Component {
           })}
         </div>
         :
-        <div class="row-mb-2 pr-2" align="center">{t("Unfortunately we are unable to award you any grants for this event")}</div>
+        <div class="row-mb-2 pr-2" align="center">{t("Please note that this offer does not include any grants. We appreciate your understanding.")}</div>
       } 
       <hr/>
     </div>
