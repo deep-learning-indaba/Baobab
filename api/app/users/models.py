@@ -108,11 +108,11 @@ class AppUser(db.Model, UserMixin):
         return self._has_admin_role(event_id, 'admin')
 
     def is_event_treasurer(self, event_id):
-        return self._has_admin_role(event_id, 'treasurer')
+        return self.is_event_admin(event_id) or self._has_admin_role(event_id, 'treasurer')
 
     def is_registration_admin(self, event_id):
         # An event admin is also a registration admin
-        return self._has_admin_role(event_id, 'registration-admin') or self._has_admin_role(event_id, 'admin')
+        return self._has_admin_role(event_id, 'registration-admin') or self.is_event_admin(event_id)
     
     def is_reviewer(self, event_id):
         if self.event_roles is None:

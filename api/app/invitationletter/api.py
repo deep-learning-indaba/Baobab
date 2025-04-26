@@ -251,3 +251,26 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             LOGGER.error(
                 "Failed to add invitation request for user with email: {} due to {}".format(user.email, e))
             return errors.ADD_INVITATION_REQUEST_FAILED
+
+
+class InvitationLetterAvailableAPI(restful.Resource):
+    @auth_required
+    def get(self):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
+        args = req_parser.parse_args()
+        event_id = args['event_id']
+        event = EventRepository.get_by_id(event_id)
+        if not event:
+            return errors.EVENT_ID_NOT_FOUND
+        
+        invitation_template = (
+            db.session.query(InvitationTemplate)
+            .filter_by(
+                event_id=event_id)
+            .first())
+
+        if not invitation_template:
+            return {"available": False}, 200
+
+        return {"available": True}, 200
