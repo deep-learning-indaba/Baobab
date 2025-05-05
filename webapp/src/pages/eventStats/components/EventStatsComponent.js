@@ -153,8 +153,8 @@ class EventStatsComponent extends Component {
                   <div className="stats-description">{t("Accepted")}</div>
                 </div>
                 <div className="col-sm">
-                  <h3>{stats.offers_paid}</h3>
-                  <div className="stats-description">{t("Paid")}</div>
+                  <h3>{stats.offers_confirmed}</h3>
+                  <div className="stats-description">{t("Confirmed")}</div>
                 </div>
                 <div className="col-sm">
                   <h3>{stats.offers_rejected}</h3>
