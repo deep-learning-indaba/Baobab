@@ -161,7 +161,7 @@ class RegistrationComponent extends Component {
                 });
               } else {
                 if (result.statusCode === 409) {
-                  this.props.history.push("/offer");
+                  this.props.history.push(`/${this.props.event.key}/offer`);
                 }
                 if (result.statusCode === 404) {
                   this.setState({

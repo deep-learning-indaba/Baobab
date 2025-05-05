@@ -52,6 +52,7 @@ class InvitedGuests extends Component {
       adding: false,
       roleSearch: "all",
       nameSearch: "",
+      tagSearch: '',
       tags: [],
       filteredTags: [],
       tagSelectorVisible: false,
@@ -149,7 +150,7 @@ class InvitedGuests extends Component {
   };
 
   filterGuestList = () => {
-    const { nameSearch, roleSearch } = this.state;
+    const { nameSearch, roleSearch, tagSearch } = this.state;
     const filtered = this.state.guestList.filter(g => {
       let passed = true;
       if (nameSearch) {
@@ -159,6 +160,9 @@ class InvitedGuests extends Component {
       }
       if (roleSearch && passed && roleSearch !== "all") {
         passed = g.role === roleSearch;
+      }
+      if (tagSearch && passed && tagSearch !== "all") {
+        passed = g.tags.some(tag => tag.id.toString() === tagSearch);
       }
       return passed;
     });
@@ -172,6 +176,15 @@ class InvitedGuests extends Component {
   updateRoleSearch = (id, event) => {
     this.setState({roleSearch: event.value}, this.filterGuestList);
   }
+
+  updateTagSearch = (id, event) => {
+    const newTagSearch = event.value;
+    if (newTagSearch === 'all') {
+      this.setState({ tagSearch: '' }, this.filterGuestList);
+      return;
+    }
+    this.setState({ tagSearch: event.value }, this.filterGuestList);
+  };
 
   getSearchRoles(roles) {
     return [{ value: "all", label: this.props.t("All") }, ...roles];
@@ -453,6 +466,23 @@ class InvitedGuests extends Component {
                 onChange={this.updateRoleSearch}
                 label={t("Filter by role")}
                 defaultValue={this.state.roleSearch || "all"} />
+            </div>
+
+            <div className={threeColClassName}>
+              <FormSelect
+                options={[
+                  { value: 'all', label: t('All Tags') },
+                  ...this.state.tags.map(tag => ({ 
+                    value: tag.id.toString(), 
+                    label: tag.name 
+                  }))
+                ]}
+                id="TagFilter"
+                placeholder={t('Filter by tag')}
+                onChange={this.updateTagSearch}
+                label={t('Filter by tag')}
+                defaultValue={this.state.tagSearch || 'all'}
+              />
             </div>
           </div>
 

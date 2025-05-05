@@ -478,7 +478,8 @@ class EventStatsAPI(EventsMixin, restful.Resource):
 
             offers_allocated = offer_repository.count_offers_allocated(event_id)
             offers_accepted = offer_repository.count_offers_accepted(event_id)
-            offers_paid = offer_repository.count_offers_paid(event_id)
+            offers_confirmed = offer_repository.count_offers_confirmed(event_id)
+            offers_paid = offer_repository.count_offers_confirmed_and_paid(event_id)
             offers_rejected = offer_repository.count_offers_rejected(event_id)
             offers_timeseries = _process_timeseries(offer_repository.timeseries_offers_accepted(event_id))
 
@@ -500,6 +501,7 @@ class EventStatsAPI(EventsMixin, restful.Resource):
                 'reviews_complete_timeseries': reviews_timeseries,
                 'offers_allocated': offers_allocated,
                 'offers_accepted': offers_accepted,
+                'offers_confirmed': offers_confirmed,
                 'offers_paid': offers_paid,
                 'offers_rejected': offers_rejected,
                 'offers_accepted_timeseries': offers_timeseries,

@@ -43,14 +43,21 @@ class Offer(db.Model):
         return any(self.get_valid_invoices())
     
     @property
-    def is_paid(self):
+    def is_confirmed(self):
+        if not self.candidate_response:
+            return False
+
         if not bool(self.payment_required):
             return True
-        else:
-            valid_invoices = self.get_valid_invoices()
-            if not valid_invoices:
-                return False
-            return all(invoice.current_payment_status.payment_status == PaymentStatus.PAID.value for invoice in valid_invoices)
+        
+        return self.is_paid
+
+    @property
+    def is_paid(self):
+        valid_invoices = self.get_valid_invoices()
+        if not valid_invoices:
+            return False
+        return all(invoice.current_payment_status.payment_status == PaymentStatus.PAID.value for invoice in valid_invoices)
     
     @property
     def invoice_id(self):
