@@ -39,6 +39,7 @@ def offer_info(offer_entity, requested_travel=None):
         'candidate_response': offer_entity.candidate_response,
         'payment_required': offer_entity.payment_required,
         'is_paid': offer_entity.is_paid,
+        'is_confirmed': offer_entity.is_confirmed,
         'invoice_id': offer_entity.invoice_id,
         'invoice_number': offer_entity.invoice_number,
         'requested_travel': requested_travel and (requested_travel.value == 'Travel' or requested_travel.value == 'Travel & Accommodation'),
