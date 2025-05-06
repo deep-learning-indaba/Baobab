@@ -66,7 +66,7 @@ class Offer extends Component {
               showReasonBox: false,
               saving: false
             }, () => {
-              if (candidate_response && this.state.offer.is_paid && this.props.event) {
+              if (candidate_response && this.state.offer.is_confirmed && this.props.event) {
                 this.props.history.push(`/${this.props.event.key}/registration`);
               }
             });
@@ -113,13 +113,13 @@ class Offer extends Component {
     return (
       <div className="container">
         <p className="h5">
-          {offer.candidate_response && offer.is_paid && <span><Trans i18nKey="spotAccepted">You accepted the following offer on {{respondedDate}}</Trans>.</span>}
+          {offer.candidate_response && offer.is_confirmed && <span><Trans i18nKey="spotAccepted">You accepted the following offer on {{respondedDate}}</Trans>.</span>}
           {!offer.candidate_response && <span><Trans i18nKey="spotRejected">You rejected your offer for a spot at {{eventName}} on {{respondedDate}} for the following reason:</Trans><br/><br/>{offer.rejected_reason}</span>}
-          {offer.candidate_response && !offer.is_paid && !offer.is_expired && <span>{t("Your offer is pending receipt of payment")}</span>}
-          {offer.candidate_response && !offer.is_paid && offer.is_expired && <span className="alert alert-danger">{t("Your offer has expired due to non payment")}</span>}
+          {offer.candidate_response && !offer.is_confirmed && !offer.is_expired && <span>{t("Your offer is pending receipt of payment")}</span>}
+          {offer.candidate_response && !offer.is_confirmed && offer.is_expired && <span className="alert alert-danger">{t("Your offer has expired due to non payment")}</span>}
         </p>
 
-        {offer.candidate_response && (offer.is_paid || (!offer.is_paid && !offer.is_expired)) && <div className="white-background card form mt-5 offer-container">
+        {offer.candidate_response && (offer.is_confirmed || (!offer.is_confirmed && !offer.is_expired)) && <div className="white-background card form mt-5 offer-container">
           {this.row("Offer date", offer.offer_date ? offer.offer_date.substring(0, 10) : "-date-")}
           {this.row("Offer expiry date", offer.expiry_date ? offer.expiry_date.substring(0, 10) : "-date-")}
           {this.row("Registration fee", 
@@ -132,7 +132,7 @@ class Offer extends Component {
           {this.props.event && acceptedGrants.length > 0 && this.row(t("Grants"), t("You have accepted the following grants") + ": " + acceptedGrants.map(a => a.name).join(", "))}
         </div>}
 
-        {offer.candidate_response && offer.is_paid &&
+        {offer.candidate_response && offer.is_confirmed &&
           <div className="row mt-4">
             <div className="col">
               <button
@@ -160,7 +160,7 @@ class Offer extends Component {
 
         {
           // If the user has accepted the offer but has not paid the registration fee, and the offer is not expired, show the invoice & payment button
-          offer.candidate_response && !offer.is_paid && !offer.is_expired &&
+          offer.candidate_response && !offer.is_confirmed && !offer.is_expired &&
           <div className="row mt-4">
             <div className="col">
               <button

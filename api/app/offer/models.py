@@ -29,7 +29,7 @@ class Offer(db.Model):
 
     def is_expired(self):
         end_of_today = datetime.combine(date.today(), time())
-        return (self.candidate_response is None or (self.candidate_response and not self.is_paid)) and (self.expiry_date < end_of_today)
+        return (self.candidate_response is None or (self.candidate_response and not self.is_confirmed)) and (self.expiry_date < end_of_today)
     
     def get_valid_invoices(self):
         valid_payment_statuses = [

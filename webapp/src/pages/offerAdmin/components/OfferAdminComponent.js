@@ -114,12 +114,12 @@ class OfferAdminComponent extends Component {
             text = t("Expired");
         }
 
-        else if (props.original.candidate_response && props.original.is_paid) {
+        else if (props.original.candidate_response && props.original.is_confirmed) {
             className = "badge badge-success";
             text = t("Confirmed")
         }
 
-        else if (props.original.candidate_response && !props.original.is_paid) {
+        else if (props.original.candidate_response && !props.original.is_confirmed) {
             className = "badge badge-warning";
             text = t("Payment Pending")
         }
