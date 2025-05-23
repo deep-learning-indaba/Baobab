@@ -591,7 +591,6 @@
     "Applications Opening Soon": "Applications Opening Soon",
     "Invitation letter is not yet available, please check again at a later date.": "Invitation letter is not yet available, please check again at a later date.",
     "Confirmed": "Confirmed",
-    "All Tags": "All Tags",
     "Resubmit an article": "Resubmit an article",
     "Start a new submission": "Start a new submission",
     "REJECTED WITH ENCOURAGEMENT TO RESUMIT": "REJECTED WITH ENCOURAGEMENT TO RESUMIT",
@@ -622,5 +621,6 @@
     "Kind Regards":"Kind Regards",
     "No - Don't confirm": "No - Don't confirm",
     "Yes - Confirm": "Yes - Confirm",
-    "No available": "No available"
+    "No available": "No available",
+    "All Tags": "All Tags"
 }
