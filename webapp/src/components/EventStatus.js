@@ -451,16 +451,16 @@ class EventStatus extends Component {
       return this.invitedGuestStatus(event);
     }
 
-    if (event.is_application_open) {
-      return this.applicationStatus(event);
-    }
-
     if (event.status.offer_status) {
       return this.offerStatus(event);
     }
 
     if (event.status.outcome_status) {
       return this.outcomeStatus(event);
+    }
+
+    if (event.is_application_open) {
+      return this.applicationStatus(event);
     }
 
     if (event.is_event_opening) {

@@ -9,7 +9,7 @@ import "react-table/react-table.css";
 import validationFields from "../../../utils/validation/validationFields";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import ReactTable from 'react-table';
-import { withTranslation } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 import TagSelectorDialog from '../../../components/TagSelectorDialog';
 import { downloadCSV } from "../../../utils/files";
 import {
@@ -52,10 +52,12 @@ class InvitedGuests extends Component {
       adding: false,
       roleSearch: "all",
       nameSearch: "",
+      tagSearch: '',
       tags: [],
       filteredTags: [],
       tagSelectorVisible: false,
-      selectedGuest: null
+      selectedGuest: null,
+      confirmRemoveGuestVisible: false
     };
   }
 
@@ -148,7 +150,7 @@ class InvitedGuests extends Component {
   };
 
   filterGuestList = () => {
-    const { nameSearch, roleSearch } = this.state;
+    const { nameSearch, roleSearch, tagSearch } = this.state;
     const filtered = this.state.guestList.filter(g => {
       let passed = true;
       if (nameSearch) {
@@ -158,6 +160,9 @@ class InvitedGuests extends Component {
       }
       if (roleSearch && passed && roleSearch !== "all") {
         passed = g.role === roleSearch;
+      }
+      if (tagSearch && passed && tagSearch !== "all") {
+        passed = g.tags.some(tag => tag.id.toString() === tagSearch);
       }
       return passed;
     });
@@ -171,6 +176,15 @@ class InvitedGuests extends Component {
   updateRoleSearch = (id, event) => {
     this.setState({roleSearch: event.value}, this.filterGuestList);
   }
+
+  updateTagSearch = (id, event) => {
+    const newTagSearch = event.value;
+    if (newTagSearch === 'all') {
+      this.setState({ tagSearch: '' }, this.filterGuestList);
+      return;
+    }
+    this.setState({ tagSearch: event.value }, this.filterGuestList);
+  };
 
   getSearchRoles(roles) {
     return [{ value: "all", label: this.props.t("All") }, ...roles];
@@ -336,6 +350,40 @@ class InvitedGuests extends Component {
     });
   }
 
+  handleDeleteGuest = (resp) => {
+    if (resp.statusCode === 200) {
+      const removedGuest = this.state.guestList.find(g => g.invited_guest_id === resp.response.data.invited_guest_id);
+      const guestName = removedGuest.user.user_title + " " + removedGuest.user.firstname + " " + removedGuest.user.lastname;
+      this.setState({
+        guestList: this.state.guestList.filter(g => g.invited_guest_id !== resp.response.data.invited_guest_id),
+        addedSucess: true,
+        successMessage: <Trans i18nKey="removed_guest" values={{ guestName }}>Removed {{guestName}} from the guest list</Trans>
+      }, this.filterGuestList);
+    }
+    else {
+      this.setState({
+        error: resp.error
+      });
+    }
+  }
+
+  removeGuest = (guest) => {
+    this.setState({
+      selectedGuest: guest,
+      confirmRemoveGuestVisible: true
+    });
+  }
+
+  confirmRemoveGuest = () => {
+    const guest = this.state.selectedGuest;
+    invitedGuestServices.deleteGuest(guest.invited_guest_id, this.props.event.id)
+      .then(resp => {
+        this.setState({
+          confirmRemoveGuestVisible: false
+        }, () => this.handleDeleteGuest(resp));
+      });
+  }
+
   render() {
     const threeColClassName = createColClassName(12, 4, 4, 4);  //xs, sm, md, lg
     const t = this.props.t;
@@ -378,7 +426,15 @@ class InvitedGuests extends Component {
         <i className="fa fa-plus-circle add-tag" onClick={() => this.addTag(props.original)}></i>
       </div>,
       accessor: u => u.tags.map(t => t.name).join("; ")
-    }];
+    },
+    {
+      id: "remove",
+      Header: <div className="invitedguest-remove">{t("Remove")}</div>,
+      accessor: u => <i className="fa fa-trash" onClick={() => this.removeGuest(u)}></i>
+    }
+  ];
+
+  const guestName = this.state.selectedGuest ? this.state.selectedGuest.user.user_title + " " + this.state.selectedGuest.user.firstname + " " + this.state.selectedGuest.user.lastname : "";
 
     return (
       <div className="InvitedGuests container-fluid pad-top-30-md">
@@ -410,6 +466,23 @@ class InvitedGuests extends Component {
                 onChange={this.updateRoleSearch}
                 label={t("Filter by role")}
                 defaultValue={this.state.roleSearch || "all"} />
+            </div>
+
+            <div className={threeColClassName}>
+              <FormSelect
+                options={[
+                  { value: 'all', label: t('All Tags') },
+                  ...this.state.tags.map(tag => ({ 
+                    value: tag.id.toString(), 
+                    label: tag.name 
+                  }))
+                ]}
+                id="TagFilter"
+                placeholder={t('Filter by tag')}
+                onChange={this.updateTagSearch}
+                label={t('Filter by tag')}
+                defaultValue={this.state.tagSearch || 'all'}
+              />
             </div>
           </div>
 
@@ -581,6 +654,16 @@ class InvitedGuests extends Component {
             </p>
         </ConfirmModal>
 
+        <ConfirmModal
+            visible={this.state.confirmRemoveGuestVisible}
+            onOK={this.confirmRemoveGuest}
+            onCancel={() => this.setState({ confirmRemoveGuestVisible: false })}
+            okText={t("Yes")}
+            cancelText={t("No")}>
+            <p>
+              <Trans i18nKey="remove_guest_confirmation" values={{ guestName }}>Are you sure you want to remove {{guestName}} from the guest list?</Trans>
+            </p>
+        </ConfirmModal>
       </div>
     );
   }

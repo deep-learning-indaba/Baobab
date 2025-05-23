@@ -8,7 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.email_template.repository import EmailRepository as email_repository
 from app.events.models import Event, EventRole, EventFee
-from app.events.mixins import EventsMixin, EventsKeyMixin, EventMixin, EventFeeMixin
+from app.events.mixins import EventsMixin, EventsKeyMixin, EventMixin, EventFeeMixin, EventRoleMixin
 from app.users.models import AppUser
 from app.users.repository import UserRepository as user_repository
 from app.applicationModel.models import ApplicationForm
@@ -29,7 +29,9 @@ from app.utils.errors import (
     EVENT_MUST_CONTAIN_TRANSLATION,
     EVENT_TRANSLATION_MISMATCH,
     STRIPE_SETUP_INCOMPLETE,
-    EVENT_MUST_HAVE_DATES
+    EVENT_MUST_HAVE_DATES,
+    EVENT_ROLE_NOT_FOUND,
+    USER_NOT_FOUND
 )
 
 from app.utils.auth import auth_optional, auth_required, event_admin_required
@@ -476,7 +478,8 @@ class EventStatsAPI(EventsMixin, restful.Resource):
 
             offers_allocated = offer_repository.count_offers_allocated(event_id)
             offers_accepted = offer_repository.count_offers_accepted(event_id)
-            offers_paid = offer_repository.count_offers_paid(event_id)
+            offers_confirmed = offer_repository.count_offers_confirmed(event_id)
+            offers_paid = offer_repository.count_offers_confirmed_and_paid(event_id)
             offers_rejected = offer_repository.count_offers_rejected(event_id)
             offers_timeseries = _process_timeseries(offer_repository.timeseries_offers_accepted(event_id))
 
@@ -498,6 +501,7 @@ class EventStatsAPI(EventsMixin, restful.Resource):
                 'reviews_complete_timeseries': reviews_timeseries,
                 'offers_allocated': offers_allocated,
                 'offers_accepted': offers_accepted,
+                'offers_confirmed': offers_confirmed,
                 'offers_paid': offers_paid,
                 'offers_rejected': offers_rejected,
                 'offers_accepted_timeseries': offers_timeseries,
@@ -692,3 +696,57 @@ class EventFeeAPI(EventFeeMixin, restful.Resource):
         event_repository.save()
 
         return event_fee, 200
+
+event_role_fields = {
+    'id': fields.Integer,
+    'event_id': fields.Integer,
+    'role': fields.String,
+    'user_id': fields.Integer,
+    'user': fields.String(attribute='user.full_name')
+}
+
+class EventRoleAPI(EventRoleMixin, restful.Resource):
+    @event_admin_required
+    def get(self, event_id):
+        event = event_repository.get_by_id(event_id)
+        if not event:
+            return EVENT_NOT_FOUND
+        
+        return marshal(event.event_roles, event_role_fields), 200
+
+    @event_admin_required
+    def post(self, event_id):
+        args = self.post_parser.parse_args()
+        event_id = args['event_id']
+        role = args['role']
+        email = args['email']
+
+        event = event_repository.get_by_id(event_id)
+        if not event:
+            return EVENT_NOT_FOUND
+
+        user = user_repository.get_by_email(email, event.organisation_id)
+        if not user:
+            return USER_NOT_FOUND
+
+        event.add_event_role(role, user.id)
+        event_repository.save()
+        return marshal(event.event_roles, event_role_fields), 200
+
+    @event_admin_required
+    def delete(self, event_id):
+        args = self.delete_parser.parse_args()
+        event_id = args['event_id']
+        event_role_id = args['event_role_id']
+        
+        event = event_repository.get_by_id(event_id)
+        if not event:
+            return EVENT_NOT_FOUND
+        
+        event_role = event.event_roles.filter(EventRole.id == event_role_id).first()
+        if not event_role:
+            return EVENT_ROLE_NOT_FOUND
+        
+        event.remove_event_role(event_role_id)
+        event_repository.save()
+        return marshal(event.event_roles, event_role_fields), 200

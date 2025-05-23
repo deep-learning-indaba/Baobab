@@ -104,7 +104,7 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
             confirmed = True
         else:
             offer = offer_repository.get_by_user_id_for_event(user.id, event_id)
-            confirmed = offer.is_paid
+            confirmed = offer.is_confirmed
             invitedguest_role = "General Attendee"
             is_invited_guest = False
         

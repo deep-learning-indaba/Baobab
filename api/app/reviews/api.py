@@ -625,6 +625,48 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
                 user=reviewer_user)
         return {'reviews_assigned': len(response_ids)}, 201
 
+    @event_admin_required
+    def delete(self, event_id):
+        args = self.post_req_parser.parse_args()
+        reviewer_user_email = args['reviewer_user_email']
+        num_reviews = args['num_reviews']
+        tags = args['tags'] or []
+
+        event = event_repository.get_by_id(event_id)
+        if not event:
+            return EVENT_NOT_FOUND
+
+        reviewer_user = user_repository.get_by_email(reviewer_user_email, g.organisation.id)
+        if reviewer_user is None:
+            return USER_NOT_FOUND
+        
+        # Get all reviews that have been assigned to the reviewer and match the tags
+
+        review_list = review_repository.get_review_list(reviewer_user.id, event_id)
+        LOGGER.info(f"len(Review list): {len(review_list)}")
+
+        not_started = [response_reviewer for response, response_reviewer, review_response in review_list
+                       if review_response is None
+                       and self._tags_match(response, tags)]
+
+        LOGGER.info(f"len(Not started): {len(not_started)}")
+
+        counter = 0
+        for response_reviewer in not_started:
+            db.session.delete(response_reviewer)
+            counter += 1
+            if counter >= num_reviews:
+                break
+
+        db.session.commit()
+        return {'num_deleted': counter}, 200
+
+    def _tags_match(self, response, tags):
+        LOGGER.info(f"Tags: {tags}")
+        response_tag_ids = [rt.tag_id for rt in response.response_tags]
+        LOGGER.info(f"Response tag ids: {response_tag_ids}")
+        return all(t in response_tag_ids for t in tags)
+
     def add_reviewer_role(self, user_id, event_id):
         event_role = EventRole('reviewer', user_id, event_id)
         db.session.add(event_role)
@@ -758,7 +800,7 @@ class ReviewListAPI(restful.Resource):
         responses_to_review = review_repository.get_review_list(user_id, event_id)
 
         return [ReviewListAPI._serialize_response(response, review_response, language)
-                for response, review_response in responses_to_review]
+                for response, _, review_response in responses_to_review]
 
 class ResponseReviewAssignmentAPI(restful.Resource):
     @event_admin_required

@@ -521,7 +521,7 @@
     "Save Tag": "Enregistrer la balise",
     "We are pleased to offer you the following grants": "Nous sommes heureux de vous offrir les bourses suivantes",
     "I accept this grant": "J'accepte cette bourse",
-    "Unfortunately we are unable to award you any grants for this event": "Malheureusement, nous ne pouvons pas vous attribuer de bourses pour cet événement",
+    "Please note that this offer does not include any grants. We appreciate your understanding.": "Veuillez noter que cette offre n'inclut aucune subvention. Nous vous remercions de votre compréhension.",
     "We are pleased to offer you a place at": "Nous sommes heureux de vous offrir une place à",
     "Please see the details of this offer below" : "Veuillez consulter les détails de cette offre ci-dessous",
     "Offer Details": "Détails de l'offre",
@@ -582,6 +582,15 @@
     "Offer for": "Offre pour",
     "Filter by name or email": "Filtrer par nom ou email",
     "Filter by candidate response": "Filtrer par réponse du candidat",
+    "removed_guest": "Retiré {{guestName}} de la liste des invités",
+    "remove_guest_confirmation": "Êtes-vous sûr de vouloir retirer {{guestName}} de la liste des invités?",
+    "Registration Volunteer": "Volontaire d'inscription",
+    "Event Treasurer": "Trésorier de l'événement",
+    "Event Roles": "Rôles de l'événement",
+    "Add Event Role": "Ajouter un rôle de l'événement",
+    "Event Role List": "Liste des rôles de l'événement",
+    "User Email": "Email de l'utilisateur",
+    "User not found": "Utilisateur non trouvé",
     "Applications for":"Les candidatures pour",
     "will open on": "ouvriront le",
     "will close on": "fermeront le ",
@@ -619,5 +628,7 @@
     "No - Don't confirm": "Non - Ne pas confirmer",
     "Yes - Confirm": "Oui - Confirmer",
     "No available": "Non disponible"
+    "Invitation letter is not yet available, please check again at a later date.": "Lettre d'invitation n'est pas encore disponible, veuillez vérifier à nouveau plus tard.",
+    "Confirmed": "Confirmé",
+    "All Tags": "Toutes les balises"
 }
-

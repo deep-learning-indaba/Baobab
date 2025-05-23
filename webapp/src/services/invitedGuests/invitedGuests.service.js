@@ -11,7 +11,8 @@ export const invitedGuestServices = {
   getRoles,
   determineIfInvitedGuest,
   addTag,
-  removeTag
+  removeTag,
+  deleteGuest
 }
 
 const roleOptions = [
@@ -185,6 +186,30 @@ function removeTag(invitedGuestId, eventId, tagId) {
 
   return axios
     .delete(baseUrl + "/api/v1/invitedguesttag", { headers: authHeader(), data: data })
+    .then(function (response) {
+      return {
+        msg: "succeeded",
+        statusCode: response.status,
+        response: response
+      }
+    })
+    .catch(function (error) {
+      return {
+        msg: "Failed",
+        statusCode: error.response && error.response.status,
+        error: (error.response && error.response.data) ? error.response.data.message : error.message,
+      }
+    })
+}
+
+function deleteGuest(invitedGuestId, eventId) {
+  const data = {
+    invited_guest_id: invitedGuestId,
+    event_id: eventId
+  };
+
+  return axios
+    .delete(baseUrl + "/api/v1/invitedGuest", { headers: authHeader(), data: data })
     .then(function (response) {
       return {
         msg: "succeeded",
