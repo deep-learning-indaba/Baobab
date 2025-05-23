@@ -247,7 +247,6 @@ class ReviewForm extends Component {
         }
 
         if (response.form) {
-            console.log("Response.form:", response.form);
             questionModels = response.form.review_form.review_sections.map(s => {
                 return {
                     headline: s.headline,
