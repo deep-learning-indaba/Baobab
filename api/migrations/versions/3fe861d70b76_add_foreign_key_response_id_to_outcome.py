@@ -12,28 +12,28 @@ down_revision = '48d559146efd'
 from alembic import op
 import sqlalchemy as sa
 
-
 def upgrade():
-    op.add_column(
-        'outcome',
-        sa.Column('response_id', sa.Integer(), nullable=True)
-    )
+    op.add_column('outcome', sa.Column('response_id', sa.Integer(), nullable=True))
 
     op.create_foreign_key(
-        'fk_outcome_response_id',  
-        'outcome',  
-        'response', 
-        ['response_id'],  
-        ['id'] 
+        'fk_outcome_response_id',
+        'outcome',
+        'response',
+        ['response_id'],
+        ['id']
     )
 
+    op.execute("""
+        UPDATE outcome
+        SET response_id = r.id
+        FROM response r
+        WHERE outcome.user_id = r.user_id
+    """)
+
+    op.alter_column('outcome', 'response_id', nullable=False)
+    
 
 def downgrade():
-    op.drop_constraint(
-        'fk_outcome_response_id', 
-        'outcome', 
-        type_='foreignkey'
-    )
+    op.drop_constraint('fk_outcome_response_id', 'outcome', type_='foreignkey')
 
     op.drop_column('outcome', 'response_id')
-

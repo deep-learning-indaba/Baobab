@@ -132,7 +132,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         for response in responses:
             outcome = outcome_repository.get_latest_by_user_for_event(current_user_id, event_id, response.id)
             response.outcome = outcome
-            response.review_summary = outcome.review_summary
+            response.review_summary = outcome
 
         return marshal(responses, ResponseAPI.response_fields), 200
 

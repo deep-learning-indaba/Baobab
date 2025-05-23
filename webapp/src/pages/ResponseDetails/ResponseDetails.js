@@ -130,6 +130,8 @@ class ReponseDetails extends Component {
 
 
   outcomeStatus= (response) => {
+    console.log('response',response);
+    
     if (response.outcome) {
       const badgeClass =
         response.outcome === "ACCEPTED"
