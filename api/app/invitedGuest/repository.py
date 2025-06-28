@@ -25,15 +25,24 @@ class InvitedGuestRepository():
                 .first())
 
     @staticmethod
-    def add_invited_guest(event_id, user_id, role):
+    def add_invited_guest(event_id, user_id, role, tag_ids):
         invited_guest = InvitedGuest(event_id, user_id, role)
         db.session.add(invited_guest)
+        db.session.flush()
+
+        for tag_id in tag_ids:
+            invited_guest_tag = InvitedGuestTag(invited_guest.id, tag_id)
+            db.session.add(invited_guest_tag)
+        
         db.session.commit()
         return invited_guest
     
     @staticmethod
     def delete_invited_guest(invited_guest_id):
         invited_guest = db.session.query(InvitedGuest).filter(InvitedGuest.id == invited_guest_id).first()
+        invited_guest_tags = db.session.query(InvitedGuestTag).filter(InvitedGuestTag.invited_guest_id == invited_guest_id).all()
+        for tag in invited_guest_tags:
+            db.session.delete(tag)
         db.session.delete(invited_guest)
         db.session.commit()
         return invited_guest
