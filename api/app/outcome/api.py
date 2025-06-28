@@ -87,7 +87,7 @@ class OutcomeAPI(restful.Resource):
         response_id=args['response_id']
 
         try:
-            outcome = outcome_repository.get_latest_by_user_for_event(user_id, event_id,response_id)
+            outcome = outcome_repository.get_latest_by_user_for_event(user_id, event_id, response_id)
             if not outcome:
                 return errors.OUTCOME_NOT_FOUND
             
@@ -109,7 +109,7 @@ class OutcomeAPI(restful.Resource):
         req_parser.add_argument('user_id', type=int, required=True)
         req_parser.add_argument('outcome', type=str, required=True)
         req_parser.add_argument('response_id', type=int, required=True)
-        req_parser.add_argument('review_summary', type=str, required=True)
+        req_parser.add_argument('review_summary', type=str, required=False)
         args = req_parser.parse_args()
 
         event = event_repository.get_by_id(event_id)
@@ -140,7 +140,8 @@ class OutcomeAPI(restful.Resource):
                     status,
                     g.current_user['id'],
                     args['response_id'],
-                    args['review_summary'])
+                    args.get('review_summary')) 
+                    # args['review_summary'])
 
             outcome_repository.add(outcome)
             db.session.commit()

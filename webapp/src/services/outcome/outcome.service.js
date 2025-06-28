@@ -8,7 +8,7 @@ export const outcomeService = {
     assignOutcome,
 }
 
-function getOutcome(event_id, user_id,response_id){
+function getOutcome(event_id, user_id, response_id){
     return axios.get(baseUrl + "/api/v1/outcome?event_id=" +event_id +
     "&user_id=" +user_id + "&response_id=" +response_id,{
         headers: authHeader()
@@ -31,7 +31,7 @@ function getOutcome(event_id, user_id,response_id){
       });
 }
 
-function assignOutcome(user_id, event_id, outcome, response_id,review_summary){
+function assignOutcome(user_id, event_id, outcome, response_id, review_summary){
   return axios
         .post(baseUrl + "/api/v1/outcome", event_id, { 
             "headers": authHeader(),

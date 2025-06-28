@@ -235,8 +235,8 @@ class ResponsePage extends Component {
         });
     };
 
-    submitOutcome(selectedOutcome,review_summary) {
-        outcomeService.assignOutcome(this.state.applicationData.user_id, this.props.event.id, selectedOutcome, this.props.match.params.id,review_summary).then(response => {
+    submitOutcome(selectedOutcome, review_summary) {
+        outcomeService.assignOutcome(this.state.applicationData.user_id, this.props.event.id, selectedOutcome, this.props.match.params.id, review_summary).then(response => {
             if (response.status === 201) {
                 const newOutcome = {
                     timestamp: response.outcome.timestamp,
