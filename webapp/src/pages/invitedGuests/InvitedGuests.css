@@ -98,6 +98,28 @@ span.not-found {
     text-align: left;
 }
 
+.tag-selector {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    min-height: 65px;
+    padding: 5px 0;
+}
+
+.tag-selector .badge {
+    display: inline-flex;
+    align-items: center;
+}
+
+.tag-selector .add-tag {
+    font-size: 1.2em;
+    color: #007bff;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+}
+
 .ReactTable .rt-th {
     text-align: left;
     font-weight: bold;
