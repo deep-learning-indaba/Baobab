@@ -41,7 +41,9 @@ class InvitedGuests extends Component {
       isLoading: true,
       isError: false,
       guestList: [],
-      user: {},
+      user: {
+        tag_ids: []
+      },
       addedSucess: false,
       notFound: false,
       buttonClicked: false,
@@ -57,7 +59,8 @@ class InvitedGuests extends Component {
       filteredTags: [],
       tagSelectorVisible: false,
       selectedGuest: null,
-      confirmRemoveGuestVisible: false
+      confirmRemoveGuestVisible: false,
+      newGuestTags: []
     };
   }
 
@@ -197,7 +200,10 @@ class InvitedGuests extends Component {
         conflict: false,
         notFound: false,
         successMessage: this.props.t("Added") + " " + response.response.data.fullname + " " + this.props.t("to the guest list"),
-        user: {},
+        user: {
+          tag_ids: []
+        },
+        newGuestTags: [],
         showErrors: false,
         adding: false
       }, this.getGuestList);
@@ -235,11 +241,17 @@ class InvitedGuests extends Component {
         return;
       }
 
+      const user = {
+        ...this.state.user,
+        tag_ids: this.state.newGuestTags.map(tag => tag.id)
+      };
+
       this.setState({ adding: true });
       invitedGuestServices
-        .addInvitedGuest(this.state.user.email,
+        .addInvitedGuest(user.email,
           this.props.event ? this.props.event.id : 0,
-          this.state.user.role)
+          user.role,
+          user.tag_ids)
         .then(resp => this.handleResponse(resp));
     });
   }
@@ -251,7 +263,10 @@ class InvitedGuests extends Component {
         this.setState({ showErrors: true });
         return;
       }
-      const user = this.state.user;
+      const user = {
+        ...this.state.user,
+        tag_ids: this.state.newGuestTags.map(tag => tag.id)
+      };
 
       this.setState({ adding: true });
 
@@ -309,6 +324,7 @@ class InvitedGuests extends Component {
       else {
         this.setState({
           tagSelectorVisible: false,
+          selectedGuest: null,
           error: resp.error
         });
       }
@@ -357,12 +373,14 @@ class InvitedGuests extends Component {
       this.setState({
         guestList: this.state.guestList.filter(g => g.invited_guest_id !== resp.response.data.invited_guest_id),
         addedSucess: true,
+        selectedGuest: null,  // Reset selectedGuest to prevent issues when adding new guests
         successMessage: <Trans i18nKey="removed_guest" values={{ guestName }}>Removed {{guestName}} from the guest list</Trans>
       }, this.filterGuestList);
     }
     else {
       this.setState({
-        error: resp.error
+        error: resp.error,
+        selectedGuest: null  // Also reset on error to be safe
       });
     }
   }
@@ -550,27 +568,56 @@ class InvitedGuests extends Component {
                   defaultValue={this.state.user[validationFields.role.name] || ""}
                   value={this.state.user[validationFields.role.name] || ""} />
               </div>
-
               <div className={threeColClassName}>
-                {!this.state.notFound &&
-                  <button
-                    type="button"
-                    className="btn btn-primary stretched margin-top-32"
-                    onClick={() => this.buttonSubmit()}
-                    disabled={this.state.adding}>
-                    {this.state.adding && (
-                      <span
-                        className="spinner-grow spinner-grow-sm"
-                        role="status"
-                        aria-hidden="true" />
-                    )}
-                    {t("Add")}
-                  </button>}
-
-                {!this.state.addedSucess && this.state.notFound &&
+                <div className="form-group">
+                  <label>{t("Tags")}</label>
+                  <div className="tag-selector">
+                    {this.state.newGuestTags.map(tag => (
+                      <span key={`new-guest-tag-${tag.id}`} className="tag badge badge-primary">
+                      {tag.name}
+                      <i 
+                        className="fa fa-times ml-1" 
+                        onClick={() => this.setState({
+                          newGuestTags: this.state.newGuestTags.filter(t => t.id !== tag.id)
+                        })} 
+                      />
+                    </span>
+                  ))}
+                    <i 
+                      className="fa fa-plus-circle add-tag" 
+                      onClick={() => this.setState({
+                        tagSelectorVisible: true,
+                        filteredTags: this.state.tags.filter(tag => 
+                          !this.state.newGuestTags.some(t => t.id === tag.id) && 
+                          this.assignable_tag_types.includes(tag.tag_type)
+                        )
+                      })}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className={threeColClassName}>
+                {!this.state.notFound ? (
+                  <>
+                    <button
+                      type="button"
+                      className="btn btn-primary stretched margin-top-32"
+                      onClick={() => this.buttonSubmit()}
+                      disabled={this.state.adding}>
+                      {this.state.adding && (
+                        <span
+                          className="spinner-grow spinner-grow-sm"
+                          role="status"
+                          aria-hidden="true" />
+                      )}
+                      {t("Add")}
+                    </button>
+                  </>
+                ) : !this.state.addedSucess && this.state.notFound ? (
                   <span className="text-warning not-found">
                     {t("User does not exist, please add these details")}:
-                  </span>}
+                  </span>
+                ) : null}
               </div>
             </div>
 
@@ -637,10 +684,20 @@ class InvitedGuests extends Component {
         </form>
 
         <TagSelectorDialog
-            tags={this.state.filteredTags}
-            visible={this.state.tagSelectorVisible}
-            onCancel={() => this.setState({ tagSelectorVisible: false })}
-            onSelectTag={this.onSelectTag}
+          visible={this.state.tagSelectorVisible}
+          onClose={() => this.setState({ tagSelectorVisible: false })}
+          onSelectTag={(tag) => {
+            if (this.state.selectedGuest) {
+              this.onSelectTag(tag);
+            } else {
+              this.setState({
+                newGuestTags: [...this.state.newGuestTags, tag],
+                tagSelectorVisible: false
+              });
+            }
+          }}
+          tags={this.state.filteredTags}
+          title={t('Add Tag')}
         />
 
         <ConfirmModal
