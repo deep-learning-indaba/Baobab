@@ -141,14 +141,16 @@ class OutcomeAPI(restful.Resource):
                     g.current_user['id'],
                     args['response_id'],
                     args.get('review_summary')) 
-                    # args['review_summary'])
 
             outcome_repository.add(outcome)
             db.session.commit()
 
             if (event.event_type==EventType.JOURNAL):
                 response = response_repository.get_by_id_and_user_id(outcome.response_id, outcome.user_id)
-                submission_title=strings.answer_by_question_key('submission_title', response.application_form, response.answers)
+                submission_title = strings.answer_by_question_key('submission_title', response.application_form, response.answers)
+                if not submission_title:
+                    raise errors.SUBMISSION_TITLE_NOT_FOUND
+
                 review_form = review_repository.get_review_form(outcome.event_id)
 
                 if review_form is not None:

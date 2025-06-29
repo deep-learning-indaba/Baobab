@@ -1086,25 +1086,24 @@ class ApplicationListComponent extends Component {
     return title_submission 
   };
 
-  renderSections() {
-    const applicationForm = this.state.applicationForm;
-    const applicationData = this.state.applicationData;
-    let html = [];
 
-    if (applicationForm && applicationData) {
-      applicationForm.sections.forEach((section) => {
-        html.push(
-          <div key={section.name} className="section">
-            <div className="flex baseline">
-              <h3>{section.name}</h3>
-            </div>
-            <div className="Q-A">{this.renderResponses(section)}</div>
-          </div>
-        );
-      });
-    }
-    return html;
+  renderSections() {
+  const { applicationForm, applicationData } = this.state;
+
+  if (applicationForm && applicationData) {
+    return applicationForm.sections.map((section) => (
+      <div key={section.name} className="section">
+        <div className="flex baseline">
+          <h3>{section.name}</h3>
+        </div>
+        <div className="Q-A">{this.renderResponses(section)}</div>
+      </div>
+    ));
   }
+
+  return null;
+}
+
 
   renderResponses(section) {
     const applicationData = this.state.applicationData;
