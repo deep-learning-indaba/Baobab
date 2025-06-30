@@ -3,12 +3,12 @@ from app import db
 from enum import Enum
 
 class Status(Enum):
-    ACCEPTED = "Accepted"
-    REJECTED = "Rejected"
-    WAITLIST = "Waitlist"
-    REVIEW = "In review"
-    ACCEPT_W_REVISION = "Accept with minor revision"
-    REJECT_W_ENCOURAGEMENT = "Reject with encouragement to resubmit"
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+    WAITLIST = "waitlist"
+    REVIEW = "in review"
+    ACCEPT_W_REVISION = "accept with minor revision"
+    REJECT_W_ENCOURAGEMENT = "reject with encouragement to resubmit"
 
 class Outcome(db.Model):
     id = db.Column(db.Integer(), primary_key = True, nullable = False)

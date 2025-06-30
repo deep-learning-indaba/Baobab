@@ -42,26 +42,23 @@ class ReponseDetails extends Component {
 
   }
 
+  
   renderSections() {
-    const applicationForm = this.state.applicationForm;
-    const applicationData = this.state.applicationData;
-    let html = [];
+  const { applicationForm, applicationData } = this.state;
 
-    if (applicationForm && applicationData) {
-      applicationForm.sections.forEach((section) => {
-        html.push(
-          <div key={section.name} className="section">
-            <div className="flex baseline">
-              <h3>{section.name}</h3>
-            </div>
-            <div className="Q-A">{this.renderResponses(section)}</div>
-          </div>
-        );
-      });
-    }
-
-    return html;
+  if (applicationForm && applicationData) {
+    return applicationForm.sections.map((section) => (
+      <div key={section.name} className="section">
+        <div className="flex baseline">
+          <h3>{section.name}</h3>
+        </div>
+        <div className="Q-A">{this.renderResponses(section)}</div>
+      </div>
+    ));
   }
+
+  return null;
+}
 
   renderResponses(section) {
     const applicationData = this.state.applicationData;
@@ -182,14 +179,14 @@ class ReponseDetails extends Component {
         }
     
     
-        let parentChain = getParentChain(elementMap[id]); 
-        let childChain = [];
-        let visited = new Set();
+        const parentChain = getParentChain(elementMap[id]); 
+        const childChain = [];
+        const visited = new Set();
     
         getChildChain(elementMap[id], visited, childChain); 
     
         
-        let finalChain = [...parentChain, ...childChain.slice(1)];
+        const finalChain = [...parentChain, ...childChain.slice(1)];
     
         finalChain = finalChain.map((element, index) => ({
             ...element,
