@@ -262,7 +262,7 @@ class ReponseDetails extends Component {
                 onClick={() =>
                   (window.location.href = `/${
                     this.props.event.key
-                  }/apply/new/${chain_responses[0].id}`)
+                  }/apply/new/${chain_responses.at(-1).id}`)
                 }
                 disabled={!this.getLastResponse(chain_responses)}
               >
