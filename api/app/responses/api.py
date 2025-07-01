@@ -149,21 +149,21 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             language = 'en'  # Fallback to English if language doesn't look like an ISO 639-1 code
 
         application_form = application_form_repository.get_by_id(application_form_id)
+
         if application_form is None:
             return errors.FORM_NOT_FOUND_BY_ID
-        
-        user = user_repository.get_by_id(user_id)
-        responses = response_repository.get_all_for_user_application(user_id, application_form_id)
-
-        allow_multiple_submissions = False
 
         event = event_repository.get_event_by_application_form_id(application_form_id)
+
+        allow_multiple_submissions = False
         if event and event.event_type == EventType.JOURNAL:
-            print('Event type is JOURNAL, allowing multiple submissions')
             allow_multiple_submissions = True
 
-        if  not allow_multiple_submissions and len(responses) > 0:
-            return errors.RESPONSE_ALREADY_SUBMITTED
+        if not allow_multiple_submissions:
+            responses = response_repository.get_all_for_user_application(user_id, application_form_id)
+            if len(responses) > 0:
+                return errors.RESPONSE_ALREADY_SUBMITTED
+
 
         response = Response(application_form_id, user_id, language, parent_id)
         response_repository.save(response)
@@ -314,7 +314,10 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                 event_description = event.get_description('en')
             
             if (event.event_type==EventType.JOURNAL):
-                submission_title=strings.answer_by_question_key('submission_title', response.application_form, response.answers)                
+                submission_title= response_repository.get_answer_by_question_key_and_response_id('submission_title', response.id)
+                if not submission_title:
+                    raise errors.SUBMISSION_TITLE_NOT_FOUND
+
                 emailer.email_user(
                     'submitting-article-journal',
                     template_parameters=dict(

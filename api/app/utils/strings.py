@@ -128,6 +128,8 @@ def build_response_html_answers(answers, language, application_form):
 
 
 def build_review_email_body(review_responses, language, review_form):
+    """ Builds a summary of review responses for an email body.
+    Each reviewer's responses are grouped by section and question."""
     summary_str = ""
     for idx, review_response in enumerate(review_responses, start=1):
         summary_str += f"Reviewer {idx}\n\n"
@@ -163,14 +165,3 @@ def build_review_email_body(review_responses, language, review_form):
 
     return summary_str
 
-def answer_by_question_key(key, application_form, answers):
-    all_questions = [q for section in application_form.sections for q in section.questions]
-    
-    question = next((q for q in all_questions if q.key == key), None)
-    
-    if question:
-        answer = next((a for a in answers if a.question_id == question.id), None)
-        if answer:
-            return answer.value
-    
-    return None

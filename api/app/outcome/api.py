@@ -147,7 +147,7 @@ class OutcomeAPI(restful.Resource):
 
             if (event.event_type==EventType.JOURNAL):
                 response = response_repository.get_by_id_and_user_id(outcome.response_id, outcome.user_id)
-                submission_title = strings.answer_by_question_key('submission_title', response.application_form, response.answers)
+                submission_title = response_repository.get_answer_by_question_key_and_response_id('submission_title', response.id)
                 if not submission_title:
                     raise errors.SUBMISSION_TITLE_NOT_FOUND
 

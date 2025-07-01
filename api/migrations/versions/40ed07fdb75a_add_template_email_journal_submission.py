@@ -35,12 +35,12 @@ def upgrade():
 
     template = """Dear {title} {firstname} {lastname},
 
-Thank you for submitting to The Journal of Artificial Intelligence for Sustainable Development. Your article is being reviewed by our committee and we will get back to you as soon as possible. Included below is a copy of your responses.
+Thank you for submitting to {event_name}. Your article is being reviewed by our committee and we will get back to you as soon as possible. Included below is a copy of your responses.
 
 {question_answer_summary}
 
 Kind Regards,
-The JAISD editorial board"""
+The {event_name} editorial board"""
 
 
     session.add(
@@ -55,12 +55,12 @@ The JAISD editorial board"""
 
     template = """Cher/Cher(e) {title} {firstname} {lastname},  
 
-    Merci d'avoir soumis votre article à The Journal of Artificial Intelligence for Sustainable Development. Votre article est actuellement en cours d’examen par notre comité, et nous reviendrons vers vous dès que possible. Vous trouverez ci-dessous un récapitulatif de vos réponses.  
+    Merci d'avoir soumis votre article à {event_name}. Votre article est actuellement en cours d’examen par notre comité, et nous reviendrons vers vous dès que possible. Vous trouverez ci-dessous un récapitulatif de vos réponses.  
 
     {question_answer_summary}  
 
     Cordialement,  
-    Le comité de redaction du JAISD
+    Le comité de redaction du {event_name}
     """
 
 
