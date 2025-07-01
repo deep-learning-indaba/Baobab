@@ -143,7 +143,6 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         application_form_id = args['application_form_id']
         language = args['language']
         parent_id = args.get('parent_id', None)
-        allow_multiple_submissions = args['multiple_submission']
 
 
         if len(language) != 2:
@@ -155,6 +154,13 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         
         user = user_repository.get_by_id(user_id)
         responses = response_repository.get_all_for_user_application(user_id, application_form_id)
+
+        allow_multiple_submissions = False
+
+        event = event_repository.get_event_by_application_form_id(application_form_id)
+        if event and event.event_type == EventType.JOURNAL:
+            print('Event type is JOURNAL, allowing multiple submissions')
+            allow_multiple_submissions = True
 
         if  not allow_multiple_submissions and len(responses) > 0:
             return errors.RESPONSE_ALREADY_SUBMITTED

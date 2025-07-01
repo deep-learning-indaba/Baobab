@@ -765,7 +765,6 @@ class ApplicationFormInstanceComponent extends Component {
       outcome: props.response && props.response.outcome,
       submitValidationErrors: [],
       parent_id: props.match.params.id || null,
-      allow_multiple_submission:props.event.event_type === "JOURNAL" ? true : false
     };
   }
 
@@ -812,7 +811,7 @@ class ApplicationFormInstanceComponent extends Component {
       () => {
         if (this.state.new_response) {
           applicationFormService
-            .submit(this.props.formSpec.id, false, this.state.answers, this.state.parent_id, this.state.allow_multiple_submission)
+            .submit(this.props.formSpec.id, false, this.state.answers, this.state.parent_id)
             .then(resp => {
               let submitError = resp.response_id === null;
               this.setState({

@@ -186,7 +186,7 @@ class ReponseDetails extends Component {
         getChildChain(elementMap[id], visited, childChain); 
     
         
-        const finalChain = [...parentChain, ...childChain.slice(1)];
+        let finalChain = [...parentChain, ...childChain.slice(1)];
     
         finalChain = finalChain.map((element, index) => ({
             ...element,
