@@ -838,7 +838,7 @@ class ResponsePage extends Component {
                 }
                 {this.state.event_type ==='JOURNAL' && 
                 <div className="response-details">
-                            <h3>{t('Reviews Summary')}</h3>
+                            <h3>{t('Review Summaries')}</h3>
                                 {this.renderComment()}
                 </div>}
 

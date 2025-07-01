@@ -281,7 +281,7 @@ class ReponseDetails extends Component {
         <div className="response-details">
          <div className="section">
             <div className="flex baseline">
-              <h3>{this.props.t('Reviews Summary')}</h3>
+              <h3>{this.props.t('Review Summaries')}</h3>
             </div>
             <div className="question-answer-block">
 
