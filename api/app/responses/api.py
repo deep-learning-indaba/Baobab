@@ -312,7 +312,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                 event_description = event.get_description(user.user_primaryLanguage)
             else:
                 event_description = event.get_description('en')
-            
+                        
             if (event.event_type==EventType.JOURNAL):
                 submission_title= response_repository.get_answer_by_question_key_and_response_id('submission_title', response.id)
                 if not submission_title:
@@ -325,7 +325,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                         question_answer_summary=question_answer_summary,
                     ),
                      subject_parameters=dict(
-                            submission_title=submission_title,
+                            submission_title=submission_title.value,
                         ),
                     event=event,
                     user=user
