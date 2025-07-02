@@ -29,6 +29,11 @@ def _extract_outcome_status(response):
         return None
     return response.outcome.status.name
 
+def _extract_review_summary(response):
+    if not hasattr(response, "review_summary") or not isinstance(response.outcome, Outcome):
+        return None
+    return response.outcome.review_summary
+
 
 class ResponseAPI(ResponseMixin, restful.Resource):
 
@@ -50,7 +55,8 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         'answers': fields.List(fields.Nested(answer_fields)),
         'language': fields.String,
         'parent_id': fields.Integer(default=None),
-        'outcome': fields.String(attribute=_extract_outcome_status)
+        'outcome': fields.String(attribute=_extract_outcome_status),
+        'review_summary': fields.String(attribute=_extract_review_summary)
     }
 
     def find_answer(self, question_id: int, answers: Sequence[Answer]) -> Optional[Answer]:
@@ -122,10 +128,11 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         form = event.get_application_form()
         responses = response_repository.get_all_for_user_application(current_user_id, form.id)
 
-        # TODO: Link outcomes to responses rather than events to cater for multiple submissions.
-        outcome = outcome_repository.get_latest_by_user_for_event(current_user_id, event_id)
         for response in responses:
+            outcome = outcome_repository.get_latest_by_user_for_event(current_user_id, event_id, response.id)
+            print('outcome', outcome)
             response.outcome = outcome
+            response.review_summary = outcome
 
         return marshal(responses, ResponseAPI.response_fields), 200
 
@@ -136,20 +143,32 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         is_submitted = args['is_submitted']
         application_form_id = args['application_form_id']
         language = args['language']
+        parent_id = args.get('parent_id')
+
+
         if len(language) != 2:
             language = 'en'  # Fallback to English if language doesn't look like an ISO 639-1 code
 
         application_form = application_form_repository.get_by_id(application_form_id)
+
         if application_form is None:
             return errors.FORM_NOT_FOUND_BY_ID
-        
-        user = user_repository.get_by_id(user_id)
-        responses = response_repository.get_all_for_user_application(user_id, application_form_id)
 
-        if not application_form.nominations and len(responses) > 0:
-            return errors.RESPONSE_ALREADY_SUBMITTED
+        event = event_repository.get_event_by_application_form_id(application_form_id)
+        if event is None:
+            return errors.EVENT_NOT_FOUND
 
-        response = Response(application_form_id, user_id, language)
+        allow_multiple_submissions = False
+        if event.event_type == EventType.JOURNAL:
+            allow_multiple_submissions = True
+
+        if not allow_multiple_submissions:
+            responses = response_repository.get_all_for_user_application(user_id, application_form_id)
+            if len(responses) > 0:
+                return errors.RESPONSE_ALREADY_SUBMITTED
+
+
+        response = Response(application_form_id, user_id, language, parent_id)
         response_repository.save(response)
 
         answers = []
@@ -296,16 +315,37 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                 event_description = event.get_description(user.user_primaryLanguage)
             else:
                 event_description = event.get_description('en')
+                        
+            if (event.event_type==EventType.JOURNAL):
+                submission_title= response_repository.get_answer_by_question_key_and_response_id('submission_title', response.id)
+                if not submission_title:
+                    raise errors.SUBMISSION_TITLE_NOT_FOUND
 
-            emailer.email_user(
-                'confirmation-response-call' if event.event_type == EventType.CALL else 'confirmation-response',
-                template_parameters=dict(
-                    event_description=event_description,
-                    question_answer_summary=question_answer_summary,
-                ),
-                event=event,
-                user=user
-            )
+                emailer.email_user(
+                    'submitting-article-journal',
+                    template_parameters=dict(
+                        event_description=event_description,
+                        question_answer_summary=question_answer_summary,
+                    ),
+                     subject_parameters=dict(
+                            submission_title=submission_title.value,
+                        ),
+                    event=event,
+                    user=user
+                )
+                
+
+            else:
+
+                emailer.email_user(
+                    'confirmation-response-call' if event.event_type == EventType.CALL else 'confirmation-response',
+                    template_parameters=dict(
+                        event_description=event_description,
+                        question_answer_summary=question_answer_summary,
+                    ),
+                    event=event,
+                    user=user
+                )
 
         except Exception as e:
             LOGGER.error('Could not send confirmation email for response with id : {response_id} due to: {e}'.format(response_id=response.id, e=e))

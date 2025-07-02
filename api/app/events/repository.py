@@ -36,6 +36,17 @@ class EventRepository(BaseRepository):
                          .join(Event, Event.id == ApplicationForm.event_id)\
                          .first()
         return result.Event if result else None
+    
+    @staticmethod
+    def get_event_by_application_form_id(application_form_id):
+        result = (
+            db.session.query(ApplicationForm.event_id, Event)
+            .filter(ApplicationForm.id == application_form_id)
+            .join(Event, Event.id == ApplicationForm.event_id)
+            .first()
+        )
+        return result.Event if result else None
+
 
     @staticmethod
     def get_upcoming_for_organisation(organisation_id):
