@@ -26,8 +26,8 @@ def upgrade():
     op.execute("""
         UPDATE outcome
         SET response_id = r.id
-        FROM response r
-        WHERE outcome.user_id = r.user_id
+        FROM response r, application_form app_form
+        WHERE outcome.user_id = r.user_id AND app_form.id = r.application_form_id AND app_form.event_id = outcome.event_id
     """)
 
     op.alter_column('outcome', 'response_id', nullable=False)
