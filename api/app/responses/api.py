@@ -130,6 +130,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
 
         for response in responses:
             outcome = outcome_repository.get_latest_by_user_for_event(current_user_id, event_id, response.id)
+            print('outcome', outcome)
             response.outcome = outcome
             response.review_summary = outcome
 
@@ -142,7 +143,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         is_submitted = args['is_submitted']
         application_form_id = args['application_form_id']
         language = args['language']
-        parent_id = args.get('parent_id', None)
+        parent_id = args.get('parent_id')
 
 
         if len(language) != 2:
@@ -154,9 +155,11 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             return errors.FORM_NOT_FOUND_BY_ID
 
         event = event_repository.get_event_by_application_form_id(application_form_id)
+        if event is None:
+            return errors.EVENT_NOT_FOUND
 
         allow_multiple_submissions = False
-        if event and event.event_type == EventType.JOURNAL:
+        if event.event_type == EventType.JOURNAL:
             allow_multiple_submissions = True
 
         if not allow_multiple_submissions:

@@ -28,6 +28,8 @@ class ReponseDetails extends Component {
       applicationFormService.getResponse(eventId),
       eventService.getEvent(eventId),
     ]).then((responses) => {
+      console.log("Responses:", responses);
+      
       this.setState({
         applicationForm: responses[0].formSpec,
         all_responses: responses[1].response,
@@ -233,6 +235,8 @@ class ReponseDetails extends Component {
 
   render() {
     const { applicationData, isLoading, error, all_responses } = this.state;
+    console.log("Application Data:", applicationData);
+    
     
     if (isLoading) {
       return <Loading />;
