@@ -12,14 +12,12 @@ export const attendanceService = {
   checkIn
 };
 
-function getAttendanceList(eventId, excludeCheckedIn) {
+function getAttendanceList(eventId) {
   return axios
     .get(
       baseUrl +
         "/api/v1/guestlist?event_id=" +
-        eventId +
-        "&exclude_already_checked_in=" +
-        excludeCheckedIn,
+        eventId,
       {
         headers: authHeader()
       }
