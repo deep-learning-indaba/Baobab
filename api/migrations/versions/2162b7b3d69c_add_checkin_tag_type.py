@@ -1,4 +1,4 @@
-"""empty message
+"""Add checkin tag type.
 
 Revision ID: 2162b7b3d69c
 Revises: 2961527fe515
@@ -15,8 +15,10 @@ import sqlalchemy as sa
 
 
 def upgrade():
-    op.execute("ALTER TYPE tag_type ADD VALUE 'CHECKIN'")
-
+    op.execute("ALTER TABLE tag ALTER COLUMN tag_type TYPE VARCHAR(255);")
+    op.execute("DROP TYPE IF EXISTS tag_type;")
+    op.execute("CREATE TYPE tag_type AS ENUM ('RESPONSE', 'REGISTRATION', 'GRANT', 'QUESTION', 'CHECKIN');")
+    op.execute("ALTER TABLE tag ALTER COLUMN tag_type TYPE tag_type USING (tag_type::tag_type);")
 
 def downgrade():
     op.execute("DELETE FROM pg_enum WHERE enumlabel = 'CHECKIN' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'tag_type')")
