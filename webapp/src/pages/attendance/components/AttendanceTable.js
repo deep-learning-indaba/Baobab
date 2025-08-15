@@ -5,7 +5,7 @@ import ReactTable from "react-table";
 import { attendanceService } from "../../../services/attendance/attendance.service";
 import FormTextBox from "../../../components/form/FormTextBox";
 import Modal from "react-bootstrap4-modal";
-import queryString from "query-string";
+
 class AttendanceTable extends React.Component {
   constructor(props) {
     super(props);
@@ -16,11 +16,11 @@ class AttendanceTable extends React.Component {
       showDetailsModal: false,
       selectedUser: null,
       confirmStatus: null,
+      confirmUser: null,
       confirmError: null,
       undoResult: null,
       confirming: false,
       undoing: false,
-      excludeCheckedIn: null,
       location: props.location,
       userAlreadyExists: null,
       showAllColumns: null,
@@ -30,21 +30,9 @@ class AttendanceTable extends React.Component {
   componentDidMount() {
     window.addEventListener("resize", this.resize);
     this.resize();
-    let url = this.props.location;
-    // Default only show people who haven't checked in.
-    let excludeCheckedIn = true;
-    if (url) {
-      let params = queryString.parse(url);
-      if (
-        params &&
-        params.excludeCheckedIn &&
-        params.excludeCheckedIn.toLowerCase() === "false"
-      ) {
-        excludeCheckedIn = false;
-      }
-    }
+    
     this.setState(
-      { loading: true, excludeCheckedIn: excludeCheckedIn },
+      { loading: true },
       () => this.getAttendanceList()
     );
   }
@@ -53,9 +41,8 @@ class AttendanceTable extends React.Component {
     this.setState({ showAllColumns: window.innerWidth >= 500 });
   };
   getAttendanceList() {
-    const { excludeCheckedIn } = this.state;
     attendanceService
-      .getAttendanceList(this.state.eventId, excludeCheckedIn)
+      .getAttendanceList(this.state.eventId)
       .then(result => {
         this.setState({
           loading: false,
@@ -88,7 +75,8 @@ class AttendanceTable extends React.Component {
         showDetailsModal: false,
         confirming: false,
         selectedUser: null,
-        confirmStatus: success, 
+        confirmStatus: success,
+        confirmUser: selectedUser,
         confirmError: result.error
       }, ()=>this.getAttendanceList());
     });
@@ -160,17 +148,23 @@ class AttendanceTable extends React.Component {
   };
 
   styleFromRole = (role) => {
-    if (role === "General Attendee") {
-      return "badge badge-dark";
-    }
-    if (role === "Speaker") {
-      return "badge badge-success";
+    if (role === "Volunteer") {
+      return "badge badge-primary";
     }
     if (role === "Organiser") {
-      return "badge badge-warning";
+      return "badge badge-danger";
+    }
+    if (["Sponsor", "Dignitary"].includes(role)) {
+      return "badge badge-yellow";
+    }
+    if (["Speaker", "Workshop Organiser", "Workshop Speaker", "Mentor"].includes(role)) {
+      return "badge badge-black";
+    }
+    if (role === "Press") {
+      return "badge badge-purple";
     }
     else {
-      return "badge badge-primary";
+      return "badge badge-success";
     }
   }
 
@@ -194,7 +188,8 @@ class AttendanceTable extends React.Component {
       searchTerm,
       selectedUser,
       originalAttendanceList,
-      signedIndemnityChecked
+      signedIndemnityChecked,
+      confirmUser
     } = this.state;
 
     const loadingStyle = {
@@ -233,15 +228,16 @@ class AttendanceTable extends React.Component {
         accessor: u => u.user_id,
         Cell: props => (
           <div>
-              <button
-                className="btn btn-success btn-sm"
-                onClick={() => {
-                  this.onCheckin(props.original);
-                }}
-                disabled={confirming}
-              >
-                Check-in
-              </button>
+            {props.original.checked_in && <h5><div className="badge badge-success">Checked In</div></h5>}
+            {!props.original.checked_in && <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => {
+                    this.onCheckin(props.original);
+                  }}
+                  disabled={confirming}
+                >
+                  Check-in
+              </button>}
           </div>
         )
       }
@@ -265,35 +261,35 @@ class AttendanceTable extends React.Component {
             {!selectedUser.confirmed && <div className="alert alert-danger">
               UNPAID FEES - Please refer to special situations desk.  
               </div>}
-            <h5>
-              Role:
-              <div className={this.styleFromRole(selectedUser.invitedguest_role)}>
-                {selectedUser.invitedguest_role}
-              </div>
-            </h5>
-            {selectedUser.invitedguest_role === "Africa Research Day Attendee" && <h5 className="text-danger">
-              Can only check-in on Wednesday or Thursday
-            </h5>}
-            {selectedUser.invitedguest_role === "Workshop Speaker" && <h5 className="text-danger">
-              Can only check-in on Friday or Saturday
-            </h5>}
-            {selectedUser.registration_metadata.map((i) => (  // TODO: Replace with tags! 
-              <h5>
-                {i.name} :
-                <div className="badge badge-light">
-                  {i.response}
+            <div className="row mb-2">
+              <div className="col-md-6 text-right"><strong>Role:</strong></div>
+              <div className="col-md-6 text-left">
+                <div className={this.styleFromRole(selectedUser.invitedguest_role)}>
+                  {selectedUser.invitedguest_role}
                 </div>
-              </h5>
-            ))}
-            <h5>
-              Indemnity Form :
-              {selectedUser.signed_indemnity_form && <div className="badge badge-success">
-                Signed
-              </div>}
-              {!selectedUser.signed_indemnity_form && <div className="badge badge-danger">
-                Not Signed.
-              </div>}
-            </h5>
+              </div>
+            </div>
+
+            <div className="row mb-2">
+              <div className="col-md-6 text-right"><strong>Indemnity Form:</strong></div>
+              <div className="col-md-6 text-left">
+                {selectedUser.signed_indemnity_form ? (
+                  <div className="badge badge-success">Signed</div>
+                ) : (
+                  <div className="badge badge-danger">Not Signed.</div>
+                )}
+              </div>
+            </div>
+
+            {selectedUser.tags.length > 0 && <div className="row mb-2">
+              <div className="col-md-6 text-right"><strong>Tags:</strong></div>
+              <div className="col-md-6 text-left">
+                {selectedUser.tags.map((i) => (
+                  <h5 className="badge badge-light">{i}</h5>
+                ))}
+              </div>
+            </div>}
+
             {!selectedUser.signed_indemnity_form && <div>
               <label>
                 <input type="checkbox" 
@@ -321,11 +317,11 @@ class AttendanceTable extends React.Component {
         
 
         {confirmStatus && <div class="alert alert-success alert-container">
-          Successfully checked-in.
+          Successfully checked-in {confirmUser.fullname}
         </div>}
         
         {confirmStatus !== null && !confirmStatus && <div class="alert alert-danger alert-container">
-          Failed to check-in due to {confirmError}
+          Failed to check-in {confirmUser.fullname} due to {confirmError}
         </div>}
             
         <div class="card no-padding-h">
