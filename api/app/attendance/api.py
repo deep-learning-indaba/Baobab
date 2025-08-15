@@ -1,23 +1,17 @@
 from flask import g
 import flask_restful as restful
-from flask_restful import reqparse, fields, marshal_with, marshal
-from app import db, LOGGER
+from flask_restful import reqparse, fields, marshal
 from app.attendance.mixins import AttendanceMixin
 from app.attendance.models import Attendance
+from app.tags.models import TagType
 from app.attendance.repository import AttendanceRepository as attendance_repository
 from app.attendance.repository import IndemnityRepository as indemnity_repository
-from app.offer.repository import OfferRepository as offer_repository
-from app.invitedGuest.repository import InvitedGuestRepository as invited_guest_repository
-from app.registrationResponse.repository import RegistrationRepository as registration_response_repository
-from app.guestRegistrations.repository import GuestRegistrationRepository as guest_registration_repository
-from app.registration.repository import RegistrationFormRepository as registration_form_repository
 from app.events.repository import EventRepository as event_repository
+from app.offer.repository import OfferRepository as offer_repository
 from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required
 from app.utils.emailer import email_user
 from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, ATTENDANCE_NOT_FOUND, EVENT_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, INDEMNITY_NOT_FOUND, INDEMNITY_NOT_SIGNED, NOT_A_GUEST
-from app.registration.models import get_registration_answer_by_question_id
-from app.invitedGuest.models import InvitedGuest
 
 attendance_fields = {
     'id': fields.Integer,
@@ -37,7 +31,8 @@ attendance_fields = {
     })),
     'offer_metadata': fields.List(fields.Nested({
         'name': fields.String
-    }))
+    })),
+    'tags': fields.List(fields.String)
 }
 
 _attendee_fields = {
@@ -50,7 +45,7 @@ _attendee_fields = {
 
 
 class AttendanceUser():
-    def __init__(self, user, attendance, is_invitedguest, invitedguest_role, confirmed, registration_metadata, offer_metadata):
+    def __init__(self, user, attendance, is_invitedguest, invitedguest_role, confirmed, tags):
         self.id = attendance.id if attendance is not None else None
         self.fullname = user.full_name  
         self.event_id = attendance.event_id if attendance is not None else None
@@ -61,16 +56,15 @@ class AttendanceUser():
         self.is_invitedguest = is_invitedguest
         self.invitedguest_role = invitedguest_role
         self.confirmed = confirmed
-        self.registration_metadata = registration_metadata
-        self.offer_metadata = offer_metadata
+        print("Tags:", tags)
 
-def _get_registration_answer(user_id, event_id, question_id, is_invited_guest):
-    if is_invited_guest:
-        answer = guest_registration_repository.get_guest_registration_answer_by_question_id(user_id, event_id, question_id)
-    else:
-        answer = get_registration_answer_by_question_id(user_id, event_id, question_id)
-    
-    return answer.value if answer else "No Answer"
+        for tag in tags:
+            print(tag.tag.stringify_tag_name(), tag.tag.tag_type)
+
+        self.tags = [tag.tag.stringify_tag_name() for tag in tags
+        if tag.tag.tag_type == TagType.CHECKIN]
+        print("self.tags:", self.tags)
+
 
 class AttendanceAPI(AttendanceMixin, restful.Resource):
 
@@ -96,39 +90,23 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
         attendance = attendance_repository.get(event_id, user_id)
         
         # Check if invited guest
-        invited_guest = db.session.query(InvitedGuest).filter(
-                    InvitedGuest.event_id == event_id).filter(InvitedGuest.user_id == user.id).first()
+        invited_guest = attendance_repository.get_invited_guest(event_id, user_id)
+        
         if (invited_guest):
             is_invited_guest = True
             invitedguest_role = invited_guest.role
             confirmed = True
+            tags = invited_guest.invited_guest_tags
         else:
-            offer = offer_repository.get_by_user_id_for_event(user.id, event_id)
+            offer = attendance_repository.get_offer(event_id, user_id)
             confirmed = offer.is_confirmed
             invitedguest_role = "General Attendee"
             is_invited_guest = False
+            tags = offer.offer_tags
         
-        # collate all tags belonging to user
-        # first, get all tags from registration questions
-        registration_metadata = []
-        # questions_with_tags = registration_form_repository.get_registration_questions_with_tags(event_id)
-        # for question in questions_with_tags:
-        #     for question_tag in question.tags:
-        #         answer = _get_registration_answer(user_id, event_id, question.id, is_invited_guest)
-        #         registration_metadata.append({"name": question_tag.tag.stringify_tag_name(), "response": answer})
-        # print(registration_metadata)
-
-        # second, get all tags from offers
-        offer_metadata = []
-        # offer = offer_repository.get_by_user_id_for_event(user_id, event_id)
-        # if offer:
-        #     for offer_tag in offer.offer_tags:
-        #         offer_metadata.append({"name": offer_tag.tag.stringify_tag_name()})    
-        # print(offer_metadata)
-
         attendance_user = AttendanceUser(user, attendance, is_invitedguest=is_invited_guest, 
                                          invitedguest_role=invitedguest_role,
-                                         confirmed=confirmed, registration_metadata=registration_metadata, offer_metadata=offer_metadata)
+                                         confirmed=confirmed, tags=tags)
         return marshal(attendance_user, attendance_fields), 200
 
     @auth_required
@@ -282,9 +260,7 @@ class GuestListApi(restful.Resource):
     def get(self):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('event_id', type=int, required=True)
-        req_parser.add_argument('exclude_already_checked_in', type=bool, required=True)
         args = req_parser.parse_args()
-        exclude_already_checked_in = args['exclude_already_checked_in']
         event_id = args['event_id']
         registration_user_id = g.current_user["id"]
         
@@ -294,13 +270,16 @@ class GuestListApi(restful.Resource):
 
         all_attendees = attendance_repository.get_all_guests_for_event(event_id)
 
-        if exclude_already_checked_in:
-            checked_in = attendance_repository.get_confirmed_attendees(event_id)
-            checked_in = set(u.user_id for u in checked_in)
-            # TODO(avishkar): Check that this scales (n^2) appropriately.
-            all_attendees = [u for u in all_attendees if u.id not in checked_in]
+        guest_list_with_status = [{
+            'id': u.AppUser.id,
+            'email': u.AppUser.email,
+            'firstname': u.AppUser.firstname,
+            'lastname': u.AppUser.lastname,
+            'user_title': u.AppUser.user_title,
+            'checked_in': u.Attendance is not None and u.Attendance.confirmed
+        } for u in all_attendees]
 
-        return marshal(all_attendees, _attendee_fields)
+        return guest_list_with_status
 
 
 class AttendeesApi(restful.Resource):
