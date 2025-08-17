@@ -51,7 +51,7 @@ class Response(db.Model):
         self.submitted_timestamp = None
         self.is_withdrawn = False
         self.withdrawn_timestamp = None
-        self.started_timestamp = date.today()
+        self.started_timestamp = datetime.now()
         self.language = language
         self.parent_id = parent_id
 

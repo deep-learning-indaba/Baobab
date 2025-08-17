@@ -132,7 +132,6 @@ class ResponseRepository():
         query = db.session.query(Response)
         if submitted_only:
             query = query.filter_by(is_submitted=True)
-
         return (query
                 .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)
                 .filter_by(event_id=event_id)
