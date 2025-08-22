@@ -427,7 +427,13 @@ class AppComponent extends Component {
       <Router history={history}>
         <div className="notranslate" translate="no">
           <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-            <a className="navbar-brand navbar-brand-main" href="/">
+            <a
+              className={
+                "navbar-brand navbar-brand-main" +
+                (this.props.organisation?.name !== "MenaML" ? " uppercase" : "")
+              }
+              href="/"
+            >
               <img
                 src={
                   this.props.organisation &&
@@ -579,10 +585,9 @@ class AppComponent extends Component {
                 |{" "}
                 <a
                   href={
-                    "/" +
-                    (this.props.organisation
-                      ? this.props.organisation.privacy_policy
-                      : "")
+                    this.props.organisation?.name === "MenaML"
+                    ? this.props.organisation.privacy_policy
+                    : "/" + (this.props.organisation?.privacy_policy || "")
                   }
                   target="_blank"
                   rel="noopener noreferrer"
@@ -594,7 +599,7 @@ class AppComponent extends Component {
                     <div className="float-right powered-by">
                       {t('Powered by')}{" "}
                       <a
-                        href="http://www.deeplearningindaba.com"
+                        href="https://www.deeplearningindaba.com"
                         target="_blank"
                         rel="noopener noreferrer"
                       >
