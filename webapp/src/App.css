@@ -123,6 +123,10 @@ footer .btn {
 
 .navbar-brand-main {
   letter-spacing: 0.05em;
+  text-transform: none;
+}
+
+.navbar-brand-main.uppercase {
   text-transform: uppercase;
 }
 

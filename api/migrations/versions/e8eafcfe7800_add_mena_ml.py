@@ -48,8 +48,8 @@ def upgrade():
     session = orm.Session(bind=Base.metadata.bind)
 
     mena = Organisation(name='MenaML', system_name='MenaML Application Portal', small_logo='menaml_logo_small.png', large_logo='menaml_logo_large.png',
-        icon_logo='menaml_logo_small.png', domain='mena', url='https://mena.ml', email_from='applications@mena.ml', system_url='https://apply.mena.ml',
-        privacy_policy='PrivacyPolicy.pdf', languages=['en'], iso_currency_code='USD')
+        icon_logo='menaml_logo_small.png', domain='mena', url='https://www.mena.ml', email_from='applications@mena.ml', system_url='https://apply.mena.ml',
+        privacy_policy='https://www.mena.ml/about/privacy-policy', languages=['en'], iso_currency_code='USD')
 
     session.add(mena)
     session.commit()
