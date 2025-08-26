@@ -31,7 +31,8 @@ from app.utils.errors import (
     STRIPE_SETUP_INCOMPLETE,
     EVENT_MUST_HAVE_DATES,
     EVENT_ROLE_NOT_FOUND,
-    USER_NOT_FOUND
+    USER_NOT_FOUND,
+    EVENT_ROLE_ALREADY_EXISTS
 )
 
 from app.utils.auth import auth_optional, auth_required, event_admin_required
@@ -729,24 +730,18 @@ class EventRoleAPI(EventRoleMixin, restful.Resource):
         if not user:
             return USER_NOT_FOUND
 
-        event.add_event_role(role, user.id)
+        if not event.add_event_role(role, user.id):
+            return EVENT_ROLE_ALREADY_EXISTS
         event_repository.save()
         return marshal(event.event_roles, event_role_fields), 200
 
     @event_admin_required
     def delete(self, event_id):
         args = self.delete_parser.parse_args()
-        event_id = args['event_id']
         event_role_id = args['event_role_id']
         
-        event = event_repository.get_by_id(event_id)
-        if not event:
-            return EVENT_NOT_FOUND
-        
-        event_role = event.event_roles.filter(EventRole.id == event_role_id).first()
-        if not event_role:
+        removed = event_repository.remove_event_role(event_role_id)
+        if not removed:
             return EVENT_ROLE_NOT_FOUND
         
-        event.remove_event_role(event_role_id)
-        event_repository.save()
-        return marshal(event.event_roles, event_role_fields), 200
+        return {}, 200

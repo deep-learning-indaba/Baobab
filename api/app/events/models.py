@@ -152,8 +152,13 @@ class Event(db.Model):
         return len(self.application_forms) > 0
 
     def add_event_role(self, role, user_id):
+        # Check for duplicates
+        if any(r.user_id == user_id and r.role == role for r in self.event_roles):
+            return False
+
         event_role = EventRole(role, user_id, self.id)
         self.event_roles.append(event_role)
+        return True
 
     def get_name(self, language):
         event_translation = self.event_translations.filter_by(language=language).first()
@@ -292,8 +297,14 @@ class Event(db.Model):
     def is_event_opening(self):
         return check_opening(self.start_date)
 
-    def remove_event_role(self, event_role_id):
-        self.event_roles = [role for role in self.event_roles if role.id != event_role_id]
+    def remove_event_role(self, role_id):
+        event_role = [role for role in self.event_roles if role.id == role_id]
+        event_role = event_role[0] if event_role else None
+        if not event_role:
+            return None
+        
+        self.event_roles.remove(event_role)
+        return event_role
 
 
 class EventTranslation(db.Model):
