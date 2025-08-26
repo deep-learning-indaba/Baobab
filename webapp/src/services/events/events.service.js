@@ -10,7 +10,8 @@ export const eventService = {
   getEvents,
   getByKey,
   getEventRoles,
-  deleteEventRole
+  deleteEventRole,
+  addEventRole
 };
 
 export function getEvent(event_id) {
@@ -201,6 +202,33 @@ function getEventRoles(event_id) {
 
 function deleteEventRole(event_id, event_role_id) {
   return axios.delete(baseUrl + `/api/v1/event-roles?event_id=${event_id}&event_role_id=${event_role_id}`, { headers: authHeader() })
+    .then(response => {
+      return {
+        eventRoles: response.data,
+        error: "",  
+        statusCode: response.status
+      };
+    })
+    .catch(error => {
+      return {
+        eventRoles: null,
+        error:
+          error.response && error.response.data
+            ? error.response.data.message
+            : error.message,
+        statusCode: error.response && error.response.status
+      };
+    });
+}
+
+function addEventRole(event_id, email, role) {
+  const data = {
+    event_id: event_id,
+    email: email,
+    role: role
+  };
+
+  return axios.post(baseUrl + `/api/v1/event-roles`, data, { headers: authHeader() })
     .then(response => {
       return {
         eventRoles: response.data,
