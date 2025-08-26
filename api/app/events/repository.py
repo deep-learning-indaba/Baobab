@@ -77,3 +77,9 @@ class EventRepository(BaseRepository):
             .filter_by(event_id=event_id, role='admin')
             .all()
         )
+
+    @staticmethod
+    def remove_event_role(event_role_id):
+        db.session.query(EventRole).filter_by(id=event_role_id).delete()
+        db.session.commit()
+        return True
