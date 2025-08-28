@@ -70,7 +70,7 @@ class EventNav extends Component {
                     className="nav-link"
                     onClick={this.props.toggleMenu}
                   >
-                    {this.props.event.event_type === 'JOURNAL'? t('Submit') : t('Apply')}
+                    {this.props.event.event_type === 'JOURNAL' ? t('Submit') : t('Apply')}
                   </NavLink>
                 </li>
               )}
@@ -87,7 +87,7 @@ class EventNav extends Component {
               </li>
             )}
             {this.props.user &&
-               (
+              (
                 <li className="nav-item dropdown ">
                   <div
                     className="nav-link dropdown-toggle"
@@ -101,13 +101,13 @@ class EventNav extends Component {
                   </div>
                   <div className="dropdown-menu" aria-labelledby="navbarDropdown">
                     {this.props.event && this.props.event.is_registration_open && (
-                    <NavLink
-                      to={`/${this.props.eventKey}/registration`}
-                      className="dropdown-item"
-                      onClick={this.props.toggleMenu}
-                    >
-                      {t('Registration Form')}
-                    </NavLink>)}
+                      <NavLink
+                        to={`/${this.props.eventKey}/registration`}
+                        className="dropdown-item"
+                        onClick={this.props.toggleMenu}
+                      >
+                        {t('Registration Form')}
+                      </NavLink>)}
                     <NavLink
                       to={`/${this.props.eventKey}/invitationLetter`}
                       className="dropdown-item"
@@ -135,84 +135,84 @@ class EventNav extends Component {
             {isEventAdmin(this.props.user, this.props.event) && (
               <AdminMenu t={t} label="Event Admin">
                 <NavLink
-                    to={`/${this.props.eventKey}/eventConfig`}
-                    className="dropdown-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Edit Event Details')}
+                  to={`/${this.props.eventKey}/eventConfig`}
+                  className="dropdown-item"
+                  onClick={this.props.toggleMenu}
+                >
+                  {t('Edit Event Details')}
                 </NavLink>
                 <NavLink
-                    to={`/${this.props.eventKey}/reviewAssignment`}
-                    className="dropdown-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Review Assignment')}
-                  </NavLink>
-                  <NavLink
-                    to={`/${this.props.eventKey}/invitedGuests`}
-                    className="dropdown-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Invited Guests')}
-                  </NavLink>
-                  <NavLink
-                    to={`/${this.props.eventKey}/responseList`}
-                    className="dropdown-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Response List')}
-                  </NavLink>
-                  <NavLink
-                    to={`/${this.props.eventKey}/reviewDashboard`}
-                    className="dropdown-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Review Dashboard')}
-                  </NavLink>
-                  <NavLink
-                    to={`/${this.props.eventKey}/tagConfig`}
-                    className="dropdown-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Configure Tags')}
-                  </NavLink>
-                  <NavLink
-                    to={`/${this.props.eventKey}/offerAdmin`}
-                    className="dropdown-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Offers')}
-                  </NavLink>
-                  <NavLink
-                      to={`/${this.props.eventKey}/invoices-admin`}
-                      className="dropdown-item"
-                      onClick={this.props.toggleMenu}
-                    >
-                      {t('Invoices')}
-                    </NavLink>
-                    <NavLink
-                      to={`/${this.props.eventKey}/eventRoleAdmin`}
-                      className="dropdown-item"
-                      onClick={this.props.toggleMenu}
-                    >
-                      {t('Event Roles')}
-                    </NavLink>
-                  <h6 className='dropdown-submenu-header'>Form Settings</h6>
-                  <NavLink
-                    to={`/${this.props.eventKey}/applicationform`}
-                    className="dropdown-item dropdown-submenu-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Application Form')}
-                  </NavLink>
-                  <NavLink
-                    to={`/${this.props.eventKey}/reviewForm`}
-                    className="dropdown-item dropdown-submenu-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Review Form')}
-                  </NavLink>
-                </AdminMenu>
+                  to={`/${this.props.eventKey}/reviewAssignment`}
+                  className="dropdown-item"
+                  onClick={this.props.toggleMenu}
+                >
+                  {t('Review Assignment')}
+                </NavLink>
+                <NavLink
+                  to={`/${this.props.eventKey}/invitedGuests`}
+                  className="dropdown-item"
+                  onClick={this.props.toggleMenu}
+                >
+                  {t('Invited Guests')}
+                </NavLink>
+                <NavLink
+                  to={`/${this.props.eventKey}/responseList`}
+                  className="dropdown-item"
+                  onClick={this.props.toggleMenu}
+                >
+                  {t('Response List')}
+                </NavLink>
+                <NavLink
+                  to={`/${this.props.eventKey}/reviewDashboard`}
+                  className="dropdown-item"
+                  onClick={this.props.toggleMenu}
+                >
+                  {t('Review Dashboard')}
+                </NavLink>
+                <NavLink
+                  to={`/${this.props.eventKey}/tagConfig`}
+                  className="dropdown-item"
+                  onClick={this.props.toggleMenu}
+                >
+                  {t('Configure Tags')}
+                </NavLink>
+                <NavLink
+                  to={`/${this.props.eventKey}/offerAdmin`}
+                  className="dropdown-item"
+                  onClick={this.props.toggleMenu}
+                >
+                  {t('Offers')}
+                </NavLink>
+                <NavLink
+                  to={`/${this.props.eventKey}/invoices-admin`}
+                  className="dropdown-item"
+                  onClick={this.props.toggleMenu}
+                >
+                  {t('Invoices')}
+                </NavLink>
+                <NavLink
+                  to={`/${this.props.eventKey}/eventRoleAdmin`}
+                  className="dropdown-item"
+                  onClick={this.props.toggleMenu}
+                >
+                  {t('Event Roles')}
+                </NavLink>
+                <h6 className='dropdown-submenu-header'>Form Settings</h6>
+                <NavLink
+                  to={`/${this.props.eventKey}/applicationform`}
+                  className="dropdown-item dropdown-submenu-item"
+                  onClick={this.props.toggleMenu}
+                >
+                  {t('Application Form')}
+                </NavLink>
+                <NavLink
+                  to={`/${this.props.eventKey}/reviewForm`}
+                  className="dropdown-item dropdown-submenu-item"
+                  onClick={this.props.toggleMenu}
+                >
+                  {t('Review Form')}
+                </NavLink>
+              </AdminMenu>
             )}
             {isEventReviewer(this.props.user, this.props.event) &&
               this.props.event &&
@@ -307,8 +307,8 @@ class LanguageSelectorComponent extends Component {
   changeLanguage = (lang) => {
     // Change the language using i18next
     if (this.props.i18n) {
-      this.props.i18n.changeLanguage(lang).then(()=>{    
-        const currentUser = JSON.parse(localStorage.getItem("user"))   
+      this.props.i18n.changeLanguage(lang).then(() => {
+        const currentUser = JSON.parse(localStorage.getItem("user"))
         if (currentUser) {
           // We send a put request to the user service to update the language on the back-end. 
           // Note the language is automatically sent with every request through axios
@@ -371,6 +371,15 @@ class AppComponent extends Component {
     this.refreshUser = this.refreshUser.bind(this);
   }
 
+  isAbsoluteUrl = (url) => {
+    try {
+      new URL(url);
+      return true; // if it parses, it's a full URL
+    } catch {
+      return false; // invalid → treat as relative
+    }
+  };
+
   componentDidMount() {
     userService.authRefresh().then(user => {
       if (!user.error) {
@@ -407,7 +416,7 @@ class AppComponent extends Component {
         });
       });
     }
-    
+
   }
 
   toggleMenu = () => {
@@ -556,7 +565,7 @@ class AppComponent extends Component {
                 <PrivateRoute exact path="/payment/:invoiceId" component={Payment} />
                 <Route exact path="/payment-success" component={Success} />
                 <Route exact path="/payment-cancel" component={Failed} />
-                
+
                 <Route
                   path="/:eventKey"
                   render={props => (
@@ -566,9 +575,9 @@ class AppComponent extends Component {
                       eventKey={this.state.eventKey}
                       event={this.state.currentEvent}
                       organisation={this.props.organisation}
-                      />         
+                    />
                   )}
-                />             
+                />
               </Switch>
             </div>
           </div>
@@ -585,9 +594,9 @@ class AppComponent extends Component {
                 |{" "}
                 <a
                   href={
-                    this.props.organisation?.name === "MenaML"
-                    ? this.props.organisation.privacy_policy
-                    : "/" + (this.props.organisation?.privacy_policy || "")
+                    isAbsoluteUrl(this.props.organisation?.privacy_policy)
+                      ? this.props.organisation.privacy_policy
+                      : "/" + (this.props.organisation?.privacy_policy || "")
                   }
                   target="_blank"
                   rel="noopener noreferrer"
