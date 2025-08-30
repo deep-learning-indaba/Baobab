@@ -95,6 +95,7 @@ application_form_detail_fields = {
     'event_id': fields.Integer,
     'is_open':  fields.Boolean,
     'nominations': fields.Boolean,
+    'allows_edits': fields.Boolean,
     'sections': fields.List(fields.Nested(section_detail_fields))
 }
 

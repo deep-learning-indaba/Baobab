@@ -7,8 +7,7 @@ import {
 } from '../../../services/applicationForm/applicationForm.service';
 import { eventService } from '../../../services/events';
 import { langObject } from './util';
- import FormCreator from '../../../components/form/FormCreator';
-
+import FormCreator from '../../../components/form/FormCreator';
 
 const ApplicationForm = (props) => {
   const { languages } = props;
@@ -37,7 +36,6 @@ const ApplicationForm = (props) => {
     event: null,
     error: null,
   });
-
 
   const [sections, setSections] = useState([{
     id: `${Math.random()}`,
@@ -112,7 +110,7 @@ const ApplicationForm = (props) => {
           })
 
           setNominate(formSpec.nominations);
-          setEditable(formSpec.editable);
+          setEditable(formSpec.allows_edits);
           setFormDetails({
             isOpen: props.event.is_application_open,
             id: formSpec.id,

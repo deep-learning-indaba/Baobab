@@ -1,4 +1,4 @@
-"""Add allow_edits column to application_form table
+"""Add allows_edits column to application_form table
 
 Revision ID: 7fb62ea19309
 Revises: 2162b7b3d69c
