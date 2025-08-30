@@ -150,6 +150,7 @@ class ApplicationFormDetailAPI(restful.Resource):
         req_parser.add_argument('is_open', type=bool, required=True)
         req_parser.add_argument('nominations', type=bool, required=True)
         req_parser.add_argument('sections', type=dict, required=True, action='append')
+        req_parser.add_argument('allows_edits', type=bool, required=True)
         args = req_parser.parse_args()
 
         app_form = application_form_repository.get_by_event_id(event_id)
@@ -158,11 +159,13 @@ class ApplicationFormDetailAPI(restful.Resource):
 
         is_open = args['is_open']
         nominations = args['nominations']
+        allows_edits = args['allows_edits']
 
         app_form = ApplicationForm(
             event_id,
             is_open,
-            nominations)
+            nominations,
+            allows_edits)
         application_form_repository.add(app_form)
         sections_data = args['sections']
 
@@ -240,6 +243,7 @@ class ApplicationFormDetailAPI(restful.Resource):
         req_parser.add_argument('nominations', type=bool, required=True)
         req_parser.add_argument('id', type=int, required=True)
         req_parser.add_argument('sections', type=dict, required=True, action='append')
+        req_parser.add_argument('allows_edits', type=bool, required=True)
 
         args = req_parser.parse_args()
         user_id = g.current_user['id']
@@ -254,6 +258,7 @@ class ApplicationFormDetailAPI(restful.Resource):
 
         app_form.is_open = args['is_open']
         app_form.nominations = args['nominations']
+        app_form.allows_edits = args['allows_edits']
 
         current_sections = app_form.sections
         incoming_sections = args['sections']
