@@ -599,5 +599,7 @@
     "Applications Opening Soon":"Ouverture prochaine des candidatures",
     "Invitation letter is not yet available, please check again at a later date.": "Lettre d'invitation n'est pas encore disponible, veuillez vérifier à nouveau plus tard.",
     "Confirmed": "Confirmé",
-    "All Tags": "Toutes les balises"
+    "All Tags": "Toutes les balises",
+    "Allow candidates to edit their applications after submitting": "Autoriser les candidats à modifier leurs candidatures après les avoir soumises",
+    "Editable forms with reviews open before application close are not recommended": "Les formulaires modifiables dont les évaluations sont ouvertes avant la clôture des candidatures ne sont pas recommandés"
 }

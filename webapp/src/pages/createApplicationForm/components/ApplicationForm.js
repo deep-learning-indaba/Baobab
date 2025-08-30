@@ -15,6 +15,7 @@ const ApplicationForm = (props) => {
   const { t } = useTranslation();
   const lang = languages;
   const [nominate, setNominate] = useState(false);
+  const [editable, setEditable] = useState(false);
   const [formDetails, setFormDetails] = useState({});
 
   const [language, setLanguage] = useState({
@@ -87,56 +88,56 @@ const ApplicationForm = (props) => {
     const eventId = props.event.id;
     applicationFormService.getDetailsForEvent(eventId)
       .then(res => {
-        if (res) {
+        if (res && res.formSpec && res.formSpec.sections) {
           const formSpec = res.formSpec;
-          if (formSpec.sections) {
-            const mapedQuestions = formSpec.sections.map(s => {
-              const questions = s.questions.map(q => {
-                const type = q.type;
-                q = {
-                  ...q,
-                  id: `${Math.random()}`,
-                  backendId: q.id,
-                  required: q.is_required,
-                  type: type === 'long_text' ? 'long-text' : type
-                }
-                return q
-              });
-              s = {
-                ...s,
+          const mapedQuestions = formSpec.sections.map(s => {
+            const questions = s.questions.map(q => {
+              const type = q.type;
+              q = {
+                ...q,
                 id: `${Math.random()}`,
-                backendId: s.id,
-                questions: questions
+                backendId: q.id,
+                required: q.is_required,
+                type: type === 'long_text' ? 'long-text' : type
               }
-              return s
-            })
-  
-            setNominate(formSpec.nominations);
-            setFormDetails({
-              isOpen: props.event.is_application_open,
-              id: formSpec.id,
-              eventId: eventId
-            })
-            setInitialState(mapedQuestions);
-            setSections(mapedQuestions);
-          } else {
-            setFormDetails({
-              isOpen: props.event.is_application_open,
-              eventId: eventId
-            })
-            setCreateMode(true);
-          }
+              return q
+            });
+            s = {
+              ...s,
+              id: `${Math.random()}`,
+              backendId: s.id,
+              questions: questions
+            }
+            return s
+          })
+
+          setNominate(formSpec.nominations);
+          setEditable(formSpec.editable);
+          setFormDetails({
+            isOpen: props.event.is_application_open,
+            id: formSpec.id,
+            eventId: eventId
+          })
+          setInitialState(mapedQuestions);
+          setSections(mapedQuestions);
         } else {
           setFormDetails({
             isOpen: props.event.is_application_open,
             eventId: eventId
           })
           setCreateMode(true);
+          const reviewOpen = new Date(props.event.review_open);
+          const applicationClose = new Date(props.event.application_close);
+          if (reviewOpen < applicationClose) {
+            setEditable(false);
+          } else {
+            setEditable(true);
+          }
         }
       }).catch(err => {
         setErrorResponse('Error occured ' + err)
     })
-  }, []);
+  }, [props.event.id, props.event.is_application_open, props.event.review_open, props.event.application_close]);
 
   const addSection = () => {
     setTimeout(() => setSections([...sections, {
@@ -268,7 +269,7 @@ const ApplicationForm = (props) => {
     const { id, eventId, isOpen } = formDetails;
     if (!isInCreateMode) {
       if (!isSaved) {
-        const res = await updateApplicationForm(id, eventId, isOpen, nominate, sectionsToSave);
+        const res = await updateApplicationForm(id, eventId, isOpen, nominate, editable, sectionsToSave);
         if(res.status === 200) {
           setIsSaved(true);
           setHomeRedirect(true);
@@ -281,7 +282,7 @@ const ApplicationForm = (props) => {
         }
       }
     } else {
-        const res = await createApplicationForm(eventId, isOpen, nominate, sectionsToSave);
+        const res = await createApplicationForm(eventId, isOpen, nominate, editable, sectionsToSave);
         if (res.status === 201) {
           setIsSaved(true);
           setHomeRedirect(true);
@@ -296,8 +297,9 @@ const ApplicationForm = (props) => {
   }
 
   const EventMeta = ({
-    handleCheckChanged, dateFormat, evnt
+    handleCheckChanged, dateFormat, evnt, editable, setEditable
   }) => {
+    const showWarning = editable && evnt && new Date(evnt.review_open) < new Date(evnt.application_close);
     return (
       <>
         <div className="nominations-desc">
@@ -313,6 +315,23 @@ const ApplicationForm = (props) => {
             + '(Users will be able to submit multiple nominations, including for themselves.'
             + ' If this option is unchecked, a candidate can only apply for themselves)')}
           </span>
+        </div>
+        <div className="nominations-desc">
+          <input
+            id="editable-chck"
+            className="nomination-chck"
+            type="checkbox"
+            checked={editable}
+            onChange={e => setEditable(e.target.checked)}
+          />
+          <span htmlFor="editable-chck" className="nomination-info">
+            {t('Allow candidates to edit their applications after submitting')}
+          </span>
+          {showWarning && (
+            <div className='alert alert-warning'>
+              {t('Editable forms with reviews open before application close are not recommended')}
+            </div>
+          )}
         </div>
         <div className="dates-container">
           <span className="dates">
@@ -341,6 +360,8 @@ const ApplicationForm = (props) => {
       setSections={setSections}
       nominate={nominate}
       setNominate={setNominate}
+      editable={editable}
+      setEditable={setEditable}
       language={language}
       setLanguage={setLanguage}
       dragId={dragId}

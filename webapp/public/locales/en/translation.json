@@ -600,5 +600,7 @@
     "Applications Opening Soon": "Applications Opening Soon",
     "Invitation letter is not yet available, please check again at a later date.": "Invitation letter is not yet available, please check again at a later date.",
     "Confirmed": "Confirmed",
-    "All Tags": "All Tags"
+    "All Tags": "All Tags",
+    "Allow candidates to edit their applications after submitting": "Allow candidates to edit their applications after submitting",
+    "Editable forms with reviews open before application close are not recommended": "Editable forms with reviews open before application close are not recommended"
 }

@@ -15,7 +15,7 @@ import {
 
 const FormCreator = ({
   languages, event: evt, t, sections,
-  setSections, setNominate, language,
+  setSections, setNominate, editable, setEditable, language,
   setLanguage, dragId, setDragId,
   applyTransition, setApplytransition,
   parentDropable, setParentDropable,
@@ -57,7 +57,7 @@ const FormCreator = ({
         error: res.error
       })
     });
-  }, []);
+  }, [evt.id, eventService, setEvent]);
 
   const handleCheckChanged = (e) => {
     const val = e.target.checked;
@@ -182,6 +182,8 @@ const FormCreator = ({
               handleCheckChanged={handleCheckChanged}
               saved={saved}
               evnt={evnt}
+              editable={editable}
+              setEditable={setEditable}
               />
             <ReactSelect
               id='select-language'
