@@ -25,8 +25,6 @@ import FormCheckbox from "../../../components/form/FormCheckbox";
 import { eventService } from "../../../services/events";
 
 
-const baseUrl = process.env.REACT_APP_API_URL;
-
 const SHORT_TEXT = "short-text";
 const SINGLE_CHOICE = "single-choice";
 const LONG_TEXT = ["long-text", "long_text"];
@@ -697,13 +695,13 @@ class SubmittedComponent extends React.Component {
           </button>
         </div>
         
-        {this.props.event.event_type === "JOURNAL" 
-        ? undefined
-        : <div class="submitted-footer">
-        <button class="btn btn-primary" onClick={this.handleEdit}>
-          {t("Edit Application")}
-        </button>
-        </div>}
+        {this.props.formSpec.allows_edits && this.props.event.event_type !== "JOURNAL" && (
+          <div className="submitted-footer">
+            <button className="btn btn-primary" onClick={this.handleEdit}>
+              {t("Edit Application")}
+            </button>
+          </div>
+        )}
 
         <ConfirmModal
           visible={this.state.withdrawModalVisible}
@@ -901,6 +899,14 @@ class ApplicationFormInstanceComponent extends Component {
       </div>;
     }
 
+    const hasWithdrawn = this.props.response && !this.props.response.is_submitted && this.props.response.is_withdrawn;
+
+    if (hasWithdrawn && !this.props.formSpec.allows_edits) {
+      return <div className={"alert alert-info alert-container"}>
+        {this.props.t("You have withdrawn your application and may not resubmit.")}
+      </div>;
+    }
+
     if (outcome === "ACCEPTED" || outcome === "REJECTED") {
       return <div className={"alert alert-success alert-container"}>
         {outcome === "ACCEPTED" && <div>
@@ -920,6 +926,7 @@ class ApplicationFormInstanceComponent extends Component {
           onWithdrawn={this.handleWithdrawn}
           responseId={this.state.responseId}
           event={this.props.event}
+          formSpec={this.props.formSpec}
           onEdit={() => this.setState({ isEditing: true, startStep: 0 })} // StartStep to jump to step 1 in the Stepzilla
         />
       );

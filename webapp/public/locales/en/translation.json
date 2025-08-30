@@ -602,5 +602,6 @@
     "Confirmed": "Confirmed",
     "All Tags": "All Tags",
     "Allow candidates to edit their applications after submitting": "Allow candidates to edit their applications after submitting",
-    "Editable forms with reviews open before application close are not recommended": "Editable forms with reviews open before application close are not recommended"
+    "Editable forms with reviews open before application close are not recommended": "Editable forms with reviews open before application close are not recommended",
+    "You have withdrawn your application and may not resubmit.": "You have withdrawn your application and may not resubmit."
 }

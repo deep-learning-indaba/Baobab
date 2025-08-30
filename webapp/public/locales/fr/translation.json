@@ -601,5 +601,6 @@
     "Confirmed": "Confirmé",
     "All Tags": "Toutes les balises",
     "Allow candidates to edit their applications after submitting": "Autoriser les candidats à modifier leurs candidatures après les avoir soumises",
-    "Editable forms with reviews open before application close are not recommended": "Les formulaires modifiables dont les évaluations sont ouvertes avant la clôture des candidatures ne sont pas recommandés"
+    "Editable forms with reviews open before application close are not recommended": "Les formulaires modifiables dont les évaluations sont ouvertes avant la clôture des candidatures ne sont pas recommandés",
+    "You have withdrawn your application and may not resubmit.": "Vous avez retiré votre candidature et ne pouvez plus la soumettre."
 }

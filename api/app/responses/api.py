@@ -201,6 +201,8 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             return errors.UPDATE_CONFLICT
         if response.is_submitted and not application_form.allows_edits:
             return errors.NOT_EDITABLE
+        if response.is_withdrawn and not application_form.allows_edits:
+            return errors.NOT_EDITABLE
         if application_form is None:
             return errors.FORM_NOT_FOUND_BY_ID
 
