@@ -594,7 +594,7 @@ class AppComponent extends Component {
                 |{" "}
                 <a
                   href={
-                    isAbsoluteUrl(this.props.organisation?.privacy_policy)
+                    this.isAbsoluteUrl(this.props.organisation?.privacy_policy)
                       ? this.props.organisation.privacy_policy
                       : "/" + (this.props.organisation?.privacy_policy || "")
                   }
