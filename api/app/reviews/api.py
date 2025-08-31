@@ -149,6 +149,14 @@ review_section_detail_fields = {
     'questions': fields.List(fields.Nested(review_question_detail_fields), attribute='review_questions')
 }
 
+review_configuration_fields = {
+    'id': fields.Integer,
+    'num_reviews_required': fields.Integer,
+    'num_optional_reviews': fields.Integer,
+    'drop_optional_question_id': fields.Integer,
+    'drop_optional_agreement_values': fields.String
+}
+
 review_form_detail_fields = {
     'id': fields.Integer,
     'event_id': fields.Integer,
@@ -157,7 +165,8 @@ review_form_detail_fields = {
     'deadline': fields.DateTime(dt_format='iso8601'),
     'active': fields.Boolean,
     'stage': fields.Integer,
-    'sections': fields.List(fields.Nested(review_section_detail_fields), attribute='review_sections')
+    'sections': fields.List(fields.Nested(review_section_detail_fields), attribute='review_sections'),
+    'review_configuration': fields.Nested(review_configuration_fields),
 }
 
 response_review_fields = {

@@ -457,7 +457,7 @@ function getReviewFormDetails(eventId,stage) {
 
 function updateReviewForm({
   id, eventId, isOpen, applicationFormId,
-  stage, deadline, active, sectionsToSave
+  stage, deadline, active, sectionsToSave, num_reviews
 }) {
   const form = {
     "id": id,
@@ -467,7 +467,8 @@ function updateReviewForm({
     "stage": stage,
     "deadline": deadline,
     "active": active,
-    "sections": sectionsToSave
+    "sections": sectionsToSave,
+    "num_reviews": num_reviews
   }
   return axios
     .put(
@@ -493,7 +494,7 @@ function updateReviewForm({
 
 function createReviewForm({
   eventId, isOpen, applicationFormId,
-  stage, deadline, active, sectionsToSave
+  stage, deadline, active, sectionsToSave, num_reviews
 }) {
   const form = {
     'event_id': eventId,
@@ -502,7 +503,8 @@ function createReviewForm({
     "stage": stage,
     "deadline": deadline,
     "active": active,
-    "sections": sectionsToSave
+    "sections": sectionsToSave,
+    "num_reviews": num_reviews
   }
   return axios
   .post(
