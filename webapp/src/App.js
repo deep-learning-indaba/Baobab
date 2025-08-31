@@ -439,7 +439,7 @@ class AppComponent extends Component {
             <a
               className={
                 "navbar-brand navbar-brand-main" +
-                (this.props.organisation?.name !== "MenaML" ? " uppercase" : "")
+                (this.props.organisation && this.props.organisation.name !== "MenaML" ? " uppercase" : "")
               }
               href="/"
             >
@@ -594,9 +594,9 @@ class AppComponent extends Component {
                 |{" "}
                 <a
                   href={
-                    this.isAbsoluteUrl(this.props.organisation?.privacy_policy)
-                      ? this.props.organisation.privacy_policy
-                      : "/" + (this.props.organisation?.privacy_policy || "")
+                    this.isAbsoluteUrl((this.props.organisation ? this.props.organisation.privacy_policy : ""))
+                      ? this.props.organisation && this.props.organisation.privacy_policy
+                      : "/" + ((this.props.organisation && this.props.organisation.privacy_policy) || "")
                   }
                   target="_blank"
                   rel="noopener noreferrer"
