@@ -15,6 +15,7 @@ class ReviewForm(db.Model):
 
     application_form = db.relationship('ApplicationForm', foreign_keys=[application_form_id])
     review_sections = db.relationship('ReviewSection', order_by='ReviewSection.order')
+    review_configuration = db.relationship('ReviewConfiguration', uselist=False, back_populates='review_form')
 
     def __init__(self, application_form_id, deadline, stage, active):
         self.application_form_id = application_form_id
@@ -253,7 +254,7 @@ class ReviewConfiguration(db.Model):
     drop_optional_question_id = db.Column(db.Integer(), db.ForeignKey('review_question.id'), nullable=True)
     drop_optional_agreement_values = db.Column(db.String(), nullable=True)
 
-    review_form = db.relationship('ReviewForm', foreign_keys=[review_form_id])
+    review_form = db.relationship('ReviewForm', back_populates='review_configuration')
     review_question = db.relationship('ReviewQuestion', foreign_keys=[drop_optional_question_id])
 
 

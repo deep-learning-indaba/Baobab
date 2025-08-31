@@ -15,13 +15,12 @@ from app.responses.repository import ResponseRepository as response_repository
 from app.responses.models import Response, ResponseReviewer, Answer
 from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin, PostReviewAssignmentMixin, \
     GetReviewAssignmentMixin, GetReviewHistoryMixin
-from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion, ReviewSection, ReviewSectionTranslation, ReviewQuestionTranslation, ReviewerTag
+from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion, ReviewSection, ReviewSectionTranslation, ReviewQuestionTranslation, ReviewerTag, ReviewConfiguration
 from app.reviews.repository import ReviewRepository as review_repository
 from app.reviews.repository import ReviewConfigurationRepository as review_configuration_repository
 from app.reviews.repository import ReviewerTagRepository as reviewer_tag_repository
 from app.references.repository import ReferenceRequestRepository as reference_repository
 from app.tags.repository import TagRepository as tag_repository
-
 from app.users.repository import UserRepository as user_repository
 
 from app.events.repository import EventRepository as event_repository
@@ -150,6 +149,14 @@ review_section_detail_fields = {
     'questions': fields.List(fields.Nested(review_question_detail_fields), attribute='review_questions')
 }
 
+review_configuration_fields = {
+    'id': fields.Integer,
+    'num_reviews_required': fields.Integer,
+    'num_optional_reviews': fields.Integer,
+    'drop_optional_question_id': fields.Integer,
+    'drop_optional_agreement_values': fields.String
+}
+
 review_form_detail_fields = {
     'id': fields.Integer,
     'event_id': fields.Integer,
@@ -158,7 +165,8 @@ review_form_detail_fields = {
     'deadline': fields.DateTime(dt_format='iso8601'),
     'active': fields.Boolean,
     'stage': fields.Integer,
-    'sections': fields.List(fields.Nested(review_section_detail_fields), attribute='review_sections')
+    'sections': fields.List(fields.Nested(review_section_detail_fields), attribute='review_sections'),
+    'review_configuration': fields.Nested(review_configuration_fields),
 }
 
 response_review_fields = {
@@ -1082,6 +1090,7 @@ class ReviewFormDetailAPI(restful.Resource):
         req_parser.add_argument('deadline', type=dt_format, required=True)
         req_parser.add_argument('active', type=bool, required=True)
         req_parser.add_argument('sections', type=dict, required=True, action='append')
+        req_parser.add_argument('num_reviews', type=int, required=True)
         args = req_parser.parse_args()
 
         application_form_id = args['application_form_id']
@@ -1090,6 +1099,7 @@ class ReviewFormDetailAPI(restful.Resource):
         deadline = args['deadline']
         active = args['active']
         sections_data = args['sections']
+        num_reviews = args['num_reviews']
 
         review_form = review_repository.get_review_form(event_id, stage)
         if review_form is not None:
@@ -1104,6 +1114,9 @@ class ReviewFormDetailAPI(restful.Resource):
             # Only make this stage active if there is no other active stage.
             active=not any(o.active for o in other_review_forms))
         
+        review_config = ReviewConfiguration(num_reviews_required=num_reviews, 
+                                            num_optional_reviews=0)
+        review_form.review_configuration = review_config
         review_repository.add_model(review_form)
 
         for section_data in sections_data:
@@ -1161,6 +1174,7 @@ class ReviewFormDetailAPI(restful.Resource):
         req_parser.add_argument('is_open', type=bool, required=True)
         req_parser.add_argument('deadline', type=dt_format, required=True)
         req_parser.add_argument('sections', type=dict, required=True, action='append')
+        req_parser.add_argument('num_reviews', type=int, required=True)
         args = req_parser.parse_args()
 
         id = args['id']
@@ -1169,6 +1183,7 @@ class ReviewFormDetailAPI(restful.Resource):
         is_open = args['is_open']
         deadline = args['deadline']
         sections_data = args['sections']
+        num_reviews = args['num_reviews']
 
         review_form = review_repository.get_review_form_by_id(id)
         if not review_form:
@@ -1183,6 +1198,10 @@ class ReviewFormDetailAPI(restful.Resource):
         review_form.stage = stage
         review_form.is_open = is_open
         review_form.deadline = deadline
+        if review_form.review_configuration:
+            review_form.review_configuration.num_reviews_required = num_reviews
+        else:
+            review_form.review_configuration = ReviewConfiguration(num_reviews_required=num_reviews, num_optional_reviews=0)
         
         # Note: we don't update the active property which is controlled by
         # the ReviewStageAPI

@@ -599,5 +599,11 @@
     "Applications Opening Soon":"Ouverture prochaine des candidatures",
     "Invitation letter is not yet available, please check again at a later date.": "Lettre d'invitation n'est pas encore disponible, veuillez vérifier à nouveau plus tard.",
     "Confirmed": "Confirmé",
-    "All Tags": "Toutes les balises"
+    "All Tags": "Toutes les balises",
+    "Allow candidates to edit their applications after submitting": "Autoriser les candidats à modifier leurs candidatures après les avoir soumises",
+    "Editable forms with reviews open before application close are not recommended": "Les formulaires modifiables dont les évaluations sont ouvertes avant la clôture des candidatures ne sont pas recommandés",
+    "You have withdrawn your application and may not resubmit.": "Vous avez retiré votre candidature et ne pouvez plus la soumettre.",
+    "By continuing, your submitted application will be withdrawn and you will not be able to resubmit it.": "En continuant, votre demande soumise sera retirée et vous ne pourrez pas la soumettre à nouveau.",
+    "Once you submit, your application will be final and you will not be able to edit it.": "Une fois votre candidature soumise, elle sera définitive et vous ne pourrez plus la modifier.",
+    "Number of reviews required": "Nombre d'avis requis"
 }

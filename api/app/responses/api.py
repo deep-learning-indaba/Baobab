@@ -191,14 +191,18 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         application_form_id = args['application_form_id']
 
         response = response_repository.get_by_id(args['id'])
+        application_form = application_form_repository.get_by_id(application_form_id)
+
         if not response:
             return errors.RESPONSE_NOT_FOUND
         if response.user_id != user_id:
             return errors.UNAUTHORIZED
         if response.application_form_id != application_form_id:
             return errors.UPDATE_CONFLICT
-        
-        application_form = application_form_repository.get_by_id(application_form_id)
+        if response.is_submitted and not application_form.allows_edits:
+            return errors.NOT_EDITABLE
+        if response.is_withdrawn and not application_form.allows_edits:
+            return errors.NOT_EDITABLE
         if application_form is None:
             return errors.FORM_NOT_FOUND_BY_ID
 

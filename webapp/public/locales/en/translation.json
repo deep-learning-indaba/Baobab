@@ -600,5 +600,11 @@
     "Applications Opening Soon": "Applications Opening Soon",
     "Invitation letter is not yet available, please check again at a later date.": "Invitation letter is not yet available, please check again at a later date.",
     "Confirmed": "Confirmed",
-    "All Tags": "All Tags"
+    "All Tags": "All Tags",
+    "Allow candidates to edit their applications after submitting": "Allow candidates to edit their applications after submitting",
+    "Editable forms with reviews open before application close are not recommended": "Editable forms with reviews open before application close are not recommended",
+    "You have withdrawn your application and may not resubmit.": "You have withdrawn your application and may not resubmit.",
+    "By continuing, your submitted application will be withdrawn and you will not be able to resubmit it.": "By continuing, your submitted application will be withdrawn and you will not be able to resubmit it.",
+    "Once you submit, your application will be final and you will not be able to edit it.": "Once you submit, your application will be final and you will not be able to edit it.",
+    "Number of reviews required": "Number of reviews required"
 }
