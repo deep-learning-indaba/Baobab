@@ -59,6 +59,7 @@ def get_form_fields(form, language):
         'event_id': form.event_id,
         'is_open':  form.is_open,
         'nominations': form.nominations,
+        'allows_edits': form.allows_edits,
         'sections': section_fields
     }
     return form_fields

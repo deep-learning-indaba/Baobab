@@ -534,6 +534,10 @@ class ConfirmationComponent extends React.Component {
               <span class="fa fa-exclamation-triangle"></span> {t("You MUST click SUBMIT before the deadline for your application to be considered!")}
             </div>
 
+            {!this.props.formSpec.allows_edits && <div class="alert alert-warning">
+              <span class="fa fa-exclamation-triangle"></span> {t("Once you submit, your application will be final and you will not be able to edit it.")}
+            </div>}
+
             <div class="text-center">
               {allErrors.length > 0 && <div class="alert alert-danger alert-container">
                 {t("Could not submit your application due to validation errors. Please go back and fix these any try again.")}
@@ -711,7 +715,9 @@ class SubmittedComponent extends React.Component {
           cancelText={t("No - Don't withdraw")}>
 
           <p>
-            {t("By continuing, your submitted application will go into draft state. You MUST press Submit again after you make your changes for your application to be considered in the selection.")}
+            {this.props.formSpec.allows_edits 
+            ? t("By continuing, your submitted application will go into draft state. You MUST press Submit again after you make your changes for your application to be considered in the selection.") 
+            : t("By continuing, your submitted application will be withdrawn and you will not be able to resubmit it.")}
           </p>
         </ConfirmModal>
 
@@ -992,6 +998,7 @@ class ApplicationFormInstanceComponent extends Component {
           sectionModels={sectionModels}
           submit={this.handleSubmit}
           isSubmitting={isSubmitting}
+          formSpec={this.props.formSpec}
         />
       )
     });
