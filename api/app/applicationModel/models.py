@@ -16,7 +16,7 @@ class ApplicationForm(db.Model):
     sections = db.relationship('Section', order_by='Section.order')
     questions = db.relationship('Question')
 
-    def __init__(self, event_id, is_open, nominations, allows_edits):
+    def __init__(self, event_id, is_open, nominations, allows_edits=True):
         self.event_id = event_id
         self.is_open = is_open
         self.nominations = nominations

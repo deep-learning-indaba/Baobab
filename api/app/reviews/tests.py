@@ -1,23 +1,20 @@
 from datetime import datetime
 import json
-import copy
-import itertools
 
 from app import db, LOGGER
 from app.utils.testing import ApiTestCase
-from app.events.models import Event, EventRole
+from app.events.models import EventRole
 from app.users.models import AppUser, UserCategory, Country
-from app.applicationModel.models import ApplicationForm, Question, Section
+from app.applicationModel.models import Question, Section
 from app.responses.models import Response, Answer, ResponseReviewer
 
-from app.references.models import ReferenceRequest, Reference
+from app.references.models import ReferenceRequest
 from app.references.repository import ReferenceRequestRepository as reference_request_repository
 from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse, ReviewScore, ReviewConfiguration
 
 from app.reviews.models import ReviewForm, ReviewQuestion, ReviewQuestionTranslation, ReviewResponse, ReviewScore, ReviewConfiguration
 from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
 from nose.plugins.skip import SkipTest
-from app.organisation.models import Organisation
 
 from parameterized import parameterized
 
@@ -2319,7 +2316,8 @@ REVIEW_FORM_POST = {
   "stage": 2,
   "is_open": True,   
   "deadline": datetime(2024, 6, 1).strftime('%Y-%m-%dT%H:%M:%S'),  
-  "active": True,     
+  "active": True,
+  "num_reviews": 2,     
   "sections": [
       {
           "order": 1,
@@ -2458,6 +2456,7 @@ REVIEW_FORM_PUT = {
   "application_form_id": 1,  
   "stage": 3,  # Updated
   "is_open": True,   
+  "num_reviews": 2,
   "deadline": datetime(2023, 2, 2).strftime('%Y-%m-%dT%H:%M:%S'),  # Updated
   "active": True,     
   "sections": [
@@ -2595,7 +2594,7 @@ REVIEW_FORM_PUT = {
   ]
 }
 
-class ReviewFormDetailAPITest(ApiTestCase):
+class APITest(ApiTestCase):
 
     def seed_static_data(self):
         first_event = self.add_event()
@@ -2917,6 +2916,7 @@ class ReviewFormDetailAPITest(ApiTestCase):
         del data["sections"][1]["questions"][0]["id"]
         
         self.maxDiff = 6000
+        data["num_reviews"] = REVIEW_FORM_POST["num_reviews"]
         self.assertEqual(data, REVIEW_FORM_POST)
 
     def test_put(self):
@@ -2945,6 +2945,7 @@ class ReviewFormDetailAPITest(ApiTestCase):
         del data["sections"][0]["questions"][1]["id"]
         del data["sections"][1]["questions"][0]["id"]
         self.maxDiff = None
+        data["num_reviews"] = REVIEW_FORM_PUT["num_reviews"]
         self.assertEqual(data, REVIEW_FORM_PUT)
 
 
