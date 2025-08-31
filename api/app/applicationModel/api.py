@@ -59,6 +59,7 @@ def get_form_fields(form, language):
         'event_id': form.event_id,
         'is_open':  form.is_open,
         'nominations': form.nominations,
+        'allows_edits': form.allows_edits,
         'sections': section_fields
     }
     return form_fields
@@ -95,6 +96,7 @@ application_form_detail_fields = {
     'event_id': fields.Integer,
     'is_open':  fields.Boolean,
     'nominations': fields.Boolean,
+    'allows_edits': fields.Boolean,
     'sections': fields.List(fields.Nested(section_detail_fields))
 }
 
@@ -150,6 +152,7 @@ class ApplicationFormDetailAPI(restful.Resource):
         req_parser.add_argument('is_open', type=bool, required=True)
         req_parser.add_argument('nominations', type=bool, required=True)
         req_parser.add_argument('sections', type=dict, required=True, action='append')
+        req_parser.add_argument('allows_edits', type=bool, required=True)
         args = req_parser.parse_args()
 
         app_form = application_form_repository.get_by_event_id(event_id)
@@ -158,11 +161,13 @@ class ApplicationFormDetailAPI(restful.Resource):
 
         is_open = args['is_open']
         nominations = args['nominations']
+        allows_edits = args['allows_edits']
 
         app_form = ApplicationForm(
             event_id,
             is_open,
-            nominations)
+            nominations,
+            allows_edits)
         application_form_repository.add(app_form)
         sections_data = args['sections']
 
@@ -240,6 +245,7 @@ class ApplicationFormDetailAPI(restful.Resource):
         req_parser.add_argument('nominations', type=bool, required=True)
         req_parser.add_argument('id', type=int, required=True)
         req_parser.add_argument('sections', type=dict, required=True, action='append')
+        req_parser.add_argument('allows_edits', type=bool, required=True)
 
         args = req_parser.parse_args()
         user_id = g.current_user['id']
@@ -254,6 +260,7 @@ class ApplicationFormDetailAPI(restful.Resource):
 
         app_form.is_open = args['is_open']
         app_form.nominations = args['nominations']
+        app_form.allows_edits = args['allows_edits']
 
         current_sections = app_form.sections
         incoming_sections = args['sections']

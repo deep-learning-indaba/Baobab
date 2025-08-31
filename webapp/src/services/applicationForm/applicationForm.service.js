@@ -11,7 +11,8 @@ export const applicationFormService = {
     withdraw,
     getQuestionList,
     getDetailsForEvent,
-    updateApplicationForm
+    updateApplicationForm,
+    createApplicationForm
 };
 
 
@@ -240,12 +241,13 @@ function getDetailsForEvent(eventId) {
   });
 }
 
-export function updateApplicationForm(id, event_id, is_open, nominations, sections) {
+export function updateApplicationForm(id, event_id, is_open, nominations, allows_edits, sections) {
   let form = {
     "id": id,
     'event_id': event_id,
     "is_open": is_open,
     "nominations": nominations,
+    "allows_edits": allows_edits,
     "sections": sections
   }
 
@@ -263,11 +265,12 @@ export function updateApplicationForm(id, event_id, is_open, nominations, sectio
     })
   }
 
-  export function createApplicationForm(event_id, is_open, nominations, sections) {
+  export function createApplicationForm(event_id, is_open, nominations, allows_edits, sections) {
     let form = {
       'event_id': event_id,
       "is_open": is_open,
       "nominations": nominations,
+      "allows_edits": allows_edits,
       "sections": sections
     }
   
