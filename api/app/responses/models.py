@@ -67,6 +67,14 @@ class Response(db.Model):
         self.is_submitted = False
         self.submitted_timestamp = None
 
+    def unsubmit(self):
+        self.is_submitted = False
+        self.submitted_timestamp = None
+
+    def unwithdraw(self):
+        self.is_withdrawn = False
+        self.withdrawn_timestamp = None
+
 
 class Answer(db.Model):
     __tablename__ = "answer"

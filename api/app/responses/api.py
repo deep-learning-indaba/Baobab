@@ -549,7 +549,7 @@ class ResponseDetailAPI(restful.Resource):
 
 
     @staticmethod
-    def _serialize_response(response, language, review_form_id, num_reviewers):
+    def _serialize_response(response, language, review_form_id):
         return {
             'id': response.id,
             'application_form_id': response.application_form_id,
@@ -582,10 +582,43 @@ class ResponseDetailAPI(restful.Resource):
         review_form = review_repository.get_review_form(event_id)
         review_form_id = None if review_form is None else review_form.id
 
-        review_config = review_configuration_repository.get_configuration_for_event(event_id)
-        num_reviewers = review_config.num_reviews_required + review_config.num_optional_reviews if review_config is not None else 1
+        return ResponseDetailAPI._serialize_response(response, language, review_form_id)
 
-        return ResponseDetailAPI._serialize_response(response, language, review_form_id, num_reviewers)
+    @event_admin_required
+    def put(self, event_id):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('response_id', type=int, required=True)
+        req_parser.add_argument('language', type=str, required=True) 
+        req_parser.add_argument('is_submitted', type=bool, required=False)
+        req_parser.add_argument('is_withdrawn', type=bool, required=False)
+        args = req_parser.parse_args()
+
+        response = response_repository.get_by_id(args['response_id'])
+        if not response:
+            return errors.RESPONSE_NOT_FOUND
+
+        if response.application_form.event_id != event_id:
+            return errors.UNAUTHORIZED
+
+        if args['is_submitted'] is not None:
+            if args['is_submitted'] and not response.is_submitted:
+                response.submit()
+            elif not args['is_submitted'] and response.is_submitted:
+                response.unsubmit()
+
+        if args['is_withdrawn'] is not None:
+            if args['is_withdrawn'] and not response.is_withdrawn:
+                response.withdraw()
+            elif not args['is_withdrawn'] and response.is_withdrawn:
+                response.unwithdraw()
+
+        response_repository.save(response)
+
+        review_form = review_repository.get_review_form(event_id)
+        review_form_id = None if review_form is None else review_form.id
+
+        return ResponseDetailAPI._serialize_response(response, args['language'], review_form_id)
+
 
 class ResponseExportAPI(restful.Resource):
 
