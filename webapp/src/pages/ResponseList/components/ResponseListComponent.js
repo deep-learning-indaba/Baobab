@@ -24,9 +24,7 @@ class ResponseListComponent extends Component {
             btnUpdate: false,
             includeUnsubmitted: false,
             responses: [],
-            filteredResponses: [],
             tags: [],
-            filteredTags: [],
             tagSelectorVisible: false,
             confirmRemoveTagVisible: false,
             selectedResponse: null,
@@ -35,24 +33,34 @@ class ResponseListComponent extends Component {
             nameSearch : "",
             tagSearch : [],
             emailSearch: "",
-            gettingResponseList: false
+            gettingResponseList: false,
+            page: 0,
+            pages: 0,
+            perPage: 10
         }
     }
 
+
     componentDidMount() {
-        this.setState({ loading: true }, () => this.getResponseList());
+        this.getResponseList(this.state.page, this.state.perPage);
     }
 
-    getResponseList() {
+    getResponseList = (page, perPage) => {
         this.setState({ gettingResponseList: true });
+
+        const { includeUnsubmitted, nameSearch, emailSearch, tagSearch } = this.state;
+        const tagId = tagSearch.length > 0 && this.state.tags ? this.state.tags.find(t => t.name === tagSearch[0]).id : null;
+
         Promise.all([
             tagsService.getTagList(this.props.event.id),
-            responsesService.getResponseList(this.props.event.id, this.state.includeUnsubmitted, []),
+            responsesService.getResponseList(this.props.event.id, includeUnsubmitted, [], page + 1, perPage, nameSearch, emailSearch, tagId)
         ]).then(([tagsResponse, responsesResponse]) => {
             this.setState({
                 tags: tagsResponse.tags,
-                responses: responsesResponse.responses,
-                filteredResponses : responsesResponse.responses,
+                responses: responsesResponse.responses || [],
+                page: responsesResponse.pagination ? responsesResponse.pagination.page - 1 : 0,
+                pages: responsesResponse.pagination ? responsesResponse.pagination.pages : 0,
+                perPage: responsesResponse.pagination ? responsesResponse.pagination.per_page : 10,
                 error: tagsResponse.error || responsesResponse.error,
                 loading: false,
                 gettingResponseList: false
@@ -63,7 +71,7 @@ class ResponseListComponent extends Component {
     toggleUnsubmitted = () => {
         this.setState({
             includeUnsubmitted: !this.state.includeUnsubmitted
-        }, this.getResponseList);
+        }, () => this.getResponseList(0, this.state.perPage));
     }
 
     handleChange = event => {
@@ -100,11 +108,9 @@ class ResponseListComponent extends Component {
     }
     
     addTag = (response) => {
-        const tagIds = response.tags.map(t=>t.id);
         this.setState({
           selectedResponse: response,
-          tagSelectorVisible: true,
-          filteredTags: this.state.tags.filter(t=>!tagIds.includes(t.id) && this.assignable_tag_types.includes(t.tag_type))
+          tagSelectorVisible: true
         })
     }
 
@@ -112,19 +118,11 @@ class ResponseListComponent extends Component {
         responsesService.tagResponse(this.state.selectedResponse.response_id, tag.id, this.props.event.id)
         .then(resp => {
             if (resp.status === 201) {
-                const newResponse = {
-                ...this.state.selectedResponse,
-                tags: [...this.state.selectedResponse.tags, tag]
-                } 
-                const newResponses = this.state.responses.map(r => 
-                    r.response_id === this.state.selectedResponse.response_id  ? newResponse : r);
                 this.setState({
-                tagSelectorVisible: false,
-                selectedResponse: null,
-                filteredTags: [],
-                responses: newResponses
-                }, this.filterResponses);
-                }
+                    tagSelectorVisible: false,
+                    selectedResponse: null
+                }, () => this.getResponseList(this.state.page, this.state.perPage));
+            }
             else {
                 this.setState({
                 tagSelectorVisible: false,
@@ -140,16 +138,9 @@ class ResponseListComponent extends Component {
     responsesService.removeTag(selectedResponse.response_id, selectedTag.id, this.props.event.id)
     .then(resp => {
       if (resp.status === 200) {
-        const newResponse = {
-          ...selectedResponse,
-          tags: selectedResponse.tags.filter(t=>t.id !== selectedTag.id)
-        }
-        const newResponses = this.state.responses.map(r => 
-            r.response_id === selectedResponse.response_id ? newResponse : r);
         this.setState({
-          responses: newResponses,
           confirmRemoveTagVisible: false
-        }, this.filterResponses);
+        }, () => this.getResponseList(this.state.page, this.state.perPage));
       }
       else {
         this.setState({
@@ -160,50 +151,21 @@ class ResponseListComponent extends Component {
     })
   }
 
-    updateNameSearch = (event) => {
-        this.setState({nameSearch: event.target.value}, this.filterResponses);
-    }
-    
-    updateEmailSearch = (event) => {
-        this.setState({emailSearch: event.target.value}, this.filterResponses);
+    handlePageChange = (page) => {
+        this.getResponseList(page, this.state.perPage);
     }
 
-    updateTagSearch = (id, event) => {
-      const newTagSearch = this.state.tagSearch;
-      if (event.action === "remove-value") {
-        newTagSearch.splice(newTagSearch.indexOf(event.removedValue.value), 1);
-      }
-      else if (event.action === "clear") {
-        newTagSearch = [];
-      }
-      else if (event.action === "select-option") {
-        newTagSearch.push(event.option.value);
-      }
-      this.setState({tagSearch: newTagSearch}, this.filterResponses);
+    handlePageSizeChange = (perPage) => {
+        this.getResponseList(0, perPage);
+    }
+
+    updateTagSearch = (selectedOption) => {
+        this.setState({ tagSearch: selectedOption ? [selectedOption.value] : [] });
     }
 
     getSearchTags(tags) {
       return tags ? tags.filter(t=>t).map(t => ({ value: t.name, label: t.name})) : tags;
     }
-
-    filterResponses = () => {
-        const { nameSearch, tagSearch, emailSearch } = this.state;
-        const filtered = this.state.responses.filter(r => {
-          let passed = true;
-          if (nameSearch) {
-            passed = ((r.firstname && r.firstname.toLowerCase().indexOf(nameSearch.toLowerCase()) > -1) 
-                      || (r.lastname && r.lastname.toLowerCase().indexOf(nameSearch.toLowerCase()) > -1));
-          }
-          if (emailSearch && passed) {
-            passed = r.email && r.email.toLowerCase().indexOf(emailSearch.toLowerCase()) > -1;
-          }
-          if (tagSearch.length > 0 && passed) {
-            passed = tagSearch && tagSearch.every(t => r.tags.some(rt => rt.name === t));
-          }
-          return passed;
-        });
-        this.setState({ filteredResponses: filtered });
-      }
 
     render() {
         const threeColClassName = createColClassName(12, 4, 4, 4);  //xs, sm, md, lg
@@ -217,9 +179,7 @@ class ResponseListComponent extends Component {
             assignedReviewerEmail,
             reviewerAssignError,
             newReviewerEmail,
-            reviewerAssignSuccess,
-            filteredTags,
-            filteredResponses
+            reviewerAssignSuccess
         } = this.state
 
         if (loading) {
@@ -321,7 +281,7 @@ class ResponseListComponent extends Component {
                             id="NameFilter"
                             type="text"
                             placeholder="Search"
-                            onChange={this.updateNameSearch}
+                            onChange={e => this.setState({ nameSearch: e.target.value })}
                             name=""
                             value={this.state.nameSearch} />
                         </div>
@@ -332,21 +292,23 @@ class ResponseListComponent extends Component {
                             id="EmailFilter"
                             type="text"
                             placeholder="Search"
-                            onChange={this.updateEmailSearch}
+                            onChange={e => this.setState({ emailSearch: e.target.value })}
                             defaultValue={this.state.emailSearch} />
                         </div>
 
                         <div className={threeColClassName}>
                             <label className="col-form-label" htmlFor="TagFilter">{t("Filter by tag")}</label>
                             <Select
-                              closeMenuOnSelect={false}
+                              isClearable={true}
                               components={animatedComponents}
-                              isMulti
-                              options={this.getSearchTags(filteredTags)}
+                              options={this.getSearchTags(this.state.tags)}
                               id="TagFilter"
                               placeholder="Search"
-                              onChange={this.updateTagSearch}
-                              defaultValue={"none"}/>
+                              onChange={this.updateTagSearch}/>
+                        </div>
+                         <div className={threeColClassName}>
+                            <label className="col-form-label">&nbsp;</label>
+                            <button className="btn btn-primary form-control" onClick={() => this.getResponseList(0, this.state.perPage)}>{t("Search")}</button>
                         </div>
                     </div>
                     
@@ -367,9 +329,15 @@ class ResponseListComponent extends Component {
                     <div className="react-table">
                         <ReactTable
                             className="ReactTable"
-                            data={filteredResponses}
+                            data={this.state.responses}
                             columns={columns}
-                            minRows={0}
+                            manual
+                            loading={this.state.gettingResponseList}
+                            pages={this.state.pages}
+                            page={this.state.page}
+                            onPageChange={this.handlePageChange}
+                            onPageSizeChange={this.handlePageSizeChange}
+                            defaultPageSize={this.state.perPage}
                         />
                     </div>
                 </div>
@@ -410,12 +378,12 @@ class ResponseListComponent extends Component {
                     </div>
                 </form>
 
-                <TagSelectorDialog
-                    tags={this.state.filteredTags}
+                {this.state.tagSelectorVisible && <TagSelectorDialog
+                    tags={this.state.tags.filter(t => !this.state.selectedResponse.tags.map(t=>t.id).includes(t.id) && this.assignable_tag_types.includes(t.tag_type))}
                     visible={this.state.tagSelectorVisible}
                     onCancel={() => this.setState({ tagSelectorVisible: false })}
                     onSelectTag={this.onSelectTag}
-                />
+                />}
 
                 <ConfirmModal
                     visible={this.state.confirmRemoveTagVisible}

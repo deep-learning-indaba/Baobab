@@ -35,6 +35,7 @@ class ResponsePage extends Component {
             assignableTagTypes: ["RESPONSE"],
             reviewResponses: [],
             outcome: {'status':null,'timestamp':null},
+            isOutcomeDropdownOpen: false,
         }
     };
 
@@ -188,20 +189,26 @@ class ResponsePage extends Component {
         });
     };
 
-    submitOutcome(selectedOutcome) {
-        outcomeService.assignOutcome(this.state.applicationData.user_id, this.props.event.id, selectedOutcome).then(response => {
-            if (response.status === 201) {
-                const newOutcome = {
-                    timestamp: response.outcome.timestamp,
-                    status: response.outcome.status,
-                };
+    toggleOutcomeDropdown = () => {
+        this.setState(prevState => ({ isOutcomeDropdownOpen: !prevState.isOutcomeDropdownOpen }));
+    }
 
-                this.setState({
-                    outcome: newOutcome
-                });
-            } else {
-                this.setState({erorr: response.error});
-            }
+    submitOutcome(selectedOutcome) {
+        this.setState({ isOutcomeDropdownOpen: false }, () => {
+            outcomeService.assignOutcome(this.state.applicationData.user_id, this.props.event.id, selectedOutcome).then(response => {
+                if (response.status === 201) {
+                    const newOutcome = {
+                        timestamp: response.outcome.timestamp,
+                        status: response.outcome.status,
+                    };
+    
+                    this.setState({
+                        outcome: newOutcome
+                    });
+                } else {
+                    this.setState({erorr: response.error});
+                }
+            });
         });
     }
 
@@ -221,88 +228,57 @@ class ResponsePage extends Component {
             };
 
             if (this.state.event_type === 'JOURNAL') {
-                return <div className='user-details'>
-                    <div className="user-details">
-                        <button
-                            type="button"
-                            class="btn btn-success"
-                            id="accept"
-                            onClick={(e) => this.submitOutcome('ACCEPTED')}>
-                            Accept
-                        </button>
+                return (
+                    <div className='user-details'>
+                        <div className="dropdown">
+                            <button className="btn btn-primary dropdown-toggle" type="button" onClick={this.toggleOutcomeDropdown}>
+                                {this.props.t('Assign Outcome')}
+                            </button>
+                            {this.state.isOutcomeDropdownOpen &&
+                                <div className="dropdown-menu show" aria-labelledby="dropdownMenuButton">
+                                    <button className="dropdown-item" type="button" onClick={() => this.submitOutcome('ACCEPTED')}>{this.props.t('Accept')}</button>
+                                    <button className="dropdown-item" type="button" onClick={() => this.submitOutcome('ACCEPT_W_REVISION')}>{this.props.t('Accept with Minor Revision')}</button>
+                                    <button className="dropdown-item" type="button" onClick={() => this.submitOutcome('REJECT_W_ENCOURAGEMENT')}>{this.props.t('Reject with Encouragement to Resubmit')}</button>
+                                    <button className="dropdown-item" type="button" onClick={() => this.submitOutcome('REJECTED')}>{this.props.t('Reject')}</button>
+                                </div>
+                            }
+                        </div>
                     </div>
-                    <div className="user-details">
-                        <button
-                            type="button"
-                            class="btn btn-warning"
-                            id="accept"
-                            onClick={(e) => this.submitOutcome('ACCEPT_W_REVISION')}>
-                            Accept with Minor Revision
-                        </button>
-                    </div>
-                    <div className="user-details">
-                        <button
-                            type="button"
-                            class="btn btn-warning"
-                            id="reject with encouragement"
-                            onClick={(e) => this.submitOutcome('REJECT_W_ENCOURAGEMENT')}>
-                            Reject with Encouragement to Resubmit
-                        </button>
-                    </div>    
-                    <div className="user-details">
-                        <button
-                            type="button"
-                            class="btn btn-danger"
-                            id="reject"
-                            onClick={(e) => this.submitOutcome('REJECTED')}>
-                            Reject
-                        </button>
-                    </div>    
-                </div>
+                )
             }
             else if (this.state.event_type === 'CALL') {
-                return <div className='user-details'>
-                    <div className="user-details">
-                        <button
-                            type="button"
-                            class="btn btn-success"
-                            id="accept"
-                            onClick={(e) => this.submitOutcome('ACCEPTED')}>
-                            Accept
-                        </button>
+                return (
+                    <div className='user-details'>
+                        <div className="dropdown">
+                            <button className="btn btn-primary dropdown-toggle" type="button" onClick={this.toggleOutcomeDropdown}>
+                                {this.props.t('Assign Outcome')}
+                            </button>
+                            {this.state.isOutcomeDropdownOpen &&
+                                <div className="dropdown-menu show" aria-labelledby="dropdownMenuButton">
+                                    <button className="dropdown-item" type="button" onClick={() => this.submitOutcome('ACCEPTED')}>{this.props.t('Accept')}</button>
+                                    <button className="dropdown-item" type="button" onClick={() => this.submitOutcome('REJECTED')}>{this.props.t('Reject')}</button>
+                                </div>
+                            }
+                        </div>
                     </div>
-                    <div className="user-details">
-                        <button
-                            type="button"
-                            class="btn btn-danger"
-                            id="reject"
-                            onClick={(e) => this.submitOutcome('REJECTED')}>
-                            Reject
-                        </button>
-                    </div>    
-                </div>
+                )
             }
             else if (this.state.event_type === 'EVENT') {
-                return <div className='user-details'>
-                    <div className="user-details">
-                        <button
-                            type="button"
-                            class="btn btn-danger"
-                            id="reject"
-                            onClick={(e) => this.submitOutcome('REJECTED')}>
-                            Reject
-                        </button>
-                    </div>    
-                    <div className="user-details">
-                    <button
-                        type="button"
-                        class="btn btn-warning"
-                        id="waitlist"
-                        onClick={(e) => this.submitOutcome('WAITLIST')}>
-                        Waitlist
-                    </button>
-                </div>
-                </div>
+                return (
+                    <div className='user-details'>
+                        <div className="dropdown">
+                            <button className="btn btn-primary dropdown-toggle" type="button" onClick={this.toggleOutcomeDropdown}>
+                                {this.props.t('Assign Outcome')}
+                            </button>
+                            {this.state.isOutcomeDropdownOpen &&
+                                <div className="dropdown-menu show" aria-labelledby="dropdownMenuButton">
+                                    <button className="dropdown-item" type="button" onClick={() => this.submitOutcome('REJECTED')}>{this.props.t('Reject')}</button>
+                                    <button className="dropdown-item" type="button" onClick={() => this.submitOutcome('WAITLIST')}>{this.props.t('Waitlist')}</button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                )
             }
         };
     };

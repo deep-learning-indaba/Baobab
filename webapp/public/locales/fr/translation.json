@@ -605,5 +605,7 @@
     "You have withdrawn your application and may not resubmit.": "Vous avez retiré votre candidature et ne pouvez plus la soumettre.",
     "By continuing, your submitted application will be withdrawn and you will not be able to resubmit it.": "En continuant, votre demande soumise sera retirée et vous ne pourrez pas la soumettre à nouveau.",
     "Once you submit, your application will be final and you will not be able to edit it.": "Une fois votre candidature soumise, elle sera définitive et vous ne pourrez plus la modifier.",
-    "Number of reviews required": "Nombre d'avis requis"
+    "Number of reviews required": "Nombre d'avis requis",
+    "Accept with Minor Revision": "Accepter avec une révision mineure",
+    "Reject with Encouragement to Resubmit": "Rejeter avec encouragement à resubmit"
 }

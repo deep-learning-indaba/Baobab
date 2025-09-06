@@ -10,21 +10,27 @@ export const responsesService = {
     removeTag
 }
 
-function getResponseList(eventId, includeUnsubmitted, questionIds) {
+function getResponseList(eventId, includeUnsubmitted, questionIds, page, perPage, nameSearch, emailSearch, tagId) {
     return axios
-        .get(baseUrl + "/api/v1/responses", { 
+        .get(baseUrl + "/api/v1/responses", {
             "headers": authHeader(),
             "params": {
                 event_id: eventId,
                 include_unsubmitted: includeUnsubmitted,
-                question_ids: questionIds
+                question_ids: questionIds,
+                page: page,
+                per_page: perPage,
+                name_search: nameSearch,
+                email_search: emailSearch,
+                tag_id: tagId
             }
         })
         .then(response => {
-            let responses = null;
-            if (response) responses = response.data;
+            let data = null;
+            if (response) data = response.data;
             return {
-                responses: responses,
+                responses: data.responses,
+                pagination: data.pagination,
                 status: response.status,
                 message: response.statusText
             }
