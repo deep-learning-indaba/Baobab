@@ -372,13 +372,35 @@ class ResponseListAPI(restful.Resource):
         # Note: Including [] in the question_ids parameter because that gets added by Axios on the front-end
         req_parser.add_argument('question_ids[]', type=int, required=False, action='append')
         req_parser.add_argument('language', type=str, required=True)
+        req_parser.add_argument('page', type=int, required=False)
+        req_parser.add_argument('per_page', type=int, required=False)
+        req_parser.add_argument('name_search', type=str, required=False)
+        req_parser.add_argument('email_search', type=str, required=False)
+        req_parser.add_argument('tag_id', type=int, required=False)
         args = req_parser.parse_args()
 
         include_unsubmitted = args['include_unsubmitted']
         question_ids = args['question_ids[]']
         language = args['language']
+        name_search = args['name_search']
+        email_search = args['email_search']
+        tag_id = args['tag_id']
 
-        responses = response_repository.get_all_for_event(event_id, not include_unsubmitted)
+        try:
+            page = args['page'] or 1
+            per_page = args['per_page'] or 25
+            if page < 1:
+                page = 1
+            if per_page < 1:
+                per_page = 25
+            if per_page > 1000:
+                per_page = 1000
+        except ValueError:
+            return errors.INVALID_INPUT_MALFORMED_PAGINATION
+
+        paginated_responses = response_repository.get_all_for_event(
+            event_id, not include_unsubmitted, page=page, per_page=per_page, name=name_search, email=email_search, tag_id=tag_id
+        )
 
         review_config = review_configuration_repository.get_configuration_for_event(event_id)
         required_reviewers = 1 if review_config is None else review_config.num_reviews_required + review_config.num_optional_reviews
@@ -394,8 +416,8 @@ class ResponseListAPI(restful.Resource):
         }
 
         serialized_responses = []
-        for response in responses:
-            reviewers = [_serialize_reviewer(r, reviewer_to_review_response.get(r.reviewer_user_id, None)) 
+        for response in paginated_responses.items:
+            reviewers = [_serialize_reviewer(r, reviewer_to_review_response.get(r.reviewer_user_id, None))
                          for r in response_to_reviewers.get(response.id, [])]
             reviewers = _pad_list(reviewers, required_reviewers)
             if question_ids:
@@ -410,7 +432,7 @@ class ResponseListAPI(restful.Resource):
                 'firstname': response.user.firstname,
                 'lastname': response.user.lastname,
                 'email': response.user.email,
-                'start_date': response.started_timestamp.isoformat(),
+                'start_date': response.started_timestamp.isoformat() if response.started_timestamp else None,
                 'is_submitted': response.is_submitted,
                 'is_withdrawn': response.is_withdrawn,
                 'submitted_date': None if response.submitted_timestamp is None else response.submitted_timestamp.isoformat(),
@@ -422,7 +444,15 @@ class ResponseListAPI(restful.Resource):
 
             serialized_responses.append(serialized)
 
-        return serialized_responses
+        return {
+            'pagination': {
+                'page': paginated_responses.page,
+                'per_page': paginated_responses.per_page,
+                'total': paginated_responses.total,
+                'pages': paginated_responses.pages
+            },
+            'responses': serialized_responses
+        }
 
 
 def _validate_user_admin_or_reviewer(user_id, event_id, response_id):
@@ -519,7 +549,7 @@ class ResponseDetailAPI(restful.Resource):
 
 
     @staticmethod
-    def _serialize_response(response, language, review_form_id, num_reviewers):
+    def _serialize_response(response, language, review_form_id):
         return {
             'id': response.id,
             'application_form_id': response.application_form_id,
@@ -552,10 +582,43 @@ class ResponseDetailAPI(restful.Resource):
         review_form = review_repository.get_review_form(event_id)
         review_form_id = None if review_form is None else review_form.id
 
-        review_config = review_configuration_repository.get_configuration_for_event(event_id)
-        num_reviewers = review_config.num_reviews_required + review_config.num_optional_reviews if review_config is not None else 1
+        return ResponseDetailAPI._serialize_response(response, language, review_form_id)
 
-        return ResponseDetailAPI._serialize_response(response, language, review_form_id, num_reviewers)
+    @event_admin_required
+    def put(self, event_id):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('response_id', type=int, required=True)
+        req_parser.add_argument('language', type=str, required=True) 
+        req_parser.add_argument('is_submitted', type=bool, required=False)
+        req_parser.add_argument('is_withdrawn', type=bool, required=False)
+        args = req_parser.parse_args()
+
+        response = response_repository.get_by_id(args['response_id'])
+        if not response:
+            return errors.RESPONSE_NOT_FOUND
+
+        if response.application_form.event_id != event_id:
+            return errors.UNAUTHORIZED
+
+        if args['is_submitted'] is not None:
+            if args['is_submitted'] and not response.is_submitted:
+                response.submit()
+            elif not args['is_submitted'] and response.is_submitted:
+                response.unsubmit()
+
+        if args['is_withdrawn'] is not None:
+            if args['is_withdrawn'] and not response.is_withdrawn:
+                response.withdraw()
+            elif not args['is_withdrawn'] and response.is_withdrawn:
+                response.unwithdraw()
+
+        response_repository.save(response)
+
+        review_form = review_repository.get_review_form(event_id)
+        review_form_id = None if review_form is None else review_form.id
+
+        return ResponseDetailAPI._serialize_response(response, args['language'], review_form_id)
+
 
 class ResponseExportAPI(restful.Resource):
 

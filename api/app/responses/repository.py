@@ -1,10 +1,11 @@
 from typing import List
 
 from app import db
-from app.responses.models import Response, Answer, ResponseTag
+from app.responses.models import Response, Answer, ResponseTag, ResponseReviewer
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.users.models import AppUser
 from sqlalchemy import func, cast, Date
+from sqlalchemy.orm import joinedload, noload
 import itertools
 
 
@@ -128,15 +129,36 @@ class ResponseRepository():
                 .all())
 
     @staticmethod
-    def get_all_for_event(event_id, submitted_only=True) -> List[Response]:
-        query = db.session.query(Response)
+    def get_all_for_event(event_id, submitted_only=True, page=1, per_page=25, name=None, email=None, tag_id=None):
+        query = db.session.query(Response).options(
+            joinedload(Response.user),
+            joinedload(Response.response_tags).joinedload(ResponseTag.tag),
+            joinedload(Response.reviewers).joinedload(ResponseReviewer.user),
+            noload(Response.answers)
+        )
         if submitted_only:
             query = query.filter_by(is_submitted=True)
 
-        return (query
-                .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)
-                .filter_by(event_id=event_id)
-                .all())
+        query = (query
+                 .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)
+                 .filter_by(event_id=event_id))
+
+        if name or email:
+            query = query.join(AppUser, AppUser.id == Response.user_id)
+            if name:
+                query = query.filter(
+                    (AppUser.firstname.ilike('%' + name + '%')) |
+                    (AppUser.lastname.ilike('%' + name + '%'))
+                )
+            if email:
+                query = query.filter(AppUser.email.ilike('%' + email + '%'))
+
+        if tag_id:
+            query = query.join(ResponseTag, ResponseTag.response_id == Response.id).filter(
+                ResponseTag.tag_id == tag_id
+            )
+
+        return query.paginate(page=page, per_page=per_page, error_out=False)
 
     @staticmethod
     def tag_response(response_id, tag_id):
