@@ -1,11 +1,11 @@
 from typing import List
 
 from app import db
-from app.responses.models import Response, Answer, ResponseTag
+from app.responses.models import Response, Answer, ResponseTag, ResponseReviewer
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.users.models import AppUser
 from sqlalchemy import func, cast, Date
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, noload
 import itertools
 
 
@@ -132,7 +132,9 @@ class ResponseRepository():
     def get_all_for_event(event_id, submitted_only=True, page=1, per_page=25, name=None, email=None, tag_id=None):
         query = db.session.query(Response).options(
             joinedload(Response.user),
-            joinedload(Response.response_tags).joinedload(ResponseTag.tag)
+            joinedload(Response.response_tags).joinedload(ResponseTag.tag),
+            joinedload(Response.reviewers).joinedload(ResponseReviewer.user),
+            noload(Response.answers)
         )
         if submitted_only:
             query = query.filter_by(is_submitted=True)
