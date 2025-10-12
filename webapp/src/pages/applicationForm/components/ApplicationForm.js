@@ -27,8 +27,6 @@ import moment from "moment";
 import { Redirect } from 'react-router-dom';
 
 
-const baseUrl = process.env.REACT_APP_API_URL;
-
 const SHORT_TEXT = "short-text";
 const SINGLE_CHOICE = "single-choice";
 const LONG_TEXT = ["long-text", "long_text"];
@@ -538,6 +536,10 @@ class ConfirmationComponent extends React.Component {
               <span class="fa fa-exclamation-triangle"></span> {t("You MUST click SUBMIT before the deadline for your application to be considered!")}
             </div>
 
+            {!this.props.formSpec.allows_edits && <div class="alert alert-warning">
+              <span class="fa fa-exclamation-triangle"></span> {t("Once you submit, your application will be final and you will not be able to edit it.")}
+            </div>}
+
             <div class="text-center">
               {allErrors.length > 0 && <div class="alert alert-danger alert-container">
                 {t("Could not submit your application due to validation errors. Please go back and fix these any try again.")}
@@ -704,16 +706,18 @@ class SubmittedComponent extends React.Component {
         </div>
         
         {this.props.event.event_type === "JOURNAL" 
-        ? <div class="submitted-footer">
+        && <div class="submitted-footer">
             <button class="btn btn-secondary" onClick={this.viewsubmission}>
               {t("View Submission(s)")}
             </button>
-          </div>
-        : <div class="submitted-footer">
-            <button class="btn btn-primary" onClick={this.handleEdit}>
+          </div>}
+        {this.props.formSpec.allows_edits && this.props.event.event_type !== "JOURNAL" && (
+          <div className="submitted-footer">
+            <button className="btn btn-primary" onClick={this.handleEdit}>
               {t("Edit Application")}
             </button>
-          </div>}
+          </div>
+        )}
 
         <ConfirmModal
           visible={this.state.withdrawModalVisible}
@@ -723,7 +727,9 @@ class SubmittedComponent extends React.Component {
           cancelText={t("No - Don't withdraw")}>
 
           <p>
-            {t("By continuing, your submitted application will go into draft state. You MUST press Submit again after you make your changes for your application to be considered in the selection.")}
+            {this.props.formSpec.allows_edits 
+            ? t("By continuing, your submitted application will go into draft state. You MUST press Submit again after you make your changes for your application to be considered in the selection.") 
+            : t("By continuing, your submitted application will be withdrawn and you will not be able to resubmit it.")}
           </p>
         </ConfirmModal>
 
@@ -912,6 +918,14 @@ class ApplicationFormInstanceComponent extends Component {
       </div>;
     }
 
+    const hasWithdrawn = this.props.response && !this.props.response.is_submitted && this.props.response.is_withdrawn;
+
+    if (hasWithdrawn && !this.props.formSpec.allows_edits) {
+      return <div className={"alert alert-info alert-container"}>
+        {this.props.t("You have withdrawn your application and may not resubmit.")}
+      </div>;
+    }
+
     if (outcome === "ACCEPTED" || outcome === "REJECTED") {
       return <div className={"alert alert-success alert-container"}>
         {outcome === "ACCEPTED" && <div>
@@ -931,6 +945,7 @@ class ApplicationFormInstanceComponent extends Component {
           onWithdrawn={this.handleWithdrawn}
           responseId={this.state.responseId}
           event={this.props.event}
+          formSpec={this.props.formSpec}
           onEdit={() => this.setState({ isEditing: true, startStep: 0 })} // StartStep to jump to step 1 in the Stepzilla
         />
       );
@@ -996,6 +1011,7 @@ class ApplicationFormInstanceComponent extends Component {
           sectionModels={sectionModels}
           submit={this.handleSubmit}
           isSubmitting={isSubmitting}
+          formSpec={this.props.formSpec}
         />
       )
     });

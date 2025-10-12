@@ -59,11 +59,12 @@ function getInvitedGuestList(eventId) {
     });
 }
 
-function addInvitedGuest(email_address, event_Id, role) {
+function addInvitedGuest(email_address, event_Id, role, tag_ids) {
   let data = {
     event_id: event_Id,
     email: email_address,
     role: role,
+    tag_ids: tag_ids
   };
 
   return axios
@@ -128,7 +129,8 @@ function createInvitedGuest(user, event_Id, role) {
     lastname: user.lastName,
     user_title: user.title,
     role: role,
-    policy_agreed: true
+    policy_agreed: true,
+    tag_ids: user.tag_ids || []
   };
   
   return axios

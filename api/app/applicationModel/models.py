@@ -10,15 +10,17 @@ class ApplicationForm(db.Model):
     event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
     is_open = db.Column(db.Boolean(), nullable=False)
     nominations = db.Column(db.Boolean(), nullable=False)
+    allows_edits = db.Column(db.Boolean(), nullable=False)
 
     event = db.relationship('Event', foreign_keys=[event_id])
     sections = db.relationship('Section', order_by='Section.order')
     questions = db.relationship('Question')
 
-    def __init__(self, event_id, is_open, nominations):
+    def __init__(self, event_id, is_open, nominations, allows_edits=True):
         self.event_id = event_id
         self.is_open = is_open
         self.nominations = nominations
+        self.allows_edits = allows_edits
 
 class Question(db.Model):
     __tablename__ = 'question'

@@ -162,7 +162,8 @@ const ReviewForm = (props) => {
             applicationFormId: res.data.application_form_id,
             stage: res.data.stage,
             deadline: res.data.deadline,
-            active: res.data.active
+            active: res.data.active,
+            num_reviews: res.data.review_configuration ? res.data.review_configuration.num_reviews_required : 2
           })
           setCreateMode(false);
           setInitialState(mapedQuestions);
@@ -201,7 +202,8 @@ const ReviewForm = (props) => {
             eventId: event.event.id,
             stage: currentStage,
             deadline: event.event.review_close || "2099-12-05T23:59:59",
-            active: currentStage !== 1 ? true : false
+            active: currentStage !== 1 ? true : false,
+            num_reviews: 2
           })
           setCreateMode(true);
         }
@@ -389,13 +391,13 @@ const ReviewForm = (props) => {
     });
     const {
       id, eventId, isOpen, applicationFormId,
-      stage, deadline, active
+      stage, deadline, active, num_reviews
     } = formDetails;
     if (!isInCreateMode) {
       if (!isSaved) {
         const res = await reviewService.updateReviewForm({
           id, eventId, isOpen, applicationFormId,
-          stage, deadline, active, sectionsToSave
+          stage, deadline, active, sectionsToSave, num_reviews
         });
         if(!res.error) {
           setIsSaved(true);
@@ -414,7 +416,7 @@ const ReviewForm = (props) => {
         } else {
           const res = await reviewService.createReviewForm({
             eventId, isOpen, applicationFormId: appFormId,
-            stage, deadline, active, sectionsToSave
+            stage, deadline, active, sectionsToSave, num_reviews
           });
           if (res.status === 201) {
             setIsSaved(true);
@@ -441,6 +443,14 @@ const ReviewForm = (props) => {
     setMemoizedTotalStages(value)
   }, [])
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormDetails(prev => ({
+        ...prev,
+        [name]: value
+    }));
+  }
+
   const EventMeta = ({
     dateFormat, saved, evnt
   }) => {
@@ -457,6 +467,17 @@ const ReviewForm = (props) => {
           <span className="date">
             {`${dateFormat(evnt.review_close)}`}
           </span>
+        </span>
+        <span className="dates">
+          <label htmlFor="num_reviews" style={{marginRight: '10px'}}>{t('Number of reviews required') + ' :'}</label>
+          <input
+              type="number"
+              id="num_reviews"
+              name="num_reviews"
+              value={formDetails.num_reviews || 2}
+              onChange={handleChange}
+              min="1"
+          />
         </span>
         {!stage.loading && (
           <Stages

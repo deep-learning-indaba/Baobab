@@ -215,8 +215,7 @@ class ReviewRepository():
                         .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
                         .filter(ReviewForm.application_form_id == event_id, ReviewForm.active == True)
                         .join(Response, ReviewResponse.response_id == Response.id)
-                        .join(AppUser, Response.user_id == AppUser.id)
-                        .all())
+                        .join(AppUser, Response.user_id == AppUser.id))
         return reviews
 
     @staticmethod

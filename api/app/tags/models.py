@@ -7,6 +7,7 @@ class TagType(Enum):
     REGISTRATION = 'registration'
     GRANT = 'grant'
     QUESTION = 'question'
+    CHECKIN = 'checkin'
 
 class Tag(db.Model):
     __tablename__ = 'tag'
@@ -15,7 +16,7 @@ class Tag(db.Model):
     tag_type = db.Column(db.Enum(TagType, name="tag_type"), nullable=True)
     active = db.Column(db.Boolean(), nullable=False, default=True)
 
-    translations = db.relationship('TagTranslation', lazy='dynamic')
+    translations = db.relationship('TagTranslation', lazy='selectin')
 
     def __init__(
             self, 
@@ -32,8 +33,11 @@ class Tag(db.Model):
         self.active = active
     
     def get_translation(self, language):
-        translation = self.translations.filter_by(language=language).first()
-        return translation
+        # Support both dynamic (query) and non-dynamic (collection) relationship loaders
+        translations = self.translations
+        if hasattr(translations, 'filter_by'):
+            return translations.filter_by(language=language).first()
+        return next((t for t in translations if t.language == language), None)
 
     def stringify_tag_name_description(self, language='en'):
         translation = self.get_translation(language)

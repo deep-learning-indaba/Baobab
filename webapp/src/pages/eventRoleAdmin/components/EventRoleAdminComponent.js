@@ -12,7 +12,8 @@ class EventRoleAdminComponent extends Component {
             eventRoles: [],
             isLoading: true,
             error: "",
-            userNotFound: false
+            userNotFound: false,
+            duplicateRole: false
         };
     }
 
@@ -29,20 +30,34 @@ class EventRoleAdminComponent extends Component {
     onDeleteRole = (roleId) => {
         eventService.deleteEventRole(this.props.event.id, roleId).then(result => {
             this.setState({
-                eventRoles: result.eventRoles
+                eventRoles: this.state.eventRoles.filter(role => role.id !== roleId),
+                error: result.error
             });
         });
     }
 
     onAddRole = (e) => {
         e.preventDefault();
-        const email = e.target.email.value;
-        const role = e.target.role.value;
+        const form = e.target;
+        const email = form.email.value;
+        const role = form.role.value;
+
         eventService.addEventRole(this.props.event.id, email, role).then(result => {
-            this.setState({
-                eventRoles: result.eventRoles,
-                userNotFound: result.error === "No user exists with that email"
-            });
+            if (result.error) {
+                this.setState({
+                    userNotFound: result.error === "No user exists with that email",
+                    duplicateRole: result.error === 'This user already has this role for this event.',
+                    error: result.error
+                });
+            } else {
+                this.setState({
+                    eventRoles: result.eventRoles,
+                    userNotFound: false,
+                    duplicateRole: false,
+                    error: null
+                });
+                form.reset();
+            }
         });
     }
     
@@ -51,7 +66,7 @@ class EventRoleAdminComponent extends Component {
             return <Loading />;
         }
 
-        if (this.state.error && !this.state.userNotFound) {
+        if (this.state.error && !this.state.userNotFound && !this.state.duplicateRole) {
             return (
                 <div className={"alert alert-danger alert-container"}>
                     {JSON.stringify(this.state.error)}
@@ -127,6 +142,11 @@ class EventRoleAdminComponent extends Component {
                     {this.state.userNotFound && (
                         <div className="alert alert-warning mt-3">
                             {this.props.t("User not found")}
+                        </div>
+                    )}
+                    {this.state.duplicateRole && (
+                        <div className="alert alert-danger mt-3">
+                            {this.props.t('This user already has this role for this event.')}
                         </div>
                     )}
                 </div>

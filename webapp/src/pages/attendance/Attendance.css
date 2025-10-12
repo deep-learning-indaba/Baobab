@@ -38,3 +38,18 @@
   margin-top: -1em;
   vertical-align: middle;
 }
+
+.badge-black {
+  color: #fff;
+  background-color: black;
+}
+
+.badge-purple {
+  color: #fff;
+  background-color: purple;
+}
+
+.badge-yellow {
+  color: #000;
+  background-color: yellow;
+}

@@ -153,3 +153,5 @@ DELETE_INVITED_GUEST_FAILED = ({'message': "Failed to delete invited guest."}, 5
 EVENT_ROLE_NOT_FOUND = ({'message': "Event role not found."}, 404)
 INVALID_INPUT_MALFORMED_PAGINATION = ({'message': "Invalid input: malformed pagination."}, 400)
 SUBMISSION_TITLE_NOT_FOUND = ({'message': "The submission title could not be found in the application form."}, 400)
+EVENT_ROLE_ALREADY_EXISTS = ({'message': 'This user already has this role for this event.'}, 409)
+NOT_EDITABLE = ({'message': "This response cannot be edited."}, 400)

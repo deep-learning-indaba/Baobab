@@ -253,10 +253,6 @@ class EventConfigComponent extends Component {
       if (this.state.updatedEvent.selection_open <= this.state.updatedEvent.review_close) {
         errors.push(this.props.t("Selection open date must be after review close date"));
       }
-      if (this.state.updatedEvent.review_open <= this.state.updatedEvent.application_close) {
-        errors.push(this.props.t("Review open date must be after application close date"));
-      }
-
       //check date ranges
       if (this.state.updatedEvent.application_open >= this.state.updatedEvent.application_close) {
         errors.push(this.props.t("Application close date must be after application open date"));

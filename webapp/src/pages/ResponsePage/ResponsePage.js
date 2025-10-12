@@ -54,7 +54,9 @@ class ResponsePage extends Component {
             pendingOutcome: "",
             confirmationMessage: "",
             review_summary: "",
-            isCommentEmpty: false
+            isCommentEmpty: false,
+            isOutcomeDropdownOpen: false,
+            isStatusDropdownOpen: false,
         }
     };
 
@@ -235,23 +237,26 @@ class ResponsePage extends Component {
         });
     };
 
-    submitOutcome(selectedOutcome, review_summary) {
-        outcomeService.assignOutcome(this.state.applicationData.user_id, this.props.event.id, selectedOutcome, this.props.match.params.id, review_summary).then(response => {
-            if (response.status === 201) {
-                const newOutcome = {
-                    timestamp: response.outcome.timestamp,
-                    status: response.outcome.status,
-                    review_summary: response.outcome.review_summary
-                };
+    toggleOutcomeDropdown = () => {
+        this.setState(prevState => ({ isOutcomeDropdownOpen: !prevState.isOutcomeDropdownOpen }));
+    }
 
-
-                this.setState({
-                    outcome: newOutcome,
-                    confirmModalVisible: false,
-                });
-            } else {
-                this.setState({erorr: response.error});
-            }
+    submitOutcome(selectedOutcome) {
+        this.setState({ isOutcomeDropdownOpen: false }, () => {
+            outcomeService.assignOutcome(this.state.applicationData.user_id, this.props.event.id, selectedOutcome).then(response => {
+                if (response.status === 201) {
+                    const newOutcome = {
+                        timestamp: response.outcome.timestamp,
+                        status: response.outcome.status,
+                    };
+    
+                    this.setState({
+                        outcome: newOutcome
+                    });
+                } else {
+                    this.setState({erorr: response.error});
+                }
+            });
         });
     }
 
@@ -312,107 +317,66 @@ class ResponsePage extends Component {
     outcomeStatus() {
         const data = this.state.applicationData;
 
-        const name = data.user_title + " " + data.firstname + " " + data.lastname;
-
-        let allQuestions = _.flatMap(this.state.applicationForm.sections , s => s.questions);
-        const submission_title = answerByQuestionKey("submission_title", allQuestions, data.answers);
+        if (data && (!data.is_submitted || data.is_withdrawn)) {
+            return null;
+        }
         
         if (data) {
-        if (this.state.outcome.status && this.state.outcome.status !== "REVIEW") {
-            const badgeClass = this.state.outcome.status === "ACCEPTED"
-                ? "badge-success"
-                : this.state.outcome.status === "REJECTED"
-                ? "badge-danger"
-                : "badge-warning";
 
-            const outcome= this.state.outcome.status ==='ACCEPTED'?this.props.t("ACCEPTED"):this.state.outcome.status ==='REJECTED'?
-                this.props.t("REJECTED"):this.state.outcome.status ==='ACCEPT_W_REVISION'?
-                this.props.t("ACCEPTED WITH REVISION"):this.state.outcome.status ==='REJECT_W_ENCOURAGEMENT'?
-                this.props.t("REJECTED WITH ENCOURAGEMENT TO RESUMIT"):this.props.t("REVIEWING");
-    
-            return (
-            <span>
-                <span className={`badge badge-pill ${badgeClass}`}>
-                {outcome}
-                </span>{" "}
-                {this.formatDate(this.state.outcome.timestamp)}
-            </span>
-            );
-        }
-    
-        const { event_type } = this.state;
-        const buttons = [];
-    
-        if (event_type === "JOURNAL" || event_type === "CALL" || event_type === "EVENT") {
-            buttons.push(
-            this.renderConfirmationButton(
-                "ACCEPTED",
-                "Accept",
-                "btn-success",
-                "Are you sure you want to ACCEPT this submission?"
-            )
-            );
-    
-            if (event_type === "JOURNAL") {
-            buttons.push(
-                this.renderConfirmationButton(
-                "ACCEPT_W_REVISION",
-                "Accept with Minor Revision",
-                "btn-warning",
-                "Are you sure you want to ACCEPT WITH MINOR REVISION?"
+        const name = data.user_title + " " + data.firstname + " " + data.lastname;
+
+            if (this.state.event_type === 'JOURNAL') {
+                return (
+                    <div className='user-details'>
+                        <div className="dropdown">
+                            <button className="btn btn-primary dropdown-toggle" type="button" onClick={this.toggleOutcomeDropdown}>
+                                {this.props.t('Assign Outcome')}
+                            </button>
+                            {this.state.isOutcomeDropdownOpen &&
+                                <div className="dropdown-menu show" aria-labelledby="dropdownMenuButton">
+                                    <button className="dropdown-item" type="button" onClick={() => this.submitOutcome('ACCEPTED')}>{this.props.t('Accept')}</button>
+                                    <button className="dropdown-item" type="button" onClick={() => this.submitOutcome('ACCEPT_W_REVISION')}>{this.props.t('Accept with Minor Revision')}</button>
+                                    <button className="dropdown-item" type="button" onClick={() => this.submitOutcome('REJECT_W_ENCOURAGEMENT')}>{this.props.t('Reject with Encouragement to Resubmit')}</button>
+                                    <button className="dropdown-item" type="button" onClick={() => this.submitOutcome('REJECTED')}>{this.props.t('Reject')}</button>
+                                </div>
+                            }
+                        </div>
+                    </div>
                 )
-            );
-            buttons.push(
-                this.renderConfirmationButton(
-                "REJECT_W_ENCOURAGEMENT",
-                "Reject with Encouragement to Resubmit",
-                "btn-warning",
-                "Are you sure you want to REJECT WITH ENCOURAGEMENT TO RESUBMIT?"
-                )
-            );
-            
             }
-    
-            if (event_type === "EVENT") {
-            buttons.push(
-                this.renderConfirmationButton(
-                "WAITLIST",
-                "Waitlist",
-                "btn-warning",
-                "Are you sure you want to WAITLIST this submission?"
+            else if (this.state.event_type === 'CALL') {
+                return (
+                    <div className='user-details'>
+                        <div className="dropdown">
+                            <button className="btn btn-primary dropdown-toggle" type="button" onClick={this.toggleOutcomeDropdown}>
+                                {this.props.t('Assign Outcome')}
+                            </button>
+                            {this.state.isOutcomeDropdownOpen &&
+                                <div className="dropdown-menu show" aria-labelledby="dropdownMenuButton">
+                                    <button className="dropdown-item" type="button" onClick={() => this.submitOutcome('ACCEPTED')}>{this.props.t('Accept')}</button>
+                                    <button className="dropdown-item" type="button" onClick={() => this.submitOutcome('REJECTED')}>{this.props.t('Reject')}</button>
+                                </div>
+                            }
+                        </div>
+                    </div>
                 )
-            );
             }
-          
-            buttons.push(
-                    this.renderConfirmationButton(
-                    "REJECTED",
-                    "Reject",
-                    "btn-danger",
-                    "Are you sure you want to REJECT this submission?"
-                    )
-                );
-
-        }
-
-        
-        return (
-            <div className="user-details">
-            {buttons.map((button, index) => (
-                <div key={index} className="user-details">
-                {button}
-                </div>
-            ))}
-           {
-            <ConfirmModal
-            visible={this.state.confirmModalVisible}
-            onOK={this.handleConfirmationOK}
-            onCancel={this.handleConfirmationCancel}
-            okText={this.props.t("Yes - Confirm")}
-            cancelText={this.props.t("No - Don't confirm")}
-        >
-            <p>{this.props.t(this.state.confirmationMessage)}</p>
-        </ConfirmModal>
+            else if (this.state.event_type === 'EVENT') {
+                return (
+                    <div className='user-details'>
+                        <div className="dropdown">
+                            <button className="btn btn-primary dropdown-toggle" type="button" onClick={this.toggleOutcomeDropdown}>
+                                {this.props.t('Assign Outcome')}
+                            </button>
+                            {this.state.isOutcomeDropdownOpen &&
+                                <div className="dropdown-menu show" aria-labelledby="dropdownMenuButton">
+                                    <button className="dropdown-item" type="button" onClick={() => this.submitOutcome('REJECTED')}>{this.props.t('Reject')}</button>
+                                    <button className="dropdown-item" type="button" onClick={() => this.submitOutcome('WAITLIST')}>{this.props.t('Waitlist')}</button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                )
             }
 
 
@@ -421,6 +385,66 @@ class ResponsePage extends Component {
         }
     }
     
+
+    updateResponseStatus = (is_submitted, is_withdrawn) => {
+        this.setState({ isStatusDropdownOpen: false }, () => {
+            responsesService.updateResponse(
+                this.state.applicationData.id,
+                this.props.event.id,
+                this.state.applicationData.language,
+                is_submitted,
+                is_withdrawn
+            ).then(response => {
+                if (response.status === 200) {
+                    this.setState({
+                        applicationData: response.detail
+                    });
+                } else {
+                    this.setState({error: response.error});
+                }
+            });
+        });
+    }
+
+    toggleStatusDropdown = () => {
+        this.setState(prevState => ({ isStatusDropdownOpen: !prevState.isStatusDropdownOpen }));
+    }
+
+    renderStatusButtons = () => {
+        if (!this.state.applicationData) {
+            return null;
+        }
+        const { is_submitted, is_withdrawn } = this.state.applicationData;
+        const t = this.props.t;
+
+        let buttons;
+        if (is_withdrawn) {
+            buttons = <button className="dropdown-item" type="button" onClick={() => this.updateResponseStatus(null, false)}>{t('Un-withdraw')}</button>
+        } else if (is_submitted) {
+            buttons = <>
+                <button className="dropdown-item" type="button" onClick={() => this.updateResponseStatus(false, null)}>{t('Un-submit')}</button>
+                <button className="dropdown-item" type="button" onClick={() => this.updateResponseStatus(null, true)}>{t('Withdraw')}</button>
+            </>
+        } else {
+            buttons = <>
+                <button className="dropdown-item" type="button" onClick={() => this.updateResponseStatus(true, null)}>{t('Submit')}</button>
+                <button className="dropdown-item" type="button" onClick={() => this.updateResponseStatus(null, true)}>{t('Withdraw')}</button>
+            </>
+        }
+
+        return (
+            <div className="dropdown">
+                <button className="btn btn-primary dropdown-toggle" type="button" onClick={this.toggleStatusDropdown}>
+                    {t('Change Status')}
+                </button>
+                {this.state.isStatusDropdownOpen &&
+                    <div className="dropdown-menu show" aria-labelledby="dropdownMenuButton">
+                        {buttons}
+                    </div>
+                }
+            </div>
+        )
+    }
 
     // Render Sections
     renderSections() {
@@ -478,7 +502,6 @@ class ResponsePage extends Component {
     // Render Answers 
     renderAnswer(id, type, headline, options) {
         const applicationData = this.state.applicationData;
-        const baseUrl = process.env.REACT_APP_API_URL;
 
         const a = applicationData.answers.find(a => a.question_id === id);
         if (!a) {
@@ -486,15 +509,15 @@ class ResponsePage extends Component {
         }
         else {
             // file
-            if (type == "file") {
-                return <a className="answer file" key={a.value} target="_blank" href={getDownloadURL(a.value)}>{this.props.t("Uploaded File")}</a>
+            if (type === "file") {
+                return <a className="answer file" key={a.value} target="_blank" rel="noopener noreferrer" href={getDownloadURL(a.value)}>{this.props.t("Uploaded File")}</a>
             }
             // multi-file
-            else if (type == "multi-file") {
+            else if (type === "multi-file") {
                 const answerFiles = JSON.parse(a.value);
                 let files = [];
                 if (Array.isArray(answerFiles) && answerFiles.length > 0) {
-                    files = answerFiles.map(file => <div key={file.name}><a key={file.name} target="_blank" href={getDownloadURL(JSON.stringify(file))}>{file.name}</a></div>)
+                    files = answerFiles.map(file => <div key={file.name}><a key={file.name} target="_blank" rel="noopener noreferrer" href={getDownloadURL(JSON.stringify(file))}>{file.name}</a></div>)
                 }
                 else {
                     files = "No files uploaded";
@@ -505,7 +528,7 @@ class ResponsePage extends Component {
             else if (type.includes("choice")) {
                 let choices = [];
                 options.forEach(opt => {
-                    if (a.value == opt.value) {
+                    if (a.value === opt.value) {
                         choices.push(<div key={opt.label}>{opt.label}</div>)
                     };
                 });
@@ -829,6 +852,7 @@ class ResponsePage extends Component {
                         <div>
                             <div className="user-details right">
                                 <label>{t('Application Status')}</label> <p>{this.applicationStatus()}</p>
+                                <div>{this.renderStatusButtons()}</div>
                                 <label>{t('Application Outcome')}</label> <p>{this.outcomeStatus()}</p>
                                 <button className="btn btn-secondary" onClick={((e) => this.goBack(e))}>{t('Go Back')}</button>
                             </div>

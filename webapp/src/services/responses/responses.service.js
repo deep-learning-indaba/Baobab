@@ -7,24 +7,31 @@ export const responsesService = {
     getResponseList,
     getResponseDetail,
     tagResponse,
-    removeTag
+    removeTag,
+    updateResponse
 }
 
-function getResponseList(eventId, includeUnsubmitted, questionIds) {
+function getResponseList(eventId, includeUnsubmitted, questionIds, page, perPage, nameSearch, emailSearch, tagId) {
     return axios
-        .get(baseUrl + "/api/v1/responses", { 
+        .get(baseUrl + "/api/v1/responses", {
             "headers": authHeader(),
             "params": {
                 event_id: eventId,
                 include_unsubmitted: includeUnsubmitted,
-                question_ids: questionIds
+                question_ids: questionIds,
+                page: page,
+                per_page: perPage,
+                name_search: nameSearch,
+                email_search: emailSearch,
+                tag_id: tagId
             }
         })
         .then(response => {
-            let responses = null;
-            if (response) responses = response.data;
+            let data = null;
+            if (response) data = response.data;
             return {
-                responses: responses,
+                responses: data.responses,
+                pagination: data.pagination,
                 status: response.status,
                 message: response.statusText
             }
@@ -92,6 +99,37 @@ function tagResponse(responseId, tagId, eventId) {
         .catch(function(error){
             return{
                 responseTag: null,
+                error:
+                    error.response && error.response.data
+                    ? error.response.data.message
+                    : error.message,
+                status: error.response && error.response.status
+            };
+        });
+}
+
+function updateResponse(responseId, eventId, language, is_submitted, is_withdrawn) {
+    return axios
+        .put(baseUrl + `/api/v1/responsedetail?event_id=${eventId}`, {
+            response_id: responseId,
+            language: language,
+            is_submitted: is_submitted,
+            is_withdrawn: is_withdrawn
+        }, { 
+            "headers": authHeader()
+        })
+        .then(response => {
+            let detail = null;
+            if (response) detail = response.data;
+            return {
+                detail: detail,
+                status: response.status,
+                message: response.statusText
+            }
+        })
+        .catch(function(error){
+            return{
+                detail: null,
                 error:
                     error.response && error.response.data
                     ? error.response.data.message

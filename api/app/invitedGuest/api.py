@@ -1,24 +1,23 @@
 
-from flask_restful import reqparse, fields, marshal_with, inputs
+from flask_restful import reqparse, fields, marshal_with
 import flask_restful as restful
 from sqlalchemy.exc import IntegrityError
 
 from app.utils.auth import auth_required, event_admin_required
 from app import LOGGER
-from app import db, bcrypt
+from app import db
 from flask import g
 
 from app.users.models import AppUser, PasswordReset
 from app.invitedGuest.models import InvitedGuest
 from app.utils.errors import EVENT_NOT_FOUND, USER_NOT_FOUND, ADD_INVITED_GUEST_FAILED, INVITED_GUEST_FOR_EVENT_EXISTS, FORBIDDEN, INVITED_GUEST_EMAIL_FAILED, INVITED_GUEST_NOT_FOUND, DELETE_INVITED_GUEST_FAILED
-from app.invitedGuest.mixins import InvitedGuestMixin, InvitedGuestListMixin, InvitedGuestTagMixin
+from app.invitedGuest.mixins import InvitedGuestListMixin, InvitedGuestTagMixin
 from app.users import api as UserAPI
 from app.users.mixins import SignupMixin
 from app.users.repository import UserRepository as user_repository
 from app.events.repository import EventRepository as event_repository
 from app.invitedGuest.repository import InvitedGuestRepository as invited_guest_repository
-from sqlalchemy import func
-from app.utils import misc, errors
+from app.utils import misc
 from app.utils.emailer import email_user
 
 user_profile_list_fields = {
@@ -59,7 +58,7 @@ def _serialize_tag(tag, language):
         'description': translation.description
     }
 
-class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
+class InvitedGuestAPI(restful.Resource):
 
     @staticmethod
     def _serialize_invited_guest(invited_guest, language):
@@ -95,10 +94,16 @@ class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
         
     @auth_required
     def post(self, send_email=True):
-        args = self.req_parser.parse_args()
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
+        req_parser.add_argument('email', type=str, required=True)
+        req_parser.add_argument('role', type=str, required=True)
+        req_parser.add_argument('tag_ids', type=list, required=False, location='json')
+        args = req_parser.parse_args()
         event_id = args['event_id']
         email = args['email']
         role = args['role']
+        tag_ids = args['tag_ids']
 
         user = user_repository.get_by_email(email, g.organisation.id)
 
@@ -115,7 +120,7 @@ class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
             return INVITED_GUEST_FOR_EVENT_EXISTS
 
         try:
-            invitedGuest = invited_guest_repository.add_invited_guest(event_id, user.id, role)
+            invitedGuest = invited_guest_repository.add_invited_guest(event_id, user.id, role, tag_ids)
         except IntegrityError:
             LOGGER.error(
                 "Failed to add invited guest: {}".format(email))

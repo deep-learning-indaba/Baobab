@@ -29,7 +29,6 @@ const HEADING = "heading";
 const SUB_HEADING = "sub-heading";
 const NUMERIC = "numeric-text";
 
-const baseUrl = process.env.REACT_APP_API_URL;
 
 class ReviewQuestionComponent extends Component {
     constructor(props) {
@@ -115,7 +114,7 @@ class ReviewQuestionComponent extends Component {
                     <FormMultiCheckbox
                         id={this.id}
                         name={this.id}
-                        options={this.options}
+                        options={question.options}
                         onChange={this.handleChange}
                         key={"i_" + key}
                         showError={validationError}
