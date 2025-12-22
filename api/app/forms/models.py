@@ -25,6 +25,9 @@ class Form(db.Model):
     is_open = db.Column(db.Boolean(), nullable=False, default=True)
     multiple_responses = db.Column(db.Boolean(), nullable=False, default=False)
     linked_form_id = db.Column(db.Integer(), db.ForeignKey('form.id'), nullable=True)
+    
+    # Settings for UI customization (e.g., page-per-section)
+    settings = db.Column(db.JSON(), nullable=True)
 
     # Timestamps
     created_at = db.Column(db.DateTime(), nullable=False)
@@ -52,13 +55,15 @@ class Form(db.Model):
     created_by = db.relationship('AppUser', foreign_keys=[created_by_user_id])
     
     def __init__(self, created_by_user_id, is_open=True, is_active=True, 
-                 linked_form_id=None, parent_form_id=None, multiple_responses=False):
+                 linked_form_id=None, parent_form_id=None, multiple_responses=False,
+                 settings=None):
         self.created_by_user_id = created_by_user_id
         self.is_open = is_open
         self.is_active = is_active
         self.linked_form_id = linked_form_id
         self.parent_form_id = parent_form_id
         self.multiple_responses = multiple_responses
+        self.settings = settings
         self.created_at = datetime.now()
         self.updated_at = datetime.now()
         self.version = 1
@@ -144,6 +149,9 @@ class FormQuestion(db.Model):
     is_required = db.Column(db.Boolean(), nullable=False, default=True)
     key = db.Column(db.String(255), nullable=True)  # Optional identifier
     
+    # Settings for UI customization (e.g., file-type)
+    settings = db.Column(db.JSON(), nullable=True)  
+    
     # Conditional visibility
     depends_on_question_id = db.Column(db.Integer(), 
                                       db.ForeignKey('form_question.id'), nullable=True)
@@ -165,7 +173,7 @@ class FormQuestion(db.Model):
     
     def __init__(self, form_id, section_id, order, question_type, 
                  is_required=True, key=None, depends_on_question_id=None,
-                 linked_question_id=None):
+                 linked_question_id=None, settings=None):
         self.form_id = form_id
         self.section_id = section_id
         self.order = order
@@ -174,6 +182,7 @@ class FormQuestion(db.Model):
         self.key = key
         self.depends_on_question_id = depends_on_question_id
         self.linked_question_id = linked_question_id
+        self.settings = settings
     
     def get_translation(self, language: str) -> 'FormQuestionTranslation':
         return self.translations.filter_by(language=language).first()

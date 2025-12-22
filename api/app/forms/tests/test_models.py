@@ -477,3 +477,85 @@ class TestFormModels(ApiTestCase):
         
         self.assertEqual(len(responses), 2)
         self.assertNotEqual(response1.id, response2.id)
+    
+    def test_form_with_settings(self):
+        """Test creating a form with settings JSON"""
+        self.seed_static_data()
+        settings = {
+            'page_per_section': True,
+            'theme': 'dark',
+            'custom_field': 'value'
+        }
+        form = Form(
+            created_by_user_id=self.user.id,
+            settings=settings
+        )
+        db.session.add(form)
+        db.session.commit()
+        
+        self.assertIsNotNone(form.settings)
+        self.assertEqual(form.settings['page_per_section'], True)
+        self.assertEqual(form.settings['theme'], 'dark')
+        self.assertEqual(form.settings['custom_field'], 'value')
+    
+    def test_form_settings_default_none(self):
+        """Test that form settings defaults to None"""
+        self.seed_static_data()
+        form = Form(created_by_user_id=self.user.id)
+        db.session.add(form)
+        db.session.commit()
+        
+        self.assertIsNone(form.settings)
+    
+    def test_question_with_settings(self):
+        """Test creating a question with settings JSON"""
+        self.seed_static_data()
+        form = Form(created_by_user_id=self.user.id)
+        db.session.add(form)
+        db.session.flush()
+        
+        section = FormSection(form_id=form.id, order=1)
+        db.session.add(section)
+        db.session.flush()
+        
+        settings = {
+            'file_type': 'pdf',
+            'max_size': 5242880,
+            'accept': '.pdf,.doc'
+        }
+        question = FormQuestion(
+            form_id=form.id,
+            section_id=section.id,
+            order=1,
+            question_type='file',
+            settings=settings
+        )
+        db.session.add(question)
+        db.session.commit()
+        
+        self.assertIsNotNone(question.settings)
+        self.assertEqual(question.settings['file_type'], 'pdf')
+        self.assertEqual(question.settings['max_size'], 5242880)
+        self.assertEqual(question.settings['accept'], '.pdf,.doc')
+    
+    def test_question_settings_default_none(self):
+        """Test that question settings defaults to None"""
+        self.seed_static_data()
+        form = Form(created_by_user_id=self.user.id)
+        db.session.add(form)
+        db.session.flush()
+        
+        section = FormSection(form_id=form.id, order=1)
+        db.session.add(section)
+        db.session.flush()
+        
+        question = FormQuestion(
+            form_id=form.id,
+            section_id=section.id,
+            order=1,
+            question_type='short-text'
+        )
+        db.session.add(question)
+        db.session.commit()
+        
+        self.assertIsNone(question.settings)

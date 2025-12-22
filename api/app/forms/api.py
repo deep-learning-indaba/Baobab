@@ -31,6 +31,7 @@ def serialize_form(form, language='en'):
                 'key': question.key,
                 'depends_on_question_id': question.depends_on_question_id,
                 'linked_question_id': question.linked_question_id,
+                'settings': question.settings,
                 'headline': question_translation.headline if question_translation else None,
                 'description': question_translation.description if question_translation else None,
                 'placeholder': question_translation.placeholder if question_translation else None,
@@ -58,6 +59,7 @@ def serialize_form(form, language='en'):
         'is_active': form.is_active,
         'is_open': form.is_open,
         'multiple_responses': form.multiple_responses,
+        'settings': form.settings,
         'created_at': form.created_at.isoformat() if form.created_at else None,
         'updated_at': form.updated_at.isoformat() if form.updated_at else None,
         'version': form.version,
@@ -125,6 +127,8 @@ class FormAPI(restful.Resource):
                 form.is_open = args['is_open']
             if 'is_active' in args:
                 form.is_active = args['is_active']
+            if 'settings' in args:
+                form.settings = args['settings']
             
             form.updated_at = datetime.now()
             

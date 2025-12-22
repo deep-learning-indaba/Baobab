@@ -661,3 +661,151 @@ class TestFormAPI(ApiTestCase):
         self.assertEqual(response_obj.status_code, 400)
         data = json.loads(response_obj.data)
         self.assertEqual(data['error'], 'Cannot update a submitted response')
+    
+    def test_form_settings_in_get_response(self):
+        """Test that form settings are included in GET response"""
+        self.seed_static_data()
+        settings = {
+            'page_per_section': True,
+            'show_progress': True
+        }
+        form = Form(
+            created_by_user_id=self.user.id,
+            is_open=True,
+            settings=settings
+        )
+        db.session.add(form)
+        db.session.commit()
+        
+        response = self.app.get(
+            f'/api/v1/forms/{form.id}?language=en',
+            headers=self.auth_headers
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertIn('settings', data)
+        self.assertEqual(data['settings']['page_per_section'], True)
+        self.assertEqual(data['settings']['show_progress'], True)
+    
+    def test_form_settings_null_when_not_set(self):
+        """Test that form settings is null when not set"""
+        self.seed_static_data()
+        form, _, _ = self._create_test_form()
+        
+        response = self.app.get(
+            f'/api/v1/forms/{form.id}?language=en',
+            headers=self.auth_headers
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertIn('settings', data)
+        self.assertIsNone(data['settings'])
+    
+    def test_update_form_settings(self):
+        """Test PUT /api/v1/forms/{form_id} to update settings"""
+        self.seed_static_data()
+        form, _, _ = self._create_test_form()
+        
+        new_settings = {
+            'page_per_section': True,
+            'theme': 'dark',
+            'custom_option': 'value'
+        }
+        update_data = {
+            'settings': new_settings
+        }
+        
+        response = self.app.put(
+            f'/api/v1/forms/{form.id}',
+            data=json.dumps(update_data),
+            headers=self.auth_headers,
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertIsNotNone(data['settings'])
+        self.assertEqual(data['settings']['page_per_section'], True)
+        self.assertEqual(data['settings']['theme'], 'dark')
+        
+        # Verify in database
+        updated_form = db.session.query(Form).filter_by(id=form.id).first()
+        self.assertEqual(updated_form.settings['page_per_section'], True)
+        self.assertEqual(updated_form.settings['theme'], 'dark')
+    
+    def test_question_settings_in_get_response(self):
+        """Test that question settings are included in GET response"""
+        self.seed_static_data()
+        form = Form(created_by_user_id=self.user.id, is_open=True)
+        db.session.add(form)
+        db.session.flush()
+        
+        section = FormSection(form_id=form.id, order=1, key='test-section')
+        db.session.add(section)
+        db.session.flush()
+        
+        section_trans = FormSectionTranslation(
+            form_section_id=section.id,
+            language='en',
+            name='Test Section'
+        )
+        db.session.add(section_trans)
+        
+        question_settings = {
+            'file_type': 'pdf',
+            'max_size': 5242880,
+            'accept': '.pdf,.doc'
+        }
+        question = FormQuestion(
+            form_id=form.id,
+            section_id=section.id,
+            order=1,
+            question_type='file',
+            is_required=True,
+            key='upload_question',
+            settings=question_settings
+        )
+        db.session.add(question)
+        db.session.flush()
+        
+        question_trans = FormQuestionTranslation(
+            form_question_id=question.id,
+            language='en',
+            headline='Upload File'
+        )
+        db.session.add(question_trans)
+        db.session.commit()
+        
+        response = self.app.get(
+            f'/api/v1/forms/{form.id}?language=en',
+            headers=self.auth_headers
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(len(data['sections']), 1)
+        self.assertEqual(len(data['sections'][0]['questions']), 1)
+        
+        question_data = data['sections'][0]['questions'][0]
+        self.assertIn('settings', question_data)
+        self.assertEqual(question_data['settings']['file_type'], 'pdf')
+        self.assertEqual(question_data['settings']['max_size'], 5242880)
+        self.assertEqual(question_data['settings']['accept'], '.pdf,.doc')
+    
+    def test_question_settings_null_when_not_set(self):
+        """Test that question settings is null when not set"""
+        self.seed_static_data()
+        form, _, _ = self._create_test_form()
+        
+        response = self.app.get(
+            f'/api/v1/forms/{form.id}?language=en',
+            headers=self.auth_headers
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        question_data = data['sections'][0]['questions'][0]
+        self.assertIn('settings', question_data)
+        self.assertIsNone(question_data['settings'])
