@@ -8,6 +8,197 @@ from typing import Tuple, Optional
 from app import db, LOGGER
 
 
+class DependencyOperator(str, enum.Enum):
+    """Operators for dependency conditions"""
+    # Comparison operators
+    EQUALS = 'EQUALS'
+    NOT_EQUALS = 'NOT_EQUALS'
+    IN = 'IN'
+    NOT_IN = 'NOT_IN'
+    
+    # Numeric operators
+    GREATER_THAN = 'GREATER_THAN'
+    LESS_THAN = 'LESS_THAN'
+    GREATER_THAN_OR_EQUAL = 'GREATER_THAN_OR_EQUAL'
+    LESS_THAN_OR_EQUAL = 'LESS_THAN_OR_EQUAL'
+    BETWEEN = 'BETWEEN'
+    
+    # Text operators
+    CONTAINS = 'CONTAINS'
+    STARTS_WITH = 'STARTS_WITH'
+    ENDS_WITH = 'ENDS_WITH'
+    REGEX = 'REGEX'
+    
+    # Boolean operators
+    IS_EMPTY = 'IS_EMPTY'
+    IS_NOT_EMPTY = 'IS_NOT_EMPTY'
+    
+    # Logical operators
+    AND = 'AND'
+    OR = 'OR'
+    NOT = 'NOT'
+
+
+class DependencyEvaluator:
+    """Evaluates dependency expressions against answer values"""
+    
+    @staticmethod
+    def evaluate(expression: dict, answers_dict: dict) -> bool:
+        """
+        Evaluate a dependency expression.
+        
+        Args:
+            expression: The dependency expression (JSON structure)
+            answers_dict: Dictionary mapping question_id to answer value
+                         {question_id: "value"}
+        
+        Returns:
+            bool: True if the condition is satisfied, False otherwise
+        
+        Example expressions:
+            # Simple condition
+            {"question_id": 123, "operator": "EQUALS", "values": ["yes"]}
+            
+            # Complex condition with AND
+            {
+                "operator": "AND",
+                "conditions": [
+                    {"question_id": 123, "operator": "IN", "values": ["1", "2"]},
+                    {"question_id": 456, "operator": "EQUALS", "values": ["X"]}
+                ]
+            }
+        """
+        if not expression:
+            return True
+        
+        operator = expression.get('operator')
+        
+        # Handle logical operators (AND, OR, NOT)
+        if operator in [DependencyOperator.AND.value, DependencyOperator.OR.value, DependencyOperator.NOT.value]:
+            return DependencyEvaluator._evaluate_logical(expression, answers_dict)
+        
+        # Handle leaf condition
+        return DependencyEvaluator._evaluate_condition(expression, answers_dict)
+    
+    @staticmethod
+    def _evaluate_logical(expression: dict, answers_dict: dict) -> bool:
+        """Evaluate logical operators (AND, OR, NOT)"""
+        operator = expression.get('operator')
+        conditions = expression.get('conditions', [])
+        
+        if operator == DependencyOperator.AND.value:
+            return all(DependencyEvaluator.evaluate(cond, answers_dict) for cond in conditions)
+        
+        elif operator == DependencyOperator.OR.value:
+            return any(DependencyEvaluator.evaluate(cond, answers_dict) for cond in conditions)
+        
+        elif operator == DependencyOperator.NOT.value:
+            if len(conditions) != 1:
+                LOGGER.warning(f"NOT operator expects exactly 1 condition, got {len(conditions)}")
+                return False
+            return not DependencyEvaluator.evaluate(conditions[0], answers_dict)
+        
+        return False
+    
+    @staticmethod
+    def _evaluate_condition(expression: dict, answers_dict: dict) -> bool:
+        """Evaluate a single condition"""
+        question_id = expression.get('question_id')
+        operator = expression.get('operator')
+        values = expression.get('values', [])
+        
+        if question_id is None:
+            LOGGER.warning("Dependency condition missing question_id")
+            return False
+        
+        # Get the answer value for this question
+        answer_value = answers_dict.get(question_id)
+        
+        # Handle IS_EMPTY and IS_NOT_EMPTY
+        if operator == DependencyOperator.IS_EMPTY.value:
+            return not answer_value or answer_value.strip() == ''
+        
+        if operator == DependencyOperator.IS_NOT_EMPTY.value:
+            return bool(answer_value and answer_value.strip())
+        
+        # If no answer exists, condition fails (except for empty checks above)
+        if answer_value is None:
+            return False
+        
+        # Comparison operators
+        if operator == DependencyOperator.EQUALS.value:
+            return len(values) > 0 and answer_value == values[0]
+        
+        if operator == DependencyOperator.NOT_EQUALS.value:
+            return len(values) > 0 and answer_value != values[0]
+        
+        if operator == DependencyOperator.IN.value:
+            return answer_value in values
+        
+        if operator == DependencyOperator.NOT_IN.value:
+            return answer_value not in values
+        
+        # Numeric operators
+        if operator in [DependencyOperator.GREATER_THAN.value, DependencyOperator.LESS_THAN.value,
+                       DependencyOperator.GREATER_THAN_OR_EQUAL.value, DependencyOperator.LESS_THAN_OR_EQUAL.value]:
+            return DependencyEvaluator._evaluate_numeric(operator, answer_value, values)
+        
+        if operator == DependencyOperator.BETWEEN.value:
+            if len(values) != 2:
+                LOGGER.warning(f"BETWEEN operator expects 2 values, got {len(values)}")
+                return False
+            try:
+                val = float(answer_value)
+                return float(values[0]) <= val <= float(values[1])
+            except (ValueError, TypeError):
+                return False
+        
+        # Text operators
+        if operator == DependencyOperator.CONTAINS.value:
+            return len(values) > 0 and values[0] in answer_value
+        
+        if operator == DependencyOperator.STARTS_WITH.value:
+            return len(values) > 0 and answer_value.startswith(values[0])
+        
+        if operator == DependencyOperator.ENDS_WITH.value:
+            return len(values) > 0 and answer_value.endswith(values[0])
+        
+        if operator == DependencyOperator.REGEX.value:
+            if len(values) == 0:
+                return False
+            try:
+                return bool(re.match(values[0], answer_value))
+            except re.error as e:
+                LOGGER.warning(f"Invalid regex pattern in dependency: {e}")
+                return False
+        
+        LOGGER.warning(f"Unknown dependency operator: {operator}")
+        return False
+    
+    @staticmethod
+    def _evaluate_numeric(operator: str, answer_value: str, values: list) -> bool:
+        """Evaluate numeric comparison operators"""
+        if len(values) == 0:
+            return False
+        
+        try:
+            answer_num = float(answer_value)
+            compare_num = float(values[0])
+            
+            if operator == DependencyOperator.GREATER_THAN.value:
+                return answer_num > compare_num
+            elif operator == DependencyOperator.LESS_THAN.value:
+                return answer_num < compare_num
+            elif operator == DependencyOperator.GREATER_THAN_OR_EQUAL.value:
+                return answer_num >= compare_num
+            elif operator == DependencyOperator.LESS_THAN_OR_EQUAL.value:
+                return answer_num <= compare_num
+        except (ValueError, TypeError):
+            return False
+        
+        return False
+
+
 class ValidationError(str, enum.Enum):
     REQUIRED = 'required'
     INVALID_OPTION = 'invalid_option'
@@ -78,10 +269,8 @@ class FormSection(db.Model):
     order = db.Column(db.Integer(), nullable=False)
     key = db.Column(db.String(255), nullable=True)  # Optional identifier
     
-    # Conditional visibility
-    # use_alter to resolve cycle in dependencies.
-    depends_on_question_id = db.Column(db.Integer(), 
-                                      db.ForeignKey('form_question.id', use_alter=True), nullable=True)
+    # Conditional visibility using expression-based dependencies
+    dependency_expression = db.Column(db.JSON(), nullable=True)
     
     # Relationships
     form = db.relationship('Form', back_populates='sections', foreign_keys=[form_id])
@@ -93,14 +282,29 @@ class FormSection(db.Model):
                                foreign_keys='FormQuestion.section_id',
                                back_populates='section')
     
-    def __init__(self, form_id, order, key=None, depends_on_question_id=None):
+    def __init__(self, form_id, order, key=None, dependency_expression=None):
         self.form_id = form_id
         self.order = order
         self.key = key
-        self.depends_on_question_id = depends_on_question_id
+        self.dependency_expression = dependency_expression
     
     def get_translation(self, language: str) -> 'FormSectionTranslation':
         return self.translations.filter_by(language=language).first()
+    
+    def evaluate_dependency(self, answers_dict: dict) -> bool:
+        """
+        Evaluate whether this section should be visible based on its dependencies.
+        
+        Args:
+            answers_dict: Dictionary mapping question_id to answer value
+        
+        Returns:
+            bool: True if section should be visible, False otherwise
+        """
+        if not self.dependency_expression:
+            return True
+        
+        return DependencyEvaluator.evaluate(self.dependency_expression, answers_dict)
 
 
 class FormSectionTranslation(db.Model):
@@ -118,17 +322,13 @@ class FormSectionTranslation(db.Model):
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text(), nullable=True)
     
-    # Conditional visibility values (JSON array)
-    show_for_values = db.Column(db.JSON(), nullable=True)
-    
     section = db.relationship('FormSection', back_populates='translations')
     
-    def __init__(self, form_section_id, language, name, description=None, show_for_values=None):
+    def __init__(self, form_section_id, language, name, description=None):
         self.form_section_id = form_section_id
         self.language = language
         self.name = name
         self.description = description
-        self.show_for_values = show_for_values
 
 
 class FormQuestion(db.Model):
@@ -152,9 +352,8 @@ class FormQuestion(db.Model):
     # Settings for UI customization (e.g., file-type)
     settings = db.Column(db.JSON(), nullable=True)  
     
-    # Conditional visibility
-    depends_on_question_id = db.Column(db.Integer(), 
-                                      db.ForeignKey('form_question.id'), nullable=True)
+    # Conditional visibility using expression-based dependencies
+    dependency_expression = db.Column(db.JSON(), nullable=True)
     
     # Generic question linking - questions can reference other questions
     # Use case: Review questions can link to application questions to display alongside
@@ -172,7 +371,7 @@ class FormQuestion(db.Model):
                                      foreign_keys=[linked_question_id])
     
     def __init__(self, form_id, section_id, order, question_type, 
-                 is_required=True, key=None, depends_on_question_id=None,
+                 is_required=True, key=None, dependency_expression=None,
                  linked_question_id=None, settings=None):
         self.form_id = form_id
         self.section_id = section_id
@@ -180,12 +379,27 @@ class FormQuestion(db.Model):
         self.type = question_type
         self.is_required = is_required
         self.key = key
-        self.depends_on_question_id = depends_on_question_id
+        self.dependency_expression = dependency_expression
         self.linked_question_id = linked_question_id
         self.settings = settings
     
     def get_translation(self, language: str) -> 'FormQuestionTranslation':
         return self.translations.filter_by(language=language).first()
+    
+    def evaluate_dependency(self, answers_dict: dict) -> bool:
+        """
+        Evaluate whether this question should be visible based on its dependencies.
+        
+        Args:
+            answers_dict: Dictionary mapping question_id to answer value
+        
+        Returns:
+            bool: True if question should be visible, False otherwise
+        """
+        if not self.dependency_expression:
+            return True
+        
+        return DependencyEvaluator.evaluate(self.dependency_expression, answers_dict)
 
 
 class FormQuestionTranslation(db.Model):
@@ -212,14 +426,11 @@ class FormQuestionTranslation(db.Model):
     options = db.Column(db.JSON(), nullable=True)
     # Format: [{"value": "opt1", "label": "Option 1"}, ...]
     
-    # Conditional visibility values
-    show_for_values = db.Column(db.JSON(), nullable=True)
-    
     question = db.relationship('FormQuestion', back_populates='translations')
     
     def __init__(self, form_question_id, language, headline, description=None,
                  placeholder=None, validation_regex=None, validation_text=None,
-                 options=None, show_for_values=None):
+                 options=None):
         self.form_question_id = form_question_id
         self.language = language
         self.headline = headline
@@ -228,7 +439,6 @@ class FormQuestionTranslation(db.Model):
         self.validation_regex = validation_regex
         self.validation_text = validation_text
         self.options = options
-        self.show_for_values = show_for_values
 
 
 class FormResponse(db.Model):

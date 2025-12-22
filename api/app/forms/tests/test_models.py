@@ -192,17 +192,24 @@ class TestFormModels(ApiTestCase):
         db.session.add(q1)
         db.session.flush()
         
+        dependency_expr = {
+            "question_id": q1.id,
+            "operator": "EQUALS",
+            "values": ["yes"]
+        }
+        
         q2 = FormQuestion(
             form_id=form.id,
             section_id=section.id,
             order=2,
             question_type='short-text',
-            depends_on_question_id=q1.id
+            dependency_expression=dependency_expr
         )
         db.session.add(q2)
         db.session.commit()
         
-        self.assertEqual(q2.depends_on_question_id, q1.id)
+        self.assertIsNotNone(q2.dependency_expression)
+        self.assertEqual(q2.dependency_expression['question_id'], q1.id)
     
     def test_form_linking(self):
         """Test generic form linking"""

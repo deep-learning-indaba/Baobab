@@ -29,7 +29,7 @@ def serialize_form(form, language='en'):
                 'order': question.order,
                 'is_required': question.is_required,
                 'key': question.key,
-                'depends_on_question_id': question.depends_on_question_id,
+                'dependency_expression': question.dependency_expression,
                 'linked_question_id': question.linked_question_id,
                 'settings': question.settings,
                 'headline': question_translation.headline if question_translation else None,
@@ -37,8 +37,7 @@ def serialize_form(form, language='en'):
                 'placeholder': question_translation.placeholder if question_translation else None,
                 'validation_regex': question_translation.validation_regex if question_translation else None,
                 'validation_text': question_translation.validation_text if question_translation else None,
-                'options': question_translation.options if question_translation else None,
-                'show_for_values': question_translation.show_for_values if question_translation else None
+                'options': question_translation.options if question_translation else None
             }
             questions_data.append(question_data)
         
@@ -46,10 +45,9 @@ def serialize_form(form, language='en'):
             'id': section.id,
             'order': section.order,
             'key': section.key,
-            'depends_on_question_id': section.depends_on_question_id,
+            'dependency_expression': section.dependency_expression,
             'name': section_translation.name if section_translation else None,
             'description': section_translation.description if section_translation else None,
-            'show_for_values': section_translation.show_for_values if section_translation else None,
             'questions': questions_data
         }
         sections_data.append(section_data)
