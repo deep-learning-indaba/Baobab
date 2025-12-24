@@ -224,10 +224,6 @@ class Form(db.Model):
     created_at = db.Column(db.DateTime(), nullable=False)
     updated_at = db.Column(db.DateTime(), nullable=False)
     created_by_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
-    
-    # Versioning for form changes
-    version = db.Column(db.Integer(), nullable=False, default=1)
-    parent_form_id = db.Column(db.Integer(), db.ForeignKey('form.id'), nullable=True)
 
     # Relationships
     sections = db.relationship('FormSection', order_by='FormSection.order', 
@@ -239,25 +235,21 @@ class Form(db.Model):
     responses = db.relationship('FormResponse', back_populates='form',
                                foreign_keys='FormResponse.form_id')
     
-    # Link to parent/linked forms
-    parent_form = db.relationship('Form', remote_side=[id], foreign_keys=[parent_form_id])
+    # Link to linked form
     linked_form = db.relationship('Form', remote_side=[id], foreign_keys=[linked_form_id])
     
     created_by = db.relationship('AppUser', foreign_keys=[created_by_user_id])
     
     def __init__(self, created_by_user_id, is_open=True, is_active=True, 
-                 linked_form_id=None, parent_form_id=None, multiple_responses=False,
-                 settings=None):
+                 linked_form_id=None, multiple_responses=False, settings=None):
         self.created_by_user_id = created_by_user_id
         self.is_open = is_open
         self.is_active = is_active
         self.linked_form_id = linked_form_id
-        self.parent_form_id = parent_form_id
         self.multiple_responses = multiple_responses
         self.settings = settings
         self.created_at = datetime.now()
         self.updated_at = datetime.now()
-        self.version = 1
 
 
 class FormSection(db.Model):
@@ -268,6 +260,12 @@ class FormSection(db.Model):
     form_id = db.Column(db.Integer(), db.ForeignKey('form.id'), nullable=False)
     order = db.Column(db.Integer(), nullable=False)
     key = db.Column(db.String(255), nullable=True)  # Optional identifier
+    
+    # Soft delete and versioning
+    is_active = db.Column(db.Boolean(), nullable=False, default=True)
+    version = db.Column(db.Integer(), nullable=False, default=1)
+    created_at = db.Column(db.DateTime(), nullable=False)
+    updated_at = db.Column(db.DateTime(), nullable=False)
     
     # Conditional visibility using expression-based dependencies
     dependency_expression = db.Column(db.JSON(), nullable=True)
@@ -287,6 +285,10 @@ class FormSection(db.Model):
         self.order = order
         self.key = key
         self.dependency_expression = dependency_expression
+        self.is_active = True
+        self.version = 1
+        self.created_at = datetime.now()
+        self.updated_at = datetime.now()
     
     def get_translation(self, language: str) -> 'FormSectionTranslation':
         return self.translations.filter_by(language=language).first()
@@ -352,6 +354,12 @@ class FormQuestion(db.Model):
     # Settings for UI customization (e.g., file-type)
     settings = db.Column(db.JSON(), nullable=True)  
     
+    # Soft delete and versioning
+    is_active = db.Column(db.Boolean(), nullable=False, default=True)
+    version = db.Column(db.Integer(), nullable=False, default=1)
+    created_at = db.Column(db.DateTime(), nullable=False)
+    updated_at = db.Column(db.DateTime(), nullable=False)
+    
     # Conditional visibility using expression-based dependencies
     dependency_expression = db.Column(db.JSON(), nullable=True)
     
@@ -382,6 +390,10 @@ class FormQuestion(db.Model):
         self.dependency_expression = dependency_expression
         self.linked_question_id = linked_question_id
         self.settings = settings
+        self.is_active = True
+        self.version = 1
+        self.created_at = datetime.now()
+        self.updated_at = datetime.now()
     
     def get_translation(self, language: str) -> 'FormQuestionTranslation':
         return self.translations.filter_by(language=language).first()
@@ -462,14 +474,20 @@ class FormResponse(db.Model):
     parent_response_id = db.Column(db.Integer(), 
                                    db.ForeignKey('form_response.id'), nullable=True)
     
+    # For linked forms
+    linked_response_id = db.Column(db.Integer(), 
+                              db.ForeignKey('form_response.id'), nullable=True)
+
     # Relationships
-    form = db.relationship('Form', back_populates='responses', foreign_keys=[form_id])
-    user = db.relationship('AppUser', foreign_keys=[user_id])
+    form = db.relationship('Form', back_populates='responses', foreign_keys=[form_id], lazy='select')
+    user = db.relationship('AppUser', foreign_keys=[user_id], lazy='select')
     answers = db.relationship('FormAnswer',
                              cascade='all, delete-orphan',
                              back_populates='response')
     parent_response = db.relationship('FormResponse', remote_side=[id],
-                                     foreign_keys=[parent_response_id])
+                                     foreign_keys=[parent_response_id], lazy='select')
+    linked_response = db.relationship('FormResponse', remote_side=[id],
+                                     foreign_keys=[linked_response_id], lazy='select')
     
     # Indexes
     __table_args__ = (
@@ -477,11 +495,12 @@ class FormResponse(db.Model):
         db.Index('idx_submitted_responses', 'form_id', 'is_submitted'),
     )
     
-    def __init__(self, form_id, user_id, language='en', parent_response_id=None):
+    def __init__(self, form_id, user_id, language='en', parent_response_id=None , linked_response_id=None):
         self.form_id = form_id
         self.user_id = user_id
         self.language = language
         self.parent_response_id = parent_response_id
+        self.linked_response_id = linked_response_id
         self.is_submitted = False
         self.is_withdrawn = False
         self.started_timestamp = datetime.now()

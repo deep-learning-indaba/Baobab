@@ -26,7 +26,6 @@ class TestFormModels(ApiTestCase):
         self.assertIsNotNone(form.id)
         self.assertTrue(form.is_active)
         self.assertTrue(form.is_open)
-        self.assertEqual(form.version, 1)
         self.assertIsNotNone(form.created_at)
     
     def test_form_with_sections(self):
