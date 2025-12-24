@@ -1,4 +1,4 @@
-"""empty message
+"""Models for generic forms.
 
 Revision ID: 661475bafb4d
 Revises: 7fb62ea19309
