@@ -152,6 +152,18 @@ const FormEditor = ({
 
   const validationErrorsCount = state.ui.validationErrors.filter(e => e.severity === 'error').length;
 
+  const allQuestions = state.sections.flatMap(section => 
+    section.questions.map(q => ({
+      id: q.id,
+      order: q.order,
+      headline: q.headline,
+      sectionId: section.id,
+      sectionOrder: section.order,
+      type: q.type,
+      options: q.options || []
+    }))
+  );
+
   return (
     <div className="form-editor">
       <div className="form-editor-toolbar">
@@ -245,6 +257,7 @@ const FormEditor = ({
               dispatch={dispatch}
               t={t}
               includeReviewTypes={includeReviewTypes}
+              allQuestions={allQuestions}
             />
           ))}
           

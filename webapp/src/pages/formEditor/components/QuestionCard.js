@@ -3,21 +3,26 @@ import TranslatableFieldGroup from './TranslatableFieldGroup';
 import QuestionTypeSelector from './QuestionTypeSelector';
 import OptionsEditor from './OptionsEditor';
 import QuestionSettingsEditor from './QuestionSettingsEditor';
+import CountryEditor from './CountryEditor';
+import DependencyEditor from './DependencyEditor';
 import { FORM_ACTIONS } from '../actionTypes';
 import './QuestionCard.css';
 
 const QuestionCard = ({
   question,
   sectionId,
+  sectionOrder,
   languages,
   dispatch,
   t,
-  includeReviewTypes = false
+  includeReviewTypes = false,
+  allQuestions = []
 }) => {
   const [showKey, setShowKey] = useState(!!question.key);
   const [showValidation, setShowValidation] = useState(
     !!question.validation_regex && Object.values(question.validation_regex).some(v => v)
   );
+  const [showDependency, setShowDependency] = useState(!!question.dependency_expression);
   const [validationMode, setValidationMode] = useState('simple');
   const [wordLimitMin, setWordLimitMin] = useState({});
   const [wordLimitMax, setWordLimitMax] = useState({});
@@ -158,6 +163,15 @@ const QuestionCard = ({
     });
   };
 
+  const handleDependencyChange = (dependencyExpression) => {
+    dispatch({
+      type: FORM_ACTIONS.SET_QUESTION_DEPENDENCY,
+      sectionId,
+      questionId: question.id,
+      dependencyExpression
+    });
+  };
+
   const handleAddOption = (optionData) => {
     dispatch({ 
       type: FORM_ACTIONS.ADD_OPTION, 
@@ -236,8 +250,9 @@ const QuestionCard = ({
   };
 
   const hasOptions = question.type && ['combobox', 'checkboxes', 'radio', 'single-choice'].includes(question.type);
-  const hasPlaceholder = question.type && ['short-text', 'long-text', 'numeric', 'combobox', 'multi-file'].includes(question.type);
+  const hasPlaceholder = question.type && ['short-text', 'long-text', 'numeric', 'combobox', 'multi-file', 'country'].includes(question.type);
   const hasSettings = question.type && ['file', 'multi-file', 'numeric', 'reference', 'long-text', 'markdown'].includes(question.type);
+  const hasCountrySettings = question.type === 'country';
   const canHaveValidation = question.type && ['short-text', 'long-text', 'markdown'].includes(question.type);
 
   return (
@@ -354,6 +369,24 @@ const QuestionCard = ({
           />
         )}
 
+        {hasCountrySettings && (
+          <CountryEditor
+            settings={question.settings && question.settings.countryOptions}
+            onChange={(countrySettings) => {
+              dispatch({
+                type: FORM_ACTIONS.SET_QUESTION_SETTINGS,
+                sectionId,
+                questionId: question.id,
+                settings: {
+                  ...question.settings,
+                  countryOptions: countrySettings
+                }
+              });
+            }}
+            t={t}
+          />
+        )}
+
         <div className="question-toggles">
           {canHaveValidation && (
             <button
@@ -365,6 +398,14 @@ const QuestionCard = ({
               {t('Add Validation')}
             </button>
           )}
+          <button
+            type="button"
+            className={`question-toggle-btn ${showDependency ? 'active' : ''}`}
+            onClick={() => setShowDependency(!showDependency)}
+          >
+            <i className={`fas ${showDependency ? 'fa-check-square' : 'fa-square'}`}></i>
+            {t('Add Dependency')}
+          </button>
           <button
             type="button"
             className={`question-toggle-btn ${showKey ? 'active' : ''}`}
@@ -386,6 +427,18 @@ const QuestionCard = ({
               className="key-input"
             />
           </div>
+        )}
+
+        {showDependency && (
+          <DependencyEditor
+            dependencyExpression={question.dependency_expression}
+            onChange={handleDependencyChange}
+            availableQuestions={allQuestions}
+            currentQuestionId={question.id}
+            currentSectionOrder={sectionOrder}
+            currentQuestionOrder={question.order}
+            t={t}
+          />
         )}
 
         {showValidation && canHaveValidation && (

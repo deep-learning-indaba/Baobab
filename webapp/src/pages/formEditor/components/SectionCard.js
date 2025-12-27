@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import TranslatableFieldGroup from './TranslatableFieldGroup';
 import QuestionCard from './QuestionCard';
+import DependencyEditor from './DependencyEditor';
 import { FORM_ACTIONS } from '../actionTypes';
 import './SectionCard.css';
 
@@ -11,10 +12,12 @@ const SectionCard = ({
   languages,
   dispatch,
   t,
-  includeReviewTypes = false
+  includeReviewTypes = false,
+  allQuestions = []
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [showKey, setShowKey] = useState(!!section.key);
+  const [showDependency, setShowDependency] = useState(!!section.dependency_expression);
 
   const handleFieldChange = (field, lang, value) => {
     dispatch({
@@ -23,6 +26,14 @@ const SectionCard = ({
       field,
       lang,
       value
+    });
+  };
+
+  const handleDependencyChange = (dependencyExpression) => {
+    dispatch({
+      type: FORM_ACTIONS.SET_SECTION_DEPENDENCY,
+      sectionId: section.id,
+      dependencyExpression
     });
   };
 
@@ -155,6 +166,14 @@ const SectionCard = ({
           <div className="section-toggles">
             <button
               type="button"
+              className={`section-toggle-btn ${showDependency ? 'active' : ''}`}
+              onClick={() => setShowDependency(!showDependency)}
+            >
+              <i className={`fas ${showDependency ? 'fa-check-square' : 'fa-square'}`}></i>
+              {t('Add Dependency')}
+            </button>
+            <button
+              type="button"
               className={`section-toggle-btn ${showKey ? 'active' : ''}`}
               onClick={() => setShowKey(!showKey)}
             >
@@ -162,6 +181,18 @@ const SectionCard = ({
               {t('Add Key')}
             </button>
           </div>
+
+          {showDependency && (
+            <DependencyEditor
+              dependencyExpression={section.dependency_expression}
+              onChange={handleDependencyChange}
+              availableQuestions={allQuestions}
+              currentQuestionId={null}
+              currentSectionOrder={section.order}
+              currentQuestionOrder={null}
+              t={t}
+            />
+          )}
 
           {showKey && (
             <div className="section-key-input">
@@ -183,10 +214,12 @@ const SectionCard = ({
                 key={question.id}
                 question={question}
                 sectionId={section.id}
+                sectionOrder={section.order}
                 languages={languages}
                 dispatch={dispatch}
                 t={t}
                 includeReviewTypes={includeReviewTypes}
+                allQuestions={allQuestions}
               />
             ))}
             

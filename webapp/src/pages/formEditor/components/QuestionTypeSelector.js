@@ -68,6 +68,11 @@ const QuestionTypeSelector = ({ value, onChange, t, includeReviewTypes = false }
       value: 'reference',
       label: t('Reference Request'),
       icon: 'fa-user-friends'
+    },
+    {
+      value: 'country',
+      label: t('Country Selector'),
+      icon: 'fa-globe-africa'
     }
   ];
 

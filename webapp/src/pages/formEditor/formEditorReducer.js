@@ -151,7 +151,7 @@ export function formEditorReducer(state, action) {
     case FORM_ACTIONS.SET_SECTION_DEPENDENCY: {
       const sections = state.sections.map(s =>
         s.id === action.sectionId
-          ? { ...s, dependency_expression: action.expression }
+          ? { ...s, dependency_expression: action.dependencyExpression }
           : s
       );
       return {
@@ -299,10 +299,21 @@ export function formEditorReducer(state, action) {
         const questions = s.questions.map(q => {
           if (q.id !== action.questionId) return q;
           
+          // Initialize settings based on question type
+          let settings = q.settings || {};
+          if (action.questionType === 'country') {
+            // Country type uses settings.countryOptions
+            settings = {
+              ...settings,
+              countryOptions: { regions: [], countries: [], excludeCountries: [] }
+            };
+          }
+          
           return {
             ...q,
             type: action.questionType,
-            options: []
+            options: [],
+            settings
           };
         });
         
@@ -342,7 +353,7 @@ export function formEditorReducer(state, action) {
         
         const questions = s.questions.map(q =>
           q.id === action.questionId
-            ? { ...q, dependency_expression: action.expression }
+            ? { ...q, dependency_expression: action.dependencyExpression }
             : q
         );
         
