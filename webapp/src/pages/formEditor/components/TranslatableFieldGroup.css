@@ -1,0 +1,90 @@
+.translatable-field-group {
+  margin-bottom: 1.5rem;
+}
+
+.translatable-field-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #333;
+  font-size: 0.95rem;
+  text-align: left;
+}
+
+.required-indicator {
+  color: #dc3545;
+  margin-left: 0.25rem;
+}
+
+.translatable-inputs-container {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.translatable-input-wrapper {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.language-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  padding: 0.25rem 0.5rem;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.translatable-input,
+.translatable-textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.translatable-input:focus,
+.translatable-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.translatable-input.has-error,
+.translatable-textarea.has-error {
+  border-color: #dc3545;
+}
+
+.translatable-input.has-error:focus,
+.translatable-textarea.has-error:focus {
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+.translatable-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.field-error {
+  color: #dc3545;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 768px) {
+  .translatable-inputs-container {
+    flex-direction: column;
+  }
+  
+  .translatable-input-wrapper {
+    min-width: 100%;
+  }
+}

@@ -1,0 +1,161 @@
+.options-editor {
+  margin-bottom: 1.5rem;
+}
+
+.options-editor-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #333;
+  font-size: 0.95rem;
+  text-align: left;
+}
+
+.options-table {
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.options-header {
+  display: flex;
+  background-color: #f9fafb;
+  padding: 0.5rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #666;
+  border-bottom: 1px solid #d1d5db;
+}
+
+.options-body {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.option-row,
+.add-option-row {
+  display: flex;
+  padding: 0.5rem;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.option-row {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.option-row:last-child {
+  border-bottom: none;
+}
+
+.option-row:hover {
+  background-color: #f9fafb;
+}
+
+.add-option-row {
+  background-color: #fafafa;
+  border: 1px dashed #d1d5db;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+}
+
+.option-value-col {
+  flex: 1;
+  min-width: 120px;
+}
+
+.option-label-col {
+  flex: 2;
+  min-width: 150px;
+}
+
+.option-actions-col {
+  width: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.option-input {
+  width: 100%;
+  padding: 0.4rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  transition: border-color 0.15s ease-in-out;
+}
+
+.option-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.delete-option-btn,
+.add-option-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  color: #666;
+  transition: color 0.15s ease-in-out;
+  font-size: 1.1rem;
+}
+
+.delete-option-btn:hover {
+  color: #dc3545;
+}
+
+.add-option-btn:hover {
+  color: #28a745;
+}
+
+.delete-option-btn:focus,
+.add-option-btn:focus {
+  outline: none;
+}
+
+.options-empty-state {
+  padding: 2rem;
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  border: 1px dashed #d1d5db;
+  border-radius: 4px;
+  background-color: #fafafa;
+}
+
+@media (max-width: 1024px) {
+  .option-row,
+  .add-option-row {
+    flex-wrap: wrap;
+  }
+  
+  .option-value-col,
+  .option-label-col {
+    min-width: 45%;
+  }
+}
+
+@media (max-width: 768px) {
+  .option-value-col,
+  .option-label-col {
+    min-width: 100%;
+  }
+  
+  .options-header {
+    display: none;
+  }
+  
+  .option-row,
+  .add-option-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .option-actions-col {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

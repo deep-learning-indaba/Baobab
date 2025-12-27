@@ -5,6 +5,7 @@ import { eventService } from "../../services/events/events.service";
 import Application from "../applicationForm";
 import ApplicationFormSetting from '../createApplicationForm';
 import ReviewForm from '../reviewForm';
+import FormEditorPage from '../formEditorPage';
 import Review from "../review";
 import ReviewList from "../reviewList"
 import ReviewAssignment from "../reviewAssignment";
@@ -282,6 +283,32 @@ class EventHome extends Component {
           exact
           path={`${match.path}/eventRoleAdmin`}
           render={(props) => <EventRoleAdmin {...props} event={event} organisation={this.props.organisation}/>}
+        />
+        <Route
+          exact
+          path={`${match.path}/forms/new`}
+          render={(props) => (
+            <FormEditorPage
+              {...props}
+              eventKey={this.state.eventKey}
+              event={event}
+              organisation={this.props.organisation}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/forms/:formId/edit`}
+          render={(props) => (
+            <FormEditorPage
+              {...props}
+              eventKey={this.state.eventKey}
+              event={event}
+              organisation={this.props.organisation}
+              user={this.props.user}
+            />
+          )}
         />
       </div>
     );

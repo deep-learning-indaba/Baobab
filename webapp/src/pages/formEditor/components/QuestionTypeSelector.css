@@ -1,0 +1,28 @@
+.question-type-selector {
+  width: 100%;
+}
+
+.question-type-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.25rem 0;
+}
+
+.question-type-icon {
+  width: 20px;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.question-type-select__control {
+  cursor: pointer;
+}
+
+.question-type-select__menu {
+  z-index: 1000;
+}
+
+.question-type-select__option {
+  cursor: pointer;
+}
