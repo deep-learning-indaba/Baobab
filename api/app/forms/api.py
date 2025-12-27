@@ -6,7 +6,7 @@ from flask import g, request
 
 from app.forms.models import (
     Form, FormResponse, FormAnswer, FormSection, FormQuestion,
-    FormSectionTranslation, FormQuestionTranslation
+    FormTranslation, FormSectionTranslation, FormQuestionTranslation
 )
 from app.utils.auth import auth_required
 from app.utils import errors
@@ -14,11 +14,11 @@ from app import db, LOGGER
 
 
 def serialize_form(form, language='en', include_inactive=False):
-    """Serialize a form with all sections and questions in specified language
+    """Serialize a form with all sections and questions with all translations
     
     Args:
         form: Form object to serialize
-        language: Language code for translations
+        language: Language code (deprecated, kept for compatibility - now returns all languages)
         include_inactive: If True, include inactive sections/questions (for admin audit)
     """
     sections_data = []
@@ -27,14 +27,36 @@ def serialize_form(form, language='en', include_inactive=False):
         if not include_inactive and not section.is_active:
             continue
             
-        section_translation = section.get_translation(language)
+        # Get all translations for this section
+        section_translations_dict = {}
+        for translation in section.translations:
+            section_translations_dict[translation.language] = translation
         
         questions_data = []
         for question in section.questions:
             if not include_inactive and not question.is_active:
                 continue
-                
-            question_translation = question.get_translation(language)
+            
+            # Get all translations for this question
+            question_translations_dict = {}
+            for translation in question.translations:
+                question_translations_dict[translation.language] = translation
+            
+            # Build i18n objects for all translatable fields
+            headline_i18n = {}
+            description_i18n = {}
+            placeholder_i18n = {}
+            validation_regex_i18n = {}
+            validation_text_i18n = {}
+            options_i18n = {}
+            
+            for lang, trans in question_translations_dict.items():
+                headline_i18n[lang] = trans.headline
+                description_i18n[lang] = trans.description
+                placeholder_i18n[lang] = trans.placeholder
+                validation_regex_i18n[lang] = trans.validation_regex
+                validation_text_i18n[lang] = trans.validation_text
+                options_i18n[lang] = trans.options
             
             question_data = {
                 'id': question.id,
@@ -49,14 +71,21 @@ def serialize_form(form, language='en', include_inactive=False):
                 'version': question.version,
                 'created_at': question.created_at.isoformat() if question.created_at else None,
                 'updated_at': question.updated_at.isoformat() if question.updated_at else None,
-                'headline': question_translation.headline if question_translation else None,
-                'description': question_translation.description if question_translation else None,
-                'placeholder': question_translation.placeholder if question_translation else None,
-                'validation_regex': question_translation.validation_regex if question_translation else None,
-                'validation_text': question_translation.validation_text if question_translation else None,
-                'options': question_translation.options if question_translation else None
+                'headline': headline_i18n,
+                'description': description_i18n,
+                'placeholder': placeholder_i18n,
+                'validation_regex': validation_regex_i18n,
+                'validation_text': validation_text_i18n,
+                'options': options_i18n
             }
             questions_data.append(question_data)
+        
+        # Build i18n objects for section translatable fields
+        name_i18n = {}
+        description_i18n = {}
+        for lang, trans in section_translations_dict.items():
+            name_i18n[lang] = trans.name
+            description_i18n[lang] = trans.description
         
         section_data = {
             'id': section.id,
@@ -67,14 +96,24 @@ def serialize_form(form, language='en', include_inactive=False):
             'version': section.version,
             'created_at': section.created_at.isoformat() if section.created_at else None,
             'updated_at': section.updated_at.isoformat() if section.updated_at else None,
-            'name': section_translation.name if section_translation else None,
-            'description': section_translation.description if section_translation else None,
+            'name': name_i18n,
+            'description': description_i18n,
             'questions': questions_data
         }
         sections_data.append(section_data)
     
+    # Get all translations for the form name
+    form_translations_dict = {}
+    for translation in form.translations:
+        form_translations_dict[translation.language] = translation
+    
+    name_i18n = {}
+    for lang, trans in form_translations_dict.items():
+        name_i18n[lang] = trans.name
+    
     return {
         'id': form.id,
+        'name': name_i18n,
         'is_active': form.is_active,
         'is_open': form.is_open,
         'multiple_responses': form.multiple_responses,
@@ -218,6 +257,25 @@ class FormAPI(restful.Resource):
             if 'settings' in args:
                 form.settings = args['settings']
             
+            # Update form name translations
+            if 'name' in args and args['name']:
+                for lang, name_text in args['name'].items():
+                    # Find or create translation
+                    translation = db.session.query(FormTranslation).filter_by(
+                        form_id=form.id,
+                        language=lang
+                    ).first()
+                    
+                    if translation:
+                        translation.name = name_text
+                    else:
+                        translation = FormTranslation(
+                            form_id=form.id,
+                            language=lang,
+                            name=name_text
+                        )
+                        db.session.add(translation)
+            
             form.updated_at = datetime.now()
             
             db.session.commit()
@@ -228,6 +286,7 @@ class FormAPI(restful.Resource):
         except Exception as e:
             LOGGER.error(f"Error updating form {form_id}: {str(e)}")
             LOGGER.error(traceback.format_exc())
+            db.session.rollback()
             return errors.DB_NOT_AVAILABLE
     
     @auth_required
@@ -281,6 +340,35 @@ class FormStructureAPI(restful.Resource):
                 return errors.FORM_NOT_FOUND
             
             args = request.get_json()
+            
+            # Update form name translations if provided
+            if 'name' in args and args['name']:
+                for lang, name_text in args['name'].items():
+                    translation = db.session.query(FormTranslation).filter_by(
+                        form_id=form.id,
+                        language=lang
+                    ).first()
+                    
+                    if translation:
+                        translation.name = name_text
+                    else:
+                        translation = FormTranslation(
+                            form_id=form.id,
+                            language=lang,
+                            name=name_text
+                        )
+                        db.session.add(translation)
+            
+            # Update form settings if provided
+            if 'settings' in args:
+                form.settings = args['settings']
+            if 'is_open' in args:
+                form.is_open = args['is_open']
+            if 'is_active' in args:
+                form.is_active = args['is_active']
+            if 'multiple_responses' in args:
+                form.multiple_responses = args['multiple_responses']
+            
             sections_data = args.get('sections', [])
             
             # Track which sections/questions are in the incoming data

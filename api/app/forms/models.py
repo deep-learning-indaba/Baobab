@@ -226,6 +226,8 @@ class Form(db.Model):
     created_by_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
 
     # Relationships
+    translations = db.relationship('FormTranslation', cascade='all, delete-orphan',
+                                  back_populates='form')
     sections = db.relationship('FormSection', order_by='FormSection.order', 
                               cascade='all, delete-orphan', foreign_keys='FormSection.form_id',
                               back_populates='form')
@@ -250,6 +252,13 @@ class Form(db.Model):
         self.settings = settings
         self.created_at = datetime.now()
         self.updated_at = datetime.now()
+    
+    def get_translation(self, language):
+        """Get form translation for the specified language."""
+        for translation in self.translations:
+            if translation.language == language:
+                return translation
+        return None
 
 
 class FormSection(db.Model):
@@ -307,6 +316,28 @@ class FormSection(db.Model):
             return True
         
         return DependencyEvaluator.evaluate(self.dependency_expression, answers_dict)
+
+
+class FormTranslation(db.Model):
+    """i18n support for forms."""
+    __tablename__ = 'form_translation'
+    __table_args__ = (
+        db.UniqueConstraint('form_id', 'language'),
+    )
+    
+    id = db.Column(db.Integer(), primary_key=True)
+    form_id = db.Column(db.Integer(), 
+                       db.ForeignKey('form.id'), nullable=False)
+    language = db.Column(db.String(2), nullable=False)
+    
+    name = db.Column(db.String(255), nullable=False)
+    
+    form = db.relationship('Form', back_populates='translations')
+    
+    def __init__(self, form_id, language, name):
+        self.form_id = form_id
+        self.language = language
+        self.name = name
 
 
 class FormSectionTranslation(db.Model):
