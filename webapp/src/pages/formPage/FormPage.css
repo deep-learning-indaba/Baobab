@@ -1,0 +1,310 @@
+.form-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Loading State */
+.form-page-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 1rem;
+}
+
+.form-page-loading .spinner-border {
+  width: 3rem;
+  height: 3rem;
+  border-width: 0.3em;
+}
+
+.form-page-loading p {
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+/* Error State */
+.form-page-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 2rem;
+}
+
+.form-page-error .alert {
+  max-width: 600px;
+  text-align: center;
+}
+
+.form-page-error .alert i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.form-page-error .alert h3 {
+  margin-bottom: 0.75rem;
+  font-size: 1.5rem;
+}
+
+.form-page-error .alert p {
+  margin-bottom: 1.5rem;
+}
+
+/* Response List */
+.form-page-responses {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.responses-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.responses-header h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.responses-subtitle {
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+.responses-actions {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.responses-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+/* Response List */
+.responses-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.response-card {
+  background-color: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.response-card:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.response-card.submitted {
+  border-color: #10b981;
+  background-color: #f0fdf4;
+}
+
+.response-card.draft {
+  border-color: #f59e0b;
+  background-color: #fffbeb;
+}
+
+.response-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.response-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.response-status i {
+  font-size: 1.25rem;
+}
+
+.response-status .status-text {
+  font-weight: 600;
+}
+
+.response-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.meta-item i {
+  width: 1rem;
+  text-align: center;
+}
+
+.response-body {
+  margin-bottom: 1rem;
+}
+
+.response-info {
+  color: #4b5563;
+  margin: 0;
+}
+
+.response-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.response-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Success State */
+.form-page-success {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 2rem;
+}
+
+.success-message {
+  text-align: center;
+  max-width: 600px;
+  background-color: white;
+  border: 2px solid #10b981;
+  border-radius: 8px;
+  padding: 3rem;
+}
+
+.success-message i {
+  font-size: 4rem;
+  color: #10b981;
+  margin-bottom: 1rem;
+}
+
+.success-message h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.75rem;
+}
+
+.success-message p {
+  color: #6b7280;
+  font-size: 1rem;
+  margin-bottom: 2rem;
+}
+
+.success-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.success-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+/* Text Colors */
+.text-success {
+  color: #10b981;
+}
+
+.text-warning {
+  color: #f59e0b;
+}
+
+.text-danger {
+  color: #ef4444;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .form-page {
+    padding: 1rem;
+  }
+
+  .responses-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .response-card {
+    padding: 1rem;
+  }
+
+  .response-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .response-meta {
+    width: 100%;
+  }
+
+  .response-actions {
+    width: 100%;
+  }
+
+  .response-actions .btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .success-message {
+    padding: 2rem 1rem;
+  }
+
+  .success-message i {
+    font-size: 3rem;
+  }
+
+  .success-message h2 {
+    font-size: 1.5rem;
+  }
+
+  .success-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .success-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -16,7 +16,7 @@ const CountryOption = (props) => {
     <components.Option {...props}>
       <span className="country-option">
         <span className="country-flag" role="img" aria-label={data.country && data.country.name}>
-          {data.country?.flag}
+          {data.country && data.country.flag}
         </span>
         <span className="country-name">{data.country && data.country.name}</span>
       </span>
@@ -31,7 +31,7 @@ const CountrySingleValue = (props) => {
     <components.SingleValue {...props}>
       <span className="country-option">
         <span className="country-flag" role="img" aria-label={data.country && data.country.name}>
-          {data.country?.flag}
+          {data.country && data.country.flag}
         </span>
         <span className="country-name">{data.country && data.country.name}</span>
       </span>
@@ -46,7 +46,9 @@ class FormCountry extends React.Component {
 
   componentWillReceiveProps(nextProps) {
     if (nextProps.showFocus) {
-      this.selectRef?.focus();
+      if (this.selectRef) {
+        this.selectRef.focus();
+      }
     }
   }
 

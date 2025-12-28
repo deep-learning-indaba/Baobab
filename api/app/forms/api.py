@@ -6,7 +6,8 @@ from flask import g, request
 
 from app.forms.models import (
     Form, FormResponse, FormAnswer, FormSection, FormQuestion,
-    FormTranslation, FormSectionTranslation, FormQuestionTranslation
+    FormTranslation, FormSectionTranslation, FormQuestionTranslation,
+    DependencyEvaluator
 )
 from app.utils.auth import auth_required
 from app.utils import errors
@@ -738,19 +739,50 @@ class FormResponseSubmitAPI(restful.Resource):
             if response.form_id != form_id:
                 return {'message': 'Form ID mismatch'}, 400
             
+            # Load the form
+            form = db.session.query(Form).filter_by(id=form_id).first()
+            if not form:
+                return {'message': 'Form not found'}, 404
+            
             # Server-side validation (backup to client validation)
-            # Only validate answers for active questions
-            # TODO: Only validate answers for questions that are visible. 
+            # Build answers dictionary for dependency evaluation
+            answers_dict = {}
+            for answer in response.answers:
+                if answer.is_active and answer.question_id:
+                    answers_dict[answer.question_id] = answer.value
+            
             validation_errors = []
+            answered_question_ids = {answer.question_id for answer in response.answers if answer.is_active}
             
-            # Get all active required questions (query fresh with explicit joins to avoid cached data)
-            answered_question_ids = {answer.question_id for answer in response.answers}
-            
+            # Only validate answers for active and visible questions
             for section in form.sections:
                 if not section.is_active:
                     continue
+                
+                # Check section visibility based on dependencies
+                section_visible = True
+                if section.dependency_expression:
+                    section_visible = DependencyEvaluator.evaluate(
+                        section.dependency_expression,
+                        answers_dict
+                    )
+                
+                if not section_visible:
+                    continue
+                
                 for question in section.questions:
                     if not question.is_active:
+                        continue
+                    
+                    # Check question visibility based on dependencies
+                    question_visible = True
+                    if question.dependency_expression:
+                        question_visible = DependencyEvaluator.evaluate(
+                            question.dependency_expression,
+                            answers_dict
+                        )
+                    
+                    if not question_visible:
                         continue
                     
                     # Check if required question is missing an answer
@@ -760,15 +792,37 @@ class FormResponseSubmitAPI(restful.Resource):
                             'error': 'REQUIRED'
                         })
             
-            # Validate existing answers
+            # Validate existing answers (only for visible questions)
             for answer in response.answers:
-                if answer.question and answer.question.is_active:
-                    is_valid, error = answer.validate(response.language)
-                    if not is_valid:
-                        validation_errors.append({
-                            'question_id': answer.question_id,
-                            'error': error.value if error else 'unknown'
-                        })
+                if not answer.is_active or not answer.question or not answer.question.is_active:
+                    continue
+                
+                # Check if question's section is visible
+                section = answer.question.section
+                if section and section.dependency_expression:
+                    section_visible = DependencyEvaluator.evaluate(
+                        section.dependency_expression,
+                        answers_dict
+                    )
+                    if not section_visible:
+                        continue
+                
+                # Check if question is visible
+                if answer.question.dependency_expression:
+                    question_visible = DependencyEvaluator.evaluate(
+                        answer.question.dependency_expression,
+                        answers_dict
+                    )
+                    if not question_visible:
+                        continue
+                
+                # Validate the answer
+                is_valid, error = answer.validate(response.language)
+                if not is_valid:
+                    validation_errors.append({
+                        'question_id': answer.question_id,
+                        'error': error.value if error else 'unknown'
+                    })
             
             if validation_errors:
                 return {

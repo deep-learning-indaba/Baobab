@@ -6,6 +6,7 @@ import Application from "../applicationForm";
 import ApplicationFormSetting from '../createApplicationForm';
 import ReviewForm from '../reviewForm';
 import FormEditorPage from '../formEditorPage';
+import FormPage from '../formPage';
 import Review from "../review";
 import ReviewList from "../reviewList"
 import ReviewAssignment from "../reviewAssignment";
@@ -306,6 +307,17 @@ class EventHome extends Component {
               eventKey={this.state.eventKey}
               event={event}
               organisation={this.props.organisation}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/forms/:formId`}
+          render={(props) => (
+            <FormPage
+              {...props}
+              event={event}
               user={this.props.user}
             />
           )}

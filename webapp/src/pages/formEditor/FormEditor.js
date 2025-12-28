@@ -22,6 +22,7 @@ const FormEditor = ({
   const { t } = useTranslation();
   const [showSettings, setShowSettings] = useState(false);
   const [saveError, setSaveError] = useState(null);
+  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
 
   const initialState = {
     form: {
@@ -115,6 +116,12 @@ const FormEditor = ({
           type: FORM_ACTIONS.SAVE_FORM_SUCCESS,
           payload: savedData
         });
+        
+        // Show success notification
+        setShowSuccessNotification(true);
+        setTimeout(() => {
+          setShowSuccessNotification(false);
+        }, 3000);
       } else {
         throw new Error(result.error || t('Failed to save form'));
       }
@@ -279,6 +286,12 @@ const FormEditor = ({
           onClose={() => setShowSettings(false)}
           t={t}
         />
+      )}
+      {showSuccessNotification && (
+        <div className="save-success-toast">
+          <i className="fas fa-check-circle"></i>
+          <span>{t('Form saved successfully!')}</span>
+        </div>
       )}
     </div>
   );
