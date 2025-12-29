@@ -31,9 +31,14 @@ const FormEditor = ({
         acc[lang.code] = '';
         return acc;
       }, {}),
+      description: languages.reduce((acc, lang) => {
+        acc[lang.code] = '';
+        return acc;
+      }, {}),
       is_active: true,
       is_open: true,
       multiple_responses: false,
+      allow_edits: true,
       linked_form_id: undefined,
       settings: {
         page_per_section: false
@@ -82,6 +87,17 @@ const FormEditor = ({
       key: 'name',
       value: {
         ...state.form.name,
+        [langCode]: value
+      }
+    });
+  };
+
+  const handleFormDescriptionChange = (langCode, value) => {
+    dispatch({
+      type: FORM_ACTIONS.SET_FORM_SETTING,
+      key: 'description',
+      value: {
+        ...state.form.description,
         [langCode]: value
       }
     });
@@ -233,6 +249,16 @@ const FormEditor = ({
           onChange={handleFormNameChange}
           required={true}
           placeholder={t('Enter form name')}
+        />
+        <TranslatableFieldGroup
+          label={t('Form Description')}
+          fieldName="form_description"
+          values={state.form.description}
+          languages={languages}
+          onChange={handleFormDescriptionChange}
+          required={false}
+          placeholder={t('Enter form description (optional)')}
+          multiline={true}
         />
       </div>
 

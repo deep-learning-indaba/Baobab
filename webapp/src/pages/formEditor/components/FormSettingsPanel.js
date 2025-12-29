@@ -61,6 +61,20 @@ const FormSettingsPanel = ({ form, onChange, onClose, t }) => {
                 </span>
               </div>
             </label>
+
+            <label className="settings-checkbox">
+              <input
+                type="checkbox"
+                checked={form.allow_edits !== false}
+                onChange={(e) => handleChange('allow_edits', e.target.checked)}
+              />
+              <div className="checkbox-label">
+                <span className="checkbox-title">{t('Allow editing after submission')}</span>
+                <span className="checkbox-description">
+                  {t('Users can edit their responses after submitting. If disabled, responses cannot be edited once submitted.')}
+                </span>
+              </div>
+            </label>
           </section>
 
           <section className="settings-section">

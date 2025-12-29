@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import SectionRenderer from './components/SectionRenderer';
+import MarkdownRenderer from '../../components/MarkdownRenderer';
 import { evaluateDependency, buildAnswersDict } from './utils/dependencyEvaluator';
 import { validateAllAnswers, hasErrors, getErrorCount } from './utils/validation';
 import './FormRenderer.css';
@@ -51,10 +52,17 @@ const FormRenderer = ({
   const [submitError, setSubmitError] = useState(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showConfirmationPage, setShowConfirmationPage] = useState(false);
+  const [showEditWarning, setShowEditWarning] = useState(false);
 
   // Form settings
   const settings = (form && form.settings) || {};
   const pagePerSection = settings.page_per_section || false;
+
+  // Determine if form should be read-only based on editability settings
+  // If allow_edits is false and response is submitted, make it read-only
+  const isResponseSubmitted = response && response.is_submitted;
+  const allowEdits = form && form.allow_edits !== false;
+  const isReadOnly = readOnly || (!allowEdits && isResponseSubmitted);
 
   // Get form name
   const formName = useMemo(() => {
@@ -63,6 +71,15 @@ const FormRenderer = ({
       return form.name[language] || form.name['en'] || Object.values(form.name)[0] || '';
     }
     return form.name;
+  }, [form, language]);
+
+  // Get form description
+  const formDescription = useMemo(() => {
+    if (!form || !form.description) return '';
+    if (typeof form.description === 'object') {
+      return form.description[language] || form.description['en'] || Object.values(form.description)[0] || '';
+    }
+    return form.description;
   }, [form, language]);
 
   // Get active sections sorted by order
@@ -85,7 +102,7 @@ const FormRenderer = ({
 
   // Auto-save functionality
   useEffect(() => {
-    if (autoSaveInterval > 0 && isDirty && onSave && !readOnly) {
+    if (autoSaveInterval > 0 && isDirty && onSave && !isReadOnly) {
       const doSave = async () => {
         if (isSaving) return;
         setIsSaving(true);
@@ -103,7 +120,7 @@ const FormRenderer = ({
       const timer = setTimeout(doSave, autoSaveInterval);
       return () => clearTimeout(timer);
     }
-  }, [answers, autoSaveInterval, isDirty, onSave, readOnly, isSaving]);
+  }, [answers, autoSaveInterval, isDirty, onSave, isReadOnly, isSaving]);
 
   // Check if a section is visible based on dependencies
   const isSectionVisible = useCallback((section) => {
@@ -189,7 +206,7 @@ const FormRenderer = ({
 
   // Handle save draft
   const handleSave = useCallback(async () => {
-    if (!onSave || isSaving || readOnly) return;
+    if (!onSave || isSaving || isReadOnly) return;
 
     setIsSaving(true);
     setSubmitError(null);
@@ -212,7 +229,7 @@ const FormRenderer = ({
     } finally {
       setIsSaving(false);
     }
-  }, [answers, isSaving, onSave, readOnly, t]);
+  }, [answers, isSaving, onSave, isReadOnly, t]);
 
   // Handle section navigation (for paginated mode)
   const handleNextSection = useCallback(() => {
@@ -240,7 +257,13 @@ const FormRenderer = ({
   // Handle form submission
   const handleSubmit = useCallback(async (event) => {
     if (event) event.preventDefault();
-    if (isSubmitting || readOnly) return;
+    if (isSubmitting || isReadOnly) return;
+
+    // Show warning if form doesn't allow edits and this is first submission
+    if (!allowEdits && !isResponseSubmitted) {
+      setShowEditWarning(true);
+      return;
+    }
 
     // Validate all visible sections
     const isVisibleChecker = (question, section) => isQuestionVisible(question, section);
@@ -298,7 +321,7 @@ const FormRenderer = ({
     } finally {
       setIsSubmitting(false);
     }
-  }, [answers, answersDict, isQuestionVisible, isSubmitting, language, onSubmit, pagePerSection, readOnly, t, visibleSections]);
+  }, [allowEdits, answers, answersDict, isQuestionVisible, isResponseSubmitted, isSubmitting, language, onSubmit, pagePerSection, isReadOnly, t, visibleSections]);
 
   // Render confirmation page
   const renderConfirmationPage = () => {
@@ -435,7 +458,7 @@ const FormRenderer = ({
           validationErrors={validationErrors}
           language={language}
           isQuestionVisible={(q) => isQuestionVisible(q, currentSection)}
-          disabled={readOnly}
+          disabled={isReadOnly}
           t={t}
         />
       );
@@ -454,7 +477,7 @@ const FormRenderer = ({
             validationErrors={validationErrors}
             language={language}
             isQuestionVisible={(q) => isQuestionVisible(q, section)}
-            disabled={readOnly}
+            disabled={isReadOnly}
             t={t}
           />
         ))}
@@ -494,7 +517,7 @@ const FormRenderer = ({
         </div>
 
         <div className="nav-right">
-          {onSave && !readOnly && (
+          {onSave && !isReadOnly && (
             <button
               type="button"
               className="btn btn-outline-primary"
@@ -530,7 +553,7 @@ const FormRenderer = ({
                 type="submit"
                 className="btn btn-primary"
                 onClick={handleSubmit}
-                disabled={isSubmitting || readOnly}
+                disabled={isSubmitting || isReadOnly}
               >
                 {isSubmitting ? (
                   <>
@@ -550,7 +573,7 @@ const FormRenderer = ({
               type="submit"
               className="btn btn-primary"
               onClick={handleSubmit}
-              disabled={isSubmitting || readOnly}
+              disabled={isSubmitting || isReadOnly}
             >
               {isSubmitting ? (
                 <>
@@ -570,6 +593,68 @@ const FormRenderer = ({
     );
   };
 
+  // Proceed with actual submission after warning confirmation
+  const handleConfirmSubmit = useCallback(async () => {
+    setShowEditWarning(false);
+    
+    // Validate all visible sections
+    const isVisibleChecker = (question, section) => isQuestionVisible(question, section);
+    const errors = validateAllAnswers(
+      visibleSections,
+      answers,
+      answersDict,
+      language,
+      t,
+      (q, s) => isVisibleChecker(q, s || visibleSections.find(sec => 
+        sec.questions && sec.questions.some(sq => sq.id === q.id)
+      ))
+    );
+
+    setValidationErrors(errors);
+    setHasValidated(true);
+
+    if (hasErrors(errors)) {
+      setSubmitError(t('Please fix the errors before submitting'));
+      // If paginated, go to the first section with errors
+      if (pagePerSection) {
+        const sectionWithError = visibleSections.findIndex(section =>
+          section.questions && section.questions.some(q => errors[q.id])
+        );
+        if (sectionWithError >= 0) {
+          setCurrentSectionIndex(sectionWithError);
+          setShowConfirmationPage(false);
+        }
+      }
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const result = await onSubmit({
+        answers,
+        is_submitted: true
+      });
+
+      if (result && result.success) {
+        // Success handled by parent
+      } else if (result && result.errors) {
+        if (Array.isArray(result.errors)) {
+          const serverErrors = {};
+          result.errors.forEach(err => {
+            serverErrors[err.question_id] = t(err.error);
+          });
+          setValidationErrors(serverErrors);
+        }
+      }
+    } catch (error) {
+      setSubmitError(error.message || t('Failed to submit'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [answers, answersDict, currentSectionIndex, isQuestionVisible, language, onSubmit, pagePerSection, setCurrentSectionIndex, setHasValidated, setIsSubmitting, setShowConfirmationPage, setShowEditWarning, setSubmitError, setValidationErrors, showConfirmationPage, t, visibleSections]);
+
   // Early return if no form
   if (!form) {
     return (
@@ -582,7 +667,7 @@ const FormRenderer = ({
   }
 
   // Early return if form is not open
-  if (!form.is_open && !readOnly && !(response && response.is_submitted)) {
+  if (!form.is_open && !isReadOnly && !(response && response.is_submitted)) {
     return (
       <div className="form-renderer-closed">
         <div className="alert alert-warning">
@@ -597,10 +682,52 @@ const FormRenderer = ({
 
   return (
     <div className="form-renderer">
+      {/* Edit Warning Dialog */}
+      {showEditWarning && (
+        <div className="edit-warning-overlay" onClick={() => setShowEditWarning(false)}>
+          <div className="edit-warning-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="edit-warning-header">
+              <i className="fas fa-exclamation-triangle"></i>
+              <h3>{t('Important: Response Cannot Be Edited After Submission')}</h3>
+            </div>
+            <div className="edit-warning-body">
+              <p>
+                {t('Once you submit this form, you will NOT be able to edit your responses. Please review your answers carefully before submitting.')}
+              </p>
+              <p>
+                {t('You can still save your responses as a draft and come back to edit them later before submitting.')}
+              </p>
+            </div>
+            <div className="edit-warning-footer">
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={() => setShowEditWarning(false)}
+              >
+                {t('Go Back to Review')}
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleConfirmSubmit}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? t('Submitting...') : t('I Understand, Submit Now')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Form Header */}
       <div className="form-header">
         {formName && <h1 className="form-name">{formName}</h1>}
-        {isDirty && !readOnly && (
+        {formDescription && (
+          <div className="form-description">
+            <MarkdownRenderer source={formDescription} />
+          </div>
+        )}
+        {isDirty && !isReadOnly && (
           <span className="unsaved-indicator">
             <i className="fas fa-circle"></i>
             {t('Unsaved changes')}

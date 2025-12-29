@@ -42,12 +42,13 @@ const SectionRenderer = ({
     <div className="section-renderer">
       <div className="section-header">
         {name && <h2 className="section-name">{name}</h2>}
-        {description && (
-          <div className="section-description">
-            <MarkdownRenderer source={description} />
-          </div>
-        )}
       </div>
+
+      {description && (
+        <div className="section-description">
+          <MarkdownRenderer source={description} />
+        </div>
+      )}
 
       <div className="section-questions">
         {visibleQuestions.map(question => (

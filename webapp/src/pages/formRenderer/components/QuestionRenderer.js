@@ -127,7 +127,6 @@ const QuestionRenderer = ({
             id={id}
             name={id}
             type="text"
-            label={description}
             placeholder={placeholder}
             onChange={handleChange}
             value={value || ''}
@@ -143,7 +142,6 @@ const QuestionRenderer = ({
           <FormTextArea
             id={id}
             name={id}
-            label={description}
             placeholder={placeholder}
             onChange={handleChange}
             value={value || ''}
@@ -158,7 +156,6 @@ const QuestionRenderer = ({
           <FormTextArea
             id={id}
             name={id}
-            label={description}
             placeholder={placeholder || t('Markdown supported')}
             onChange={handleChange}
             value={value || ''}
@@ -175,7 +172,6 @@ const QuestionRenderer = ({
             id={id}
             name={id}
             type="number"
-            label={description}
             placeholder={placeholder}
             onChange={handleChange}
             value={value || ''}
@@ -193,7 +189,6 @@ const QuestionRenderer = ({
             id={id}
             name={id}
             options={options}
-            label={description}
             placeholder={placeholder || t('Select an option...')}
             onChange={handleDropdownChange}
             defaultValue={value || null}
@@ -209,11 +204,10 @@ const QuestionRenderer = ({
           <FormMultiCheckbox
             id={id}
             name={id}
-            label={description}
             placeholder={placeholder}
             options={options}
             defaultValue={value || ''}
-            onChange={handleChange}
+            onChange={(newValue) => onChange(question, newValue)}
             showError={!!validationError}
             errorText={validationError}
           />
@@ -225,10 +219,9 @@ const QuestionRenderer = ({
           <FormRadio
             id={id}
             name={id}
-            label={description}
             options={options}
             value={value || ''}
-            onChange={handleChange}
+            onChange={(event) => onChange(question, event.target.value)}
             showError={!!validationError}
             errorText={validationError}
           />
@@ -239,7 +232,7 @@ const QuestionRenderer = ({
           <FormCheckbox
             id={id}
             name={id}
-            label={description}
+            label={description || placeholder}
             placeholder={placeholder}
             onChange={handleCheckChange}
             value={value === 'true' || value === true}
@@ -253,7 +246,6 @@ const QuestionRenderer = ({
           <FormDate
             id={id}
             name={id}
-            label={description}
             value={value || ''}
             placeholder={placeholder}
             onChange={handleChange}
@@ -269,7 +261,6 @@ const QuestionRenderer = ({
           <FormFileUpload
             id={id}
             name={id}
-            label={description}
             value={value}
             showError={!!validationError || !!uploadError}
             errorText={validationError || uploadError}
@@ -286,7 +277,6 @@ const QuestionRenderer = ({
           <FormMultiFile
             id={id}
             name={id}
-            label={description}
             value={value}
             onChange={handleChange}
             uploadFile={handleUploadFile}
@@ -301,7 +291,6 @@ const QuestionRenderer = ({
           <FormCountry
             id={id}
             name={id}
-            label={description}
             value={value || ''}
             placeholder={placeholder || t('Select a country...')}
             onChange={handleCountryChange}
@@ -331,6 +320,7 @@ const QuestionRenderer = ({
   // Don't render headline for information/sub-heading types
   const isDisplayOnly = ['information', 'sub-heading'].includes(question.type);
   const headlineClass = isDisplayOnly ? 'question-headline display-only' : 'question-headline';
+  const shouldShowDescription = description && !isDisplayOnly;
 
   return (
     <div className={`question-renderer ${validationError ? 'has-error' : ''}`}>
@@ -344,6 +334,11 @@ const QuestionRenderer = ({
           ) : (
             <h4 className="question-title">{headline}</h4>
           )}
+        </div>
+      )}
+      {shouldShowDescription && (
+        <div className="question-description">
+          <MarkdownRenderer source={description} />
         </div>
       )}
       <div className="question-control">

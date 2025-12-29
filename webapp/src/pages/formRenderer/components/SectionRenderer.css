@@ -7,9 +7,13 @@
 }
 
 .section-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
   border-bottom: 2px solid #e5e7eb;
+  text-align: left;
 }
 
 .section-name {
@@ -17,12 +21,16 @@
   font-weight: 600;
   color: #1f2937;
   margin: 0 0 0.75rem 0;
+  text-align: left;
 }
 
 .section-description {
   color: #6b7280;
   font-size: 1rem;
   line-height: 1.6;
+  width: 100%;
+  text-align: left;
+  margin-bottom: 3rem;
 }
 
 .section-description p {

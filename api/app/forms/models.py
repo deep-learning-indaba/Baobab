@@ -215,6 +215,7 @@ class Form(db.Model):
     is_active = db.Column(db.Boolean(), nullable=False, default=True)
     is_open = db.Column(db.Boolean(), nullable=False, default=True)
     multiple_responses = db.Column(db.Boolean(), nullable=False, default=False)
+    allow_edits = db.Column(db.Boolean(), nullable=False, default=True)
     linked_form_id = db.Column(db.Integer(), db.ForeignKey('form.id'), nullable=True)
     
     # Settings for UI customization (e.g., page-per-section)
@@ -243,12 +244,13 @@ class Form(db.Model):
     created_by = db.relationship('AppUser', foreign_keys=[created_by_user_id])
     
     def __init__(self, created_by_user_id, is_open=True, is_active=True, 
-                 linked_form_id=None, multiple_responses=False, settings=None):
+                 linked_form_id=None, multiple_responses=False, allow_edits=True, settings=None):
         self.created_by_user_id = created_by_user_id
         self.is_open = is_open
         self.is_active = is_active
         self.linked_form_id = linked_form_id
         self.multiple_responses = multiple_responses
+        self.allow_edits = allow_edits
         self.settings = settings
         self.created_at = datetime.now()
         self.updated_at = datetime.now()
@@ -331,13 +333,15 @@ class FormTranslation(db.Model):
     language = db.Column(db.String(2), nullable=False)
     
     name = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text(), nullable=True)
     
     form = db.relationship('Form', back_populates='translations')
     
-    def __init__(self, form_id, language, name):
+    def __init__(self, form_id, language, name, description=None):
         self.form_id = form_id
         self.language = language
         self.name = name
+        self.description = description
 
 
 class FormSectionTranslation(db.Model):

@@ -140,6 +140,7 @@ export function loadFormFromApi(apiData, languages) {
   const form = {
     id: apiData.id,
     name: apiData.name || {},
+    description: apiData.description || {},
     is_active: apiData.is_active,
     is_open: apiData.is_open,
     multiple_responses: apiData.multiple_responses,

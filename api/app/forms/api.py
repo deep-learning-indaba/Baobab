@@ -103,21 +103,25 @@ def serialize_form(form, language='en', include_inactive=False):
         }
         sections_data.append(section_data)
     
-    # Get all translations for the form name
+    # Get all translations for the form name and description
     form_translations_dict = {}
     for translation in form.translations:
         form_translations_dict[translation.language] = translation
     
     name_i18n = {}
+    description_i18n = {}
     for lang, trans in form_translations_dict.items():
         name_i18n[lang] = trans.name
+        description_i18n[lang] = trans.description
     
     return {
         'id': form.id,
         'name': name_i18n,
+        'description': description_i18n,
         'is_active': form.is_active,
         'is_open': form.is_open,
         'multiple_responses': form.multiple_responses,
+        'allow_edits': form.allow_edits,
         'settings': form.settings,
         'created_at': form.created_at.isoformat() if form.created_at else None,
         'updated_at': form.updated_at.isoformat() if form.updated_at else None,
@@ -255,10 +259,12 @@ class FormAPI(restful.Resource):
                 form.is_open = args['is_open']
             if 'is_active' in args:
                 form.is_active = args['is_active']
+            if 'allow_edits' in args:
+                form.allow_edits = args['allow_edits']
             if 'settings' in args:
                 form.settings = args['settings']
             
-            # Update form name translations
+            # Update form name and description translations
             if 'name' in args and args['name']:
                 for lang, name_text in args['name'].items():
                     # Find or create translation
@@ -269,11 +275,14 @@ class FormAPI(restful.Resource):
                     
                     if translation:
                         translation.name = name_text
+                        if 'description' in args and args['description']:
+                            translation.description = args['description'].get(lang)
                     else:
                         translation = FormTranslation(
                             form_id=form.id,
                             language=lang,
-                            name=name_text
+                            name=name_text,
+                            description=args.get('description', {}).get(lang) if 'description' in args else None
                         )
                         db.session.add(translation)
             
@@ -342,7 +351,7 @@ class FormStructureAPI(restful.Resource):
             
             args = request.get_json()
             
-            # Update form name translations if provided
+            # Update form name and description translations if provided
             if 'name' in args and args['name']:
                 for lang, name_text in args['name'].items():
                     translation = db.session.query(FormTranslation).filter_by(
@@ -352,11 +361,14 @@ class FormStructureAPI(restful.Resource):
                     
                     if translation:
                         translation.name = name_text
+                        if 'description' in args and args['description']:
+                            translation.description = args['description'].get(lang)
                     else:
                         translation = FormTranslation(
                             form_id=form.id,
                             language=lang,
-                            name=name_text
+                            name=name_text,
+                            description=args.get('description', {}).get(lang) if 'description' in args else None
                         )
                         db.session.add(translation)
             
@@ -369,6 +381,8 @@ class FormStructureAPI(restful.Resource):
                 form.is_active = args['is_active']
             if 'multiple_responses' in args:
                 form.multiple_responses = args['multiple_responses']
+            if 'allow_edits' in args:
+                form.allow_edits = args['allow_edits']
             
             sections_data = args.get('sections', [])
             

@@ -3,6 +3,7 @@
   background-color: #fafafa;
   border-radius: 6px;
   transition: all 0.2s ease;
+  text-align: left;
 }
 
 .question-renderer:hover {
@@ -23,11 +24,12 @@
 }
 
 .question-title {
-  font-size: 1rem;
-  font-weight: 500;
-  color: #374151;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: #1f2937;
   margin: 0;
   display: inline;
+  text-align: left;
 }
 
 .display-headline {
@@ -47,9 +49,27 @@
   margin-top: 0.5rem;
 }
 
+.question-description {
+  color: #6b7280;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+  text-align: left;
+}
+
+.question-description p {
+  margin: 0;
+}
+
+.question-description p + p {
+  margin-top: 0.5rem;
+}
+
 .question-information {
   color: #6b7280;
   line-height: 1.6;
+  text-align: left;
 }
 
 .question-information p {
