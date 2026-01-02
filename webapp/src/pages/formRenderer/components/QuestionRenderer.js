@@ -20,6 +20,7 @@ const QuestionRenderer = ({
   language,
   validationError,
   disabled = false,
+  linkedResponse = null,
   t
 }) => {
   const [uploading, setUploading] = useState(false);
@@ -103,6 +104,42 @@ const QuestionRenderer = ({
     const newValue = event.target.checked;
     onChange(question, newValue ? 'true' : 'false');
   }, [question, onChange]);
+
+  const renderLinkedQuestion = () => {
+    if (!question.linked_question_id || !linkedResponse) {
+      return (
+        <div className="linked-question-no-data">
+          <i className="fas fa-info-circle"></i>
+          <span>{t('No linked response available')}</span>
+        </div>
+      );
+    }
+
+    const linkedAnswer = linkedResponse.answers.find(
+      ans => ans.question_id === question.linked_question_id
+    );
+
+    if (!linkedAnswer || !linkedAnswer.value) {
+      return (
+        <div className="linked-question-no-data">
+          <i className="fas fa-info-circle"></i>
+          <span>{t('No answer provided in linked form')}</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="linked-question-value">
+        <div className="linked-question-label">
+          <i className="fas fa-link"></i>
+          <span>{t('Value from linked form:')}</span>
+        </div>
+        <div className="linked-question-display">
+          {linkedAnswer.value}
+        </div>
+      </div>
+    );
+  };
 
   // Handle dropdown change
   const handleDropdownChange = useCallback((name, selected) => {
@@ -307,6 +344,9 @@ const QuestionRenderer = ({
             <MarkdownRenderer source={description} />
           </div>
         ) : null;
+
+      case 'linked-form-question':
+        return renderLinkedQuestion();
 
       default:
         return (

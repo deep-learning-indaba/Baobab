@@ -12,6 +12,7 @@ const SectionRenderer = ({
   language,
   isQuestionVisible,
   disabled = false,
+  linkedResponse,
   t
 }) => {
   // Get translated content
@@ -60,6 +61,7 @@ const SectionRenderer = ({
             language={language}
             validationError={validationErrors[question.id]}
             disabled={disabled}
+            linkedResponse={linkedResponse}
             t={t}
           />
         ))}

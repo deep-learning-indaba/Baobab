@@ -39,6 +39,7 @@ const FormEditor = ({
       is_open: true,
       multiple_responses: false,
       allow_edits: true,
+      visibility_expression: null,
       linked_form_id: undefined,
       settings: {
         page_per_section: false
@@ -291,6 +292,7 @@ const FormEditor = ({
               t={t}
               includeReviewTypes={includeReviewTypes}
               allQuestions={allQuestions}
+              linkedFormId={state.form.linked_form_id}
             />
           ))}
           

@@ -9,6 +9,7 @@ from app.forms.models import (
     FormTranslation, FormSectionTranslation, FormQuestionTranslation,
     DependencyEvaluator
 )
+from app.forms.visibility import VisibilityEvaluator
 from app.utils.auth import auth_required
 from app.utils import errors
 from app import db, LOGGER
@@ -66,6 +67,7 @@ def serialize_form(form, language='en', include_inactive=False):
                 'is_required': question.is_required,
                 'key': question.key,
                 'dependency_expression': question.dependency_expression,
+                'tag_expression': question.tag_expression,
                 'linked_question_id': question.linked_question_id,
                 'settings': question.settings,
                 'is_active': question.is_active,
@@ -93,6 +95,7 @@ def serialize_form(form, language='en', include_inactive=False):
             'order': section.order,
             'key': section.key,
             'dependency_expression': section.dependency_expression,
+            'tag_expression': section.tag_expression,
             'is_active': section.is_active,
             'version': section.version,
             'created_at': section.created_at.isoformat() if section.created_at else None,
@@ -122,6 +125,7 @@ def serialize_form(form, language='en', include_inactive=False):
         'is_open': form.is_open,
         'multiple_responses': form.multiple_responses,
         'allow_edits': form.allow_edits,
+        'visibility_expression': form.visibility_expression,
         'settings': form.settings,
         'created_at': form.created_at.isoformat() if form.created_at else None,
         'updated_at': form.updated_at.isoformat() if form.updated_at else None,
@@ -236,6 +240,13 @@ class FormAPI(restful.Resource):
             if not form:
                 return errors.FORM_NOT_FOUND
             
+            # Check visibility if expression exists
+            event_id = request.args.get('event_id')
+            if event_id and form.visibility_expression:
+                user_id = g.current_user['id']
+                if not VisibilityEvaluator.check_form_visibility(form, user_id, int(event_id)):
+                    return {'error': 'You do not have permission to access this form'}, 403
+            
             language = request.args.get('language', 'en')
             return serialize_form(form, language), 200
             
@@ -261,6 +272,10 @@ class FormAPI(restful.Resource):
                 form.is_active = args['is_active']
             if 'allow_edits' in args:
                 form.allow_edits = args['allow_edits']
+            if 'visibility_expression' in args:
+                form.visibility_expression = args['visibility_expression']
+            if 'linked_form_id' in args:
+                form.linked_form_id = args['linked_form_id']
             if 'settings' in args:
                 form.settings = args['settings']
             
@@ -383,6 +398,8 @@ class FormStructureAPI(restful.Resource):
                 form.multiple_responses = args['multiple_responses']
             if 'allow_edits' in args:
                 form.allow_edits = args['allow_edits']
+            if 'visibility_expression' in args:
+                form.visibility_expression = args['visibility_expression']
             
             sections_data = args.get('sections', [])
             
@@ -576,6 +593,12 @@ class FormResponseAPI(restful.Resource):
             user_id = g.current_user['id']
             args = request.get_json()
             
+            # Check visibility if expression exists
+            event_id = args.get('event_id')
+            if event_id and form.visibility_expression:
+                if not VisibilityEvaluator.check_form_visibility(form, user_id, int(event_id)):
+                    return {'error': 'You do not have permission to access this form'}, 403
+            
             # Check if multiple_responses is allowed
             if not form.multiple_responses:
                 # Check if user already has an unsubmitted response
@@ -637,9 +660,8 @@ class FormResponseAPI(restful.Resource):
             
             user_id = g.current_user['id']
             args = request.get_json()
-            
-            # response_id is required for PUT
             response_id = args.get('response_id')
+            
             if not response_id:
                 return {'error': 'response_id is required'}, 400
             
@@ -652,6 +674,12 @@ class FormResponseAPI(restful.Resource):
             
             if not response:
                 return {'error': 'Response not found'}, 404
+            
+            # Check visibility if expression exists
+            event_id = args.get('event_id')
+            if event_id and response.form.visibility_expression:
+                if not VisibilityEvaluator.check_form_visibility(response.form, user_id, int(event_id)):
+                    return {'error': 'You do not have permission to access this form'}, 403
             
             # Cannot update submitted response
             if response.is_submitted:
@@ -694,13 +722,19 @@ class FormResponseAPI(restful.Resource):
     
     @auth_required
     def get(self, form_id):
-        """Get user's response(s)"""
+        """Get response(s) for current user"""
         try:
             form = db.session.query(Form).filter_by(id=form_id).first()
             if not form:
                 return errors.FORM_NOT_FOUND
             
             user_id = g.current_user['id']
+            
+            # Check visibility if expression exists
+            event_id = request.args.get('event_id')
+            if event_id and form.visibility_expression:
+                if not VisibilityEvaluator.check_form_visibility(form, user_id, int(event_id)):
+                    return {'error': 'You do not have permission to access this form'}, 403
             
             if form.multiple_responses:
                 # Return all responses for this user
@@ -765,6 +799,13 @@ class FormResponseSubmitAPI(restful.Resource):
                 if answer.is_active and answer.question_id:
                     answers_dict[answer.question_id] = answer.value
             
+            # Get user tags for tag-based visibility
+            user_id = response.user_id
+            event_id = args.get('event_id')
+            user_tags = set()
+            if event_id:
+                user_tags = VisibilityEvaluator.get_user_tags_for_event(user_id, int(event_id))
+            
             validation_errors = []
             answered_question_ids = {answer.question_id for answer in response.answers if answer.is_active}
             
@@ -781,6 +822,13 @@ class FormResponseSubmitAPI(restful.Resource):
                         answers_dict
                     )
                 
+                # Check section visibility based on tags
+                if section_visible and section.tag_expression:
+                    section_visible = VisibilityEvaluator.evaluate(
+                        section.tag_expression,
+                        user_tags
+                    )
+                
                 if not section_visible:
                     continue
                 
@@ -794,6 +842,13 @@ class FormResponseSubmitAPI(restful.Resource):
                         question_visible = DependencyEvaluator.evaluate(
                             question.dependency_expression,
                             answers_dict
+                        )
+                    
+                    # Check question visibility based on tags
+                    if question_visible and question.tag_expression:
+                        question_visible = VisibilityEvaluator.evaluate(
+                            question.tag_expression,
+                            user_tags
                         )
                     
                     if not question_visible:
@@ -821,11 +876,29 @@ class FormResponseSubmitAPI(restful.Resource):
                     if not section_visible:
                         continue
                 
+                # Check section visibility based on tags
+                if section and section.tag_expression:
+                    section_visible = VisibilityEvaluator.evaluate(
+                        section.tag_expression,
+                        user_tags
+                    )
+                    if not section_visible:
+                        continue
+                
                 # Check if question is visible
                 if answer.question.dependency_expression:
                     question_visible = DependencyEvaluator.evaluate(
                         answer.question.dependency_expression,
                         answers_dict
+                    )
+                    if not question_visible:
+                        continue
+                
+                # Check question visibility based on tags
+                if answer.question.tag_expression:
+                    question_visible = VisibilityEvaluator.evaluate(
+                        answer.question.tag_expression,
+                        user_tags
                     )
                     if not question_visible:
                         continue

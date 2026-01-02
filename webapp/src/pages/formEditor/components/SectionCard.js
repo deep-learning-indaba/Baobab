@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import TranslatableFieldGroup from './TranslatableFieldGroup';
 import QuestionCard from './QuestionCard';
 import DependencyEditor from './DependencyEditor';
+import VisibilityExpressionEditor from './VisibilityExpressionEditor';
 import { FORM_ACTIONS } from '../actionTypes';
 import './SectionCard.css';
 
@@ -13,11 +14,13 @@ const SectionCard = ({
   dispatch,
   t,
   includeReviewTypes = false,
-  allQuestions = []
+  allQuestions = [],
+  linkedFormId = null
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [showKey, setShowKey] = useState(!!section.key);
   const [showDependency, setShowDependency] = useState(!!section.dependency_expression);
+  const [showTagExpression, setShowTagExpression] = useState(!!section.tag_expression);
 
   const handleFieldChange = (field, lang, value) => {
     dispatch({
@@ -34,6 +37,14 @@ const SectionCard = ({
       type: FORM_ACTIONS.SET_SECTION_DEPENDENCY,
       sectionId: section.id,
       dependencyExpression
+    });
+  };
+
+  const handleTagExpressionChange = (tagExpression) => {
+    dispatch({
+      type: FORM_ACTIONS.SET_SECTION_TAG_EXPRESSION,
+      sectionId: section.id,
+      tagExpression
     });
   };
 
@@ -174,6 +185,14 @@ const SectionCard = ({
             </button>
             <button
               type="button"
+              className={`section-toggle-btn ${showTagExpression ? 'active' : ''}`}
+              onClick={() => setShowTagExpression(!showTagExpression)}
+            >
+              <i className={`fas ${showTagExpression ? 'fa-check-square' : 'fa-square'}`}></i>
+              {t('Add Tag Visibility')}
+            </button>
+            <button
+              type="button"
               className={`section-toggle-btn ${showKey ? 'active' : ''}`}
               onClick={() => setShowKey(!showKey)}
             >
@@ -187,10 +206,17 @@ const SectionCard = ({
               dependencyExpression={section.dependency_expression}
               onChange={handleDependencyChange}
               availableQuestions={allQuestions}
-              currentQuestionId={null}
               currentSectionOrder={section.order}
               currentQuestionOrder={null}
+              linkedFormId={linkedFormId}
               t={t}
+            />
+          )}
+
+          {showTagExpression && (
+            <VisibilityExpressionEditor
+              expression={section.tag_expression}
+              onChange={handleTagExpressionChange}
             />
           )}
 
@@ -220,6 +246,7 @@ const SectionCard = ({
                 t={t}
                 includeReviewTypes={includeReviewTypes}
                 allQuestions={allQuestions}
+                linkedFormId={linkedFormId}
               />
             ))}
             

@@ -115,10 +115,10 @@
 }
 
 .settings-checkbox input[type="checkbox"] {
-  margin-top: 0.25rem;
-  width: 20px;
-  height: 20px;
+  margin-right: 12px;
   cursor: pointer;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
 }
 
@@ -160,6 +160,40 @@
 
 .close-settings-footer-btn:hover {
   background-color: #2563eb;
+}
+
+.settings-field {
+  margin-bottom: 16px;
+}
+
+.settings-field label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.settings-select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: white;
+  cursor: pointer;
+}
+
+.settings-select:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
+.settings-hint {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+  font-style: italic;
 }
 
 @media (max-width: 768px) {

@@ -218,6 +218,9 @@ class Form(db.Model):
     allow_edits = db.Column(db.Boolean(), nullable=False, default=True)
     linked_form_id = db.Column(db.Integer(), db.ForeignKey('form.id'), nullable=True)
     
+    # Visibility control based on tags
+    visibility_expression = db.Column(db.JSON(), nullable=True)
+    
     # Settings for UI customization (e.g., page-per-section)
     settings = db.Column(db.JSON(), nullable=True)
 
@@ -244,13 +247,15 @@ class Form(db.Model):
     created_by = db.relationship('AppUser', foreign_keys=[created_by_user_id])
     
     def __init__(self, created_by_user_id, is_open=True, is_active=True, 
-                 linked_form_id=None, multiple_responses=False, allow_edits=True, settings=None):
+                 linked_form_id=None, multiple_responses=False, allow_edits=True, 
+                 visibility_expression=None, settings=None):
         self.created_by_user_id = created_by_user_id
         self.is_open = is_open
         self.is_active = is_active
         self.linked_form_id = linked_form_id
         self.multiple_responses = multiple_responses
         self.allow_edits = allow_edits
+        self.visibility_expression = visibility_expression
         self.settings = settings
         self.created_at = datetime.now()
         self.updated_at = datetime.now()
@@ -281,6 +286,9 @@ class FormSection(db.Model):
     # Conditional visibility using expression-based dependencies
     dependency_expression = db.Column(db.JSON(), nullable=True)
     
+    # Tag-based visibility control
+    tag_expression = db.Column(db.JSON(), nullable=True)
+    
     # Relationships
     form = db.relationship('Form', back_populates='sections', foreign_keys=[form_id])
     translations = db.relationship('FormSectionTranslation', lazy='dynamic',
@@ -291,11 +299,12 @@ class FormSection(db.Model):
                                foreign_keys='FormQuestion.section_id',
                                back_populates='section')
     
-    def __init__(self, form_id, order, key=None, dependency_expression=None):
+    def __init__(self, form_id, order, key=None, dependency_expression=None, tag_expression=None):
         self.form_id = form_id
         self.order = order
         self.key = key
         self.dependency_expression = dependency_expression
+        self.tag_expression = tag_expression
         self.is_active = True
         self.version = 1
         self.created_at = datetime.now()
@@ -304,12 +313,13 @@ class FormSection(db.Model):
     def get_translation(self, language: str) -> 'FormSectionTranslation':
         return self.translations.filter_by(language=language).first()
     
-    def evaluate_dependency(self, answers_dict: dict) -> bool:
+    def evaluate_dependency(self, answers_dict: dict, linked_response=None) -> bool:
         """
         Evaluate whether this section should be visible based on its dependencies.
         
         Args:
             answers_dict: Dictionary mapping question_id to answer value
+            linked_response: Optional linked FormResponse for evaluating dependencies on linked questions
         
         Returns:
             bool: True if section should be visible, False otherwise
@@ -317,7 +327,14 @@ class FormSection(db.Model):
         if not self.dependency_expression:
             return True
         
-        return DependencyEvaluator.evaluate(self.dependency_expression, answers_dict)
+        # Build combined answers dict with linked response answers
+        combined_dict = dict(answers_dict)
+        if linked_response and linked_response.answers:
+            for answer in linked_response.answers:
+                if answer.is_active:
+                    combined_dict[answer.question_id] = answer.value
+        
+        return DependencyEvaluator.evaluate(self.dependency_expression, combined_dict)
 
 
 class FormTranslation(db.Model):
@@ -398,6 +415,9 @@ class FormQuestion(db.Model):
     # Conditional visibility using expression-based dependencies
     dependency_expression = db.Column(db.JSON(), nullable=True)
     
+    # Tag-based visibility control
+    tag_expression = db.Column(db.JSON(), nullable=True)
+    
     # Generic question linking - questions can reference other questions
     # Use case: Review questions can link to application questions to display alongside
     linked_question_id = db.Column(db.Integer(), 
@@ -415,7 +435,7 @@ class FormQuestion(db.Model):
     
     def __init__(self, form_id, section_id, order, question_type, 
                  is_required=True, key=None, dependency_expression=None,
-                 linked_question_id=None, settings=None):
+                 tag_expression=None, linked_question_id=None, settings=None):
         self.form_id = form_id
         self.section_id = section_id
         self.order = order
@@ -423,6 +443,7 @@ class FormQuestion(db.Model):
         self.is_required = is_required
         self.key = key
         self.dependency_expression = dependency_expression
+        self.tag_expression = tag_expression
         self.linked_question_id = linked_question_id
         self.settings = settings
         self.is_active = True
@@ -433,12 +454,13 @@ class FormQuestion(db.Model):
     def get_translation(self, language: str) -> 'FormQuestionTranslation':
         return self.translations.filter_by(language=language).first()
     
-    def evaluate_dependency(self, answers_dict: dict) -> bool:
+    def evaluate_dependency(self, answers_dict: dict, linked_response=None) -> bool:
         """
         Evaluate whether this question should be visible based on its dependencies.
         
         Args:
             answers_dict: Dictionary mapping question_id to answer value
+            linked_response: Optional linked FormResponse for evaluating dependencies on linked questions
         
         Returns:
             bool: True if question should be visible, False otherwise
@@ -446,7 +468,14 @@ class FormQuestion(db.Model):
         if not self.dependency_expression:
             return True
         
-        return DependencyEvaluator.evaluate(self.dependency_expression, answers_dict)
+        # Build combined answers dict with linked response answers
+        combined_dict = dict(answers_dict)
+        if linked_response and linked_response.answers:
+            for answer in linked_response.answers:
+                if answer.is_active:
+                    combined_dict[answer.question_id] = answer.value
+        
+        return DependencyEvaluator.evaluate(self.dependency_expression, combined_dict)
 
 
 class FormQuestionTranslation(db.Model):

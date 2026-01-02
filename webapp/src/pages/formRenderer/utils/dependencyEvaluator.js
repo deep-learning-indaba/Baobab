@@ -213,9 +213,10 @@ function evaluateNumeric(operator, answerValue, values) {
 /**
  * Build answers dictionary from an array of answers
  * @param {Array} answers - Array of {question_id, value} objects
+ * @param {Object} linkedResponse - Optional linked form response with answers
  * @returns {Object} Dictionary mapping question_id to value
  */
-export function buildAnswersDict(answers) {
+export function buildAnswersDict(answers, linkedResponse = null) {
   const dict = {};
   if (!answers) return dict;
   
@@ -224,6 +225,18 @@ export function buildAnswersDict(answers) {
       dict[answer.question_id] = answer.value;
     }
   });
+  
+  // Add linked form answers if available
+  if (linkedResponse && linkedResponse.answers) {
+    linkedResponse.answers.forEach(answer => {
+      if (answer && answer.question_id !== undefined) {
+        // Prefix with 'linked_' to distinguish from current form questions
+        dict[`linked_${answer.question_id}`] = answer.value;
+        // Also add without prefix for backward compatibility
+        dict[answer.question_id] = answer.value;
+      }
+    });
+  }
   
   return dict;
 }

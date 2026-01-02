@@ -4,6 +4,7 @@ import SectionRenderer from './components/SectionRenderer';
 import MarkdownRenderer from '../../components/MarkdownRenderer';
 import { evaluateDependency, buildAnswersDict } from './utils/dependencyEvaluator';
 import { validateAllAnswers, hasErrors, getErrorCount } from './utils/validation';
+import { evaluateVisibilityExpression } from './utils/visibilityEvaluator';
 import './FormRenderer.css';
 
 /**
@@ -37,7 +38,8 @@ const FormRenderer = ({
   readOnly = false,
   linkedResponse = null,
   showConfirmation = true,
-  autoSaveInterval = 0 // milliseconds, 0 = disabled
+  autoSaveInterval = 0, // milliseconds, 0 = disabled
+  userTags = [] // Array of tag names the user has
 }) => {
   const { t } = useTranslation();
 
@@ -91,7 +93,9 @@ const FormRenderer = ({
   }, [form]);
 
   // Build answers dictionary for dependency evaluation
-  const answersDict = useMemo(() => buildAnswersDict(answers), [answers]);
+  const answersDict = useMemo(() => {
+    return buildAnswersDict(answers, linkedResponse);
+  }, [answers, linkedResponse]);
 
   // Initialize answers from existing response
   useEffect(() => {
@@ -122,21 +126,44 @@ const FormRenderer = ({
     }
   }, [answers, autoSaveInterval, isDirty, onSave, isReadOnly, isSaving]);
 
-  // Check if a section is visible based on dependencies
+  // Check if a section is visible based on dependencies and tags
   const isSectionVisible = useCallback((section) => {
-    if (!section.dependency_expression) return true;
-    return evaluateDependency(section.dependency_expression, answersDict);
-  }, [answersDict]);
+    if (section.dependency_expression) {
+      if (!evaluateDependency(section.dependency_expression, answersDict)) {
+        return false;
+      }
+    }
+    
+    if (section.tag_expression) {
+      if (!evaluateVisibilityExpression(section.tag_expression, userTags)) {
+        return false;
+      }
+    }
+    
+    return true;
+  }, [answersDict, userTags]);
 
-  // Check if a question is visible based on dependencies
+  // Check if a question is visible based on dependencies and tags
   const isQuestionVisible = useCallback((question, section) => {
     // First check section visibility
     if (!isSectionVisible(section)) return false;
     
-    // Then check question's own dependency
-    if (!question.dependency_expression) return true;
-    return evaluateDependency(question.dependency_expression, answersDict);
-  }, [answersDict, isSectionVisible]);
+    // Check question's dependency expression
+    if (question.dependency_expression) {
+      if (!evaluateDependency(question.dependency_expression, answersDict)) {
+        return false;
+      }
+    }
+    
+    // Check question's tag expression
+    if (question.tag_expression) {
+      if (!evaluateVisibilityExpression(question.tag_expression, userTags)) {
+        return false;
+      }
+    }
+    
+    return true;
+  }, [answersDict, isSectionVisible, userTags]);
 
   // Get visible sections
   const visibleSections = useMemo(() => {
@@ -459,6 +486,7 @@ const FormRenderer = ({
           language={language}
           isQuestionVisible={(q) => isQuestionVisible(q, currentSection)}
           disabled={isReadOnly}
+          linkedResponse={linkedResponse}
           t={t}
         />
       );
@@ -476,8 +504,9 @@ const FormRenderer = ({
             onAnswerChange={handleAnswerChange}
             validationErrors={validationErrors}
             language={language}
-            isQuestionVisible={(q) => isQuestionVisible(q, section)}
+            isQuestionVisible={isQuestionVisible}
             disabled={isReadOnly}
+            linkedResponse={linkedResponse}
             t={t}
           />
         ))}

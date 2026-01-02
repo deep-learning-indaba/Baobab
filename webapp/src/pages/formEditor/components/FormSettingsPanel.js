@@ -1,7 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import VisibilityExpressionEditor from './VisibilityExpressionEditor';
+import { formServices } from '../../../services/form/form.service';
 import './FormSettingsPanel.css';
 
 const FormSettingsPanel = ({ form, onChange, onClose, t }) => {
+  const [availableForms, setAvailableForms] = useState([]);
+  const [loadingForms, setLoadingForms] = useState(false);
+
+  useEffect(() => {
+    const fetchAvailableForms = async () => {
+      setLoadingForms(true);
+      try {
+        const response = await formServices.getFormList({ is_active: true });
+        if (response.forms) {
+          const forms = response.forms.filter(f => f.id !== form.id);
+          setAvailableForms(forms);
+        }
+      } catch (error) {
+        console.error('Error fetching forms:', error);
+      } finally {
+        setLoadingForms(false);
+      }
+    };
+
+    fetchAvailableForms();
+  }, [form.id]);
+
   const handleChange = (field, value) => {
     onChange(field, value);
   };
@@ -75,6 +99,36 @@ const FormSettingsPanel = ({ form, onChange, onClose, t }) => {
                 </span>
               </div>
             </label>
+          </section>
+
+          <section className="settings-section">
+            <VisibilityExpressionEditor
+              expression={form.visibility_expression}
+              onChange={(value) => handleChange('visibility_expression', value)}
+            />
+          </section>
+
+          <section className="settings-section">
+            <h3>{t('Form Linking')}</h3>
+            <div className="settings-field">
+              <label>{t('Link to Form')}</label>
+              <select
+                value={form.linked_form_id || ''}
+                onChange={(e) => handleChange('linked_form_id', e.target.value ? parseInt(e.target.value) : null)}
+                className="settings-select"
+                disabled={loadingForms}
+              >
+                <option value="">{t('No linked form')}</option>
+                {availableForms.map(f => (
+                  <option key={f.id} value={f.id}>
+                    {typeof f.name === 'object' ? (f.name.en || Object.values(f.name)[0]) : f.name}
+                  </option>
+                ))}
+              </select>
+              <span className="settings-hint">
+                {t('Link this form to another form to pre-populate responses')}
+              </span>
+            </div>
           </section>
 
           <section className="settings-section">

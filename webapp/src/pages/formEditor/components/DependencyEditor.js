@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { formServices } from '../../../services/form/form.service';
 import { ALL_COUNTRIES } from '../../../utils/countryData';
 import './DependencyEditor.css';
 
@@ -33,6 +34,7 @@ const DependencyEditor = ({
   currentQuestionId,
   currentSectionOrder,
   currentQuestionOrder,
+  linkedFormId,
   t 
 }) => {
   const [mode, setMode] = useState('simple');
@@ -40,6 +42,8 @@ const DependencyEditor = ({
   const [rawValueInput, setRawValueInput] = useState('');
   const [isInitialized, setIsInitialized] = useState(false);
   const [showJsonPreview, setShowJsonPreview] = useState(false);
+  const [linkedFormQuestions, setLinkedFormQuestions] = useState([]);
+  const [loadingLinkedQuestions, setLoadingLinkedQuestions] = useState(false);
 
   useEffect(() => {
     if (!isInitialized) {
@@ -68,8 +72,54 @@ const DependencyEditor = ({
     }
   }, [dependencyExpression, isInitialized]);
 
+  useEffect(() => {
+    if (!linkedFormId) {
+      setLinkedFormQuestions([]);
+      return;
+    }
+
+    const fetchLinkedFormQuestions = async () => {
+      setLoadingLinkedQuestions(true);
+      try {
+        const response = await formServices.getForm(linkedFormId);
+        if (response.form && response.form.sections) {
+          const allQuestions = [];
+          response.form.sections.forEach((section) => {
+            const sectionName = typeof section.name === 'object' 
+              ? (section.name.en || Object.values(section.name)[0]) 
+              : section.name;
+            
+            section.questions.forEach((question) => {
+              const questionHeadline = typeof question.headline === 'object'
+                ? (question.headline.en || Object.values(question.headline)[0])
+                : question.headline;
+              
+              allQuestions.push({
+                id: question.id,
+                headline: questionHeadline || `Question ${question.order}`,
+                sectionName: sectionName,
+                sectionOrder: section.order,
+                order: question.order,
+                type: question.type,
+                options: question.options || [],
+                isLinked: true
+              });
+            });
+          });
+          setLinkedFormQuestions(allQuestions);
+        }
+      } catch (err) {
+        console.error('Error fetching linked form questions:', err);
+      } finally {
+        setLoadingLinkedQuestions(false);
+      }
+    };
+
+    fetchLinkedFormQuestions();
+  }, [linkedFormId]);
+
   const getAvailableQuestions = () => {
-    return availableQuestions.filter(q => {
+    const currentFormQuestions = availableQuestions.filter(q => {
       // Exclude the current question
       if (q.id === currentQuestionId) return false;
       
@@ -91,10 +141,13 @@ const DependencyEditor = ({
       
       return false;
     });
+
+    return [...currentFormQuestions, ...linkedFormQuestions];
   };
 
   const getSelectedQuestion = (questionId) => {
-    return availableQuestions.find(q => q.id === questionId);
+    const allQuestions = [...availableQuestions, ...linkedFormQuestions];
+    return allQuestions.find(q => q.id === questionId);
   };
 
   const hasOptions = (questionType) => {
@@ -347,11 +400,17 @@ const DependencyEditor = ({
             className="dependency-select"
           >
             <option value="">{t('Select a question...')}</option>
-            {getAvailableQuestions().map(q => (
-              <option key={q.id} value={q.id}>
-                Q{q.order}: {q.headline && q.headline[Object.keys(q.headline)[0]] ? q.headline[Object.keys(q.headline)[0]] : t('Untitled Question')}
-              </option>
-            ))}
+            {getAvailableQuestions().map(q => {
+              const headline = q.headline && typeof q.headline === 'object' 
+                ? (q.headline[Object.keys(q.headline)[0]] || t('Untitled Question'))
+                : (q.headline || t('Untitled Question'));
+              const prefix = q.isLinked ? `[Linked] ${q.sectionName} - ` : `Q${q.order}: `;
+              return (
+                <option key={q.id} value={q.id}>
+                  {prefix}{headline}
+                </option>
+              );
+            })}
           </select>
         </div>
 
@@ -405,11 +464,17 @@ const DependencyEditor = ({
             className="dependency-select-small"
           >
             <option value="">{t('Select question...')}</option>
-            {getAvailableQuestions().map(q => (
-              <option key={q.id} value={q.id}>
-                Q{q.order}: {q.headline && q.headline[Object.keys(q.headline)[0]] ? q.headline[Object.keys(q.headline)[0]] : t('Untitled')}
-              </option>
-            ))}
+            {getAvailableQuestions().map(q => {
+              const headline = q.headline && typeof q.headline === 'object' 
+                ? (q.headline[Object.keys(q.headline)[0]] || t('Untitled'))
+                : (q.headline || t('Untitled'));
+              const prefix = q.isLinked ? `[Linked] ${q.sectionName} - ` : `Q${q.order}: `;
+              return (
+                <option key={q.id} value={q.id}>
+                  {prefix}{headline}
+                </option>
+              );
+            })}
           </select>
 
           <select

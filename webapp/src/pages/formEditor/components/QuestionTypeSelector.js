@@ -70,6 +70,11 @@ const QuestionTypeSelector = ({ value, onChange, t, includeReviewTypes = false }
       icon: 'fa-user-friends'
     },
     {
+      value: 'linked-form-question',
+      label: t('Linked Form Question'),
+      icon: 'fa-link'
+    },
+    {
       value: 'country',
       label: t('Country Selector'),
       icon: 'fa-globe-africa'

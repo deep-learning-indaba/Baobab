@@ -161,6 +161,19 @@ export function formEditorReducer(state, action) {
       };
     }
 
+    case FORM_ACTIONS.SET_SECTION_TAG_EXPRESSION: {
+      const sections = state.sections.map(s =>
+        s.id === action.sectionId
+          ? { ...s, tag_expression: action.tagExpression }
+          : s
+      );
+      return {
+        ...state,
+        sections,
+        ui: { ...state.ui, isDirty: true }
+      };
+    }
+
     case FORM_ACTIONS.ADD_QUESTION: {
       const sections = state.sections.map(s => {
         if (s.id !== action.sectionId) return s;
@@ -348,18 +361,38 @@ export function formEditorReducer(state, action) {
     }
 
     case FORM_ACTIONS.SET_QUESTION_DEPENDENCY: {
-      const sections = state.sections.map(s => {
-        if (s.id !== action.sectionId) return s;
+      const sections = state.sections.map(section => {
+        if (section.id !== action.sectionId) return section;
         
-        const questions = s.questions.map(q =>
-          q.id === action.questionId
-            ? { ...q, dependency_expression: action.dependencyExpression }
-            : q
-        );
-        
-        return { ...s, questions };
+        return {
+          ...section,
+          questions: section.questions.map(q =>
+            q.id === action.questionId
+              ? { ...q, dependency_expression: action.dependencyExpression }
+              : q
+          )
+        };
       });
+      return {
+        ...state,
+        sections,
+        ui: { ...state.ui, isDirty: true }
+      };
+    }
 
+    case FORM_ACTIONS.SET_QUESTION_TAG_EXPRESSION: {
+      const sections = state.sections.map(section => {
+        if (section.id !== action.sectionId) return section;
+        
+        return {
+          ...section,
+          questions: section.questions.map(q =>
+            q.id === action.questionId
+              ? { ...q, tag_expression: action.tagExpression }
+              : q
+          )
+        };
+      });
       return {
         ...state,
         sections,

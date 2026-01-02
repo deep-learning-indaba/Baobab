@@ -16,7 +16,8 @@ const QuestionCard = ({
   dispatch,
   t,
   includeReviewTypes = false,
-  allQuestions = []
+  allQuestions = [],
+  linkedFormId = null
 }) => {
   const [showKey, setShowKey] = useState(!!question.key);
   const [showValidation, setShowValidation] = useState(
@@ -437,6 +438,7 @@ const QuestionCard = ({
             currentQuestionId={question.id}
             currentSectionOrder={sectionOrder}
             currentQuestionOrder={question.order}
+            linkedFormId={linkedFormId}
             t={t}
           />
         )}
