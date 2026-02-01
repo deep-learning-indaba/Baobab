@@ -2,7 +2,7 @@ import React from 'react';
 import { default as ReactSelect } from 'react-select';
 import './QuestionTypeSelector.css';
 
-const QuestionTypeSelector = ({ value, onChange, t, includeReviewTypes = false }) => {
+const QuestionTypeSelector = ({ value, onChange, t, includeReviewTypes = false, linkedFormId = null }) => {
   const baseOptions = [
     {
       value: 'short-text',
@@ -70,16 +70,20 @@ const QuestionTypeSelector = ({ value, onChange, t, includeReviewTypes = false }
       icon: 'fa-user-friends'
     },
     {
-      value: 'linked-form-question',
-      label: t('Linked Form Question'),
-      icon: 'fa-link'
-    },
-    {
       value: 'country',
       label: t('Country Selector'),
       icon: 'fa-globe-africa'
     }
   ];
+
+  // Only include linked-form-question if a linked form is selected OR if it's the current value
+  if (linkedFormId || value === 'linked-form-question') {
+    baseOptions.push({
+      value: 'linked-form-question',
+      label: t('Linked Form Question'),
+      icon: 'fa-link'
+    });
+  }
 
   const reviewOnlyOptions = [
     {

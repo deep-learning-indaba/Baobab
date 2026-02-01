@@ -10,9 +10,10 @@ from app.forms.models import (
     DependencyEvaluator
 )
 from app.forms.visibility import VisibilityEvaluator
-from app.utils.auth import auth_required
+from app.utils.auth import auth_required, event_admin_required
 from app.utils import errors
 from app import db, LOGGER
+from app.users.models import AppUser
 
 
 def serialize_form(form, language='en', include_inactive=False):
@@ -157,6 +158,35 @@ def serialize_response(response):
         'language': response.language,
         'answers': answers_data
     }
+
+
+def serialize_response_summary(response):
+    """Serialize a form response summary without answers (for list views)"""
+    return {
+        'id': response.id,
+        'form_id': response.form_id,
+        'user_id': response.user_id,
+        'is_submitted': response.is_submitted,
+        'submitted_timestamp': response.submitted_timestamp.isoformat() if response.submitted_timestamp else None,
+        'is_withdrawn': response.is_withdrawn,
+        'withdrawn_timestamp': response.withdrawn_timestamp.isoformat() if response.withdrawn_timestamp else None,
+        'started_timestamp': response.started_timestamp.isoformat() if response.started_timestamp else None,
+        'language': response.language,
+        'answer_count': len(response.answers) if response.answers else 0
+    }
+
+
+def serialize_response_with_linked(response):
+    """Serialize a form response with answers and linked response details (for detail views)"""
+    response_data = serialize_response(response)
+    
+    # Add linked response if it exists
+    if response.linked_response_id and response.linked_response:
+        response_data['linked_response'] = serialize_response(response.linked_response)
+    else:
+        response_data['linked_response'] = None
+    
+    return response_data
 
 
 class FormListAPI(restful.Resource):
@@ -400,6 +430,8 @@ class FormStructureAPI(restful.Resource):
                 form.allow_edits = args['allow_edits']
             if 'visibility_expression' in args:
                 form.visibility_expression = args['visibility_expression']
+            if 'linked_form_id' in args:
+                form.linked_form_id = args['linked_form_id']
             
             sections_data = args.get('sections', [])
             
@@ -962,4 +994,158 @@ class FormResponseWithdrawAPI(restful.Resource):
             LOGGER.error(f"Error withdrawing response {response_id}: {str(e)}")
             LOGGER.error(traceback.format_exc())
             db.session.rollback()
+            return errors.DB_NOT_AVAILABLE
+
+
+class FormResponseListAdminAPI(restful.Resource):
+    """Admin endpoint to list all responses for a form with pagination"""
+    
+    @event_admin_required
+    def get(self, form_id, event_id):
+        """Get paginated list of all responses for a form (admin only)"""
+        try:
+            # Verify form exists
+            form = db.session.query(Form).filter_by(id=form_id).first()
+            if not form:
+                return errors.FORM_NOT_FOUND
+            
+            # Parse pagination parameters
+            try:
+                page = int(request.args.get('page', 1))
+                per_page = int(request.args.get('per_page', 25))
+                if page < 1:
+                    page = 1
+                if per_page < 1:
+                    per_page = 25
+                if per_page > 10000:
+                    per_page = 10000
+            except ValueError:
+                return errors.INVALID_INPUT_MALFORMED_PAGINATION
+            
+            # Parse filter parameters
+            is_submitted = request.args.get('is_submitted')
+            is_withdrawn = request.args.get('is_withdrawn')
+            user_id = request.args.get('user_id')
+            email_search = request.args.get('email')
+            name_search = request.args.get('name')
+            
+            # Build query with user join for user information
+            query = db.session.query(FormResponse, AppUser).join(
+                AppUser, FormResponse.user_id == AppUser.id
+            ).filter(FormResponse.form_id == form_id)
+            
+            # Apply filters
+            if is_submitted is not None:
+                query = query.filter(FormResponse.is_submitted == (is_submitted.lower() == 'true'))
+            
+            if is_withdrawn is not None:
+                query = query.filter(FormResponse.is_withdrawn == (is_withdrawn.lower() == 'true'))
+            
+            if user_id:
+                query = query.filter(FormResponse.user_id == int(user_id))
+            
+            # Search by email (case-insensitive partial match)
+            if email_search:
+                query = query.filter(AppUser.email.ilike(f'%{email_search}%'))
+            
+            # Search by name (case-insensitive partial match on firstname or lastname)
+            if name_search:
+                query = query.filter(
+                    db.or_(
+                        AppUser.firstname.ilike(f'%{name_search}%'),
+                        AppUser.lastname.ilike(f'%{name_search}%')
+                    )
+                )
+            
+            # Order by most recent first
+            query = query.order_by(FormResponse.started_timestamp.desc())
+            
+            # Paginate
+            paginated = query.paginate(page=page, per_page=per_page, error_out=False)
+            
+            # Serialize results with user information (without answers for efficiency)
+            results = []
+            for response, user in paginated.items:
+                response_data = serialize_response_summary(response)
+                response_data['user'] = {
+                    'id': user.id,
+                    'firstname': user.firstname,
+                    'lastname': user.lastname,
+                    'email': user.email,
+                    'user_title': user.user_title
+                }
+                results.append(response_data)
+            
+            return {
+                'pagination': {
+                    'page': paginated.page,
+                    'per_page': paginated.per_page,
+                    'total': paginated.total,
+                    'pages': paginated.pages
+                },
+                'responses': results
+            }, 200
+            
+        except Exception as e:
+            LOGGER.error(f"Error getting responses for form {form_id}: {str(e)}")
+            LOGGER.error(traceback.format_exc())
+            return errors.DB_NOT_AVAILABLE
+
+
+class FormResponseDetailAdminAPI(restful.Resource):
+    """Admin endpoint to retrieve full details of a single response"""
+    
+    @event_admin_required
+    def get(self, form_id, response_id, event_id):
+        """Get detailed response including answers and linked response (admin only)"""
+        try:
+            # Verify form exists
+            form = db.session.query(Form).filter_by(id=form_id).first()
+            if not form:
+                return errors.FORM_NOT_FOUND
+            
+            # Get response with user information
+            result = db.session.query(FormResponse, AppUser).join(
+                AppUser, FormResponse.user_id == AppUser.id
+            ).filter(
+                FormResponse.id == response_id,
+                FormResponse.form_id == form_id
+            ).first()
+            
+            if not result:
+                return {'error': 'Response not found'}, 404
+            
+            response, user = result
+            
+            # Serialize with full details including linked response
+            response_data = serialize_response_with_linked(response)
+            
+            # Add user information
+            response_data['user'] = {
+                'id': user.id,
+                'firstname': user.firstname,
+                'lastname': user.lastname,
+                'email': user.email,
+                'user_title': user.user_title
+            }
+            
+            # Add linked response user information if linked response exists
+            if response_data['linked_response'] and response.linked_response:
+                linked_user = db.session.query(AppUser).filter_by(
+                    id=response.linked_response.user_id
+                ).first()
+                if linked_user:
+                    response_data['linked_response']['user'] = {
+                        'id': linked_user.id,
+                        'firstname': linked_user.firstname,
+                        'lastname': linked_user.lastname,
+                        'email': linked_user.email,
+                        'user_title': linked_user.user_title
+                    }
+            
+            return response_data, 200
+            
+        except Exception as e:
+            LOGGER.error(f"Error getting response detail {response_id}: {str(e)}")
+            LOGGER.error(traceback.format_exc())
             return errors.DB_NOT_AVAILABLE

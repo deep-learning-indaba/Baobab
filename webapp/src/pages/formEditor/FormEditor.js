@@ -13,6 +13,7 @@ import './FormEditor.css';
 const FormEditor = ({
   eventId,
   formId,
+  eventKey,
   languages,
   onSave,
   onCancel,
@@ -23,6 +24,7 @@ const FormEditor = ({
   const [showSettings, setShowSettings] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
+  const [autoTranslateEnabled, setAutoTranslateEnabled] = useState(true);
 
   const initialState = {
     form: {
@@ -192,9 +194,7 @@ const FormEditor = ({
     <div className="form-editor">
       <div className="form-editor-toolbar">
         <div className="toolbar-left">
-          <h1 className="form-editor-title">
-            {formId ? t('Edit Form') : t('Create New Form')}
-          </h1>
+          <h1 className="form-editor-title">{t('Form Editor')}</h1>
           {state.ui.isDirty && (
             <span className="unsaved-indicator">
               <i className="fas fa-circle"></i>
@@ -204,6 +204,26 @@ const FormEditor = ({
         </div>
         
         <div className="toolbar-right">
+          <label className="auto-translate-toggle">
+            <input
+              type="checkbox"
+              checked={autoTranslateEnabled}
+              onChange={(e) => setAutoTranslateEnabled(e.target.checked)}
+            />
+            <span className="toggle-slider"></span>
+            <span className="toggle-label">{t('Auto-translate')}</span>
+          </label>
+          {formId && (
+            <button
+              type="button"
+              className="toolbar-btn toolbar-btn-preview"
+              onClick={() => window.open(`/${eventKey}/forms/${formId}/preview`, '_blank')}
+              title={t('Preview this form')}
+            >
+              <i className="fas fa-eye"></i>
+              {t('Preview')}
+            </button>
+          )}
           <button
             type="button"
             className="toolbar-btn toolbar-btn-secondary"
@@ -249,6 +269,7 @@ const FormEditor = ({
           languages={languages}
           onChange={handleFormNameChange}
           required={true}
+          autoTranslateEnabled={autoTranslateEnabled}
           placeholder={t('Enter form name')}
         />
         <TranslatableFieldGroup
@@ -257,9 +278,9 @@ const FormEditor = ({
           values={state.form.description}
           languages={languages}
           onChange={handleFormDescriptionChange}
-          required={false}
-          placeholder={t('Enter form description (optional)')}
           multiline={true}
+          autoTranslateEnabled={autoTranslateEnabled}
+          placeholder={t('Enter form description (optional)')}
         />
       </div>
 
@@ -293,6 +314,7 @@ const FormEditor = ({
               includeReviewTypes={includeReviewTypes}
               allQuestions={allQuestions}
               linkedFormId={state.form.linked_form_id}
+              autoTranslateEnabled={autoTranslateEnabled}
             />
           ))}
           

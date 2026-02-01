@@ -79,6 +79,109 @@
   margin-top: 0.25rem;
 }
 
+.translating-indicator {
+  color: #3b82f6;
+  font-size: 0.85rem;
+  margin-left: 0.5rem;
+  font-weight: normal;
+}
+
+.translating-indicator i {
+  margin-right: 0.25rem;
+}
+
+.retranslate-btn {
+  margin-top: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  color: #3b82f6;
+  background-color: transparent;
+  border: 1px solid #3b82f6;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  width: fit-content;
+}
+
+.retranslate-btn:hover:not(:disabled) {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.retranslate-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.retranslate-btn i {
+  font-size: 0.7rem;
+}
+
+.auto-translate-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+
+.auto-translate-toggle input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  background-color: #ccc;
+  border-radius: 34px;
+  transition: background-color 0.3s ease;
+}
+
+.toggle-slider::before {
+  content: "";
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  top: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.auto-translate-toggle input[type="checkbox"]:checked + .toggle-slider {
+  background-color: #3b82f6;
+}
+
+.auto-translate-toggle input[type="checkbox"]:checked + .toggle-slider::before {
+  transform: translateX(20px);
+}
+
+.auto-translate-toggle input[type="checkbox"]:focus + .toggle-slider {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.auto-translate-toggle input[type="checkbox"]:disabled + .toggle-slider {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toggle-label {
+  font-size: 0.9rem;
+  color: #333;
+  font-weight: 500;
+}
+
 @media (max-width: 768px) {
   .translatable-inputs-container {
     flex-direction: column;

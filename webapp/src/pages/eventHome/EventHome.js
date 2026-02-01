@@ -31,6 +31,10 @@ import ResponsePage from "../ResponsePage/ResponsePage";
 import ReviewDashboard from "../reviewDashboard";
 import { Attendance, Indemnity } from '../attendance';
 import EventRoleAdmin from "../eventRoleAdmin";
+import FormManagement from "../formManagement";
+import FormPreviewPage from "../formPreview";
+import FormResponseList from "../formResponseList";
+import FormResponseDetail from "../formResponseDetail";
 
 class EventInfo extends Component {
   constructor(props) {
@@ -287,6 +291,11 @@ class EventHome extends Component {
         />
         <Route
           exact
+          path={`${match.path}/formManagement`}
+          render={(props) => <FormManagement {...props} event={event} user={this.props.user}/>}
+        />
+        <Route
+          exact
           path={`${match.path}/forms/new`}
           render={(props) => (
             <FormEditorPage
@@ -307,6 +316,39 @@ class EventHome extends Component {
               eventKey={this.state.eventKey}
               event={event}
               organisation={this.props.organisation}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/form-responses/:formId/:responseId`}
+          render={(props) => (
+            <FormResponseDetail
+              {...props}
+              event={event}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/form-responses/:formId`}
+          render={(props) => (
+            <FormResponseList
+              {...props}
+              event={event}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/forms/:formId/preview`}
+          render={(props) => (
+            <FormPreviewPage
+              {...props}
+              event={event}
               user={this.props.user}
             />
           )}

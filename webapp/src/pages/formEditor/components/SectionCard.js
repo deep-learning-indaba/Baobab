@@ -15,7 +15,8 @@ const SectionCard = ({
   t,
   includeReviewTypes = false,
   allQuestions = [],
-  linkedFormId = null
+  linkedFormId = null,
+  autoTranslateEnabled = true
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [showKey, setShowKey] = useState(!!section.key);
@@ -163,6 +164,7 @@ const SectionCard = ({
             languages={languages}
             onChange={(lang, value) => handleFieldChange('name', lang, value)}
             required={true}
+            autoTranslateEnabled={autoTranslateEnabled}
           />
 
           <TranslatableFieldGroup
@@ -172,6 +174,7 @@ const SectionCard = ({
             languages={languages}
             onChange={(lang, value) => handleFieldChange('description', lang, value)}
             multiline={true}
+            autoTranslateEnabled={autoTranslateEnabled}
           />
 
           <div className="section-toggles">
@@ -247,6 +250,7 @@ const SectionCard = ({
                 includeReviewTypes={includeReviewTypes}
                 allQuestions={allQuestions}
                 linkedFormId={linkedFormId}
+                autoTranslateEnabled={autoTranslateEnabled}
               />
             ))}
             

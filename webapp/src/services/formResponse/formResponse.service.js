@@ -9,7 +9,9 @@ export const formResponseService = {
     getResponse,
     getResponses,
     submitResponse,
-    withdrawResponse
+    withdrawResponse,
+    getResponseListAdmin,
+    getResponseDetailAdmin
 }
 
 /**
@@ -170,6 +172,74 @@ function submitResponse(formId, responseId) {
  */
 function withdrawResponse(formId, responseId) {
     return axios.post(baseUrl + `/api/v1/forms/${formId}/responses/${responseId}/withdraw`, {}, {
+        headers: authHeader()
+    })
+    .then(function(response) {
+        return {
+            response: response.data,
+            error: "",
+            statusCode: response.status
+        };
+    })
+    .catch(function(error) {
+        return {
+            response: null,
+            error: extractErrorMessage(error),
+            statusCode: error.response && error.response.status
+        };
+    });
+}
+
+/**
+ * Get paginated list of all responses for a form (admin only)
+ * @param {number} eventId - The event ID
+ * @param {number} formId - The form ID
+ * @param {object} filters - Filters { page, per_page, is_submitted, is_withdrawn, user_id, email, name }
+ * @returns {Promise} Response with paginated responses or error
+ */
+function getResponseListAdmin(eventId, formId, filters = {}) {
+    const params = new URLSearchParams();
+    params.append('event_id', eventId);
+    
+    if (filters.page) params.append('page', filters.page);
+    if (filters.per_page) params.append('per_page', filters.per_page);
+    if (filters.is_submitted !== undefined) params.append('is_submitted', filters.is_submitted);
+    if (filters.is_withdrawn !== undefined) params.append('is_withdrawn', filters.is_withdrawn);
+    if (filters.user_id) params.append('user_id', filters.user_id);
+    if (filters.email) params.append('email', filters.email);
+    if (filters.name) params.append('name', filters.name);
+    
+    return axios.get(baseUrl + `/api/v1/forms/${formId}/responses/admin?${params.toString()}`, {
+        headers: authHeader()
+    })
+    .then(function(response) {
+        return {
+            data: response.data,
+            error: "",
+            statusCode: response.status
+        };
+    })
+    .catch(function(error) {
+        return {
+            data: null,
+            error: extractErrorMessage(error),
+            statusCode: error.response && error.response.status
+        };
+    });
+}
+
+/**
+ * Get detailed response including answers and linked response (admin only)
+ * @param {number} eventId - The event ID
+ * @param {number} formId - The form ID
+ * @param {number} responseId - The response ID
+ * @returns {Promise} Response with detailed response object or error
+ */
+function getResponseDetailAdmin(eventId, formId, responseId) {
+    const params = new URLSearchParams();
+    params.append('event_id', eventId);
+    
+    return axios.get(baseUrl + `/api/v1/forms/${formId}/responses/${responseId}/admin?${params.toString()}`, {
         headers: authHeader()
     })
     .then(function(response) {

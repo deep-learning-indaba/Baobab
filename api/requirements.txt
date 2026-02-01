@@ -31,6 +31,7 @@ flask-cors
 python-dateutil
 gunicorn
 google-cloud-storage
+google-cloud-translate==2.0.1
 oauth2client
 oauthlib
 enum34

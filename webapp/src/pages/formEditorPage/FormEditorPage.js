@@ -139,6 +139,7 @@ const FormEditorPage = (props) => {
       <FormEditor
         eventId={eventId}
         formId={formId}
+        eventKey={props.eventKey}
         languages={languages}
         onSave={handleSave}
         onCancel={handleCancel}

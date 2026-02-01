@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { formServices } from '../../../services/form/form.service';
 import './LinkedQuestionSelector.css';
 
-const LinkedQuestionSelector = ({ linkedFormId, linkedQuestionId, onChange, t }) => {
+const LinkedQuestionSelector = ({ linkedFormId, linkedQuestionId, onChange, t, onQuestionDataLoad }) => {
   const [linkedFormQuestions, setLinkedFormQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -33,7 +33,9 @@ const LinkedQuestionSelector = ({ linkedFormId, linkedQuestionId, onChange, t })
               allQuestions.push({
                 id: question.id,
                 label: `${sectionName} - ${questionHeadline || `Question ${question.order}`}`,
-                type: question.type
+                type: question.type,
+                headline: question.headline,
+                description: question.description
               });
             });
           });
@@ -77,12 +79,22 @@ const LinkedQuestionSelector = ({ linkedFormId, linkedQuestionId, onChange, t })
     );
   }
 
+  const handleQuestionSelect = (questionId) => {
+    const selectedQuestion = linkedFormQuestions.find(q => q.id === parseInt(questionId));
+    onChange(questionId ? parseInt(questionId) : null);
+    
+    // Call the callback with the full question data so parent can auto-populate fields
+    if (onQuestionDataLoad && selectedQuestion) {
+      onQuestionDataLoad(selectedQuestion);
+    }
+  };
+
   return (
     <div className="linked-question-selector">
       <label>{t('Select Question from Linked Form')}</label>
       <select
         value={linkedQuestionId || ''}
-        onChange={(e) => onChange(e.target.value ? parseInt(e.target.value) : null)}
+        onChange={(e) => handleQuestionSelect(e.target.value)}
         className="linked-question-select"
       >
         <option value="">{t('Select a question...')}</option>

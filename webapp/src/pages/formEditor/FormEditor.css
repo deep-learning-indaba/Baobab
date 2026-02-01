@@ -85,6 +85,15 @@
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
 }
 
+.toolbar-btn-preview {
+  background-color: #8b5cf6;
+  color: white;
+}
+
+.toolbar-btn-preview:hover:not(:disabled) {
+  background-color: #7c3aed;
+}
+
 .toolbar-btn-secondary {
   background-color: white;
   color: #374151;

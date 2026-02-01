@@ -61,6 +61,7 @@ const FormSettingsPanel = ({ form, onChange, onClose, t }) => {
                 checked={form.settings.page_per_section || false}
                 onChange={(e) => handleSettingsChange('page_per_section', e.target.checked)}
               />
+              <span className="toggle-slider"></span>
               <div className="checkbox-label">
                 <span className="checkbox-title">{t('Display each section as a separate page')}</span>
                 <span className="checkbox-description">
@@ -78,6 +79,7 @@ const FormSettingsPanel = ({ form, onChange, onClose, t }) => {
                 checked={form.multiple_responses || false}
                 onChange={(e) => handleChange('multiple_responses', e.target.checked)}
               />
+              <span className="toggle-slider"></span>
               <div className="checkbox-label">
                 <span className="checkbox-title">{t('Allow multiple responses')}</span>
                 <span className="checkbox-description">
@@ -92,6 +94,7 @@ const FormSettingsPanel = ({ form, onChange, onClose, t }) => {
                 checked={form.allow_edits !== false}
                 onChange={(e) => handleChange('allow_edits', e.target.checked)}
               />
+              <span className="toggle-slider"></span>
               <div className="checkbox-label">
                 <span className="checkbox-title">{t('Allow editing after submission')}</span>
                 <span className="checkbox-description">
@@ -139,6 +142,7 @@ const FormSettingsPanel = ({ form, onChange, onClose, t }) => {
                 checked={form.is_open || false}
                 onChange={(e) => handleChange('is_open', e.target.checked)}
               />
+              <span className="toggle-slider"></span>
               <div className="checkbox-label">
                 <span className="checkbox-title">{t('Form is open')}</span>
                 <span className="checkbox-description">
@@ -153,6 +157,7 @@ const FormSettingsPanel = ({ form, onChange, onClose, t }) => {
                 checked={form.is_active || false}
                 onChange={(e) => handleChange('is_active', e.target.checked)}
               />
+              <span className="toggle-slider"></span>
               <div className="checkbox-label">
                 <span className="checkbox-title">{t('Form is active')}</span>
                 <span className="checkbox-description">

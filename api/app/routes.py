@@ -21,6 +21,7 @@ from .tags import api as tag_api
 from .invoice import api as invoice_api
 from .reporting import api as reporting_api
 from .forms import api as forms_api
+from .utils import translation_api
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
 rest_api.add_resource(users_api.UserCommentAPI, '/api/v1/user-comment')
@@ -156,6 +157,9 @@ rest_api.add_resource(invitation_letter_api.InvitationLetterAvailableAPI, '/api/
 rest_api.add_resource(forms_api.FormListAPI, '/api/v1/forms')
 rest_api.add_resource(forms_api.FormAPI, '/api/v1/forms/<int:form_id>')
 rest_api.add_resource(forms_api.FormStructureAPI, '/api/v1/forms/<int:form_id>/structure')
-rest_api.add_resource(forms_api.FormResponseAPI, '/api/v1/forms/<int:form_id>/responses')
+rest_api.add_resource(forms_api.FormResponseAPI, '/api/v1/forms/<int:form_id>/response')
+rest_api.add_resource(translation_api.TranslationAPI, '/api/v1/translate')
 rest_api.add_resource(forms_api.FormResponseSubmitAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/submit')
 rest_api.add_resource(forms_api.FormResponseWithdrawAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/withdraw')
+rest_api.add_resource(forms_api.FormResponseListAdminAPI, '/api/v1/forms/<int:form_id>/responses/admin')
+rest_api.add_resource(forms_api.FormResponseDetailAdminAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/admin')

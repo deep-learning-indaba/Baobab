@@ -5,6 +5,7 @@ import OptionsEditor from './OptionsEditor';
 import QuestionSettingsEditor from './QuestionSettingsEditor';
 import CountryEditor from './CountryEditor';
 import DependencyEditor from './DependencyEditor';
+import LinkedQuestionSelector from './LinkedQuestionSelector';
 import { FORM_ACTIONS } from '../actionTypes';
 import './QuestionCard.css';
 
@@ -17,7 +18,8 @@ const QuestionCard = ({
   t,
   includeReviewTypes = false,
   allQuestions = [],
-  linkedFormId = null
+  linkedFormId = null,
+  autoTranslateEnabled = true
 }) => {
   const [showKey, setShowKey] = useState(!!question.key);
   const [showValidation, setShowValidation] = useState(
@@ -254,6 +256,7 @@ const QuestionCard = ({
   const hasPlaceholder = question.type && ['short-text', 'long-text', 'numeric', 'combobox', 'multi-file', 'country'].includes(question.type);
   const hasSettings = question.type && ['file', 'multi-file', 'numeric', 'reference', 'long-text', 'markdown'].includes(question.type);
   const hasCountrySettings = question.type === 'country';
+  const hasLinkedQuestion = question.type === 'linked-form-question';
   const canHaveValidation = question.type && ['short-text', 'long-text', 'markdown'].includes(question.type);
 
   return (
@@ -304,6 +307,7 @@ const QuestionCard = ({
               onChange={handleTypeChange}
               t={t}
               includeReviewTypes={includeReviewTypes}
+              linkedFormId={linkedFormId}
             />
           </div>
           {question.type !== 'sub-heading' && question.type !== 'information' && (
@@ -326,6 +330,7 @@ const QuestionCard = ({
             languages={languages}
             onChange={(lang, value) => handleFieldChange('headline', lang, value)}
             required={true}
+            autoTranslateEnabled={autoTranslateEnabled}
           />
         )}
 
@@ -335,6 +340,7 @@ const QuestionCard = ({
           values={question.description}
           languages={languages}
           onChange={(lang, value) => handleFieldChange('description', lang, value)}
+          autoTranslateEnabled={autoTranslateEnabled}
           multiline={true}
         />
 
@@ -345,6 +351,7 @@ const QuestionCard = ({
             values={question.placeholder}
             languages={languages}
             onChange={(lang, value) => handleFieldChange('placeholder', lang, value)}
+            autoTranslateEnabled={autoTranslateEnabled}
           />
         )}
 
@@ -381,6 +388,57 @@ const QuestionCard = ({
                 settings: {
                   ...question.settings,
                   countryOptions: countrySettings
+                }
+              });
+            }}
+            t={t}
+          />
+        )}
+
+        {hasLinkedQuestion && (
+          <LinkedQuestionSelector
+            linkedFormId={linkedFormId}
+            linkedQuestionId={question.linked_question_id}
+            onChange={(questionId) => {
+              dispatch({
+                type: FORM_ACTIONS.UPDATE_QUESTION_FIELD,
+                sectionId,
+                questionId: question.id,
+                field: 'linked_question_id',
+                value: questionId
+              });
+            }}
+            onQuestionDataLoad={(selectedQuestion) => {
+              // Auto-populate headline and description from linked question
+              // Only populate if current fields are empty
+              const currentHeadline = question.headline || {};
+              const currentDescription = question.description || {};
+              
+              languages.forEach(lang => {
+                const langCode = lang.code;
+                
+                // Auto-fill headline if empty
+                if (!currentHeadline[langCode] && selectedQuestion.headline && selectedQuestion.headline[langCode]) {
+                  dispatch({
+                    type: FORM_ACTIONS.UPDATE_QUESTION_FIELD,
+                    sectionId,
+                    questionId: question.id,
+                    field: 'headline',
+                    lang: langCode,
+                    value: selectedQuestion.headline[langCode]
+                  });
+                }
+                
+                // Auto-fill description if empty
+                if (!currentDescription[langCode] && selectedQuestion.description && selectedQuestion.description[langCode]) {
+                  dispatch({
+                    type: FORM_ACTIONS.UPDATE_QUESTION_FIELD,
+                    sectionId,
+                    questionId: question.id,
+                    field: 'description',
+                    lang: langCode,
+                    value: selectedQuestion.description[langCode]
+                  });
                 }
               });
             }}
@@ -508,6 +566,7 @@ const QuestionCard = ({
                   values={question.validation_regex}
                   languages={languages}
                   onChange={(lang, value) => handleFieldChange('validation_regex', lang, value)}
+                  autoTranslateEnabled={autoTranslateEnabled}
                 />
                 <TranslatableFieldGroup
                   label={t('Validation Error Message')}
@@ -515,6 +574,7 @@ const QuestionCard = ({
                   values={question.validation_text}
                   languages={languages}
                   onChange={(lang, value) => handleFieldChange('validation_text', lang, value)}
+                  autoTranslateEnabled={autoTranslateEnabled}
                 />
               </>
             )}
