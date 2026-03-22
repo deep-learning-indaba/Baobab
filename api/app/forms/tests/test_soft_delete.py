@@ -9,6 +9,7 @@ class TestFormSoftDelete(ApiTestCase):
     def seed_static_data(self):
         self.user = self.add_user('admin@example.com', 'Admin', 'User', password='password123')
         self.auth_headers = self.get_auth_header_for('admin@example.com', 'password123')
+        self.event = self.add_event()
     
     def setUp(self):
         super(TestFormSoftDelete, self).setUp()
@@ -16,7 +17,7 @@ class TestFormSoftDelete(ApiTestCase):
     
     def _create_form_with_structure(self):
         """Helper to create a form with sections and questions"""
-        form = Form(created_by_user_id=self.user.id, is_open=True)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id, is_open=True)
         db.session.add(form)
         db.session.flush()
         

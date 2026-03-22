@@ -308,11 +308,12 @@ class TestDependencyEvaluator(ApiTestCase):
 class TestFormQuestionDependencies(ApiTestCase):
     def seed_static_data(self):
         self.user = self.add_user('test@example.com', 'Test', 'User')
+        self.event = self.add_event()
     
     def test_question_with_simple_dependency(self):
         """Test creating a question with a simple dependency expression"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id)
         db.session.add(form)
         db.session.flush()
         
@@ -352,7 +353,7 @@ class TestFormQuestionDependencies(ApiTestCase):
     def test_question_evaluate_dependency_simple(self):
         """Test evaluating a question's dependency"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id)
         db.session.add(form)
         db.session.flush()
         
@@ -396,7 +397,7 @@ class TestFormQuestionDependencies(ApiTestCase):
     def test_question_evaluate_dependency_complex(self):
         """Test evaluating a complex multi-dependency"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id)
         db.session.add(form)
         db.session.flush()
         
@@ -437,7 +438,7 @@ class TestFormQuestionDependencies(ApiTestCase):
     def test_question_without_dependency_always_visible(self):
         """Test that questions without dependencies are always visible"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id)
         db.session.add(form)
         db.session.flush()
         
@@ -462,11 +463,12 @@ class TestFormQuestionDependencies(ApiTestCase):
 class TestFormSectionDependencies(ApiTestCase):
     def seed_static_data(self):
         self.user = self.add_user('test@example.com', 'Test', 'User')
+        self.event = self.add_event()
     
     def test_section_with_dependency(self):
         """Test creating a section with dependency expression"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id)
         db.session.add(form)
         db.session.flush()
         
@@ -503,7 +505,7 @@ class TestFormSectionDependencies(ApiTestCase):
     def test_section_evaluate_dependency(self):
         """Test evaluating a section's dependency"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id)
         db.session.add(form)
         db.session.flush()
         
@@ -544,7 +546,7 @@ class TestFormSectionDependencies(ApiTestCase):
     def test_section_without_dependency_always_visible(self):
         """Test that sections without dependencies are always visible"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id)
         db.session.add(form)
         db.session.flush()
         

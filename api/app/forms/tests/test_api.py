@@ -14,10 +14,11 @@ class TestFormAPI(ApiTestCase):
     def seed_static_data(self):
         self.user = self.add_user('test@example.com', 'Test', 'User', password='password123')
         self.auth_headers = self.get_auth_header_for('test@example.com', 'password123')
+        self.event = self.add_event()
 
     def _create_test_form(self):
         """Helper to create a test form with sections and questions"""
-        form = Form(created_by_user_id=self.user.id, is_open=True)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id, is_open=True)
         db.session.add(form)
         db.session.flush()
         
@@ -390,7 +391,7 @@ class TestFormAPI(ApiTestCase):
         """Test that multiple response forms allow POST to create new responses"""
         # Create form with multiple_responses=True
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id, is_open=True, multiple_responses=True)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id, is_open=True, multiple_responses=True)
         db.session.add(form)
         db.session.flush()
         form_id = form.id
@@ -481,7 +482,7 @@ class TestFormAPI(ApiTestCase):
         """Test GET returns all responses when multiple_responses is enabled"""
         # Create form with multiple_responses=True
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id, is_open=True, multiple_responses=True)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id, is_open=True, multiple_responses=True)
         db.session.add(form)
         db.session.flush()
         
@@ -556,7 +557,7 @@ class TestFormAPI(ApiTestCase):
     def test_multiple_responses_flag_in_form_response(self):
         """Test that form API includes multiple_responses flag"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id, is_open=True, multiple_responses=True)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id, is_open=True, multiple_responses=True)
         db.session.add(form)
         db.session.commit()
         
@@ -738,7 +739,7 @@ class TestFormAPI(ApiTestCase):
     def test_question_settings_in_get_response(self):
         """Test that question settings are included in GET response"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id, is_open=True)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id, is_open=True)
         db.session.add(form)
         db.session.flush()
         

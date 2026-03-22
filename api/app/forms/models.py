@@ -210,6 +210,7 @@ class Form(db.Model):
     __tablename__ = 'form'
     
     id = db.Column(db.Integer(), primary_key=True)
+    event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
     
     # Basic form properties
     is_active = db.Column(db.Boolean(), nullable=False, default=True)
@@ -244,11 +245,13 @@ class Form(db.Model):
     # Link to linked form
     linked_form = db.relationship('Form', remote_side=[id], foreign_keys=[linked_form_id])
     
+    event = db.relationship('Event', foreign_keys=[event_id])
     created_by = db.relationship('AppUser', foreign_keys=[created_by_user_id])
     
-    def __init__(self, created_by_user_id, is_open=True, is_active=True, 
+    def __init__(self, event_id, created_by_user_id, is_open=True, is_active=True, 
                  linked_form_id=None, multiple_responses=False, allow_edits=True, 
                  visibility_expression=None, settings=None):
+        self.event_id = event_id
         self.created_by_user_id = created_by_user_id
         self.is_open = is_open
         self.is_active = is_active

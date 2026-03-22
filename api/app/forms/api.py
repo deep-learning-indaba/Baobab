@@ -120,6 +120,7 @@ def serialize_form(form, language='en', include_inactive=False):
     
     return {
         'id': form.id,
+        'event_id': form.event_id,
         'name': name_i18n,
         'description': description_i18n,
         'is_active': form.is_active,
@@ -212,6 +213,11 @@ class FormListAPI(restful.Resource):
             if is_open is not None:
                 query = query.filter_by(is_open=is_open.lower() == 'true')
             
+            # Filter by event_id
+            event_id = request.args.get('event_id')
+            if event_id:
+                query = query.filter_by(event_id=int(event_id))
+            
             # Filter by created_by if specified (admin feature)
             created_by = request.args.get('created_by')
             if created_by:
@@ -238,8 +244,13 @@ class FormListAPI(restful.Resource):
             args = request.get_json()
             user_id = g.current_user['id']
             
+            event_id = args.get('event_id')
+            if not event_id:
+                return {'error': 'event_id is required'}, 400
+            
             # Create empty form
             form = Form(
+                event_id=event_id,
                 created_by_user_id=user_id,
                 is_open=args.get('is_open', False),
                 is_active=args.get('is_active', True),
@@ -271,10 +282,9 @@ class FormAPI(restful.Resource):
                 return errors.FORM_NOT_FOUND
             
             # Check visibility if expression exists
-            event_id = request.args.get('event_id')
-            if event_id and form.visibility_expression:
+            if form.visibility_expression:
                 user_id = g.current_user['id']
-                if not VisibilityEvaluator.check_form_visibility(form, user_id, int(event_id)):
+                if not VisibilityEvaluator.check_form_visibility(form, user_id, form.event_id):
                     return {'error': 'You do not have permission to access this form'}, 403
             
             language = request.args.get('language', 'en')
@@ -626,9 +636,8 @@ class FormResponseAPI(restful.Resource):
             args = request.get_json()
             
             # Check visibility if expression exists
-            event_id = args.get('event_id')
-            if event_id and form.visibility_expression:
-                if not VisibilityEvaluator.check_form_visibility(form, user_id, int(event_id)):
+            if form.visibility_expression:
+                if not VisibilityEvaluator.check_form_visibility(form, user_id, form.event_id):
                     return {'error': 'You do not have permission to access this form'}, 403
             
             # Check if multiple_responses is allowed
@@ -708,9 +717,8 @@ class FormResponseAPI(restful.Resource):
                 return {'error': 'Response not found'}, 404
             
             # Check visibility if expression exists
-            event_id = args.get('event_id')
-            if event_id and response.form.visibility_expression:
-                if not VisibilityEvaluator.check_form_visibility(response.form, user_id, int(event_id)):
+            if response.form.visibility_expression:
+                if not VisibilityEvaluator.check_form_visibility(response.form, user_id, response.form.event_id):
                     return {'error': 'You do not have permission to access this form'}, 403
             
             # Cannot update submitted response
@@ -763,9 +771,8 @@ class FormResponseAPI(restful.Resource):
             user_id = g.current_user['id']
             
             # Check visibility if expression exists
-            event_id = request.args.get('event_id')
-            if event_id and form.visibility_expression:
-                if not VisibilityEvaluator.check_form_visibility(form, user_id, int(event_id)):
+            if form.visibility_expression:
+                if not VisibilityEvaluator.check_form_visibility(form, user_id, form.event_id):
                     return {'error': 'You do not have permission to access this form'}, 403
             
             if form.multiple_responses:
@@ -833,10 +840,7 @@ class FormResponseSubmitAPI(restful.Resource):
             
             # Get user tags for tag-based visibility
             user_id = response.user_id
-            event_id = args.get('event_id')
-            user_tags = set()
-            if event_id:
-                user_tags = VisibilityEvaluator.get_user_tags_for_event(user_id, int(event_id))
+            user_tags = VisibilityEvaluator.get_user_tags_for_event(user_id, form.event_id)
             
             validation_errors = []
             answered_question_ids = {answer.question_id for answer in response.answers if answer.is_active}
@@ -1035,10 +1039,10 @@ class FormResponseListAdminAPI(restful.Resource):
             ).filter(FormResponse.form_id == form_id)
             
             # Apply filters
-            if is_submitted is not None:
+            if is_submitted:
                 query = query.filter(FormResponse.is_submitted == (is_submitted.lower() == 'true'))
             
-            if is_withdrawn is not None:
+            if is_withdrawn:
                 query = query.filter(FormResponse.is_withdrawn == (is_withdrawn.lower() == 'true'))
             
             if user_id:

@@ -12,11 +12,13 @@ from app.utils.testing import ApiTestCase
 class TestFormModels(ApiTestCase):
     def seed_static_data(self):
         self.user = self.add_user('test@example.com', 'Test', 'User')
+        self.event = self.add_event()
 
     def test_create_form(self):
         """Test creating a basic form"""
         self.seed_static_data()
         form = Form(
+            event_id=self.event.id,
             created_by_user_id=self.user.id,
             is_open=True
         )
@@ -31,7 +33,7 @@ class TestFormModels(ApiTestCase):
     def test_form_with_sections(self):
         """Test creating a form with sections"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id)
         db.session.add(form)
         db.session.flush()
         
@@ -46,7 +48,7 @@ class TestFormModels(ApiTestCase):
     def test_section_translation(self):
         """Test section translations"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id)
         db.session.add(form)
         db.session.flush()
         
@@ -76,7 +78,7 @@ class TestFormModels(ApiTestCase):
     def test_form_with_questions(self):
         """Test creating questions in a section"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id)
         db.session.add(form)
         db.session.flush()
         
@@ -102,7 +104,7 @@ class TestFormModels(ApiTestCase):
     def test_question_translation(self):
         """Test question translations"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id)
         db.session.add(form)
         db.session.flush()
         
@@ -137,7 +139,7 @@ class TestFormModels(ApiTestCase):
     def test_question_with_options(self):
         """Test multi-choice question with options"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id)
         db.session.add(form)
         db.session.flush()
         
@@ -174,7 +176,7 @@ class TestFormModels(ApiTestCase):
     def test_conditional_question(self):
         """Test question with dependency"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id)
         db.session.add(form)
         db.session.flush()
         
@@ -213,11 +215,12 @@ class TestFormModels(ApiTestCase):
     def test_form_linking(self):
         """Test generic form linking"""
         self.seed_static_data()
-        form1 = Form(created_by_user_id=self.user.id)
+        form1 = Form(event_id=self.event.id, created_by_user_id=self.user.id)
         db.session.add(form1)
         db.session.flush()
         
         form2 = Form(
+            event_id=self.event.id,
             created_by_user_id=self.user.id,
             linked_form_id=form1.id
         )
@@ -230,7 +233,7 @@ class TestFormModels(ApiTestCase):
     def test_create_response(self):
         """Test creating a form response"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id)
         db.session.add(form)
         db.session.flush()
         
@@ -250,7 +253,7 @@ class TestFormModels(ApiTestCase):
     def test_answer_validation_required(self):
         """Test required field validation"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id)
         db.session.add(form)
         db.session.flush()
         
@@ -296,7 +299,7 @@ class TestFormModels(ApiTestCase):
     def test_answer_validation_regex(self):
         """Test regex validation"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id)
         db.session.add(form)
         db.session.flush()
         
@@ -349,7 +352,7 @@ class TestFormModels(ApiTestCase):
     def test_answer_validation_option(self):
         """Test option validation for multi-choice"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id)
         db.session.add(form)
         db.session.flush()
         
@@ -405,7 +408,7 @@ class TestFormModels(ApiTestCase):
     def test_cascade_delete_form(self):
         """Test that deleting form cascades to sections and questions"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id)
         db.session.add(form)
         db.session.flush()
         
@@ -438,6 +441,7 @@ class TestFormModels(ApiTestCase):
         """Test form with multiple_responses enabled"""
         self.seed_static_data()
         form = Form(
+            event_id=self.event.id,
             created_by_user_id=self.user.id,
             multiple_responses=True
         )
@@ -449,7 +453,7 @@ class TestFormModels(ApiTestCase):
     def test_multiple_responses_default_false(self):
         """Test that multiple_responses defaults to False"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id)
         db.session.add(form)
         db.session.commit()
         
@@ -459,6 +463,7 @@ class TestFormModels(ApiTestCase):
         """Test creating multiple responses for same user on form with multiple_responses=True"""
         self.seed_static_data()
         form = Form(
+            event_id=self.event.id,
             created_by_user_id=self.user.id,
             multiple_responses=True
         )
@@ -493,6 +498,7 @@ class TestFormModels(ApiTestCase):
             'custom_field': 'value'
         }
         form = Form(
+            event_id=self.event.id,
             created_by_user_id=self.user.id,
             settings=settings
         )
@@ -507,7 +513,7 @@ class TestFormModels(ApiTestCase):
     def test_form_settings_default_none(self):
         """Test that form settings defaults to None"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id)
         db.session.add(form)
         db.session.commit()
         
@@ -516,7 +522,7 @@ class TestFormModels(ApiTestCase):
     def test_question_with_settings(self):
         """Test creating a question with settings JSON"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id)
         db.session.add(form)
         db.session.flush()
         
@@ -547,7 +553,7 @@ class TestFormModels(ApiTestCase):
     def test_question_settings_default_none(self):
         """Test that question settings defaults to None"""
         self.seed_static_data()
-        form = Form(created_by_user_id=self.user.id)
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id)
         db.session.add(form)
         db.session.flush()
         

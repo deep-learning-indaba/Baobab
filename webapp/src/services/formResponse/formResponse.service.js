@@ -21,7 +21,7 @@ export const formResponseService = {
  * @returns {Promise} Response with response object or error
  */
 function createResponse(formId, data) {
-    return axios.post(baseUrl + `/api/v1/forms/${formId}/responses`, data, {
+    return axios.post(baseUrl + `/api/v1/forms/${formId}/response`, data, {
         headers: authHeader()
     })
     .then(function(response) {
@@ -54,7 +54,7 @@ function updateResponse(formId, responseId, data) {
         response_id: responseId
     };
     
-    return axios.put(baseUrl + `/api/v1/forms/${formId}/responses`, payload, {
+    return axios.put(baseUrl + `/api/v1/forms/${formId}/response`, payload, {
         headers: authHeader()
     })
     .then(function(response) {
@@ -79,7 +79,7 @@ function updateResponse(formId, responseId, data) {
  * @returns {Promise} Response with response object(s) or error
  */
 function getResponse(formId) {
-    return axios.get(baseUrl + `/api/v1/forms/${formId}/responses`, {
+    return axios.get(baseUrl + `/api/v1/forms/${formId}/response`, {
         headers: authHeader()
     })
     .then(function(response) {
