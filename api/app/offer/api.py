@@ -176,6 +176,30 @@ class OfferAPI(OfferMixin, restful.Resource):
             if not event_fee:
                 return errors.EVENT_FEE_NOT_FOUND
 
+        validated_grant_tags = []
+        for gi in grant_tags:
+            tag_id = gi['id']
+            existing_tag = db.session.query(Tag).get(tag_id)
+            if not existing_tag or existing_tag.event_id != event_id:
+                return errors.TAG_NOT_FOUND
+            if existing_tag.tag_type != TagType.GRANT:
+                return errors.TAG_NOT_TYPE_GRANT
+            if not existing_tag.active:
+                return errors.TAG_NOT_ACTIVE
+            validated_grant_tags.append(existing_tag)
+
+        validated_note_tags = []
+        for nt in note_tags:
+            tag_id = nt['id']
+            existing_tag = db.session.query(Tag).get(tag_id)
+            if not existing_tag or existing_tag.event_id != event_id:
+                return errors.TAG_NOT_FOUND
+            if existing_tag.tag_type != TagType.OFFER_NOTE:
+                return errors.TAG_NOT_TYPE_OFFER_NOTE
+            if not existing_tag.active:
+                return errors.TAG_NOT_ACTIVE
+            validated_note_tags.append(existing_tag)
+
         new_outcome = Outcome(
             event_id,
             user_id,
@@ -194,18 +218,9 @@ class OfferAPI(OfferMixin, restful.Resource):
         )
 
         db.session.add(offer_entity)
-        db.session.commit()
+        db.session.flush()
 
-        for gi in grant_tags:
-            tag_id = gi['id']
-            existing_tag = db.session.query(Tag).get(tag_id)
-            if not existing_tag or existing_tag.event_id != event_id:
-                return errors.TAG_NOT_FOUND
-            if existing_tag.tag_type != TagType.GRANT:
-                return errors.TAG_NOT_TYPE_GRANT
-            if not existing_tag.active:
-                return errors.TAG_NOT_ACTIVE
-                        
+        for existing_tag in validated_grant_tags:
             offer_tag = OfferTag(
                 offer_id=offer_entity.id,
                 tag_id=existing_tag.id,
@@ -213,23 +228,14 @@ class OfferAPI(OfferMixin, restful.Resource):
             )
             db.session.add(offer_tag)
 
-        for nt in note_tags:
-            tag_id = nt['id']
-            existing_tag = db.session.query(Tag).get(tag_id)
-            if not existing_tag or existing_tag.event_id != event_id:
-                return errors.TAG_NOT_FOUND
-            if existing_tag.tag_type != TagType.OFFER_NOTE:
-                return errors.TAG_NOT_TYPE_OFFER_NOTE
-            if not existing_tag.active:
-                return errors.TAG_NOT_ACTIVE
-
+        for existing_tag in validated_note_tags:
             offer_tag = OfferTag(
                 offer_id=offer_entity.id,
                 tag_id=existing_tag.id,
                 accepted=None
             )
             db.session.add(offer_tag)
-        
+
         db.session.commit()
         
         language = user.user_primaryLanguage
