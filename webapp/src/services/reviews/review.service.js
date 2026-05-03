@@ -24,7 +24,10 @@ export const reviewService = {
   updateReviewForm,
   createReviewForm,
   addReviewerTag,
-  deleteReviewerTag
+  deleteReviewerTag,
+  getFormReviewAssignments,
+  assignFormReviews,
+  removeFormReviews
 };
 
 function getReviewForm(eventId, skip) {
@@ -527,6 +530,78 @@ function createReviewForm({
       error: extractErrorMessage(error)
     };
   });
+}
+
+function getFormReviewAssignments(reviewFormId, eventId) {
+  return axios
+    .get(
+      baseUrl + '/api/v1/forms/' + reviewFormId + '/review-assignments?event_id=' + eventId,
+      { headers: authHeader() }
+    )
+    .then(function(response) {
+      return {
+        reviewers: response.data,
+        error: ''
+      };
+    })
+    .catch(function(error) {
+      return {
+        reviewers: null,
+        error: extractErrorMessage(error)
+      };
+    });
+}
+
+function assignFormReviews(reviewFormId, eventId, reviewerUserEmail, numReviews) {
+  return axios
+    .post(
+      baseUrl + '/api/v1/forms/' + reviewFormId + '/review-assignments?event_id=' + eventId,
+      {
+        reviewer_user_email: reviewerUserEmail,
+        num_reviews: numReviews,
+        event_id: eventId
+      },
+      { headers: authHeader() }
+    )
+    .then(function(response) {
+      return {
+        reviews_assigned: response.data.reviews_assigned,
+        error: ''
+      };
+    })
+    .catch(function(error) {
+      return {
+        reviews_assigned: 0,
+        error: extractErrorMessage(error)
+      };
+    });
+}
+
+function removeFormReviews(reviewFormId, eventId, reviewerUserEmail, numReviews) {
+  return axios
+    .delete(
+      baseUrl + '/api/v1/forms/' + reviewFormId + '/review-assignments?event_id=' + eventId,
+      {
+        headers: authHeader(),
+        data: {
+          reviewer_user_email: reviewerUserEmail,
+          num_reviews: numReviews,
+          event_id: eventId
+        }
+      }
+    )
+    .then(function(response) {
+      return {
+        num_deleted: response.data.num_deleted,
+        error: ''
+      };
+    })
+    .catch(function(error) {
+      return {
+        num_deleted: 0,
+        error: extractErrorMessage(error)
+      };
+    });
 }
 
 function addReviewerTag({reviewerUserId, tagId, eventId}) {

@@ -35,6 +35,7 @@ import FormManagement from "../formManagement";
 import FormPreviewPage from "../formPreview";
 import FormResponseList from "../formResponseList";
 import FormResponseDetail from "../formResponseDetail";
+import FormConfigPage from "../formConfig";
 
 class EventInfo extends Component {
   constructor(props) {
@@ -293,6 +294,11 @@ class EventHome extends Component {
           exact
           path={`${match.path}/formManagement`}
           render={(props) => <FormManagement {...props} event={event} user={this.props.user}/>}
+        />
+        <Route
+          exact
+          path={`${match.path}/formConfig`}
+          render={(props) => <FormConfigPage {...props} event={event} user={this.props.user} eventKey={this.state.eventKey}/>}
         />
         <Route
           exact

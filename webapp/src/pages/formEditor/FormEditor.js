@@ -154,6 +154,19 @@ const FormEditor = ({
     }
   };
 
+  const handlePreview = () => {
+    const payload = transformToApiPayload(state.sections, languages);
+    const previewData = {
+      form: {
+        ...state.form,
+        sections: payload.sections
+      },
+      isDirty: state.ui.isDirty
+    };
+    localStorage.setItem(`baobab_form_draft_preview_${formId}`, JSON.stringify(previewData));
+    window.open(`/${eventKey}/forms/${formId}/preview`, '_blank');
+  };
+
   const handleCancel = () => {
     if (state.ui.isDirty) {
       if (window.confirm(t('You have unsaved changes. Are you sure you want to leave?'))) {
@@ -217,7 +230,7 @@ const FormEditor = ({
             <button
               type="button"
               className="toolbar-btn toolbar-btn-preview"
-              onClick={() => window.open(`/${eventKey}/forms/${formId}/preview`, '_blank')}
+              onClick={handlePreview}
               title={t('Preview this form')}
             >
               <i className="fas fa-eye"></i>

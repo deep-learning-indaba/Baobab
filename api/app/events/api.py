@@ -43,6 +43,7 @@ from app.events.models import EventType
 import app.events.status as event_status
 from app.reviews.repository import ReviewRepository as review_repository
 from app.reviews.repository import ReviewConfigurationRepository as review_config_repository
+from app.forms.models import Form as GenericForm
 
 def status_info(status):
     if status is None:
@@ -58,6 +59,16 @@ def status_info(status):
     }
 
 def event_info(user_id, event, status, language):
+    new_reg_form = db.session.query(GenericForm).filter_by(
+        event_id=event.id, form_type='registration'
+    ).first()
+    new_app_form = db.session.query(GenericForm).filter_by(
+        event_id=event.id, form_type='application'
+    ).first()
+    new_review_form = db.session.query(GenericForm).filter_by(
+        event_id=event.id, form_type='review'
+    ).first()
+
     return {
         'id': event.id,
         'name': event.get_name(language),
@@ -86,7 +97,10 @@ def event_info(user_id, event, status, language):
         'is_event_open': event.is_event_open,
         'is_event_opening': event.is_event_opening,
         'travel_grant': event.travel_grant,
-        "miniconf_url": event.miniconf_url
+        "miniconf_url": event.miniconf_url,
+        'registration_form_id': new_reg_form.id if new_reg_form else None,
+        'application_form_id': new_app_form.id if new_app_form else None,
+        'review_form_id': new_review_form.id if new_review_form else None
     }
 
 

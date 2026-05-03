@@ -17,13 +17,25 @@ const FormPreviewPage = (props) => {
   const [error, setError] = useState(null);
   const [previewComplete, setPreviewComplete] = useState(false);
   const [mockResponse, setMockResponse] = useState(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Load form structure
+  // Load form structure - prefer draft from localStorage set by FormEditor
   const loadForm = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
+      const draftKey = `baobab_form_draft_preview_${formId}`;
+      const draftJson = localStorage.getItem(draftKey);
+
+      if (draftJson) {
+        const draft = JSON.parse(draftJson);
+        setForm(draft.form);
+        setHasUnsavedChanges(draft.isDirty);
+        setLoading(false);
+        return;
+      }
+
       const formResult = await formServices.getFormStructure(formId, i18n.language);
       
       if (formResult.error) {
@@ -184,6 +196,12 @@ const FormPreviewPage = (props) => {
           <span className="banner-notice">
             {t('No responses will be saved to the database')}
           </span>
+          {hasUnsavedChanges && (
+            <span className="banner-notice banner-notice-warning">
+              <i className="fas fa-exclamation-triangle"></i>
+              {t('Unsaved changes')}
+            </span>
+          )}
         </div>
         <button
           className="btn btn-sm btn-outline-light"
@@ -193,7 +211,14 @@ const FormPreviewPage = (props) => {
           {t('Exit Preview')}
         </button>
       </div>
-      
+
+      {hasUnsavedChanges && (
+        <div className="alert alert-warning form-preview-unsaved-warning">
+          <i className="fas fa-exclamation-triangle"></i>
+          {t('You are previewing unsaved changes. Save the form to make these changes permanent.')}
+        </div>
+      )}
+
       {form && (
         <div className="form-preview-content">
           <FormRenderer
@@ -205,6 +230,7 @@ const FormPreviewPage = (props) => {
             onCancel={handleCancel}
             showConfirmation={true}
             autoSaveInterval={0}
+            isPreview={true}
           />
         </div>
       )}

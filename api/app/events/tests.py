@@ -19,6 +19,7 @@ from app.invitedGuest.models import InvitedGuest, GuestRegistration
 import app.events.status as event_status
 from app.registration.models import Registration
 from app.offer.models import Offer
+from app.forms.models import Form
 
 class EventsAPITest(ApiTestCase):
 
@@ -1164,3 +1165,147 @@ class EventFeeAPITest(ApiTestCase):
         self.assertEqual(data['updated_by_user_id'], 1)
         self.assertEqual(data['updated_by'], 'User Lastname')
         self.assertIsNotNone(data['updated_at'])
+
+
+class EventsByKeyRegistrationFormIdTest(ApiTestCase):
+    """Tests that event_info includes registration_form_id for the new forms system."""
+
+    def seed_static_data(self):
+        self.user = self.add_user('user@test.com', 'Test', 'User')
+        self.event = self.add_event(key='TESTEVENT')
+
+    def _get_event_by_key(self):
+        header = self.get_auth_header_for('user@test.com')
+        return self.app.get(
+            '/api/v1/event-by-key?event_key=TESTEVENT&language=en',
+            headers=header
+        )
+
+    def test_registration_form_id_is_none_when_no_new_form(self):
+        """registration_form_id is None when no new-system registration form exists."""
+        self.seed_static_data()
+        response = self._get_event_by_key()
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertIsNone(data['registration_form_id'])
+
+    def test_registration_form_id_is_set_when_new_form_exists(self):
+        """registration_form_id returns the Form id when a registration Form exists."""
+        self.seed_static_data()
+        reg_form = Form(
+            event_id=self.event.id,
+            created_by_user_id=self.user.id,
+            form_type='registration',
+            is_open=True
+        )
+        db.session.add(reg_form)
+        db.session.commit()
+        reg_form_id = reg_form.id
+
+        response = self._get_event_by_key()
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['registration_form_id'], reg_form_id)
+
+    def test_registration_form_id_not_set_for_other_form_types(self):
+        """registration_form_id is None when only non-registration typed forms exist."""
+        self.seed_static_data()
+        app_form = Form(
+            event_id=self.event.id,
+            created_by_user_id=self.user.id,
+            form_type='application',
+            is_open=True
+        )
+        db.session.add(app_form)
+        db.session.commit()
+
+        response = self._get_event_by_key()
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertIsNone(data['registration_form_id'])
+
+    def test_application_form_id_is_none_when_no_new_form(self):
+        """application_form_id is None when no new-system application form exists."""
+        self.seed_static_data()
+        response = self._get_event_by_key()
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertIsNone(data['application_form_id'])
+
+    def test_application_form_id_is_set_when_new_form_exists(self):
+        """application_form_id returns the Form id when an application Form exists."""
+        self.seed_static_data()
+        app_form = Form(
+            event_id=self.event.id,
+            created_by_user_id=self.user.id,
+            form_type='application',
+            is_open=True
+        )
+        db.session.add(app_form)
+        db.session.commit()
+        app_form_id = app_form.id
+
+        response = self._get_event_by_key()
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['application_form_id'], app_form_id)
+
+    def test_application_form_id_not_set_for_other_form_types(self):
+        """application_form_id is None when only non-application typed forms exist."""
+        self.seed_static_data()
+        reg_form = Form(
+            event_id=self.event.id,
+            created_by_user_id=self.user.id,
+            form_type='registration',
+            is_open=True
+        )
+        db.session.add(reg_form)
+        db.session.commit()
+
+        response = self._get_event_by_key()
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertIsNone(data['application_form_id'])
+
+    def test_review_form_id_is_none_when_no_new_form(self):
+        """review_form_id is None when no new-system review form exists."""
+        self.seed_static_data()
+        response = self._get_event_by_key()
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertIsNone(data['review_form_id'])
+
+    def test_review_form_id_is_set_when_new_form_exists(self):
+        """review_form_id returns the Form id when a review Form exists."""
+        self.seed_static_data()
+        review_form = Form(
+            event_id=self.event.id,
+            created_by_user_id=self.user.id,
+            form_type='review',
+            is_open=True
+        )
+        db.session.add(review_form)
+        db.session.commit()
+        review_form_id = review_form.id
+
+        response = self._get_event_by_key()
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['review_form_id'], review_form_id)
+
+    def test_review_form_id_not_set_for_other_form_types(self):
+        """review_form_id is None when only non-review typed forms exist."""
+        self.seed_static_data()
+        app_form = Form(
+            event_id=self.event.id,
+            created_by_user_id=self.user.id,
+            form_type='application',
+            is_open=True
+        )
+        db.session.add(app_form)
+        db.session.commit()
+
+        response = self._get_event_by_key()
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertIsNone(data['review_form_id'])

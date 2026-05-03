@@ -39,7 +39,8 @@ const FormRenderer = ({
   linkedResponse = null,
   showConfirmation = true,
   autoSaveInterval = 0, // milliseconds, 0 = disabled
-  userTags = [] // Array of tag names the user has
+  userTags = [], // Array of tag names the user has
+  isPreview = false
 }) => {
   const { t } = useTranslation();
 
@@ -695,8 +696,8 @@ const FormRenderer = ({
     );
   }
 
-  // Early return if form is not open
-  if (!form.is_open && !isReadOnly && !(response && response.is_submitted)) {
+  // Early return if form is not open (skip in preview mode)
+  if (!form.is_open && !isReadOnly && !isPreview && !(response && response.is_submitted)) {
     return (
       <div className="form-renderer-closed">
         <div className="alert alert-warning">
@@ -745,6 +746,14 @@ const FormRenderer = ({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Closed Form Warning (preview mode only) */}
+      {!form.is_open && isPreview && (
+        <div className="alert alert-warning form-closed-preview-warning">
+          <i className="fas fa-lock"></i>
+          {t('Warning: This form is currently closed for submissions. In preview mode, you can still view the form, but submissions are disabled.')}
         </div>
       )}
 

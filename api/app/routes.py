@@ -163,3 +163,5 @@ rest_api.add_resource(forms_api.FormResponseSubmitAPI, '/api/v1/forms/<int:form_
 rest_api.add_resource(forms_api.FormResponseWithdrawAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/withdraw')
 rest_api.add_resource(forms_api.FormResponseListAdminAPI, '/api/v1/forms/<int:form_id>/responses/admin')
 rest_api.add_resource(forms_api.FormResponseDetailAdminAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/admin')
+rest_api.add_resource(forms_api.EventFormConfigAPI, '/api/v1/form-config')
+rest_api.add_resource(forms_api.FormReviewAssignmentAPI, '/api/v1/forms/<int:form_id>/review-assignments')

@@ -6,6 +6,7 @@ import enum
 from typing import Tuple, Optional
 
 from app import db, LOGGER
+from app.utils import misc
 
 
 class DependencyOperator(str, enum.Enum):
@@ -212,6 +213,12 @@ class Form(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
     
+    # Role designation for migration from legacy form systems
+    # form_type values: 'application', 'review', 'registration', or NULL (generic)
+    form_type = db.Column(db.String(50), nullable=True)
+    # stage is only used when form_type='review' for multi-stage review support
+    stage = db.Column(db.Integer(), nullable=True)
+
     # Basic form properties
     is_active = db.Column(db.Boolean(), nullable=False, default=True)
     is_open = db.Column(db.Boolean(), nullable=False, default=True)
@@ -247,10 +254,15 @@ class Form(db.Model):
     
     event = db.relationship('Event', foreign_keys=[event_id])
     created_by = db.relationship('AppUser', foreign_keys=[created_by_user_id])
+
+    __table_args__ = (
+        db.UniqueConstraint('event_id', 'form_type', 'stage',
+                            name='uq_event_form_type_stage'),
+    )
     
     def __init__(self, event_id, created_by_user_id, is_open=True, is_active=True, 
                  linked_form_id=None, multiple_responses=False, allow_edits=True, 
-                 visibility_expression=None, settings=None):
+                 visibility_expression=None, settings=None, form_type=None, stage=None):
         self.event_id = event_id
         self.created_by_user_id = created_by_user_id
         self.is_open = is_open
@@ -260,6 +272,8 @@ class Form(db.Model):
         self.allow_edits = allow_edits
         self.visibility_expression = visibility_expression
         self.settings = settings
+        self.form_type = form_type
+        self.stage = stage
         self.created_at = datetime.now()
         self.updated_at = datetime.now()
     
@@ -571,6 +585,21 @@ class FormResponse(db.Model):
         self.is_submitted = False
         self.is_withdrawn = False
         self.started_timestamp = datetime.now()
+    
+    def calculate_score(self):
+        """Calculate weighted review score (for review form responses)."""
+        total = 0.0
+        for answer in self.answers:
+            if not answer.is_active or not answer.question_id:
+                continue
+            question = answer.question
+            if not question:
+                continue
+            weight = (question.settings or {}).get('weight', 0)
+            if weight > 0:
+                value = misc.try_parse_float(answer.value)
+                total += value * weight
+        return total
 
 
 class FormAnswer(db.Model):

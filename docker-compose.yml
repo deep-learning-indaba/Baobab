@@ -45,6 +45,7 @@ services:
       GCP_BUCKET_NAME: __filler__
       FILE_SIZE_LIMIT: 52428800
       BOABAB_HOST: http://localhost:8080
+      GCP_API_KEY: AIzaSyCCYANP8yh0W5fahjy8t50gFdjr8EwnhSg
 
   webapp:
     build: ./webapp

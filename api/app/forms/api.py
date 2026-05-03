@@ -1,5 +1,6 @@
 from datetime import datetime
 import traceback
+import random
 
 import flask_restful as restful
 from flask import g, request
@@ -10,10 +11,21 @@ from app.forms.models import (
     DependencyEvaluator
 )
 from app.forms.visibility import VisibilityEvaluator
+from app.forms.mixins import (
+    uses_new_form, get_form_by_type,
+    apply_form_type_defaults, validate_form_type_constraints
+)
 from app.utils.auth import auth_required, event_admin_required
 from app.utils import errors
 from app import db, LOGGER
 from app.users.models import AppUser
+from app.users.repository import UserRepository as user_repository
+from app.events.repository import EventRepository as event_repository
+from app.utils.emailer import email_user
+from app.utils import misc
+from app.applicationModel.models import ApplicationForm
+from app.registration.models import RegistrationForm
+from app.reviews.models import ReviewForm
 
 
 def serialize_form(form, language='en', include_inactive=False):
@@ -121,6 +133,8 @@ def serialize_form(form, language='en', include_inactive=False):
     return {
         'id': form.id,
         'event_id': form.event_id,
+        'form_type': form.form_type,
+        'stage': form.stage,
         'name': name_i18n,
         'description': description_i18n,
         'is_active': form.is_active,
@@ -157,6 +171,7 @@ def serialize_response(response):
         'withdrawn_timestamp': response.withdrawn_timestamp.isoformat() if response.withdrawn_timestamp else None,
         'started_timestamp': response.started_timestamp.isoformat() if response.started_timestamp else None,
         'language': response.language,
+        'linked_response_id': response.linked_response_id,
         'answers': answers_data
     }
 
@@ -248,6 +263,15 @@ class FormListAPI(restful.Resource):
             if not event_id:
                 return {'error': 'event_id is required'}, 400
             
+            form_type = args.get('form_type')
+            stage = args.get('stage')
+
+            # Validate form type constraints before creating
+            if form_type:
+                constraint_error = validate_form_type_constraints(event_id, form_type)
+                if constraint_error:
+                    return {'error': constraint_error}, 400
+
             # Create empty form
             form = Form(
                 event_id=event_id,
@@ -256,8 +280,15 @@ class FormListAPI(restful.Resource):
                 is_active=args.get('is_active', True),
                 linked_form_id=args.get('linked_form_id'),
                 multiple_responses=args.get('multiple_responses', False),
-                settings=args.get('settings')
+                settings=args.get('settings'),
+                form_type=form_type,
+                stage=stage
             )
+
+            # Apply form-type defaults after construction so explicit args win
+            if form_type:
+                apply_form_type_defaults(form, form_type, stage)
+            
             db.session.add(form)
             db.session.commit()
             
@@ -640,6 +671,8 @@ class FormResponseAPI(restful.Resource):
                 if not VisibilityEvaluator.check_form_visibility(form, user_id, form.event_id):
                     return {'error': 'You do not have permission to access this form'}, 403
             
+            linked_response_id = args.get('linked_response_id')
+
             # Check if multiple_responses is allowed
             if not form.multiple_responses:
                 # Check if user already has an unsubmitted response
@@ -655,13 +688,28 @@ class FormResponseAPI(restful.Resource):
                         'message': 'A response already exists for this form. Use PUT to update it.',
                         'response_id': existing_response.id
                     }, 400
-            
+            elif linked_response_id:
+                # For multi-response forms (review forms), prevent duplicate assignments:
+                # one reviewer should only have one response per linked application response.
+                existing_review = db.session.query(FormResponse).filter_by(
+                    form_id=form_id,
+                    user_id=user_id,
+                    linked_response_id=linked_response_id
+                ).first()
+                if existing_review:
+                    return {
+                        'error': 'Review already exists',
+                        'message': 'You are already assigned to review this response.',
+                        'response_id': existing_review.id
+                    }, 400
+
             # Create new response
             language = args.get('language', 'en')
             response = FormResponse(
                 form_id=form_id,
                 user_id=user_id,
-                language=language
+                language=language,
+                linked_response_id=linked_response_id
             )
             db.session.add(response)
             db.session.flush()
@@ -1152,4 +1200,342 @@ class FormResponseDetailAdminAPI(restful.Resource):
         except Exception as e:
             LOGGER.error(f"Error getting response detail {response_id}: {str(e)}")
             LOGGER.error(traceback.format_exc())
+            return errors.DB_NOT_AVAILABLE
+
+
+class EventFormConfigAPI(restful.Resource):
+    """Returns form system configuration for all form types for an event."""
+
+    @event_admin_required
+    def get(self, event_id):
+        """Get form system config for all types (old vs new, form IDs, stages)."""
+        try:
+            # --- Application ---
+            new_app_form = db.session.query(Form).filter_by(
+                event_id=event_id, form_type='application'
+            ).first()
+
+            if new_app_form:
+                response_count = db.session.query(FormResponse).filter_by(
+                    form_id=new_app_form.id, is_submitted=True
+                ).count()
+                name_trans = new_app_form.get_translation('en')
+                application_data = {
+                    'system': 'new',
+                    'form_id': new_app_form.id,
+                    'form_name': name_trans.name if name_trans else None,
+                    'is_open': new_app_form.is_open,
+                    'is_active': new_app_form.is_active,
+                    'response_count': response_count
+                }
+            else:
+                legacy_app_form = db.session.query(ApplicationForm).filter_by(
+                    event_id=event_id
+                ).first()
+                application_data = {
+                    'system': 'old',
+                    'form_id': None,
+                    'legacy_form_id': legacy_app_form.id if legacy_app_form else None
+                }
+
+            # --- Review ---
+            new_review_forms = db.session.query(Form).filter_by(
+                event_id=event_id, form_type='review'
+            ).order_by(Form.stage).all()
+
+            if new_review_forms:
+                stages_data = []
+                for review_form in new_review_forms:
+                    settings = review_form.settings or {}
+                    num_reviews_required = settings.get('num_reviews_required', 3)
+                    total_assignments = db.session.query(FormResponse).filter_by(
+                        form_id=review_form.id
+                    ).count()
+                    completed_assignments = db.session.query(FormResponse).filter_by(
+                        form_id=review_form.id, is_submitted=True
+                    ).count()
+                    name_trans = review_form.get_translation('en')
+                    stages_data.append({
+                        'stage': review_form.stage,
+                        'form_id': review_form.id,
+                        'form_name': name_trans.name if name_trans else None,
+                        'is_active': review_form.is_active,
+                        'num_reviews_required': num_reviews_required,
+                        'completed_count': completed_assignments,
+                        'total_count': total_assignments
+                    })
+                review_data = {'system': 'new', 'stages': stages_data}
+            else:
+                legacy_app = db.session.query(ApplicationForm).filter_by(
+                    event_id=event_id
+                ).first()
+                legacy_review_form = None
+                if legacy_app:
+                    legacy_review_form = db.session.query(ReviewForm).filter_by(
+                        application_form_id=legacy_app.id
+                    ).first()
+                review_data = {
+                    'system': 'old',
+                    'legacy_form_id': legacy_review_form.id if legacy_review_form else None
+                }
+
+            # --- Registration ---
+            new_reg_form = db.session.query(Form).filter_by(
+                event_id=event_id, form_type='registration'
+            ).first()
+
+            if new_reg_form:
+                response_count = db.session.query(FormResponse).filter_by(
+                    form_id=new_reg_form.id, is_submitted=True
+                ).count()
+                name_trans = new_reg_form.get_translation('en')
+                registration_data = {
+                    'system': 'new',
+                    'form_id': new_reg_form.id,
+                    'form_name': name_trans.name if name_trans else None,
+                    'is_open': new_reg_form.is_open,
+                    'is_active': new_reg_form.is_active,
+                    'response_count': response_count
+                }
+            else:
+                legacy_reg_form = db.session.query(RegistrationForm).filter_by(
+                    event_id=event_id
+                ).first()
+                registration_data = {
+                    'system': 'old',
+                    'form_id': None,
+                    'legacy_form_id': legacy_reg_form.id if legacy_reg_form else None
+                }
+
+            # --- Generic Forms (form_type=NULL) ---
+            generic_forms = db.session.query(Form).filter(
+                Form.event_id == event_id,
+                Form.form_type == None
+            ).order_by(Form.created_at.desc()).all()
+
+            generic_forms_data = []
+            for gf in generic_forms:
+                name_trans = gf.get_translation('en')
+                response_count = db.session.query(FormResponse).filter_by(
+                    form_id=gf.id
+                ).count()
+                generic_forms_data.append({
+                    'id': gf.id,
+                    'name': name_trans.name if name_trans else None,
+                    'is_active': gf.is_active,
+                    'response_count': response_count
+                })
+
+            return {
+                'application': application_data,
+                'review': review_data,
+                'registration': registration_data,
+                'generic_forms': generic_forms_data
+            }, 200
+
+        except Exception as e:
+            LOGGER.error(f"Error getting form config for event {event_id}: {str(e)}")
+            LOGGER.error(traceback.format_exc())
+            return errors.DB_NOT_AVAILABLE
+
+
+class FormReviewAssignmentAPI(restful.Resource):
+    """
+    Manage review assignments for new-style review forms.
+
+    A review assignment is simply a FormResponse (with no answers yet) on the
+    review Form whose linked_response_id points to the applicant's FormResponse.
+    This avoids any new model: assignment = pre-created unfilled FormResponse.
+    """
+
+    @event_admin_required
+    def get(self, form_id, event_id):
+        """Return per-reviewer allocation and completion counts for this review form."""
+        try:
+            review_form = db.session.query(Form).filter_by(
+                id=form_id, form_type='review'
+            ).first()
+            if not review_form:
+                return errors.FORM_NOT_FOUND
+
+            rows = (
+                db.session.query(
+                    AppUser,
+                    db.func.count(FormResponse.id).label('reviews_allocated'),
+                    db.func.sum(
+                        db.case([(FormResponse.is_submitted == True, 1)], else_=0)
+                    ).label('reviews_completed')
+                )
+                .join(FormResponse, FormResponse.user_id == AppUser.id)
+                .filter(
+                    FormResponse.form_id == form_id,
+                    FormResponse.is_withdrawn == False
+                )
+                .group_by(AppUser.id)
+                .all()
+            )
+
+            result = []
+            for user, allocated, completed in rows:
+                result.append({
+                    'reviewer_user_id': user.id,
+                    'email': user.email,
+                    'firstname': user.firstname,
+                    'lastname': user.lastname,
+                    'user_title': user.user_title,
+                    'reviews_allocated': allocated,
+                    'reviews_completed': int(completed) if completed else 0,
+                    'tags': []
+                })
+            return result, 200
+
+        except Exception as e:
+            LOGGER.error(f"Error getting review assignments for form {form_id}: {str(e)}")
+            LOGGER.error(traceback.format_exc())
+            return errors.DB_NOT_AVAILABLE
+
+    @event_admin_required
+    def post(self, form_id, event_id):
+        """Assign N reviews to a reviewer by bulk-creating FormResponse records."""
+        try:
+            args = request.get_json()
+            reviewer_user_email = args.get('reviewer_user_email')
+            num_reviews = args.get('num_reviews', 0)
+
+            review_form = db.session.query(Form).filter_by(
+                id=form_id, form_type='review'
+            ).first()
+            if not review_form:
+                return errors.FORM_NOT_FOUND
+
+            if not review_form.linked_form_id:
+                return {'error': 'Review form has no linked application form'}, 400
+
+            reviewer = user_repository.get_by_email(reviewer_user_email, g.organisation.id)
+            if reviewer is None:
+                return errors.USER_NOT_FOUND
+
+            reviewer_id = reviewer.id
+            reviewer_email = reviewer.email
+
+            num_reviews_required = (review_form.settings or {}).get('num_reviews_required', 1)
+
+            # All submitted, non-withdrawn application responses excluding the reviewer's own
+            candidate_app_responses = db.session.query(FormResponse).filter(
+                FormResponse.form_id == review_form.linked_form_id,
+                FormResponse.is_submitted == True,
+                FormResponse.is_withdrawn == False,
+                FormResponse.user_id != reviewer_id
+            ).all()
+
+            # Responses already at the required reviewer count
+            fully_assigned_ids = set(
+                row[0]
+                for row in db.session.query(FormResponse.linked_response_id)
+                .filter(
+                    FormResponse.form_id == form_id,
+                    FormResponse.is_withdrawn == False
+                )
+                .group_by(FormResponse.linked_response_id)
+                .having(db.func.count(FormResponse.id) >= num_reviews_required)
+                .all()
+            )
+
+            # Responses already assigned to this reviewer
+            already_assigned_ids = set(
+                row[0]
+                for row in db.session.query(FormResponse.linked_response_id)
+                .filter(
+                    FormResponse.form_id == form_id,
+                    FormResponse.user_id == reviewer_id,
+                    FormResponse.is_withdrawn == False
+                )
+                .all()
+            )
+
+            eligible_ids = [
+                r.id for r in candidate_app_responses
+                if r.id not in fully_assigned_ids and r.id not in already_assigned_ids
+            ]
+
+            to_assign = random.sample(eligible_ids, min(len(eligible_ids), num_reviews))
+
+            for app_response_id in to_assign:
+                assignment = FormResponse(
+                    form_id=form_id,
+                    user_id=reviewer_id,
+                    linked_response_id=app_response_id
+                )
+                db.session.add(assignment)
+
+            db.session.commit()
+
+            if len(to_assign) > 0:
+                event = event_repository.get_by_id(event_id)
+                reviewer = user_repository.get_by_email(reviewer_email, g.organisation.id)
+                email_user(
+                    'reviews-assigned',
+                    template_parameters=dict(
+                        num_reviews=len(to_assign),
+                        baobab_host=misc.get_baobab_host(),
+                        system_name=g.organisation.system_name,
+                        event_key=event.key
+                    ),
+                    event=event,
+                    user=reviewer
+                )
+
+            return {'reviews_assigned': len(to_assign)}, 201
+
+        except Exception as e:
+            LOGGER.error(f"Error assigning reviews for form {form_id}: {str(e)}")
+            LOGGER.error(traceback.format_exc())
+            db.session.rollback()
+            return errors.DB_NOT_AVAILABLE
+
+    @event_admin_required
+    def delete(self, form_id, event_id):
+        """Remove up to N unstarted (no answers) review assignments from a reviewer."""
+        try:
+            args = request.get_json()
+            reviewer_user_email = args.get('reviewer_user_email')
+            num_reviews = args.get('num_reviews', 0)
+
+            review_form = db.session.query(Form).filter_by(
+                id=form_id, form_type='review'
+            ).first()
+            if not review_form:
+                return errors.FORM_NOT_FOUND
+
+            reviewer = user_repository.get_by_email(reviewer_user_email, g.organisation.id)
+            if reviewer is None:
+                return errors.USER_NOT_FOUND
+
+            # Unstarted = not submitted and has no answers
+            unstarted = (
+                db.session.query(FormResponse)
+                .filter(
+                    FormResponse.form_id == form_id,
+                    FormResponse.user_id == reviewer.id,
+                    FormResponse.is_submitted == False,
+                    FormResponse.is_withdrawn == False
+                )
+                .all()
+            )
+            unstarted = [r for r in unstarted if len(r.answers) == 0]
+
+            counter = 0
+            for response in unstarted:
+                db.session.delete(response)
+                counter += 1
+                if counter >= num_reviews:
+                    break
+
+            db.session.commit()
+            return {'num_deleted': counter}, 200
+
+        except Exception as e:
+            LOGGER.error(f"Error removing review assignments for form {form_id}: {str(e)}")
+            LOGGER.error(traceback.format_exc())
+            db.session.rollback()
             return errors.DB_NOT_AVAILABLE
