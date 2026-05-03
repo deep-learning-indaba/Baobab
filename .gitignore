@@ -8,6 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 .idea/
+.windsurf/
 .Python
 build/
 develop-eggs/
@@ -136,3 +137,6 @@ integration-tests/cypress/support/
 integration-tests/cypress/videos/
 integration-tests/cypress/screenshots/
 integration-tests/cypress/plugins/
+
+# Temporary Docs
+/docs/temp/
