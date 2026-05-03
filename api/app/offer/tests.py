@@ -74,8 +74,10 @@ class OfferApiTest(ApiTestCase):
         self.headers2 = self.get_auth_header_for("something2@email.com")
         self.adminHeaders = self.get_auth_header_for("offer_admin@ea.com")
 
-        self.add_email_template('offer')
-        self.add_email_template('offer-grants', template='These are your grants: {grants}')
+        self.add_email_template('offer-nofee')
+        self.add_email_template('offer-fee')
+        self.add_email_template('offer-nofee-grants', template='These are your grants: {grants}')
+        self.add_email_template('offer-fee-grants', template='These are your grants: {grants}')
         self.add_email_template('offer-paid')
         self.add_email_template('invoice')
 
@@ -222,6 +224,66 @@ class OfferApiTest(ApiTestCase):
         )
 
         self.assertEqual(response.status_code, 404)
+
+    def test_create_offer_with_note_tags(self):
+        self._seed_static_data(add_offer=False)
+
+        tag1 = self.add_tag(event_id=self.event_id, names={'en': 'Note 1 en', 'fr': 'Note 1 fr'}, descriptions={'en': 'Note 1 en description', 'fr': 'Note 1 fr description'}, tag_type='OFFER_NOTE')
+        tag2 = self.add_tag(event_id=self.event_id, tag_type='OFFER_NOTE')
+
+        offer_data = OFFER_DATA.copy()
+        offer_data['note_tags'] = [{'id': tag1.id}, {'id': tag2.id}]
+
+        response = self.app.post(
+            '/api/v1/offer',
+            data=json.dumps(offer_data),
+            headers=self.adminHeaders,
+            content_type='application/json'
+        )
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 201)
+        offer = offer_repository.get_by_id(data['id'])
+        self.assertEqual(len(offer.offer_tags), 2)
+
+    def test_create_offer_with_grant_and_note_tags(self):
+        self._seed_static_data(add_offer=False)
+
+        grant_tag = self.add_tag(event_id=self.event_id, tag_type='GRANT')
+        note_tag = self.add_tag(event_id=self.event_id, tag_type='OFFER_NOTE')
+
+        offer_data = OFFER_DATA.copy()
+        offer_data['grant_tags'] = [{'id': grant_tag.id}]
+        offer_data['note_tags'] = [{'id': note_tag.id}]
+
+        response = self.app.post(
+            '/api/v1/offer',
+            data=json.dumps(offer_data),
+            headers=self.adminHeaders,
+            content_type='application/json'
+        )
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 201)
+        offer = offer_repository.get_by_id(data['id'])
+        self.assertEqual(len(offer.offer_tags), 2)
+
+    def test_create_offer_with_non_offer_note_tags(self):
+        self._seed_static_data(add_offer=False)
+
+        tag1 = self.add_tag(event_id=self.event_id, tag_type='REGISTRATION')
+
+        offer_data = OFFER_DATA.copy()
+        offer_data['note_tags'] = [{'id': tag1.id}]
+
+        response = self.app.post(
+            '/api/v1/offer',
+            data=json.dumps(offer_data),
+            headers=self.adminHeaders,
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 500)
 
     def test_create_duplicate_offer(self):
         self._seed_static_data(add_offer=True)

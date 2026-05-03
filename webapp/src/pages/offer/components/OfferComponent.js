@@ -24,6 +24,7 @@ class Offer extends Component {
       noOffer: null,
       category: "",
       grant_tags: [],
+      note_tags: [],
       applicationExist: null
     };
   }
@@ -63,6 +64,7 @@ class Offer extends Component {
             this.setState({
               offer: response.response.data,
               grant_tags: this.initGrants(response.response.data.tags),
+              note_tags: this.initNotes(response.response.data.tags),
               showReasonBox: false,
               saving: false
             }, () => {
@@ -216,6 +218,32 @@ class Offer extends Component {
       </div>);
   }
 
+  renderNotes = () => {
+    const { note_tags } = this.state;
+    const t = this.props.t;
+
+    if (!note_tags || note_tags.length === 0) {
+      return null;
+    }
+
+    return <div className="row mb-3">
+      <div className="col-md-3 font-weight-bold pr-2 h4" align="left">{t("Notes")}</div>
+      <div className="col-md-12">
+        {note_tags.map((note_tag) => {
+          return <div className="row mb-2 offer-note" key={"note_tag_" + note_tag.id}>
+            <div className="col-md-2">
+              <span className="font-weight-bold">{note_tag.name}</span>
+            </div>
+            <div className="col-md-10">
+              {note_tag.description}
+            </div>
+          </div>;
+        })}
+      </div>
+      <hr/>
+    </div>;
+  }
+
   renderGrants = () => {
     const { grant_tags } = this.state;
     const t = this.props.t;
@@ -283,6 +311,7 @@ class Offer extends Component {
                 <p class="font-weight-bold h3">{t("Offer Details")}</p>
 
                 {this.props.event && grant_tags && this.renderGrants()}
+                {this.renderNotes()}
 
                 <div class="row">
                   <div class="col-md-12 font-weight-bold pr-2 h4" align="left">{t("Registration Fee")}</div>
@@ -410,7 +439,8 @@ class Offer extends Component {
             loading: false,
             offer: result.offer,
             error: result.error,
-            grant_tags: this.initGrants(result.offer.tags)
+            grant_tags: this.initGrants(result.offer.tags),
+            note_tags: this.initNotes(result.offer.tags)
           });
         }
       });
@@ -423,6 +453,10 @@ class Offer extends Component {
         accepted: tag.accepted === null ? true : tag.accepted,
         }
       });
+  }
+
+  initNotes = (tags) => {
+    return tags.filter(tag => tag.tag_type === "OFFER_NOTE");
   }
 
   render() {
