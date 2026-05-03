@@ -2916,6 +2916,7 @@ class APITest(ApiTestCase):
         del data["sections"][1]["questions"][0]["id"]
         
         self.maxDiff = 6000
+        del data['review_configuration']
         data["num_reviews"] = REVIEW_FORM_POST["num_reviews"]
         self.assertEqual(data, REVIEW_FORM_POST)
 
@@ -2945,6 +2946,7 @@ class APITest(ApiTestCase):
         del data["sections"][0]["questions"][1]["id"]
         del data["sections"][1]["questions"][0]["id"]
         self.maxDiff = None
+        del data['review_configuration']
         data["num_reviews"] = REVIEW_FORM_PUT["num_reviews"]
         self.assertEqual(data, REVIEW_FORM_PUT)
 

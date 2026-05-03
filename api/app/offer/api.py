@@ -149,6 +149,7 @@ class OfferAPI(OfferMixin, restful.Resource):
         user_id = args['user_id']
         event_id = args['event_id']
         grant_tags = args['grant_tags']
+        note_tags = args['note_tags']
         offer_date = datetime.strptime((args['offer_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
         expiry_date = datetime.strptime((args['expiry_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
         payment_required = args['payment_required']
@@ -175,6 +176,30 @@ class OfferAPI(OfferMixin, restful.Resource):
             if not event_fee:
                 return errors.EVENT_FEE_NOT_FOUND
 
+        validated_grant_tags = []
+        for gi in grant_tags:
+            tag_id = gi['id']
+            existing_tag = db.session.query(Tag).get(tag_id)
+            if not existing_tag or existing_tag.event_id != event_id:
+                return errors.TAG_NOT_FOUND
+            if existing_tag.tag_type != TagType.GRANT:
+                return errors.TAG_NOT_TYPE_GRANT
+            if not existing_tag.active:
+                return errors.TAG_NOT_ACTIVE
+            validated_grant_tags.append(existing_tag)
+
+        validated_note_tags = []
+        for nt in note_tags:
+            tag_id = nt['id']
+            existing_tag = db.session.query(Tag).get(tag_id)
+            if not existing_tag or existing_tag.event_id != event_id:
+                return errors.TAG_NOT_FOUND
+            if existing_tag.tag_type != TagType.OFFER_NOTE:
+                return errors.TAG_NOT_TYPE_OFFER_NOTE
+            if not existing_tag.active:
+                return errors.TAG_NOT_ACTIVE
+            validated_note_tags.append(existing_tag)
+
         new_outcome = Outcome(
             event_id,
             user_id,
@@ -193,36 +218,44 @@ class OfferAPI(OfferMixin, restful.Resource):
         )
 
         db.session.add(offer_entity)
-        db.session.commit()
+        db.session.flush()
 
-        for gi in grant_tags:
-            tag_id = gi['id']
-            existing_tag = db.session.query(Tag).get(tag_id)
-            if not existing_tag or existing_tag.event_id != event_id:
-                return errors.TAG_NOT_FOUND
-            if existing_tag.tag_type != TagType.GRANT:
-                return errors.TAG_NOT_TYPE_GRANT
-            if not existing_tag.active:
-                return errors.TAG_NOT_ACTIVE
-                        
+        for existing_tag in validated_grant_tags:
             offer_tag = OfferTag(
                 offer_id=offer_entity.id,
                 tag_id=existing_tag.id,
                 accepted=None
             )
             db.session.add(offer_tag)
-        
+
+        for existing_tag in validated_note_tags:
+            offer_tag = OfferTag(
+                offer_id=offer_entity.id,
+                tag_id=existing_tag.id,
+                accepted=None
+            )
+            db.session.add(offer_tag)
+
         db.session.commit()
         
         language = user.user_primaryLanguage
 
-        if grant_tags:
-            grant_strs = [offer_tag.tag.stringify_tag_name_description(language=language) for offer_tag in offer_entity.offer_tags]
+        grant_offer_tags = [ot for ot in offer_entity.offer_tags if ot.tag.tag_type == TagType.GRANT]
+        note_offer_tags = [ot for ot in offer_entity.offer_tags if ot.tag.tag_type == TagType.OFFER_NOTE]
+
+        if grant_offer_tags:
+            grant_strs = [ot.tag.stringify_tag_name_description(language=language) for ot in grant_offer_tags]
             grants_summary = "\n\u2022 " + "\n\u2022 ".join(grant_strs)
             email_template = 'offer-fee-grants' if payment_required else 'offer-nofee-grants'
         else:
             grants_summary = ''
             email_template = 'offer-fee' if payment_required else 'offer-nofee'
+
+        if note_offer_tags:
+            note_strs = [ot.tag.stringify_tag_name_description(language=language) for ot in note_offer_tags]
+            notes_summary = "\n\u2022 " + "\n\u2022 ".join(note_strs)
+        else:
+            notes_summary = ''
 
         email_user(
             email_template,
@@ -231,6 +264,7 @@ class OfferAPI(OfferMixin, restful.Resource):
                 expiry_date=offer_entity.expiry_date.strftime("%Y-%m-%d"),
                 event_email_from=event_email_from,
                 grants=grants_summary,
+                notes=notes_summary,
                 payment_amount=float(event_fee.amount) if payment_required else 0,
                 payment_currency=event_fee.iso_currency_code if payment_required else '',
             ),

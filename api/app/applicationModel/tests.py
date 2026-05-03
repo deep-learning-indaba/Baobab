@@ -138,6 +138,7 @@ APPLICATION_FORM_POST_DATA = {
   "event_id": 1, 
   "is_open": True, 
   "nominations": False, 
+  "allows_edits": True,
   "sections": [
     {
       "name": {
@@ -399,6 +400,7 @@ APPLICATION_FORM_PUT_DATA = {
   "event_id": 1, 
   "is_open": False,  # Updated 
   "nominations": True,  # Updated 
+  "allows_edits": False,  # Updated
   "sections": [
     {
       "id": 1,

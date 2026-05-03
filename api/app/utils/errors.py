@@ -131,6 +131,8 @@ TAG_NOT_FOUND = (
     {'message': 'No tag found with the given id'}, 404)
 TAG_NOT_TYPE_GRANT = (
     {'message': 'Tag is not of type GRANT'}, 500)
+TAG_NOT_TYPE_OFFER_NOTE = (
+    {'message': 'Tag is not of type OFFER_NOTE'}, 500)
 TAG_NOT_ACTIVE = (
     {'message': 'Tag has been deleted'}, 500)
 REVIEW_FORM_NOT_FOUND = ({'message': "No review form found for the event"}, 404)

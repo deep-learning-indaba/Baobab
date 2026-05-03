@@ -399,7 +399,7 @@ class ResponseListAPI(restful.Resource):
             return errors.INVALID_INPUT_MALFORMED_PAGINATION
 
         paginated_responses = response_repository.get_all_for_event(
-            event_id, not include_unsubmitted, page=page, per_page=per_page, name=name_search, email=email_search, tag_id=tag_id
+            event_id, not include_unsubmitted, page=page, per_page=per_page, name=name_search, email=email_search, tag_id=tag_id, load_answers=bool(question_ids)
         )
 
         review_config = review_configuration_repository.get_configuration_for_event(event_id)

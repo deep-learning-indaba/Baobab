@@ -35,14 +35,15 @@ function getOffer(event_id){
 
 }
 
-function addOffer(user_id, event_id, offer_date, expiry_date, payment_required, grant_tags){
+function addOffer(user_id, event_id, offer_date, expiry_date, payment_required, grant_tags, note_tags){
   const data = {
         user_id: user_id, 
         event_id: event_id,
         offer_date: offer_date,
         expiry_date: expiry_date,
         payment_required: payment_required,
-        grant_tags: grant_tags
+        grant_tags: grant_tags,
+        note_tags: note_tags || []
     }
 
     return axios
