@@ -565,9 +565,9 @@ class ResponseListAPITest(ApiTestCase):
 
         data = json.loads(response.data)
 
-        self.assertEqual(len(data), 2)
+        self.assertEqual(len(data['responses']), 2)
 
-        response1 = data[0]
+        response1 = data['responses'][0]
         self.assertEqual(response1['response_id'], 1)
         self.assertEqual(response1['user_title'], self.user_names[0].user_title)
         self.assertEqual(response1['firstname'], self.user_names[0].firstname)
@@ -589,7 +589,7 @@ class ResponseListAPITest(ApiTestCase):
         self.assertEqual(response1['tags'][0]['id'], 1)
         self.assertEqual(response1['tags'][0]['name'], 'Tag 1 en')
 
-        response2 = data[1]
+        response2 = data['responses'][1]
         self.assertEqual(response2['response_id'], 2)
         self.assertEqual(response2['user_title'], self.user_names[1].user_title)
         self.assertEqual(response2['firstname'], self.user_names[1].firstname)
@@ -624,22 +624,22 @@ class ResponseListAPITest(ApiTestCase):
             data=params)
 
         data = json.loads(response.data)
-        self.assertEqual(len(data), 3)
+        self.assertEqual(len(data['responses']), 3)
 
-        self.assertEqual(len(data[0]['answers']), 2)
+        self.assertEqual(len(data['responses'][0]['answers']), 2)
 
-        self.assertEqual(data[0]['answers'][0]['question_id'], 1)
-        self.assertEqual(data[0]['answers'][0]['value'], 'First answer')
-        self.assertEqual(data[0]['answers'][0]['type'], 'short-text')
-        self.assertEqual(data[0]['answers'][0]['options'], None)
-        self.assertEqual(data[0]['answers'][0]['headline'], 'English Headline 1')
-        self.assertEqual(data[0]['answers'][1]['question_id'], 3)
-        self.assertEqual(data[0]['answers'][1]['value'], 'Third answer')
-        self.assertEqual(data[0]['answers'][1]['type'], 'short-text')
-        self.assertEqual(data[0]['answers'][1]['options'], None)
-        self.assertEqual(data[0]['answers'][1]['headline'], 'English Headline 3')
+        self.assertEqual(data['responses'][0]['answers'][0]['question_id'], 1)
+        self.assertEqual(data['responses'][0]['answers'][0]['value'], 'First answer')
+        self.assertEqual(data['responses'][0]['answers'][0]['type'], 'short-text')
+        self.assertEqual(data['responses'][0]['answers'][0]['options'], None)
+        self.assertEqual(data['responses'][0]['answers'][0]['headline'], 'English Headline 1')
+        self.assertEqual(data['responses'][0]['answers'][1]['question_id'], 3)
+        self.assertEqual(data['responses'][0]['answers'][1]['value'], 'Third answer')
+        self.assertEqual(data['responses'][0]['answers'][1]['type'], 'short-text')
+        self.assertEqual(data['responses'][0]['answers'][1]['options'], None)
+        self.assertEqual(data['responses'][0]['answers'][1]['headline'], 'English Headline 3')
 
-        response3 = data[2]
+        response3 = data['responses'][2]
         self.assertEqual(response3['response_id'], 3)
         self.assertEqual(response3['user_title'], self.user_names[2].user_title)
         self.assertEqual(response3['firstname'], self.user_names[2].firstname)
@@ -714,8 +714,8 @@ class ResponseTagAPITest(ApiTestCase):
 
         data = json.loads(response.data)
 
-        self.assertEqual(len(data[0]['tags']), 1)
-        self.assertEqual(data[0]['tags'][0]['id'], 1)
+        self.assertEqual(len(data['responses'][0]['tags']), 1)
+        self.assertEqual(data['responses'][0]['tags'][0]['id'], 1)
 
     def test_tag_reviewer(self):
         """Test that a reviewer can add a tag."""
@@ -747,8 +747,8 @@ class ResponseTagAPITest(ApiTestCase):
 
         data = json.loads(response.data)
 
-        self.assertEqual(len(data[0]['tags']), 1)
-        self.assertEqual(data[0]['tags'][0]['id'], 1)
+        self.assertEqual(len(data['responses'][0]['tags']), 1)
+        self.assertEqual(data['responses'][0]['tags'][0]['id'], 1)
 
     def test_remove_tag_admin(self):
         """Test that an event admin can remove a tag from a response."""
@@ -780,7 +780,7 @@ class ResponseTagAPITest(ApiTestCase):
 
         data = json.loads(response.data)
 
-        self.assertEqual(len(data[1]['tags']), 0)
+        self.assertEqual(len(data['responses'][1]['tags']), 0)
 
     def test_remove_tag_reviewer(self):
         """Test that a reviewer can remove a tag from a response."""
@@ -812,7 +812,7 @@ class ResponseTagAPITest(ApiTestCase):
 
         data = json.loads(response.data)
 
-        self.assertEqual(len(data[1]['tags']), 0)
+        self.assertEqual(len(data['responses'][1]['tags']), 0)
 
     def test_tag_different_reviewer(self):
         """Test that a reviewer of a different response can't add a tag."""

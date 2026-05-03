@@ -129,13 +129,15 @@ class ResponseRepository():
                 .all())
 
     @staticmethod
-    def get_all_for_event(event_id, submitted_only=True, page=1, per_page=25, name=None, email=None, tag_id=None):
-        query = db.session.query(Response).options(
+    def get_all_for_event(event_id, submitted_only=True, page=1, per_page=25, name=None, email=None, tag_id=None, load_answers=False):
+        load_options = [
             joinedload(Response.user),
             joinedload(Response.response_tags).joinedload(ResponseTag.tag),
             joinedload(Response.reviewers).joinedload(ResponseReviewer.user),
-            noload(Response.answers)
-        )
+        ]
+        if not load_answers:
+            load_options.append(noload(Response.answers))
+        query = db.session.query(Response).options(*load_options)
         if submitted_only:
             query = query.filter_by(is_submitted=True)
 

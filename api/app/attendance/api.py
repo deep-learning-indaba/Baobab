@@ -9,6 +9,7 @@ from app.attendance.repository import IndemnityRepository as indemnity_repositor
 from app.events.repository import EventRepository as event_repository
 from app.offer.repository import OfferRepository as offer_repository
 from app.users.repository import UserRepository as user_repository
+from app.registration.repository import RegistrationRepository as registration_repository
 from app.utils.auth import auth_required
 from app.utils.emailer import email_user
 from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, ATTENDANCE_NOT_FOUND, EVENT_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, INDEMNITY_NOT_FOUND, INDEMNITY_NOT_SIGNED, NOT_A_GUEST
@@ -45,7 +46,7 @@ _attendee_fields = {
 
 
 class AttendanceUser():
-    def __init__(self, user, attendance, is_invitedguest, invitedguest_role, confirmed, tags):
+    def __init__(self, user, attendance, is_invitedguest, invitedguest_role, confirmed, tags, registration=None):
         self.id = attendance.id if attendance is not None else None
         self.fullname = user.full_name  
         self.event_id = attendance.event_id if attendance is not None else None
@@ -56,14 +57,21 @@ class AttendanceUser():
         self.is_invitedguest = is_invitedguest
         self.invitedguest_role = invitedguest_role
         self.confirmed = confirmed
-        print("Tags:", tags)
-
-        for tag in tags:
-            print(tag.tag.stringify_tag_name(), tag.tag.tag_type)
-
         self.tags = [tag.tag.stringify_tag_name() for tag in tags
-        if tag.tag.tag_type == TagType.CHECKIN]
-        print("self.tags:", self.tags)
+            if tag.tag.tag_type == TagType.CHECKIN]
+        self.offer_metadata = [
+            {'name': tag.tag.get_translation('en').name}
+            for tag in tags
+            if tag.tag.tag_type != TagType.CHECKIN
+        ]
+        if registration:
+            self.registration_metadata = [
+                {'name': qt.tag.get_translation('en').name, 'response': answer.value}
+                for answer in registration.answers
+                for qt in answer.registration_question.tags
+            ]
+        else:
+            self.registration_metadata = []
 
 
 class AttendanceAPI(AttendanceMixin, restful.Resource):
@@ -91,6 +99,7 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
         
         # Check if invited guest
         invited_guest = attendance_repository.get_invited_guest(event_id, user_id)
+        registration = None
         
         if (invited_guest):
             is_invited_guest = True
@@ -103,10 +112,11 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
             invitedguest_role = "General Attendee"
             is_invited_guest = False
             tags = offer.offer_tags
+            registration = registration_repository.from_offer(offer.id)
         
         attendance_user = AttendanceUser(user, attendance, is_invitedguest=is_invited_guest, 
                                          invitedguest_role=invitedguest_role,
-                                         confirmed=confirmed, tags=tags)
+                                         confirmed=confirmed, tags=tags, registration=registration)
         return marshal(attendance_user, attendance_fields), 200
 
     @auth_required
