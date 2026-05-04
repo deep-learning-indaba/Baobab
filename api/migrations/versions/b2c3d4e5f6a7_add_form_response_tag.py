@@ -1,14 +1,14 @@
 """Add form_response_tag table
 
-Revision ID: a1b2c3d4e5f6
-Revises: fd232b2eed5e
+Revision ID: b2c3d4e5f6a7
+Revises: a1b2c3d4e5f6
 Create Date: 2026-05-04 00:00:00.000000
 
 """
 
 # revision identifiers, used by Alembic.
-revision = 'a1b2c3d4e5f6'
-down_revision = 'fd232b2eed5e'
+revision = 'b2c3d4e5f6a7'
+down_revision = 'a1b2c3d4e5f6'
 
 from alembic import op
 import sqlalchemy as sa

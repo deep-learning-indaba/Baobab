@@ -185,5 +185,8 @@ jobs:
       - name: Use deployment Dockerfile
         run: cp Dockerfile.deploy Dockerfile
 
+      - name: Increase App Engine Cloud Build timeout
+        run: gcloud config set app/cloud_build_timeout 1800
+
       - name: Deploy backend to App Engine staging service
         run: gcloud app deploy app.generated.yaml --quiet --promote --stop-previous-version
