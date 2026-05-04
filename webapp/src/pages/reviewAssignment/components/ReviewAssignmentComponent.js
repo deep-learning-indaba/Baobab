@@ -37,18 +37,25 @@ class ReviewAssignmentComponent extends Component {
     const event_id = this.props.event ? this.props.event.id : 0;
 
     if (this.isNewStyleEvent()) {
-      reviewService.getFormReviewAssignments(this.props.event.review_form_id, event_id)
-        .then(result => {
-          this.setState({
-            reviewers: result.reviewers || [],
-            filteredReviewers: result.reviewers || [],
-            reviewSummary: null,
-            tags: [],
-            newReviewerEmail: '',
-            error: result.error,
-            loading: false
-          });
+      const reviewFormId = this.props.event.review_form_id;
+      Promise.all([
+        tagsService.getTagList(event_id),
+        reviewService.getFormReviewAssignments(reviewFormId, event_id),
+        reviewService.getFormReviewSummary(reviewFormId, event_id, [])
+      ]).then(responses => {
+        const tagList = (responses[0].tags || []).filter(
+          tag => this.filterable_tag_types.includes(tag.tag_type)
+        ).map(tag => ({ ...tag, active: false }));
+        this.setState({
+          tags: tagList,
+          reviewers: responses[1].reviewers || [],
+          filteredReviewers: responses[1].reviewers || [],
+          reviewSummary: responses[2].reviewSummary,
+          newReviewerEmail: '',
+          error: responses[0].error || responses[1].error || responses[2].error,
+          loading: false
         });
+      });
       return;
     }
 
@@ -81,19 +88,24 @@ class ReviewAssignmentComponent extends Component {
     const event_id = this.props.event ? this.props.event.id : 0;
 
     if (this.isNewStyleEvent()) {
+      const reviewFormId = this.props.event.review_form_id;
+      const activeTags = this.state.tags.filter(tag => tag.active).map(tag => tag.id);
       reviewService.assignFormReviews(
-        this.props.event.review_form_id, event_id, email, toAssign
+        reviewFormId, event_id, email, toAssign, activeTags
       ).then(result => {
-        return reviewService.getFormReviewAssignments(this.props.event.review_form_id, event_id)
-          .then(listResult => {
-            this.setState({
-              loading: false,
-              reviewers: listResult.reviewers || [],
-              filteredReviewers: listResult.reviewers || [],
-              newReviewerEmail: '',
-              error: result.error || listResult.error
-            });
+        return Promise.all([
+          reviewService.getFormReviewAssignments(reviewFormId, event_id),
+          reviewService.getFormReviewSummary(reviewFormId, event_id, activeTags)
+        ]).then(responses => {
+          this.setState({
+            loading: false,
+            reviewers: responses[0].reviewers || [],
+            filteredReviewers: responses[0].reviewers || [],
+            reviewSummary: responses[1].reviewSummary,
+            newReviewerEmail: '',
+            error: result.error || responses[0].error || responses[1].error
           });
+        });
       });
       return;
     }
@@ -137,18 +149,23 @@ class ReviewAssignmentComponent extends Component {
     const event_id = this.props.event ? this.props.event.id : 0;
 
     if (this.isNewStyleEvent()) {
+      const reviewFormId = this.props.event.review_form_id;
+      const activeTags = this.state.tags.filter(tag => tag.active).map(tag => tag.id);
       reviewService.removeFormReviews(
-        this.props.event.review_form_id, event_id, email, toRemove
+        reviewFormId, event_id, email, toRemove, activeTags
       ).then(result => {
-        return reviewService.getFormReviewAssignments(this.props.event.review_form_id, event_id)
-          .then(listResult => {
-            this.setState({
-              loading: false,
-              reviewers: listResult.reviewers || [],
-              filteredReviewers: listResult.reviewers || [],
-              error: result.error || listResult.error
-            });
+        return Promise.all([
+          reviewService.getFormReviewAssignments(reviewFormId, event_id),
+          reviewService.getFormReviewSummary(reviewFormId, event_id, activeTags)
+        ]).then(responses => {
+          this.setState({
+            loading: false,
+            reviewers: responses[0].reviewers || [],
+            filteredReviewers: responses[0].reviewers || [],
+            reviewSummary: responses[1].reviewSummary,
+            error: result.error || responses[0].error || responses[1].error
           });
+        });
       });
       return;
     }
@@ -207,11 +224,21 @@ class ReviewAssignmentComponent extends Component {
   }
 
   refreshSummary = () => {
+    const event_id = this.props.event ? this.props.event.id : 0;
+    const tags = this.state.tags.filter(tag => tag.active).map(tag => tag.id);
     if (this.isNewStyleEvent()) {
+      reviewService.getFormReviewSummary(this.props.event.review_form_id, event_id, tags).then(
+        result => {
+          this.setState({
+            reviewSummary: result.reviewSummary,
+            error: result.error
+          });
+        },
+        error => this.setState({ error })
+      );
       return;
     }
-    const tags = this.state.tags.filter(tag => tag.active).map(tag => tag.id);
-    reviewService.getReviewSummary(this.props.event ? this.props.event.id : 0, tags).then(
+    reviewService.getReviewSummary(event_id, tags).then(
       result => {
         this.setState(prevState => ({
           reviewSummary: result.reviewSummary,
