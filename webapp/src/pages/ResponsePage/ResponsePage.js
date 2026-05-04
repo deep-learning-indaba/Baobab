@@ -437,10 +437,8 @@ class ResponsePage extends Component {
                 return <div key={choices}>{choices}</div>
             }
             // other
-            else {
-                return <div key={headline}><p className="answer">{a.value}</p></div>
-            };
-        };
+            return <div key={headline}><p className="answer">{a.value}</p></div>
+        }
     };
 
     // render Delete Modal

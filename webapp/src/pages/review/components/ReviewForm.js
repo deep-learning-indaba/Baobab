@@ -43,7 +43,7 @@ class ReviewQuestionComponent extends Component {
         }
     };
 
-    linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
+    linkRenderer = (props) => <a href={props.href} target="_blank" rel="noopener noreferrer">{props.children}</a>
 
     formControl = (key, question, answer, score, validationError) => {
         const question_type = answer && answer.question_type === FILE ? FILE : question.type;
@@ -157,7 +157,7 @@ class ReviewQuestionComponent extends Component {
         }
     }
 
-    linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
+    linkRenderer = (props) => <a href={props.href} target="_blank" rel="noopener noreferrer">{props.children}</a>
 
     renderHeader = (model) => {
         if (model.question.type === SECTION_DIVIDER) {
@@ -540,7 +540,7 @@ class ReviewForm extends Component {
         });
     }
 
-    linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
+    linkRenderer = (props) => <a href={props.href} target="_blank" rel="noopener noreferrer">{props.children}</a>
 
     render() {
         const {

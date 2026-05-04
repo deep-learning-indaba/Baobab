@@ -2,7 +2,6 @@
 
 import React, { Component } from "react";
 import { withRouter } from "react-router";
-import { Link } from "react-router-dom";
 import MarkdownRenderer from "../../../components/MarkdownRenderer";
 import FormTextArea from "../../../components/form/FormTextArea";
 import FormTextBox from "../../../components/form/FormTextBox";

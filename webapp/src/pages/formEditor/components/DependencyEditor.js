@@ -43,7 +43,7 @@ const DependencyEditor = ({
   const [isInitialized, setIsInitialized] = useState(false);
   const [showJsonPreview, setShowJsonPreview] = useState(false);
   const [linkedFormQuestions, setLinkedFormQuestions] = useState([]);
-  const [loadingLinkedQuestions, setLoadingLinkedQuestions] = useState(false);
+  const [, setLoadingLinkedQuestions] = useState(false);
 
   useEffect(() => {
     if (!isInitialized) {

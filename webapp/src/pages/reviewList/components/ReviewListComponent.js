@@ -32,7 +32,7 @@ class ReviewListComponent extends Component {
         reviewList.forEach(r => {
             r.information.forEach(i => {
                 r[i.headline] = i.value;
-                if (!columns.some(c=>c == i.headline)) {
+                if (!columns.some(c=>c === i.headline)) {
                     columns.push(i.headline);
                 }
             });
@@ -184,7 +184,7 @@ class ReviewListComponent extends Component {
               {numReviews === numCompleted && numReviews > 0 && 
                 <div className="alert alert-success">{this.props.t("You have completed all your reviews, thank you!")}</div>}
 
-              {numReviews == 0 && 
+              {numReviews === 0 && 
                 <div className="alert alert-info">{this.props.t("You have no reviews assigned")}</div>}
             
               <div class="checkbox-top">

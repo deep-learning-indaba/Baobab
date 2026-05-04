@@ -36,7 +36,7 @@ function AnswerValue({answer, question, t}) {
         }
       case FILE:
         return <div>
-          <a target="_blank" href={getDownloadURL(answer.value)}>{t("Uploaded File")}</a>
+          <a target="_blank" rel="noopener noreferrer" href={getDownloadURL(answer.value)}>{t("Uploaded File")}</a>
           <br/>
           <span className="small-text">
             *{t("Note: You may need to change the file name to open the file on certain operating systems")}

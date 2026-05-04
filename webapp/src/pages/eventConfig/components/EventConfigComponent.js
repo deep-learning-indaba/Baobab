@@ -138,7 +138,7 @@ class EventConfigComponent extends Component {
 
   onClickUpdate = () => {
     const errors = this.validateEventDetails();
-    if (errors.length == 0) { //PUT
+    if (errors.length === 0) { //PUT
       const event_with_times = this.addTimeToDates(this.state.updatedEvent);
       eventService.update(event_with_times).then(result => {
       if (result.error) {
@@ -221,7 +221,7 @@ class EventConfigComponent extends Component {
     if (this.state.updatedEvent.email_from.trim().length === 0) {
       errors.push(this.props.t("Organisation email is required"));
     }
-    if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(this.state.updatedEvent.email_from)) {
+    if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(this.state.updatedEvent.email_from)) {
       errors.push(this.props.t("Organisation email is invalid"));
     }
     if (this.state.updatedEvent.url.trim().length === 0) {

@@ -7,10 +7,6 @@ import * as moment from 'moment';
 import MarkdownRenderer from "../MarkdownRenderer";
 
 class FormDate extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
   shouldDisplayError = () => {
     return this.props.showError && this.props.errorText !== "";
 

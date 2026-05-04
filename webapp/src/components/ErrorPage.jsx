@@ -16,7 +16,7 @@ Error Message:
 // Consider logging componentStack and error
 export const ErrorPage = ({ componentStack, error }) => {
   if (errorHandler){
-    var errorMessage= new Object();
+    var errorMessage= {};
     errorMessage.componentStack = componentStack;
     errorMessage.error  = error;
     var jsonString= JSON.stringify(errorMessage);

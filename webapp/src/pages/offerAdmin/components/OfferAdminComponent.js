@@ -1,12 +1,10 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { offerServices } from "../../../services/offer/offer.service";
-import { responsesService } from '../../../services/responses/responses.service';
 import { withTranslation } from 'react-i18next';
 import Loading from "../../../components/Loading";
 import ReactTable from 'react-table';
 import FormTextBox from "../../../components/form/FormTextBox";
-import FormTextArea from "../../../components/form/FormTextArea";
 import FormSelect from "../../../components/form/FormSelect";
 import ReactToolTip from "react-tooltip";
 import FormDate from "../../../components/form/FormDate";
