@@ -8,6 +8,7 @@ class TagType(Enum):
     GRANT = 'grant'
     QUESTION = 'question'
     CHECKIN = 'checkin'
+    OFFER_NOTE = 'offer_note'
 
 class Tag(db.Model):
     __tablename__ = 'tag'

@@ -30,7 +30,7 @@ class InvitedGuestRepository():
         db.session.add(invited_guest)
         db.session.flush()
 
-        for tag_id in tag_ids:
+        for tag_id in (tag_ids or []):
             invited_guest_tag = InvitedGuestTag(invited_guest.id, tag_id)
             db.session.add(invited_guest_tag)
         

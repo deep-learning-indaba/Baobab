@@ -140,5 +140,5 @@ integration-tests/cypress/videos/
 integration-tests/cypress/screenshots/
 integration-tests/cypress/plugins/
 
-# Temporary design docs
-docs/temp/
+# Temporary Docs
+/docs/temp/

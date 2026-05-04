@@ -999,12 +999,12 @@ class ReviewResponseSummaryListAPI(restful.Resource):
         parser.add_argument('language', type=str, required=True)
         args = parser.parse_args()
 
-        responses = response_repository.get_all_for_event(event_id)
+        responses = response_repository.get_all_for_event(event_id, load_answers=True)
         review_form = review_repository.get_review_form(event_id)
 
         return [
             ReviewResponseSummaryListAPI._serialise_response(response, review_form, args['language'])
-            for response in responses
+            for response in responses.items
         ], 200
 
 

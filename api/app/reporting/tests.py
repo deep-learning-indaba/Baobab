@@ -115,17 +115,17 @@ class ReportingTest(ApiTestCase):
             )
 
             self.assertEqual(200, response.status_code)
-            self.assertEqual(4, len(response.json))  # 2 responses, 2 questions each
-            self.assertEqual('John Doe', response.json[0]['answer'])
-            self.assertEqual('Blue', response.json[1]['answer'])
-            self.assertEqual('Jean Dupont', response.json[2]['answer'])
-            self.assertEqual('Rouge', response.json[3]['answer'])
-            self.assertEqual('en', response.json[0]['response_language'])
-            self.assertEqual('fr', response.json[2]['response_language'])
-            self.assertEqual('Section 1', response.json[0]['section'])
-            self.assertEqual('Section 2', response.json[1]['section'])
-            self.assertEqual('What is your name?', response.json[0]['question'])
-            self.assertEqual('What is your favourite colour?', response.json[1]['question'])
+            self.assertEqual(4, len(response.json['results']))  # 2 responses, 2 questions each
+            self.assertEqual('John Doe', response.json['results'][0]['answer'])
+            self.assertEqual('Blue', response.json['results'][1]['answer'])
+            self.assertEqual('Jean Dupont', response.json['results'][2]['answer'])
+            self.assertEqual('Rouge', response.json['results'][3]['answer'])
+            self.assertEqual('en', response.json['results'][0]['response_language'])
+            self.assertEqual('fr', response.json['results'][2]['response_language'])
+            self.assertEqual('Section 1', response.json['results'][0]['section'])
+            self.assertEqual('Section 2', response.json['results'][1]['section'])
+            self.assertEqual('What is your name?', response.json['results'][0]['question'])
+            self.assertEqual('What is your favourite colour?', response.json['results'][1]['question'])
 
         def test_get_application_response_report_fr(self):
             response = self.app.get(
@@ -133,17 +133,17 @@ class ReportingTest(ApiTestCase):
                 headers=self.get_auth_header_for(self.admin_user.email, password='abcd')
             )
             self.assertEqual(200, response.status_code)
-            self.assertEqual(4, len(response.json))
-            self.assertEqual('John Doe', response.json[0]['answer'])
-            self.assertEqual('Blue', response.json[1]['answer'])
-            self.assertEqual('Jean Dupont', response.json[2]['answer'])
-            self.assertEqual('Rouge', response.json[3]['answer'])
-            self.assertEqual('en', response.json[0]['response_language'])
-            self.assertEqual('fr', response.json[2]['response_language'])
-            self.assertEqual('Section 1 FR', response.json[0]['section'])
-            self.assertEqual('Section 2 FR', response.json[1]['section'])
-            self.assertEqual('What is your name? FR', response.json[0]['question'])
-            self.assertEqual('What is your favourite colour? FR', response.json[1]['question'])
+            self.assertEqual(4, len(response.json['results']))
+            self.assertEqual('John Doe', response.json['results'][0]['answer'])
+            self.assertEqual('Blue', response.json['results'][1]['answer'])
+            self.assertEqual('Jean Dupont', response.json['results'][2]['answer'])
+            self.assertEqual('Rouge', response.json['results'][3]['answer'])
+            self.assertEqual('en', response.json['results'][0]['response_language'])
+            self.assertEqual('fr', response.json['results'][2]['response_language'])
+            self.assertEqual('Section 1 FR', response.json['results'][0]['section'])
+            self.assertEqual('Section 2 FR', response.json['results'][1]['section'])
+            self.assertEqual('What is your name? FR', response.json['results'][0]['question'])
+            self.assertEqual('What is your favourite colour? FR', response.json['results'][1]['question'])
 
         def test_get_reviews_report(self):
             response = self.app.get(
@@ -154,9 +154,9 @@ class ReportingTest(ApiTestCase):
             self.assertEqual(200, response.status_code)
 
             print(response.json)
-            self.assertEqual(8, len(response.json))
+            self.assertEqual(8, len(response.json['results']))
 
-            response1_review1_answer1 = response.json[0]
+            response1_review1_answer1 = response.json['results'][0]
             self.assertEqual('5', response1_review1_answer1['score'])
             self.assertEqual('How good are they?', response1_review1_answer1['question'])
             self.assertEqual('en', response1_review1_answer1['review_language'])
@@ -166,7 +166,7 @@ class ReportingTest(ApiTestCase):
             self.assertEqual(self.reviewer1_firstname, response1_review1_answer1['reviewer_firstname'])
             self.assertEqual(self.reviewer1_lastname, response1_review1_answer1['reviewer_lastname'])
 
-            response1_review1_answer2 = response.json[1]
+            response1_review1_answer2 = response.json['results'][1]
             self.assertEqual('Good job!', response1_review1_answer2['score'])
             self.assertEqual('Any other comments?', response1_review1_answer2['question'])
             self.assertEqual('en', response1_review1_answer2['review_language'])
@@ -176,7 +176,7 @@ class ReportingTest(ApiTestCase):
             self.assertEqual(self.reviewer1_firstname, response1_review1_answer2['reviewer_firstname'])
             self.assertEqual(self.reviewer1_lastname, response1_review1_answer2['reviewer_lastname'])
 
-            response1_review2_answer1 = response.json[2]
+            response1_review2_answer1 = response.json['results'][2]
             self.assertEqual('3', response1_review2_answer1['score'])
             self.assertEqual('How good are they?', response1_review2_answer1['question'])
             self.assertEqual('en', response1_review2_answer1['review_language'])
@@ -186,7 +186,7 @@ class ReportingTest(ApiTestCase):
             self.assertEqual(self.reviewer2_firstname, response1_review2_answer1['reviewer_firstname'])
             self.assertEqual(self.reviewer2_lastname, response1_review2_answer1['reviewer_lastname'])
 
-            response1_review2_answer2 = response.json[3]
+            response1_review2_answer2 = response.json['results'][3]
             self.assertEqual('Could be better', response1_review2_answer2['score'])
             self.assertEqual('Any other comments?', response1_review2_answer2['question'])
             self.assertEqual('en', response1_review2_answer2['review_language'])
@@ -196,7 +196,7 @@ class ReportingTest(ApiTestCase):
             self.assertEqual(self.reviewer2_firstname, response1_review2_answer2['reviewer_firstname'])
             self.assertEqual(self.reviewer2_lastname, response1_review2_answer2['reviewer_lastname'])
 
-            response2_review1_answer1 = response.json[4]
+            response2_review1_answer1 = response.json['results'][4]
             self.assertEqual('4', response2_review1_answer1['score'])
             self.assertEqual('How good are they?', response2_review1_answer1['question'])
             self.assertEqual('en', response2_review1_answer1['review_language'])
@@ -206,7 +206,7 @@ class ReportingTest(ApiTestCase):
             self.assertEqual(self.reviewer1_firstname, response2_review1_answer1['reviewer_firstname'])
             self.assertEqual(self.reviewer1_lastname, response2_review1_answer1['reviewer_lastname'])
 
-            response2_review1_answer2 = response.json[5]
+            response2_review1_answer2 = response.json['results'][5]
             self.assertEqual('Good job!', response2_review1_answer2['score'])
             self.assertEqual('Any other comments?', response2_review1_answer2['question'])
             self.assertEqual('en', response2_review1_answer2['review_language'])
@@ -216,7 +216,7 @@ class ReportingTest(ApiTestCase):
             self.assertEqual(self.reviewer1_firstname, response2_review1_answer2['reviewer_firstname'])
             self.assertEqual(self.reviewer1_lastname, response2_review1_answer2['reviewer_lastname'])
 
-            response2_review2_answer1 = response.json[6]
+            response2_review2_answer1 = response.json['results'][6]
             self.assertEqual('2', response2_review2_answer1['score'])
             self.assertEqual('How good are they?', response2_review2_answer1['question'])
             self.assertEqual('en', response2_review2_answer1['review_language'])
@@ -226,7 +226,7 @@ class ReportingTest(ApiTestCase):
             self.assertEqual(self.reviewer2_firstname, response2_review2_answer1['reviewer_firstname'])
             self.assertEqual(self.reviewer2_lastname, response2_review2_answer1['reviewer_lastname'])
 
-            response2_review2_answer2 = response.json[7]
+            response2_review2_answer2 = response.json['results'][7]
             self.assertEqual('Could be better', response2_review2_answer2['score'])
             self.assertEqual('Any other comments?', response2_review2_answer2['question'])
             self.assertEqual('en', response2_review2_answer2['review_language'])

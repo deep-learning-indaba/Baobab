@@ -223,6 +223,19 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data[1]['description'], 'French Tag 2 Event 1 Description')
 
 
+    def test_tag_type_list(self):
+        """Test that all tag types including OFFER_NOTE are returned."""
+        self.seed_static_data()
+        response = self.app.get('/api/v1/tagtypes', headers=self.user1_headers, data={'event_id': 1})
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertIn('OFFER_NOTE', data)
+        self.assertIn('RESPONSE', data)
+        self.assertIn('REGISTRATION', data)
+        self.assertIn('GRANT', data)
+        self.assertIn('QUESTION', data)
+        self.assertIn('CHECKIN', data)
+
     def test_tag_list_default_language(self):
         """Test that the language defaults to English when not found."""
         self.seed_static_data()

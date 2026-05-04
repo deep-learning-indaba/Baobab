@@ -507,6 +507,8 @@
     "RESPONSE" : "RESPONSE",
     "REGISTRATION": "REGISTRATION",
     "GRANT": "GRANT",
+    "OFFER_NOTE": "OFFER_NOTE",
+    "Notes": "Notes",
     "Select A Tag": "Select A Tag",
     "Close": "Close",
     "Start Date": "Start Date",

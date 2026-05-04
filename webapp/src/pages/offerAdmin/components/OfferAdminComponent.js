@@ -166,8 +166,8 @@ class OfferAdminComponent extends Component {
             id: "tags",
             Header: <div className="tags">{t("Tags")}</div>,
             Cell: props => <div>
-              {props.original.tags.map(t => 
-                  <span className="tag badge badge-primary" key={`tag_${props.original.response_id}_${t.id}`}>{t.name}</span>)}
+              {props.original.tags.map(tag => 
+                  <span className={"tag badge " + (tag.tag_type === "OFFER_NOTE" ? "badge-warning" : "badge-primary")} key={`tag_${props.original.response_id}_${tag.id}`}>{tag.name}</span>)}
             </div>,
             accessor: u => u.tags.map(t => t.name).join("; "),
             minWidth: 150
@@ -346,8 +346,8 @@ class OfferAdminComponent extends Component {
                     {t("Tags")}
                 </label>
                 <div className="col-sm-10">
-                    {selectedOffer.tags.map(t => 
-                    <span className="tag badge badge-primary" key={`tag_${selectedOffer.response_id}_${t.id}`}>{t.name}</span>)}
+                    {selectedOffer.tags.map(tag => 
+                    <span className={"tag badge " + (tag.tag_type === "OFFER_NOTE" ? "badge-warning" : "badge-primary")} key={`tag_${selectedOffer.response_id}_${tag.id}`}>{tag.name}</span>)}
                 </div>
             </div>
             <div className="form-group row">
