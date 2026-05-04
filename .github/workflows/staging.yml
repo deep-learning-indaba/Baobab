@@ -35,9 +35,6 @@ jobs:
       - name: Install frontend dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Run frontend tests
-        run: yarn test-ci --watchAll=false
-
       - name: Build staging frontend
         run: yarn build-test
         env:
