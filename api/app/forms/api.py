@@ -8,7 +8,7 @@ from flask import g, request
 from app.forms.models import (
     Form, FormResponse, FormAnswer, FormSection, FormQuestion,
     FormTranslation, FormSectionTranslation, FormQuestionTranslation,
-    DependencyEvaluator
+    DependencyEvaluator, FormResponseTag
 )
 from app.forms.visibility import VisibilityEvaluator
 from app.forms.mixins import (
@@ -25,7 +25,9 @@ from app.utils.emailer import email_user
 from app.utils import misc
 from app.applicationModel.models import ApplicationForm
 from app.registration.models import RegistrationForm
-from app.reviews.models import ReviewForm
+from app.reviews.models import ReviewForm, ReviewerTag
+from app.events.models import EventRole
+from app.tags.repository import TagRepository as tag_repository
 
 
 def serialize_form(form, language='en', include_inactive=False):
@@ -1350,7 +1352,7 @@ class FormReviewAssignmentAPI(restful.Resource):
 
     @event_admin_required
     def get(self, form_id, event_id):
-        """Return per-reviewer allocation and completion counts for this review form."""
+        """Return per-reviewer allocation and completion counts, with reviewer tags."""
         try:
             review_form = db.session.query(Form).filter_by(
                 id=form_id, form_type='review'
@@ -1375,6 +1377,27 @@ class FormReviewAssignmentAPI(restful.Resource):
                 .all()
             )
 
+            # Load all reviewer tags for this event once to avoid N+1 queries
+            reviewer_tags = db.session.query(ReviewerTag).filter_by(
+                event_id=event_id
+            ).all()
+
+            def _tags_for_reviewer(reviewer_user_id):
+                language = 'en'
+                result = []
+                for rt in reviewer_tags:
+                    if rt.reviewer_user_id != reviewer_user_id:
+                        continue
+                    translation = rt.tag.get_translation(language)
+                    if translation is None:
+                        translation = rt.tag.get_translation('en')
+                    result.append({
+                        'id': rt.tag_id,
+                        'name': translation.name if translation else '',
+                        'description': translation.description if translation else ''
+                    })
+                return result
+
             result = []
             for user, allocated, completed in rows:
                 result.append({
@@ -1385,22 +1408,23 @@ class FormReviewAssignmentAPI(restful.Resource):
                     'user_title': user.user_title,
                     'reviews_allocated': allocated,
                     'reviews_completed': int(completed) if completed else 0,
-                    'tags': []
+                    'tags': _tags_for_reviewer(user.id)
                 })
             return result, 200
 
         except Exception as e:
-            LOGGER.error(f"Error getting review assignments for form {form_id}: {str(e)}")
+            LOGGER.error('Error getting review assignments for form {}: {}'.format(form_id, str(e)))
             LOGGER.error(traceback.format_exc())
             return errors.DB_NOT_AVAILABLE
 
     @event_admin_required
     def post(self, form_id, event_id):
-        """Assign N reviews to a reviewer by bulk-creating FormResponse records."""
+        """Assign N reviews to a reviewer, optionally filtered by response tags."""
         try:
             args = request.get_json()
             reviewer_user_email = args.get('reviewer_user_email')
             num_reviews = args.get('num_reviews', 0)
+            tag_ids = args.get('tag_ids') or []
 
             review_form = db.session.query(Form).filter_by(
                 id=form_id, form_type='review'
@@ -1418,7 +1442,21 @@ class FormReviewAssignmentAPI(restful.Resource):
             reviewer_id = reviewer.id
             reviewer_email = reviewer.email
 
+            # Ensure the user has the reviewer event role (required for ReviewerTagAPI)
+            existing_role = db.session.query(EventRole).filter_by(
+                role='reviewer', user_id=reviewer_id, event_id=event_id
+            ).first()
+            if not existing_role:
+                db.session.add(EventRole('reviewer', reviewer_id, event_id))
+
             num_reviews_required = (review_form.settings or {}).get('num_reviews_required', 1)
+
+            # Merge explicitly requested tags with the reviewer's own tags
+            reviewer_tags = db.session.query(ReviewerTag).filter_by(
+                event_id=event_id, reviewer_user_id=reviewer_id
+            ).all()
+            reviewer_tag_ids = [rt.tag_id for rt in reviewer_tags]
+            filter_tag_ids = list(set(tag_ids) | set(reviewer_tag_ids))
 
             # All submitted, non-withdrawn application responses excluding the reviewer's own
             candidate_app_responses = db.session.query(FormResponse).filter(
@@ -1427,6 +1465,15 @@ class FormReviewAssignmentAPI(restful.Resource):
                 FormResponse.is_withdrawn == False,
                 FormResponse.user_id != reviewer_id
             ).all()
+
+            # Apply tag filtering: response must have ALL selected tags
+            if filter_tag_ids:
+                filtered = []
+                for resp in candidate_app_responses:
+                    resp_tag_ids = [rt.tag_id for rt in resp.response_tags]
+                    if all(t in resp_tag_ids for t in filter_tag_ids):
+                        filtered.append(resp)
+                candidate_app_responses = filtered
 
             # Responses already at the required reviewer count
             fully_assigned_ids = set(
@@ -1488,18 +1535,19 @@ class FormReviewAssignmentAPI(restful.Resource):
             return {'reviews_assigned': len(to_assign)}, 201
 
         except Exception as e:
-            LOGGER.error(f"Error assigning reviews for form {form_id}: {str(e)}")
+            LOGGER.error('Error assigning reviews for form {}: {}'.format(form_id, str(e)))
             LOGGER.error(traceback.format_exc())
             db.session.rollback()
             return errors.DB_NOT_AVAILABLE
 
     @event_admin_required
     def delete(self, form_id, event_id):
-        """Remove up to N unstarted (no answers) review assignments from a reviewer."""
+        """Remove up to N unstarted (no answers) review assignments, optionally filtered by tags."""
         try:
             args = request.get_json()
             reviewer_user_email = args.get('reviewer_user_email')
             num_reviews = args.get('num_reviews', 0)
+            tag_ids = args.get('tag_ids') or []
 
             review_form = db.session.query(Form).filter_by(
                 id=form_id, form_type='review'
@@ -1524,6 +1572,18 @@ class FormReviewAssignmentAPI(restful.Resource):
             )
             unstarted = [r for r in unstarted if len(r.answers) == 0]
 
+            # Apply tag filter: only remove assignments whose linked response has all selected tags
+            if tag_ids:
+                def _has_all_tags(assignment):
+                    if not assignment.linked_response_id:
+                        return False
+                    linked = db.session.query(FormResponse).get(assignment.linked_response_id)
+                    if not linked:
+                        return False
+                    resp_tag_ids = [rt.tag_id for rt in linked.response_tags]
+                    return all(t in resp_tag_ids for t in tag_ids)
+                unstarted = [r for r in unstarted if _has_all_tags(r)]
+
             counter = 0
             for response in unstarted:
                 db.session.delete(response)
@@ -1535,7 +1595,155 @@ class FormReviewAssignmentAPI(restful.Resource):
             return {'num_deleted': counter}, 200
 
         except Exception as e:
-            LOGGER.error(f"Error removing review assignments for form {form_id}: {str(e)}")
+            LOGGER.error('Error removing review assignments for form {}: {}'.format(form_id, str(e)))
             LOGGER.error(traceback.format_exc())
             db.session.rollback()
+            return errors.DB_NOT_AVAILABLE
+
+
+class FormResponseTagAPI(restful.Resource):
+    """Add or remove tags from a FormResponse (application response)."""
+
+    @event_admin_required
+    def post(self, form_id, response_id, event_id):
+        """Add a tag to a FormResponse."""
+        try:
+            args = request.get_json()
+            tag_id = args.get('tag_id')
+            if not tag_id:
+                return {'error': 'tag_id is required'}, 400
+
+            form_response = db.session.query(FormResponse).filter_by(
+                id=response_id, form_id=form_id
+            ).first()
+            if not form_response:
+                return errors.OBJECT_NOT_FOUND
+
+            tag = tag_repository.get_by_id(tag_id)
+            if not tag:
+                return errors.TAG_NOT_FOUND
+            if tag.event_id != event_id:
+                return errors.FORBIDDEN
+
+            existing = db.session.query(FormResponseTag).filter_by(
+                form_response_id=response_id, tag_id=tag_id
+            ).first()
+            if existing:
+                return {'error': 'Tag already applied to this response'}, 400
+
+            frt = FormResponseTag(form_response_id=response_id, tag_id=tag_id)
+            db.session.add(frt)
+            db.session.commit()
+
+            translation = tag.get_translation('en')
+            return {
+                'id': frt.id,
+                'form_response_id': frt.form_response_id,
+                'tag_id': frt.tag_id,
+                'name': translation.name if translation else '',
+                'description': translation.description if translation else ''
+            }, 201
+
+        except Exception as e:
+            LOGGER.error('Error adding tag to form response {}: {}'.format(response_id, str(e)))
+            LOGGER.error(traceback.format_exc())
+            db.session.rollback()
+            return errors.DB_NOT_AVAILABLE
+
+    @event_admin_required
+    def delete(self, form_id, response_id, event_id):
+        """Remove a tag from a FormResponse."""
+        try:
+            args = request.get_json()
+            tag_id = args.get('tag_id')
+            if not tag_id:
+                return {'error': 'tag_id is required'}, 400
+
+            frt = db.session.query(FormResponseTag).filter_by(
+                form_response_id=response_id, tag_id=tag_id
+            ).first()
+            if not frt:
+                return errors.OBJECT_NOT_FOUND
+
+            db.session.delete(frt)
+            db.session.commit()
+            return {}, 200
+
+        except Exception as e:
+            LOGGER.error('Error removing tag from form response {}: {}'.format(response_id, str(e)))
+            LOGGER.error(traceback.format_exc())
+            db.session.rollback()
+            return errors.DB_NOT_AVAILABLE
+
+
+class FormReviewSummaryAPI(restful.Resource):
+    """Count unallocated reviews for a new-style review form, optionally filtered by response tags."""
+
+    @event_admin_required
+    def get(self, form_id, event_id):
+        try:
+            review_form = db.session.query(Form).filter_by(
+                id=form_id, form_type='review'
+            ).first()
+            if not review_form:
+                return errors.FORM_NOT_FOUND
+
+            if not review_form.linked_form_id:
+                return {'reviews_unallocated': 0}, 200
+
+            from flask_restful import reqparse as rp
+            parser = rp.RequestParser()
+            parser.add_argument('tags[]', type=int, action='append', location='args')
+            args = parser.parse_args()
+            tag_ids = args['tags[]'] or []
+
+            num_reviews_required = (review_form.settings or {}).get('num_reviews_required', 1)
+
+            # All submitted app responses for the linked form
+            app_responses = db.session.query(FormResponse).filter(
+                FormResponse.form_id == review_form.linked_form_id,
+                FormResponse.is_submitted == True,
+                FormResponse.is_withdrawn == False
+            ).all()
+
+            # Apply tag filter
+            if tag_ids:
+                filtered = []
+                for resp in app_responses:
+                    resp_tag_ids = [rt.tag_id for rt in resp.response_tags]
+                    if all(t in resp_tag_ids for t in tag_ids):
+                        filtered.append(resp)
+                app_responses = filtered
+
+            app_response_ids = [r.id for r in app_responses]
+
+            if not app_response_ids:
+                return {'reviews_unallocated': 0}, 200
+
+            # Count existing active review assignments per app response
+            assignment_counts = dict(
+                db.session.query(
+                    FormResponse.linked_response_id,
+                    db.func.count(FormResponse.id)
+                )
+                .filter(
+                    FormResponse.form_id == form_id,
+                    FormResponse.linked_response_id.in_(app_response_ids),
+                    FormResponse.is_withdrawn == False
+                )
+                .group_by(FormResponse.linked_response_id)
+                .all()
+            )
+
+            total_required = len(app_response_ids) * num_reviews_required
+            assigned = sum(
+                min(assignment_counts.get(rid, 0), num_reviews_required)
+                for rid in app_response_ids
+            )
+
+            return {'reviews_unallocated': total_required - assigned}, 200
+
+        except Exception as e:
+            LOGGER.error('Error getting review summary for form {}: {}'.format(form_id, str(e)))
+            LOGGER.error(traceback.format_exc())
             return errors.DB_NOT_AVAILABLE

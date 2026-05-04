@@ -569,6 +569,9 @@ class FormResponse(db.Model):
                                      foreign_keys=[parent_response_id], lazy='select')
     linked_response = db.relationship('FormResponse', remote_side=[id],
                                      foreign_keys=[linked_response_id], lazy='select')
+    response_tags = db.relationship('FormResponseTag',
+                                    cascade='all, delete-orphan',
+                                    foreign_keys='FormResponseTag.form_response_id')
     
     # Indexes
     __table_args__ = (
@@ -665,3 +668,24 @@ class FormAnswer(db.Model):
                 return False, ValidationError.INVALID_OPTION
         
         return True, None
+
+
+class FormResponseTag(db.Model):
+    """Tag applied to a FormResponse (application response)."""
+    __tablename__ = 'form_response_tag'
+
+    id = db.Column(db.Integer(), primary_key=True)
+    form_response_id = db.Column(
+        db.Integer(), db.ForeignKey('form_response.id'), nullable=False
+    )
+    tag_id = db.Column(db.Integer(), db.ForeignKey('tag.id'), nullable=False)
+
+    tag = db.relationship('Tag', foreign_keys=[tag_id], lazy='selectin')
+
+    __table_args__ = (
+        db.UniqueConstraint('form_response_id', 'tag_id', name='uq_form_response_tag'),
+    )
+
+    def __init__(self, form_response_id, tag_id):
+        self.form_response_id = form_response_id
+        self.tag_id = tag_id

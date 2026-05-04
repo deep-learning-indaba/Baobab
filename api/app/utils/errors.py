@@ -129,6 +129,8 @@ DUPLICATE_RESPONSE = ({'message': 'A response has already been submitted for thi
 BAD_CONFIGURATION = ({'message': 'There is an error with the form configuration'}, 500)
 TAG_NOT_FOUND = (
     {'message': 'No tag found with the given id'}, 404)
+OBJECT_NOT_FOUND = (
+    {'message': 'Object not found'}, 404)
 TAG_NOT_TYPE_GRANT = (
     {'message': 'Tag is not of type GRANT'}, 500)
 TAG_NOT_TYPE_OFFER_NOTE = (
