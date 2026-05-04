@@ -2,9 +2,9 @@ service: staging-frontend
 runtime: python312
 
 handlers:
-  - url: /(.*\.(gif|png|jpg|css|js|pdf|json)(|\.map))$
+  - url: /(.*\.(gif|png|jpg|css|js|pdf|json))$
     static_files: build/\1
-    upload: build/(.*)(|\.map)
+    upload: build/(.*)
     secure: always
     redirect_http_response_code: 301
 
