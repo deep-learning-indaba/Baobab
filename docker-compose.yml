@@ -1,9 +1,5 @@
 version: "3.2"
 services:
-  redis:
-    image: redis
-    ports:
-      - 6379:6379
   db:
     image: postgres
     ports:
@@ -27,7 +23,6 @@ services:
     links:
       - db
       - storage
-      - redis
     environment:
       DEBUG: "True"
       SECRET_KEY: __filler__

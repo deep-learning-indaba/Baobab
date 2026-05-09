@@ -105,62 +105,43 @@ jobs:
               print("Missing required secrets: " + ", ".join(missing), file=sys.stderr)
               sys.exit(1)
 
-          config = {
-              "service": "staging-api",
-              "runtime": "custom",
-              "env": "flex",
-              "entrypoint": "gunicorn -c gunicorn.config.py -b :$PORT main:app",
-              "manual_scaling": {"instances": 1},
-              "resources": {"cpu": 1, "memory_gb": 0.6, "disk_size_gb": 15},
-              "env_variables": {
-                  "DATABASE_URL": os.environ["STAGING_DATABASE_URL"],
-                  "SECRET_KEY": os.environ["STAGING_SECRET_KEY"],
-                  "SMTP_USERNAME": os.environ["SMTP_USERNAME"],
-                  "SMTP_PASSWORD": os.environ["SMTP_PASSWORD"],
-                  "SMTP_SENDER_NAME": "Deep Learning Indaba",
-                  "SMTP_SENDER_EMAIL": os.environ.get("SMTP_SENDER_EMAIL", "baobab@deeplearningindaba.com"),
-                  "SMTP_HOST": os.environ.get("SMTP_HOST", "email-smtp.us-east-1.amazonaws.com"),
-                  "SMTP_PORT": os.environ.get("SMTP_PORT", "587"),
-                  "GCP_CLIENT_ID": os.environ["STAGING_GCP_CLIENT_ID"],
-                  "GCP_CLIENT_EMAIL": os.environ["STAGING_GCP_CLIENT_EMAIL"],
-                  "GCP_PRIVATE_KEY_ID": os.environ["STAGING_GCP_PRIVATE_KEY_ID"],
-                  "GCP_PRIVATE_KEY": os.environ["STAGING_GCP_PRIVATE_KEY"],
-                  "GCP_PROJECT_NAME": os.environ["GCP_PROJECT_ID"],
-                  "GCP_BUCKET_NAME": os.environ["STAGING_BACKEND_BUCKET"],
-                  "FILE_SIZE_LIMIT": "10485760",
-                  "BOABAB_HOST": os.environ.get("STAGING_BAOBAB_HOST", "https://test-baobab.deeplearningindaba.com/"),
-              },
-              "beta_settings": {
-                  "cloud_sql_instances": os.environ["STAGING_CLOUD_SQL_INSTANCE"]
-              },
-              "readiness_check": {"app_start_timeout_sec": 600},
+          env_variables = {
+              "DATABASE_URL": os.environ["STAGING_DATABASE_URL"],
+              "SECRET_KEY": os.environ["STAGING_SECRET_KEY"],
+              "SMTP_USERNAME": os.environ["SMTP_USERNAME"],
+              "SMTP_PASSWORD": os.environ["SMTP_PASSWORD"],
+              "SMTP_SENDER_NAME": "Deep Learning Indaba",
+              "SMTP_SENDER_EMAIL": os.environ.get("SMTP_SENDER_EMAIL", "baobab@deeplearningindaba.com"),
+              "SMTP_HOST": os.environ.get("SMTP_HOST", "email-smtp.us-east-1.amazonaws.com"),
+              "SMTP_PORT": os.environ.get("SMTP_PORT", "587"),
+              "GCP_CLIENT_ID": os.environ["STAGING_GCP_CLIENT_ID"],
+              "GCP_CLIENT_EMAIL": os.environ["STAGING_GCP_CLIENT_EMAIL"],
+              "GCP_PRIVATE_KEY_ID": os.environ["STAGING_GCP_PRIVATE_KEY_ID"],
+              "GCP_PRIVATE_KEY": os.environ["STAGING_GCP_PRIVATE_KEY"],
+              "GCP_PROJECT_NAME": os.environ["GCP_PROJECT_ID"],
+              "GCP_BUCKET_NAME": os.environ["STAGING_BACKEND_BUCKET"],
+              "FILE_SIZE_LIMIT": "10485760",
+              "BOABAB_HOST": os.environ.get("STAGING_BAOBAB_HOST", "https://test-baobab.deeplearningindaba.com/"),
           }
 
           def scalar(value):
               return "'" + str(value).replace("\\n", "\\\\n").replace("'", "''") + "'"
 
           with open("app.generated.yaml", "w") as f:
-              f.write("service: " + config["service"] + "\n")
-              f.write("runtime: " + config["runtime"] + "\n")
-              f.write("env: " + config["env"] + "\n")
-              f.write("entrypoint: " + scalar(config["entrypoint"]) + "\n")
+              f.write("service: staging-api\n")
+              f.write("runtime: python311\n")
+              f.write("instance_class: B4\n")
+              f.write("entrypoint: " + scalar("gunicorn -c gunicorn.config.py -b :$PORT main:app") + "\n")
               f.write("\n")
               f.write("manual_scaling:\n")
-              f.write("  instances: " + str(config["manual_scaling"]["instances"]) + "\n")
-              f.write("resources:\n")
-              f.write("  cpu: " + str(config["resources"]["cpu"]) + "\n")
-              f.write("  memory_gb: " + str(config["resources"]["memory_gb"]) + "\n")
-              f.write("  disk_size_gb: " + str(config["resources"]["disk_size_gb"]) + "\n")
+              f.write("  instances: 1\n")
               f.write("\n")
               f.write("env_variables:\n")
-              for key, value in config["env_variables"].items():
+              for key, value in env_variables.items():
                   f.write("  " + key + ": " + scalar(value) + "\n")
               f.write("\n")
               f.write("beta_settings:\n")
-              f.write("  cloud_sql_instances: " + scalar(config["beta_settings"]["cloud_sql_instances"]) + "\n")
-              f.write("\n")
-              f.write("readiness_check:\n")
-              f.write("  app_start_timeout_sec: " + str(config["readiness_check"]["app_start_timeout_sec"]) + "\n")
+              f.write("  cloud_sql_instances: " + scalar(os.environ["STAGING_CLOUD_SQL_INSTANCE"]) + "\n")
           PY
         env:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -178,12 +159,6 @@ jobs:
           STAGING_BACKEND_BUCKET: ${{ secrets.STAGING_BACKEND_BUCKET }}
           STAGING_BAOBAB_HOST: ${{ secrets.STAGING_BAOBAB_HOST }}
           STAGING_CLOUD_SQL_INSTANCE: ${{ secrets.STAGING_CLOUD_SQL_INSTANCE }}
-
-      - name: Use deployment Dockerfile
-        run: cp Dockerfile.deploy Dockerfile
-
-      - name: Increase App Engine Cloud Build timeout
-        run: gcloud config set app/cloud_build_timeout 7200
 
       - name: Deploy backend to App Engine staging service
         run: gcloud app deploy app.generated.yaml --quiet --promote --stop-previous-version --version=v1
