@@ -15,7 +15,12 @@ import tldextract
 
 app = Flask(__name__)
 app.config.from_object('config')
-CORS(app, resources={r"/api/*": {"origins": r".*"}}, supports_credentials=True)
+_allowed_origins = [
+    app.config.get('BOABAB_HOST', 'http://localhost:8080').rstrip('/'),
+    'http://localhost:3000',
+    'http://localhost:8080',
+]
+CORS(app, resources={r"/api/*": {"origins": _allowed_origins}}, supports_credentials=True)
 print((app.config['SQLALCHEMY_DATABASE_URI']))
 rest_api = restful.Api(app)
 db = SQLAlchemy(app)
