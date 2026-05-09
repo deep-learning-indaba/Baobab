@@ -134,7 +134,6 @@ jobs:
                   "cloud_sql_instances": os.environ["STAGING_CLOUD_SQL_INSTANCE"]
               },
               "readiness_check": {"app_start_timeout_sec": 600},
-              "cloud_build_timeout": 3600,
           }
 
           def scalar(value):
@@ -162,8 +161,6 @@ jobs:
               f.write("\n")
               f.write("readiness_check:\n")
               f.write("  app_start_timeout_sec: " + str(config["readiness_check"]["app_start_timeout_sec"]) + "\n")
-              f.write("\n")
-              f.write("cloud_build_timeout: " + str(config["cloud_build_timeout"]) + "\n")
           PY
         env:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -186,7 +183,7 @@ jobs:
         run: cp Dockerfile.deploy Dockerfile
 
       - name: Increase App Engine Cloud Build timeout
-        run: gcloud config set app/cloud_build_timeout 3600
+        run: gcloud config set app/cloud_build_timeout 7200
 
       - name: Deploy backend to App Engine staging service
         run: gcloud app deploy app.generated.yaml --quiet --promote --stop-previous-version --version=v1
