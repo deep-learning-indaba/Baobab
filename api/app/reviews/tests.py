@@ -14,7 +14,7 @@ from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse, Revie
 
 from app.reviews.models import ReviewForm, ReviewQuestion, ReviewQuestionTranslation, ReviewResponse, ReviewScore, ReviewConfiguration
 from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
-from nose.plugins.skip import SkipTest
+from unittest import skip as SkipTest
 
 from parameterized import parameterized
 

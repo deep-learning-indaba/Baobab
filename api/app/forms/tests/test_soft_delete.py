@@ -179,6 +179,7 @@ class TestFormSoftDelete(ApiTestCase):
         self.assertEqual(rv.status_code, 400)  # Should fail validation
         
         # Now soft delete question2
+        question2 = db.session.merge(question2)
         question2.is_active = False
         db.session.commit()
         

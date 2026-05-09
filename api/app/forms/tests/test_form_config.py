@@ -15,6 +15,8 @@ class TestFormTypeModel(ApiTestCase):
         self.event = self.add_event()
         self.add_event_role('admin', self.user.id, self.event.id)
         self.auth_headers = self.get_auth_header_for('admin@test.com')
+        self.user = db.session.merge(self.user)
+        self.event = db.session.merge(self.event)
 
     def test_form_type_defaults_to_none(self):
         """A form with no form_type has form_type=None."""
@@ -123,6 +125,8 @@ class TestFormTypeDefaults(ApiTestCase):
         self.event = self.add_event()
         self.add_event_role('admin', self.user.id, self.event.id)
         self.auth_headers = self.get_auth_header_for('admin@test.com')
+        self.user = db.session.merge(self.user)
+        self.event = db.session.merge(self.event)
 
     def test_registration_defaults_applied(self):
         """Creating a registration form applies correct defaults."""
@@ -380,6 +384,9 @@ class TestEventFormConfigAPI(ApiTestCase):
         self.add_event_role('admin', self.admin.id, self.event.id)
         self.admin_headers = self.get_auth_header_for('admin@test.com')
         self.user_headers = self.get_auth_header_for('user@test.com')
+        self.admin = db.session.merge(self.admin)
+        self.regular_user = db.session.merge(self.regular_user)
+        self.event = db.session.merge(self.event)
 
     def _get_form_config(self, event_id=None, headers=None):
         eid = event_id if event_id is not None else self.event.id

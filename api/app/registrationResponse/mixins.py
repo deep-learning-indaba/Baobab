@@ -1,5 +1,5 @@
 from flask_restful import reqparse
-from flask_restplus import inputs
+from flask_restful import inputs
 
 
 class RegistrationAdminMixin(object):

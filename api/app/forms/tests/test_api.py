@@ -671,6 +671,7 @@ class TestFormAPI(ApiTestCase):
             'show_progress': True
         }
         form = Form(
+            event_id=self.event.id,
             created_by_user_id=self.user.id,
             is_open=True,
             settings=settings
