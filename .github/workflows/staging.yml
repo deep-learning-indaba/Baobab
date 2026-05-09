@@ -53,7 +53,7 @@ jobs:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Deploy frontend to App Engine
-        run: gcloud app deploy staging-app.yaml dispatch.yaml --quiet --promote
+        run: gcloud app deploy staging-app.yaml dispatch.yaml --quiet --promote --stop-previous-version --version=v1
 
   backend:
     name: Deploy staging backend
