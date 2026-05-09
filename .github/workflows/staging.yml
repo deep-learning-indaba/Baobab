@@ -53,7 +53,7 @@ jobs:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Upload frontend build to Cloud Storage
-        run: gcloud storage rsync --recursive --delete-unmatched-destination-objects build gs://${{ secrets.STAGING_FRONTEND_BUCKET }}
+        run: gcloud storage rsync --recursive --delete-unmatched-destination-objects --exclude="log-.*\.txt" build gs://${{ secrets.STAGING_FRONTEND_BUCKET }}
 
       - name: Set frontend cache headers
         run: |
