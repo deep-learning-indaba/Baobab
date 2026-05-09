@@ -1,4 +1,7 @@
 dispatch:
+  - url: "test-baobab.deeplearningindaba.com/api/*"
+    service: staging-api
+
   - url: "test-baobab.deeplearningindaba.com/*"
     service: staging-frontend
 

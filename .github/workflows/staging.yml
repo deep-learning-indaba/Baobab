@@ -18,6 +18,7 @@ jobs:
   frontend:
     name: Build and deploy staging frontend
     runs-on: ubuntu-latest
+    needs: backend
     defaults:
       run:
         working-directory: webapp
