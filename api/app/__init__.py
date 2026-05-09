@@ -71,8 +71,17 @@ def is_from_stripe():
     stripe_user_agent = 'Stripe/1.0 (+https://stripe.com/docs/webhooks)'
     return request.environ.get('HTTP_USER_AGENT') == stripe_user_agent
 
+@app.route('/_ah/start')
+@app.route('/_ah/stop')
+@app.route('/_ah/warmup')
+def appengine_lifecycle():
+    return 'OK', 200
+
+
 @app.before_request
 def populate_organisation():
+    if request.path.startswith('/_ah/'):
+        return
     if is_from_stripe():
         signed_payload, expected_signature = get_signed_payload_and_signature()
         g.organisation = OrganisationResolver.resolve_from_stripe_signature(
@@ -81,7 +90,6 @@ def populate_organisation():
         )
     else:
         domain = get_domain()
-        LOGGER.info('Origin Domain: {}'.format(domain))  # TODO: Remove this after testing
         g.organisation = OrganisationResolver.resolve_from_domain(domain)
 
 ## Flask Admin Config
