@@ -33,11 +33,12 @@ jobs:
           cache-dependency-path: api/requirements.txt
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.txt pytest-xdist
 
       - name: Run tests
-        run: pytest -v
+        run: pytest -n auto -v
         env:
+          DEBUG: 'True'
           SECRET_KEY: 'test-secret-key'
           FILE_SIZE_LIMIT: '10485760'
           GCP_CLIENT_ID: dummy
