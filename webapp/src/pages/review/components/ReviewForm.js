@@ -13,7 +13,7 @@ import { reviewService } from "../../../services/reviews";
 import { userService } from "../../../services/user";
 
 import { Link } from "react-router-dom";
-import { ConfirmModal } from "react-bootstrap4-modal";
+import { ConfirmModal } from "../../../components/Modal";
 import { Trans, withTranslation } from 'react-i18next'
 
 const LONG_TEXT = "long-text";
@@ -555,38 +555,36 @@ class ReviewForm extends Component {
             currentSkip
         } = this.state;
 
-        const loadingStyle = {
-            "width": "3rem",
-            "height": "3rem"
-        }
-
         const t = this.props.t;
         const editMode = this.props.match.params && this.props.match.params.id > 0;
 
         if (isLoading) {
             return (
-                <div class="d-flex justify-content-center">
-                    <div class="spinner-border" style={loadingStyle} role="status">
-                        <span class="sr-only">Loading...</span>
-                    </div>
+                <div className="flex justify-center items-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
             );
         }
 
         if (error) {
-            return <div className={"alert alert-danger alert-container"}>
-                {error}
-            </div>;
+            return (
+                <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-6">
+                    {error}
+                </div>
+            );
         }
 
         if (!editMode && form.reviews_remaining_count === 0) {
             return (
-                <div class="review-form-container">
-                    <div class="alert alert-success alert-container">
-                        <p class="complete-title">{t("All Done!")}</p><br />
-                        {t("You have completed all your reviews! Please let us know if you have any capacity for more")}
-                        <br /><br />
-                        {t("Thank you for your contribution!")}
+                <div className="w-full max-w-5xl mx-auto pt-6 text-left">
+                    <div className="bg-green-50 text-green-800 border border-green-200 p-8 rounded-2xl shadow-sm space-y-4 text-center">
+                        <p className="text-xl font-bold">{t("All Done!")}</p>
+                        <p className="text-sm">
+                            {t("You have completed all your reviews! Please let us know if you have any capacity for more")}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-4 font-semibold">
+                            {t("Thank you for your contribution!")}
+                        </p>
                     </div>
                 </div>
             )
@@ -595,11 +593,11 @@ class ReviewForm extends Component {
         const reviewsRemainingCount = form.reviews_remaining_count;
 
         return (
-            <div class="review-form-container">
+            <div className="w-full max-w-5xl mx-auto pt-6 text-left space-y-6">
                 {questionModels && questionModels.map(section =>
-                    <div className="card review-section" key={"s_" + section.id}>
-                        {section.headline && <h3 className="section-headline card-title">{section.headline}</h3>}
-                        {section.description && <div className="section-description"><MarkdownRenderer source={section.description} /></div>}
+                    <div className="bg-white rounded-2xl shadow-sm border border-border p-8 space-y-6" key={"s_" + section.id}>
+                        {section.headline && <h2 className="text-xl font-bold text-foreground pb-2 border-b border-border/50">{section.headline}</h2>}
+                        {section.description && <div className="text-sm text-muted-foreground"><MarkdownRenderer source={section.description} /></div>}
                         {section.questions && section.questions.map(qm => 
                             <ReviewQuestion
                                 model={qm}
@@ -607,105 +605,106 @@ class ReviewForm extends Component {
                                 onChange={this.onChange} />
                         )}
                     </div>
-                    
                 )}
-                <br /><hr />
 
-                <div className="review-total-score">
-                    {t("Total Score")}: {this.state.totalScore} 
+                <div className="bg-slate-50 border border-border rounded-xl p-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div className="text-lg font-bold text-foreground">
+                        {t("Total Score")}: <span className="text-primary font-black">{this.state.totalScore}</span>
+                    </div>
 
                     <button
                         onClick={this.addFlag}
-                        className="btn btn-light flag-category pull-right">
-                        {t("Flag Response")} <i className="fa fa-flag"></i>
-                    </button>
-                    
-                </div>
-
-                <hr />
-                <div>
-                    {t("Response ID")}: <span className="font-weight-bold">{form.response.id}</span> - {t("Please quote this in any correspondence with admins outside of the system.")}
-                </div>
-
-                <hr />
-
-                <div className="floating-bar">
-                    <button disabled={isSubmitting || !this.state.stale} 
-                        className={"btn btn-info"}
-                        onClick={this.save}>
-                            {isSubmitting && (
-                                <span
-                                    class="spinner-grow spinner-grow-sm"
-                                    role="status"
-                                    aria-hidden="true"
-                                />
-                            )}
-                            {t("Save for later")}
-                    </button>
-
-                    {this.state.saveValidationFailed && 
-                        <span className="save-validation-failed text-danger">
-                            <i class="fa fa-exclamation"/> {this.props.t("Please fix validation errors before saving")}
-                        </span>
-                    }
-
-                    {this.state.saveSuccess && 
-                        <span><span className="save-validation-failed text-success">{this.props.t("Saved")}</span><span className="return-to-list"><Link to={`/${this.props.event.key}/reviewlist`}>{this.props.t("Return to review list")}...</Link></span>
-                        </span>
-                    }
-
-                    {this.state.saveError && 
-                         <span className="save-validation-failed alert alert-danger">
-                            <i class="fa fa-exclamation"/> {this.state.saveError}
-                        </span>
-                    }
-
-                </div>
-
-                <div class="buttons">
-                    {currentSkip > 0 &&
-                        <button
-                            disabled={form.review_response || isSubmitting}
-                            className={"btn btn-secondary " + (form.review_response ? "hidden" : "")}
-                            style={{ marginRight: "1em" }}
-                            onClick={this.goBack}>
-                            {t("Go Back")}
-                        </button>
-                    }
-                    {currentSkip < form.reviews_remaining_count &&
-                        <button
-                            disabled={form.review_response || isSubmitting}
-                            className={"btn btn-secondary " + (form.review_response ? "hidden" : "")}
-                            onClick={this.skip}>
-                            {t("Skip")}
-                        </button>
-                    }
-                    <button disabled={isSubmitting}
-                        type="submit"
-                        class="btn btn-primary float-right"
-                        onClick={this.submit}>
-                        {isSubmitting && (
-                            <span
-                                class="spinner-grow spinner-grow-sm"
-                                role="status"
-                                aria-hidden="true"
-                            />
-                        )}
-                        {t("Submit")}
+                        className="inline-flex items-center justify-center px-4 py-2 rounded-lg text-xs font-semibold border border-border text-muted-foreground hover:bg-slate-100 bg-white transition-colors cursor-pointer"
+                    >
+                        <i className="fa fa-flag mr-1.5 text-warning"></i>
+                        {t("Flag Response")}
                     </button>
                 </div>
 
-                {(hasValidated && !validationStale && !isValid) &&
-                    <div class="alert alert-danger alert-container">
+                <div className="text-xs text-muted-foreground bg-slate-50 border border-border/50 p-4 rounded-xl leading-relaxed italic">
+                    {t("Response ID")}: <span className="font-semibold text-foreground">{form.response.id}</span> - {t("Please quote this in any correspondence with admins outside of the system.")}
+                </div>
+
+                {this.state.saveValidationFailed && (
+                    <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-4">
+                        <i className="fa fa-exclamation mr-1.5"/> {this.props.t("Please fix validation errors before saving")}
+                    </div>
+                )}
+
+                {this.state.saveSuccess && (
+                    <div className="bg-green-50 text-green-700 border border-green-200 p-4 rounded-xl text-sm flex justify-between items-center mt-4 w-full">
+                        <span>{this.props.t("Saved successfully")}</span>
+                        <Link to={`/${this.props.event.key}/reviewlist`} className="text-primary hover:underline font-semibold text-xs">
+                            {this.props.t("Return to review list")} &rarr;
+                        </Link>
+                    </div>
+                )}
+
+                {this.state.saveError && (
+                    <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-4">
+                        <i className="fa fa-exclamation mr-1.5"/> {this.state.saveError}
+                    </div>
+                )}
+
+                {(hasValidated && !validationStale && !isValid) && (
+                    <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-4">
                         {t("There are one or more validation errors, please correct before submitting.")}
                     </div>
-                }
-                <br />
-                {!editMode &&
-                    <div class="alert alert-info">
-                        <span class="fa fa-info-circle"></span> <Trans i18nKey="reviewsRemaining">You have {{reviewsRemainingCount}} reviews remaining</Trans>
+                )}
+
+                {!editMode && (
+                    <div className="bg-blue-50 text-blue-700 border border-blue-200 p-4 rounded-xl text-sm mt-4 text-center">
+                        <span className="fa fa-info-circle mr-1.5"></span> <Trans i18nKey="reviewsRemaining">You have {{reviewsRemainingCount}} reviews remaining</Trans>
                     </div>
-                }
+                )}
+
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border-border/50">
+                    <div className="flex items-center gap-2">
+                        {currentSkip > 0 && (
+                            <button
+                                disabled={form.review_response || isSubmitting}
+                                className="inline-flex items-center justify-center px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors border border-border text-muted-foreground hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
+                                onClick={this.goBack}
+                            >
+                                {t("Go Back")}
+                            </button>
+                        )}
+                        {currentSkip < form.reviews_remaining_count && (
+                            <button
+                                disabled={form.review_response || isSubmitting}
+                                className="inline-flex items-center justify-center px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors border border-border text-muted-foreground hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
+                                onClick={this.skip}
+                            >
+                                {t("Skip")}
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <button 
+                            disabled={isSubmitting || !this.state.stale} 
+                            className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors border border-primary text-primary hover:bg-primary/5 disabled:opacity-50 cursor-pointer"
+                            onClick={this.save}
+                        >
+                            {isSubmitting && (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-1.5"></div>
+                            )}
+                            {t("Save for later")}
+                        </button>
+
+                        <button 
+                            disabled={isSubmitting}
+                            type="button"
+                            className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm disabled:opacity-50 cursor-pointer"
+                            onClick={this.submit}
+                        >
+                            {isSubmitting && (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-1.5"></div>
+                            )}
+                            {t("Submit")}
+                        </button>
+                    </div>
+                </div>
 
                 <ConfirmModal
                     visible={this.state.flagModalVisible}
@@ -717,16 +716,16 @@ class ReviewForm extends Component {
                     cancelText={"Cancel"}
                     title="Flag applicant category">
 
-                    <div class="flagModal">
+                    <div className="flagModal p-4 space-y-4">
                         <p>{t("If reviewing this response revealed an issue that should be considered if this candidate were accepted, please describe it below.")}</p>
                         <textarea
-                            className="form-control"
+                            className="w-full border border-border rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                             value={this.state.flagValue}
-                            rows="3"
+                            rows="4"
                             onChange={this.flagOnChange}>
                         </textarea>
                         {this.state.flagError &&
-                            <div class="alert alert-danger alert-container">
+                            <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-4">
                                 {this.state.flagError}
                             </div>}
                     </div>

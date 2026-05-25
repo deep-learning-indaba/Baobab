@@ -23,51 +23,50 @@ class GenericFormsList extends Component {
         var collapsed = this.state.collapsed;
 
         return (
-            <div className="card mb-3">
+            <div className="bg-white rounded-2xl shadow-sm border border-border overflow-hidden mb-3">
                 <div
-                    className="card-header d-flex justify-content-between align-items-center"
-                    style={{ cursor: "pointer" }}
+                    className="px-6 py-4 flex justify-between items-center bg-slate-50 border-b border-border/50 cursor-pointer select-none"
                     onClick={this.toggleCollapse}
                 >
-                    <h5 className="mb-0">
+                    <h5 className="text-base font-bold text-foreground flex items-center gap-2">
                         {t('Other Forms')}
-                        <span className="badge badge-light ml-2">{forms.length}</span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-white text-muted-foreground border border-border">{forms.length}</span>
                     </h5>
-                    <span className={"fas " + (collapsed ? "fa-chevron-down" : "fa-chevron-up")} />
+                    <span className={"fas text-muted-foreground " + (collapsed ? "fa-chevron-down" : "fa-chevron-up")} />
                 </div>
                 {!collapsed && (
-                    <div className="card-body">
+                    <div className="p-6 space-y-4">
                         {forms.length === 0 ? (
-                            <p className="text-muted mb-0">{t('No generic forms created yet.')}</p>
+                            <p className="text-sm text-muted-foreground">{t('No generic forms created yet.')}</p>
                         ) : (
-                            <div className="list-group list-group-flush">
+                            <div className="divide-y divide-border">
                                 {forms.map(function(form) {
                                     return (
                                         <div
                                             key={form.id}
-                                            className="list-group-item d-flex justify-content-between align-items-center px-0"
+                                            className="py-4 flex justify-between items-center first:pt-0 last:pb-0"
                                         >
-                                            <div>
-                                                <strong>{form.name || t('Untitled Form')}</strong>
-                                                <span className="text-muted small ml-2">
+                                            <div className="flex items-center gap-2">
+                                                <strong className="text-sm font-semibold text-foreground">{form.name || t('Untitled Form')}</strong>
+                                                <span className="text-xs text-muted-foreground">
                                                     ({form.response_count} {t('responses')})
                                                 </span>
                                                 {!form.is_active && (
-                                                    <span className="badge badge-warning ml-2">
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-warning/10 text-warning-text border border-warning-border/50">
                                                         {t('Inactive')}
                                                     </span>
                                                 )}
                                             </div>
-                                            <div>
+                                            <div className="flex items-center">
                                                 <Link
                                                     to={"/" + eventKey + "/forms/" + form.id + "/edit"}
-                                                    className="btn btn-sm btn-outline-primary mr-2"
+                                                    className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold border border-primary text-primary hover:bg-primary/10 transition-colors mr-2"
                                                 >
                                                     {t('Edit')}
                                                 </Link>
                                                 <Link
                                                     to={"/" + eventKey + "/form-responses/" + form.id}
-                                                    className="btn btn-sm btn-outline-secondary"
+                                                    className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold border border-border text-muted-foreground hover:bg-slate-50 transition-colors"
                                                 >
                                                     {t('Responses')}
                                                 </Link>
@@ -77,10 +76,10 @@ class GenericFormsList extends Component {
                                 })}
                             </div>
                         )}
-                        <div className="mt-3">
+                        <div className="pt-2">
                             <Link
                                 to={"/" + eventKey + "/forms/new"}
-                                className="btn btn-sm btn-outline-primary"
+                                className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold border border-primary text-primary hover:bg-primary/10 transition-colors"
                             >
                                 + {t('Create New Form')}
                             </Link>

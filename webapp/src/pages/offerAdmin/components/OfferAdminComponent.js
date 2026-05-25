@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { offerServices } from "../../../services/offer/offer.service";
 import { withTranslation } from 'react-i18next';
-import Loading from "../../../components/Loading";
 import ReactTable from 'react-table';
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
@@ -312,118 +311,100 @@ class OfferAdminComponent extends Component {
     renderOfferEditor = () => {
         const t = this.props.t;
         const { selectedOffer } = this.state;
-        return <div className="card no-padding-h">
-            <p className="h4 text-center mb-4">
-                {t("Offer for")} {selectedOffer.user_title + " " + selectedOffer.firstname + " " + selectedOffer.lastname}
-                <span className="float-right small status-badge">{this.statusCell({original: selectedOffer})}</span>
-            </p>
-            
-            <div className="form-group row">
-                <label
-                    className="col-sm-2 col-form-label">
-                    {t("Offer Date")}
-                </label>
-                <div className="col-sm-10">
-                <FormDate id="expiry_date" value={selectedOffer.offer_date} fieldName="expiry_date" disabled={true}/>
+        return (
+            <div className="bg-slate-50/50 rounded-xl border border-border p-6 space-y-6 mt-6">
+                <div className="flex justify-between items-center pb-2 border-b border-border/50">
+                    <h3 className="text-lg font-bold text-foreground">
+                        {t("Offer for")} {selectedOffer.user_title + " " + selectedOffer.firstname + " " + selectedOffer.lastname}
+                    </h3>
+                    <span className="text-sm font-semibold">{this.statusCell({original: selectedOffer})}</span>
                 </div>
-            </div>
-            <div className="form-group row">
-                <label
-                    className="col-sm-2 col-form-label"
-                    html-for="expiry_date">
-                    {t("Expiry Date")}
-                </label>
-                <div className="col-sm-10">
-                    <FormDate id="expiry_date" value={selectedOffer.expiry_date} onChange={this.setOfferExpiry} fieldName="expiry_date" />
-                </div>
-            </div>
-            <div className="form-group row">
-                <label
-                    className="col-sm-2 col-form-label"
-                    html-for="expiry_date">
-                    {t("Tags")}
-                </label>
-                <div className="col-sm-10">
-                    {selectedOffer.tags.map(tag => 
-                    <span className={"tag badge " + (tag.tag_type === "OFFER_NOTE" ? "badge-warning" : "badge-primary")} key={`tag_${selectedOffer.response_id}_${tag.id}`}>{tag.name}</span>)}
-                </div>
-            </div>
-            <div className="form-group row">
-                <label
-                    className="col-sm-2 col-form-label"
-                    html-for="expiry_date">
-                    {t("Response")}
-                </label>
-                <div className="col-sm-10">
-                    {this.candidateResponseCell({original: selectedOffer})}
-                </div>
-            </div>
-            {selectedOffer.response_date &&
-                <div className="form-group row">
-                    <label
-                        className="col-sm-2 col-form-label"
-                        html-for="expiry_date">
-                        {t("Responded At")}
-                    </label>
-                    <div className="col-sm-10">
-                        {selectedOffer.response_date}
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+                    <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-foreground/90">{t("Offer Date")}</label>
+                        <FormDate id="expiry_date" value={selectedOffer.offer_date} fieldName="expiry_date" disabled={true}/>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label htmlFor="expiry_date" className="block text-sm font-semibold text-foreground/90">{t("Expiry Date")}</label>
+                        <FormDate id="expiry_date" value={selectedOffer.expiry_date} onChange={this.setOfferExpiry} fieldName="expiry_date" />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-foreground/90">{t("Tags")}</label>
+                        <div className="flex flex-wrap gap-1 items-center">
+                            {selectedOffer.tags.map(tag => (
+                                <span className={"inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border " + (tag.tag_type === "OFFER_NOTE" ? "bg-warning/10 text-warning-text border-warning-border/50" : "bg-primary/10 text-primary border-primary/20")} key={`tag_${selectedOffer.response_id}_${tag.id}`}>
+                                    {tag.name}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-foreground/90">{t("Response")}</label>
+                        <div className="text-sm text-foreground">{this.candidateResponseCell({original: selectedOffer})}</div>
+                    </div>
+
+                    {selectedOffer.response_date && (
+                        <div className="space-y-2">
+                            <label className="block text-sm font-semibold text-foreground/90">{t("Responded At")}</label>
+                            <div className="text-sm text-foreground">{selectedOffer.response_date}</div>
+                        </div>
+                    )}
+
+                    {selectedOffer.candidate_response === false && (
+                        <div className="space-y-2">
+                            <label className="block text-sm font-semibold text-foreground/90">{t("Rejected Reason")}</label>
+                            <div className="text-sm text-foreground italic bg-slate-100/50 border border-border rounded-lg p-3">{selectedOffer.rejected_reason}</div>
+                        </div>
+                    )}
+
+                    <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-foreground/90">{t("Payment")}</label>
+                        <div className="text-sm text-foreground">{this.paymentCell({original: selectedOffer})}</div>
                     </div>
                 </div>
-            }
-            {selectedOffer.candidate_response === false &&
-                <div className="form-group row">
-                    <label
-                        className="col-sm-2 col-form-label"
-                        html-for="expiry_date">
-                        {t("Rejected Reason")}
-                    </label>
-                    <div className="col-sm-10">
-                        {selectedOffer.rejected_reason}
-                    </div>
-                </div>
-            }
-            <div className="form-group row">
-                <label
-                    className="col-sm-2 col-form-label"
-                    html-for="expiry_date">
-                    {t("Payment")}
-                </label>
-                <div className="col-sm-10">
-                    {this.paymentCell({original: selectedOffer})}  
-                </div>
-            </div>
-            <div className="form-group row">
-                <div className="col-sm">
+
+                <div className="flex justify-end pt-4 border-t border-border/50">
                     <button 
-                        className="btn btn-primary float-right margin-top-10px" 
+                        className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm disabled:opacity-50 cursor-pointer" 
                         onClick={() => this.saveOffer()}
-                        disabled={!this.state.isValid || !this.state.updated}>
-                            {t("Save")}
+                        disabled={!this.state.isValid || !this.state.updated}
+                    >
+                        {t("Save")}
                     </button>
                 </div>
             </div>
-            
-        </div>
+        );
     }
 
     render() {
         const { t } = this.props;
         const { loading, error, filteredOffers, offerEditorVisible } = this.state;
 
-        if (loading) { return <Loading />; }
+        if (loading) {
+            return (
+                <div className="flex justify-center items-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+            );
+        }
 
         return (
-            <div className="OfferAdmin container-fluid pad-top-30-md">
-                {error &&
-                    <div className={"alert alert-danger alert-container"}>
-                    {JSON.stringify(error)}
-                    </div>}
+            <div className="w-full max-w-5xl mx-auto pt-6 text-left space-y-6">
+                {error && (
+                    <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-6">
+                        {JSON.stringify(error)}
+                    </div>
+                )}
 
-                <div className="card no-padding-h">
-                    <p className="h4 text-center mb-4">{t("Offers")}</p>
+                <div className="bg-white rounded-2xl shadow-sm border border-border p-8 space-y-6" key="tag-table">
+                    <h1 className="font-heading text-2xl font-bold text-foreground mb-6">{t("Offers")}</h1>
 
-                    <div className="row">
-                        <div className="col-sm-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
                             <FormTextBox
                                 id="s"
                                 type="text"
@@ -433,7 +414,7 @@ class OfferAdminComponent extends Component {
                                 name=""
                                 value={this.state.search} />
                         </div>
-                        <div className="col-sm-6">
+                        <div className="space-y-2">
                             <FormSelect
                                 options={this.getCandidateResponseOptions()}
                                 id="candidateResponseFilter"
@@ -453,15 +434,6 @@ class OfferAdminComponent extends Component {
                             minRows={0}
                         />
                     </div>
-                    {/* {!offerEditorVisible && 
-                        <div className={"row-mb-3"}>
-                        <button
-                            onClick={() => this.setOfferEditorVisible()}
-                            className="btn btn-primary float-right margin-top-10px">
-                            {t("New Offer")}
-                        </button>
-                        </div>
-                    } */}
                 </div>
                 {offerEditorVisible && this.renderOfferEditor()}
                 <ReactToolTip id="tooltip" type="info" place="right" effect="solid" />

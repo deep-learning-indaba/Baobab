@@ -2,7 +2,6 @@
 import React, { Component } from "react";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
-import { createColClassName } from "../../../utils/styling/styling";
 import { getCountries } from "../../../utils/validation/contentHelpers";
 
 class Address extends Component {
@@ -58,10 +57,8 @@ class Address extends Component {
       countryValue
     } = this.state.addressText;
 
-    const addressStyle = createColClassName(12, 4, 6, 6);
-
     return (
-      <div class={addressStyle}>
+      <div className="space-y-4 p-6 bg-surface-low rounded-xl border border-border">
         <div>
           <FormTextBox
             id={streetAddress1.name}

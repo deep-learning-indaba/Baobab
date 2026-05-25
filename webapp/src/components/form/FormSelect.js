@@ -10,7 +10,7 @@ class FormSelect extends React.Component {
     return this.props.showError && this.props.errorText !== "";
   };
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     if (nextProps.showFocus) {
       this.nameInput.focus();
     }

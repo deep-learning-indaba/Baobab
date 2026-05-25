@@ -1,213 +1,937 @@
-/*   Color scheme
-#1F2232;    # Dark Metallic
-#EC4E20;    # Red
-#E8ECEE;    # Light grey
-#40798C;    # Teal
-#70A9A1;    # Green
-*/
+/* ════════════════════════════════════════════════════════════
+   BAOBAB DESIGN SYSTEM — App.css
+   Corporate Modern · Baobab Green × Electric Blue
+   ════════════════════════════════════════════════════════════ */
 
-.App {
-  text-align: center;
+/* ── 1. Design Tokens ──────────────────────────────────────── */
+:root {
+  /* Green palette (brand, success) */
+  --clr-primary:            #0f5238;
+  --clr-on-primary:         #ffffff;
+  --clr-primary-container:  #2d6a4f;
+  --clr-on-primary-container: #a8e7c5;
+
+  /* Secondary green */
+  --clr-secondary:          #3f6653;
+  --clr-on-secondary:       #ffffff;
+  --clr-secondary-container: #beead1;
+
+  /* Electric Blue (interactive actions, focus) */
+  --clr-action:             #0132c5;
+  --clr-on-action:          #ffffff;
+  --clr-action-container:   #2f4fdd;
+  --clr-action-glow:        rgba(1, 50, 197, 0.14);
+
+  /* Surface scale */
+  --clr-surface:            #f8f9fa;
+  --clr-surface-low:        #f3f4f5;
+  --clr-surface-mid:        #edeeef;
+  --clr-surface-high:       #e7e8e9;
+  --clr-white:              #ffffff;
+
+  /* Text */
+  --clr-on-surface:         #191c1d;
+  --clr-on-surface-muted:   #404943;
+
+  /* Borders */
+  --clr-outline:            #707973;
+  --clr-outline-variant:    #bfc9c1;
+
+  /* Semantic */
+  --clr-error:              #ba1a1a;
+  --clr-error-container:    #ffdad6;
+  --clr-on-error-container: #93000a;
+  --clr-warning-text:       #92400e;
+  --clr-warning-bg:         rgba(180, 83, 9, 0.08);
+  --clr-warning-border:     rgba(180, 83, 9, 0.2);
+
+  /* Typography */
+  --font-heading: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+  --font-body:    'Inter', 'Segoe UI', sans-serif;
+
+  /* Spacing (4-pt scale) */
+  --sp-xs:   0.25rem;   /*  4px */
+  --sp-sm:   0.5rem;    /*  8px */
+  --sp-md:   1rem;      /* 16px */
+  --sp-lg:   1.5rem;    /* 24px */
+  --sp-xl:   3rem;      /* 48px */
+
+  /* Border radius */
+  --r-sm:    0.25rem;
+  --r-md:    0.5rem;
+  --r-lg:    1rem;
+  --r-xl:    1.5rem;
+  --r-full:  9999px;
+
+  /* Shadows — light, diffuse */
+  --shadow-xs:      0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-card:    0 4px 20px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-elevated:0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+
+  --transition: 180ms ease;
 }
 
-.App-header {
-  background-color: #1F2232;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-  height: 60px;
-}
-
-.App-link {
-  color: #40798C;
+/* ── 2. Base Reset & Typography ────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
-  background: #F9fafb;
-  font-family: 'Open Sans', sans-serif;
+  background: var(--clr-surface);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--clr-on-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-html button:active {
-  border: none;
-  outline: none;
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--clr-on-surface);
+  line-height: 1.25;
 }
 
-.Body{
-  background: #F9fafb;;
-  min-height: 80vh;
-  padding-bottom: 1em;
-  padding-top: 2em;
-}
+h1 { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.025em; }
+h2 { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; }
+h3 { font-size: 1.375rem; }
+h4 { font-size: 1.125rem; }
+h5 { font-size: 0.9375rem; }
+h6 { font-size: 0.875rem; }
 
-h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
-  font-family: 'Roboto', sans-serif;
-}
+@layer base {
+  a {
+    color: var(--clr-action);
+    text-decoration: none;
+    transition: color var(--transition);
+  }
 
-.HomeNavBar{
-  margin-bottom: 0px;
-}
-
-footer {
-  padding: 1em;
-  background: white;
-  border-top-color: rgb(221, 221, 221);
-  border-top-style: solid;
-  border-top-width: 1px;
-  border-bottom-color: rgb(221, 221, 221);
-  border-bottom-style: solid;
-  border-bottom-width: 1px;
-}
-
-footer .btn {
-  margin-top: -0.5em;
-}
-
-@media (max-width: 650px) {
-  .Body {
-    padding-top: 3em;
+  a:hover {
+    color: var(--clr-primary);
+    text-decoration: underline;
   }
 }
 
-.container-fluid {
-  padding-right: 30px;
-  padding-left: 30px;
+code {
+  font-family: 'Source Code Pro', Menlo, Consolas, 'Courier New', monospace;
+  font-size: 0.875em;
+  background: var(--clr-surface-high);
+  padding: 0.1em 0.35em;
+  border-radius: var(--r-sm);
 }
 
-.link-style{
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
+/* ── 3. Top Navigation Bar ─────────────────────────────────── */
+/* Override Bootstrap bg-dark → Baobab Green */
+.bg-dark {
+  background-color: var(--clr-primary) !important;
 }
 
-.nav-link {
-  cursor: pointer;
+.navbar {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.cursor-pointer {
-  cursor: pointer;
+.navbar-expand-lg {
+  flex-flow: row nowrap;
+  justify-content: flex-start;
 }
 
-.navbar-light .navbar-nav .nav-link.active {
-  font-weight: bold;
-  border-bottom: 3px solid #27A844;
+.navbar-nav {
+  display: flex;
+  flex-direction: column;
+  padding-left: 0;
+  margin-bottom: 0;
+  list-style: none;
 }
 
-.navbar-light .navbar-nav .nav-item .nav-link{
-  padding-bottom: 0.75em;
-  padding-top: 0.75em;
+.navbar-expand-lg .navbar-nav {
+  flex-direction: row;
 }
 
-.navbar-light {
-  padding-left: 2em;
-  padding-top: 0;
-  padding-right: 2em;
-  padding-bottom: 0;
-  border-bottom-color: rgb(221, 221, 221);
-  border-bottom-style: solid;
-  border-bottom-width: 1px;
+.navbar.navbar-dark {
+  padding: 0 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  border-bottom: 1px solid var(--clr-primary-container);
+  min-height: 56px;
 }
 
-.navbar-light .navbar-brand {
-  color: rgba(0, 0, 0);
-  padding-bottom: 0.5em;
-  padding-top: 0.5em;
+.navbar-dark .navbar-brand {
+  color: var(--clr-on-primary) !important;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.0625rem;
+  letter-spacing: -0.01em;
+  padding: 0.75rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.navbar-light .navbar-nav .nav-link {
-  color: rgba(0,0,0,.75);
+.navbar-brand .brand-image {
+  border-radius: var(--r-sm);
+  opacity: 0.95;
 }
 
 .navbar-brand-main {
-  letter-spacing: 0.05em;
-  text-transform: none;
+  letter-spacing: -0.01em;
 }
 
 .navbar-brand-main.uppercase {
   text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.navbar-brand .brand-image {
-  margin-right: 10px;
+.navbar-dark .navbar-nav .nav-link {
+  color: rgba(255, 255, 255, 0.82) !important;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.875rem 0.625rem !important;
+  transition: color var(--transition);
 }
 
-.alert-container{
-  margin-top: 16px;
+.navbar-dark .navbar-nav .nav-link:hover {
+  color: var(--clr-on-primary) !important;
 }
 
-.form-group {
-  white-space: pre-wrap;
+.navbar-dark .navbar-toggler {
+  border-color: rgba(255, 255, 255, 0.3);
+  padding: 0.375rem 0.625rem;
 }
 
-.card {
-  box-shadow: 0px 2px 4px rgba(0,0,0,0.15);
-  padding-top: 30px;
-  padding-bottom: 30px;
+/* ── 4. Event Sub-Navigation ───────────────────────────────── */
+.navbar-light {
+  background: var(--clr-white) !important;
+  border-bottom: 1px solid var(--clr-outline-variant) !important;
+  padding: 0 2rem !important;
+  box-shadow: none !important;
+  min-height: 48px;
 }
 
-label {
-  margin-bottom: .2rem;
+.navbar-light .navbar-brand {
+  color: var(--clr-primary) !important;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  padding: 0.625rem 0;
 }
 
-.powered-by a {
-  font-weight: bold;
+.navbar-light .navbar-nav .nav-link {
+  color: var(--clr-on-surface-muted) !important;
+  font-size: 0.8375rem;
+  font-weight: 500;
+  padding: 0.75rem 0.625rem !important;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color var(--transition), border-color var(--transition);
 }
 
-.bg-dark {
-  background-color: #1f2d3e !important;
+.navbar-light .navbar-nav .nav-link:hover {
+  color: var(--clr-primary) !important;
+  border-bottom-color: var(--clr-outline-variant);
 }
 
-.disabled-form-control {
-  color: rgba(0, 0, 0, 0.3);
+.navbar-light .navbar-nav .nav-link.active {
+  color: var(--clr-primary) !important;
+  font-weight: 600;
+  border-bottom-color: var(--clr-primary);
 }
 
+/* ── 5. Language Selector ──────────────────────────────────── */
 .language-navbar {
-  padding-right: .5em;
-  border-right: 1px solid rgba(255,255,255,.25);
-  margin-right: .5em;
+  padding-right: 1rem;
+  border-right: 1px solid rgba(255, 255, 255, 0.22);
+  margin-right: 0.75rem;
 }
 
-.menu-icon {
-  margin-right: .1em;
+/* ── 6. Dropdown Menus ─────────────────────────────────────── */
+.dropdown-menu {
+  display: none;
+  border: 1px solid var(--clr-outline-variant);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-elevated);
+  padding: 0.375rem;
+  background: var(--clr-white);
+  min-width: 13rem;
+  margin-top: 0.25rem;
 }
 
-div.vertical-space {
-  margin-top: 2em;
+.dropdown-menu.show {
+  display: block;
+  position: absolute;
+  z-index: 1000;
 }
 
-div.card-container {
-  margin: 0 auto;
+.section-menu-wrapper {
+  position: relative;
+}
+
+.dropdown-item {
+  border-radius: var(--r-md);
+  padding: 0.4375rem 0.75rem;
+  font-size: 0.8375rem;
+  font-family: var(--font-body);
+  color: var(--clr-on-surface);
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background-color: var(--clr-surface-low);
+  color: var(--clr-primary);
+}
+
+.dropdown-item:active {
+  background-color: var(--clr-secondary-container);
+  color: var(--clr-primary);
 }
 
 .dropdown-submenu-header {
-  color: gray;
-  padding-left: 1.5em;
-  padding-top: 0.5em;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--clr-outline);
+  padding: 0.5rem 0.75rem 0.2rem;
 }
 
 .dropdown-submenu-item {
-  padding-left: 3em;
+  padding-left: 1.25rem;
 }
 
-.katex-display>.katex {
-  text-align: left;
+/* ── 7. Page Body Layout ───────────────────────────────────── */
+.Body {
+  background: var(--clr-surface);
+  min-height: 80vh;
+  padding: 2rem 0 3rem;
 }
+
+.container-fluid {
+  width: 100%;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+/* ── 8. Cards ──────────────────────────────────────────────── */
+.card {
+  background: var(--clr-white);
+  border: 1px solid rgba(191, 201, 193, 0.55);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-card);
+  padding: 1.5rem;
+  transition: box-shadow var(--transition);
+}
+
+.card .card-body {
+  padding: 0;
+}
+
+.card-title {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--clr-on-surface);
+  margin-bottom: 1rem;
+}
+
+/* Community card variant: larger radius */
+.card.card-community {
+  border-radius: var(--r-xl);
+  padding: 2rem;
+}
+
+/* Data card variant: sharper, denser */
+.card.card-data {
+  border-radius: var(--r-sm);
+  padding: 1rem;
+}
+
+/* ── 9. Buttons ────────────────────────────────────────────── */
+.btn {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-radius: var(--r-lg);
+  padding: 0.5rem 1.25rem;
+  line-height: 1.4;
+  transition: all var(--transition);
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+/* Primary — Baobab Green */
+.btn-primary {
+  background: var(--clr-primary) !important;
+  color: var(--clr-on-primary) !important;
+  border: 1.5px solid var(--clr-primary) !important;
+}
+.btn-primary:hover,
+.btn-primary:focus {
+  background: var(--clr-primary-container) !important;
+  border-color: var(--clr-primary-container) !important;
+  box-shadow: 0 4px 14px rgba(15, 82, 56, 0.28) !important;
+}
+.btn-primary:disabled,
+.btn-primary.disabled {
+  opacity: 0.5;
+  box-shadow: none !important;
+}
+
+/* Success — same green family */
+.btn-success {
+  background: var(--clr-primary) !important;
+  color: var(--clr-on-primary) !important;
+  border: 1.5px solid var(--clr-primary) !important;
+}
+.btn-success:hover,
+.btn-success:focus {
+  background: var(--clr-primary-container) !important;
+  box-shadow: 0 4px 14px rgba(15, 82, 56, 0.28) !important;
+}
+
+/* Secondary — outlined ghost */
+.btn-secondary {
+  background: transparent !important;
+  color: var(--clr-primary) !important;
+  border: 1.5px solid var(--clr-primary) !important;
+}
+.btn-secondary:hover,
+.btn-secondary:focus {
+  background: var(--clr-surface-low) !important;
+}
+
+/* Danger */
+.btn-danger {
+  background: var(--clr-error) !important;
+  color: #fff !important;
+  border-color: var(--clr-error) !important;
+}
+.btn-danger:hover {
+  filter: brightness(1.08);
+}
+
+/* Warning */
+.btn-warning {
+  background: #b45309 !important;
+  color: #fff !important;
+  border-color: #b45309 !important;
+}
+
+/* Sizes */
+.btn-sm {
+  font-size: 0.78rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: var(--r-md);
+}
+
+.btn-lg {
+  font-size: 1rem;
+  padding: 0.75rem 2rem;
+  border-radius: var(--r-xl);
+}
+
+/* Link-style buttons */
+.link-style,
+button.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--clr-action);
+  font-family: var(--font-body);
+  font-size: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color var(--transition);
+}
+.link-style:hover,
+button.link-button:hover {
+  color: var(--clr-primary);
+}
+
+/* ── 10. Badges & Pills ────────────────────────────────────── */
+.badge {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  padding: 0.275em 0.625em;
+  border-radius: var(--r-full);
+}
+
+.badge-success {
+  background: rgba(15, 82, 56, 0.1) !important;
+  color: var(--clr-primary) !important;
+  border: 1px solid rgba(15, 82, 56, 0.2) !important;
+}
+
+.badge-secondary {
+  background: var(--clr-surface-high) !important;
+  color: var(--clr-on-surface-muted) !important;
+}
+
+.badge-warning {
+  background: rgba(180, 83, 9, 0.1) !important;
+  color: #b45309 !important;
+}
+
+.badge-danger {
+  background: var(--clr-error-container) !important;
+  color: var(--clr-on-error-container) !important;
+}
+
+.badge-primary {
+  background: rgba(15, 82, 56, 0.12) !important;
+  color: var(--clr-primary) !important;
+}
+
+.badge-pill {
+  border-radius: var(--r-full) !important;
+}
+
+/* ── 11. Bootstrap text color overrides ────────────────────── */
+.text-success { color: var(--clr-primary) !important; }
+.text-primary  { color: var(--clr-action) !important; }
+/* text-danger, text-warning keep Bootstrap defaults (they're correct semantically) */
+
+/* ── 12. Alerts ────────────────────────────────────────────── */
+.alert {
+  border-radius: var(--r-lg);
+  border: 1px solid transparent;
+  font-size: 0.875rem;
+  padding: 0.875rem 1.25rem;
+  line-height: 1.5;
+}
+
+.alert-danger {
+  background: var(--clr-error-container);
+  color: var(--clr-on-error-container);
+  border-color: rgba(186, 26, 26, 0.2);
+}
+
+.alert-success {
+  background: rgba(177, 240, 206, 0.35);
+  color: var(--clr-primary);
+  border-color: rgba(15, 82, 56, 0.2);
+}
+
+.alert-warning {
+  background: var(--clr-warning-bg);
+  color: var(--clr-warning-text);
+  border-color: var(--clr-warning-border);
+}
+
+.alert-info {
+  background: rgba(1, 50, 197, 0.07);
+  color: var(--clr-action);
+  border-color: rgba(1, 50, 197, 0.18);
+}
+
+.alert-container {
+  margin-top: 1rem;
+}
+
+/* ── 13. Form Controls ─────────────────────────────────────── */
+.form-control {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--clr-outline-variant);
+  border-radius: var(--r-lg);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: var(--clr-on-surface);
+  background: var(--clr-white);
+  padding: 0.5rem 0.875rem;
+  height: auto;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.form-control:focus {
+  border-color: var(--clr-action);
+  box-shadow: 0 0 0 3px var(--clr-action-glow);
+  outline: none;
+}
+
+.form-control:disabled,
+.form-control[readonly] {
+  background: var(--clr-surface-low);
+  color: var(--clr-outline);
+  cursor: not-allowed;
+}
+
+.disabled-form-control {
+  color: var(--clr-outline);
+}
+
+label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--clr-on-surface-muted);
+  margin-bottom: 0.2rem;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+  white-space: pre-wrap;
+}
+
+/* Select — override Bootstrap's default styling */
+select.form-control {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23707973' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.875rem center;
+  padding-right: 2.25rem;
+}
+
+/* ── 14. Footer ────────────────────────────────────────────── */
+footer {
+  background: var(--clr-white);
+  border-top: 1px solid var(--clr-outline-variant);
+  border-bottom: none;
+  padding: 1.125rem 2rem;
+  font-size: 0.8375rem;
+  color: var(--clr-on-surface-muted);
+}
+
+footer a {
+  color: var(--clr-primary);
+  font-weight: 500;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+footer .powered-by {
+  color: var(--clr-outline);
+  font-size: 0.8125rem;
+}
+
+footer .powered-by a {
+  font-weight: 600;
+  color: var(--clr-primary);
+}
+
+footer .btn {
+  margin-top: 0;
+}
+
+/* ── 15. Spinner / Loading ─────────────────────────────────── */
+.spinner-border {
+  color: var(--clr-primary);
+}
+
+/* ── 16. Cursors & Nav helpers ─────────────────────────────── */
+.nav-link        { cursor: pointer; }
+.cursor-pointer  { cursor: pointer; }
+
+/* ── 17. Miscellaneous Utilities ───────────────────────────── */
+div.vertical-space  { margin-top: 2rem; }
+div.card-container  { margin: 0 auto; }
+
+.menu-icon { margin-right: 0.3rem; }
 
 .tag-selector .tag-btn {
-  margin-right: 0.5em;
-  margin-bottom: 0.5em;
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
-button.link-button {
-  background: none!important;
+/* KaTeX */
+.katex-display > .katex { text-align: left; }
+
+/* Pull helpers (for legacy usage) */
+.pull-right { float: right; }
+
+/* ── 18. Responsive ────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .Body {
+    padding: 1.5rem 0 2rem;
+  }
+
+  .container-fluid {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .navbar.navbar-dark,
+  .navbar-light {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  footer {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 { font-size: 1.75rem; }
+  h2 { font-size: 1.375rem; }
+}
+
+/* ── 19. Event Sidebar (responsive drawer) ─────────────────── */
+.event-sidebar {
+  display: none;
+  flex-direction: column;
+  width: 260px;
+  flex-shrink: 0;
+  background: #fafafa;
+  border-right: 1px solid var(--clr-outline-variant);
+  padding: 2rem 0.5rem;
+  overflow-y: auto;
+}
+
+@media (min-width: 768px) {
+  .event-sidebar {
+    display: flex;
+  }
+}
+
+.event-sidebar.event-sidebar--open {
+  display: flex;
+  position: fixed;
+  top: 3.5rem; /* aligns below the 56px top navbar */
+  left: 0;
+  bottom: 0;
+  z-index: 40;
+  padding-top: 1.5rem;
+  box-shadow: var(--shadow-elevated);
+}
+
+/* On desktop, treat an open drawer the same as the normal sidebar */
+@media (min-width: 768px) {
+  .event-sidebar.event-sidebar--open {
+    position: relative;
+    top: auto;
+    left: auto;
+    bottom: auto;
+    z-index: auto;
+    padding-top: 2rem;
+    box-shadow: none;
+  }
+}
+
+/* Visible on mobile only — reliably hidden on desktop without Tailwind responsive utilities */
+.mobile-only {
+  display: flex;
+}
+@media (min-width: 768px) {
+  .mobile-only {
+    display: none !important;
+  }
+}
+
+/* ── 20. Navbar Responsive Collapse (replaces Bootstrap JS) ─── */
+.navbar-toggler { display: none; }
+
+@media (min-width: 992px) {
+  .collapse.navbar-collapse {
+    display: flex !important;
+    flex-basis: auto;
+    flex-grow: 1;
+    align-items: center;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .navbar-toggler { display: block; }
+
+  .collapse.navbar-collapse {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .collapse.navbar-collapse.collapsed {
+    display: none;
+  }
+}
+
+/* ── 20. Bootstrap utility shims (replaces Bootstrap CSS) ────── */
+.container {
+  width: 100%;
+  max-width: 1140px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: -0.75rem;
+  margin-right: -0.75rem;
+}
+
+.col {
+  flex: 1 0 0%;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.no-gutters {
+  margin-left: 0;
+  margin-right: 0;
+}
+.no-gutters > .col,
+.no-gutters > [class*="col-"] {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Common col sizes */
+.col-1  { flex: 0 0 8.333333%;  max-width: 8.333333%; }
+.col-2  { flex: 0 0 16.666667%; max-width: 16.666667%; }
+.col-3  { flex: 0 0 25%;        max-width: 25%; }
+.col-4  { flex: 0 0 33.333333%; max-width: 33.333333%; }
+.col-5  { flex: 0 0 41.666667%; max-width: 41.666667%; }
+.col-6  { flex: 0 0 50%;        max-width: 50%; }
+.col-7  { flex: 0 0 58.333333%; max-width: 58.333333%; }
+.col-8  { flex: 0 0 66.666667%; max-width: 66.666667%; }
+.col-9  { flex: 0 0 75%;        max-width: 75%; }
+.col-10 { flex: 0 0 83.333333%; max-width: 83.333333%; }
+.col-11 { flex: 0 0 91.666667%; max-width: 91.666667%; }
+.col-12 { flex: 0 0 100%;       max-width: 100%; }
+
+@media (min-width: 576px) {
+  .col-sm-1  { flex: 0 0 8.333333%;  max-width: 8.333333%; }
+  .col-sm-2  { flex: 0 0 16.666667%; max-width: 16.666667%; }
+  .col-sm-3  { flex: 0 0 25%;        max-width: 25%; }
+  .col-sm-4  { flex: 0 0 33.333333%; max-width: 33.333333%; }
+  .col-sm-6  { flex: 0 0 50%;        max-width: 50%; }
+  .col-sm-8  { flex: 0 0 66.666667%; max-width: 66.666667%; }
+  .col-sm-12 { flex: 0 0 100%;       max-width: 100%; }
+}
+
+@media (min-width: 768px) {
+  .col-md-1  { flex: 0 0 8.333333%;  max-width: 8.333333%; }
+  .col-md-2  { flex: 0 0 16.666667%; max-width: 16.666667%; }
+  .col-md-3  { flex: 0 0 25%;        max-width: 25%; }
+  .col-md-4  { flex: 0 0 33.333333%; max-width: 33.333333%; }
+  .col-md-5  { flex: 0 0 41.666667%; max-width: 41.666667%; }
+  .col-md-6  { flex: 0 0 50%;        max-width: 50%; }
+  .col-md-7  { flex: 0 0 58.333333%; max-width: 58.333333%; }
+  .col-md-8  { flex: 0 0 66.666667%; max-width: 66.666667%; }
+  .col-md-9  { flex: 0 0 75%;        max-width: 75%; }
+  .col-md-10 { flex: 0 0 83.333333%; max-width: 83.333333%; }
+  .col-md-12 { flex: 0 0 100%;       max-width: 100%; }
+}
+
+@media (min-width: 992px) {
+  .col-lg-1  { flex: 0 0 8.333333%;  max-width: 8.333333%; }
+  .col-lg-2  { flex: 0 0 16.666667%; max-width: 16.666667%; }
+  .col-lg-3  { flex: 0 0 25%;        max-width: 25%; }
+  .col-lg-4  { flex: 0 0 33.333333%; max-width: 33.333333%; }
+  .col-lg-5  { flex: 0 0 41.666667%; max-width: 41.666667%; }
+  .col-lg-6  { flex: 0 0 50%;        max-width: 50%; }
+  .col-lg-8  { flex: 0 0 66.666667%; max-width: 66.666667%; }
+  .col-lg-9  { flex: 0 0 75%;        max-width: 75%; }
+  .col-lg-10 { flex: 0 0 83.333333%; max-width: 83.333333%; }
+  .col-lg-12 { flex: 0 0 100%;       max-width: 100%; }
+}
+
+/* Display utilities */
+.d-none         { display: none !important; }
+.d-block        { display: block !important; }
+.d-inline       { display: inline !important; }
+.d-inline-block { display: inline-block !important; }
+.d-flex         { display: flex !important; }
+.d-inline-flex  { display: inline-flex !important; }
+
+/* Flex utilities */
+.flex-column        { flex-direction: column !important; }
+.flex-row           { flex-direction: row !important; }
+.flex-wrap          { flex-wrap: wrap !important; }
+.flex-nowrap        { flex-wrap: nowrap !important; }
+.flex-grow-1        { flex-grow: 1 !important; }
+.justify-content-start   { justify-content: flex-start !important; }
+.justify-content-end     { justify-content: flex-end !important; }
+.justify-content-center  { justify-content: center !important; }
+.justify-content-between { justify-content: space-between !important; }
+.align-items-start   { align-items: flex-start !important; }
+.align-items-center  { align-items: center !important; }
+.align-items-end     { align-items: flex-end !important; }
+.align-top           { vertical-align: top !important; }
+
+/* Spacing */
+.mr-auto { margin-right: auto !important; }
+.ml-auto { margin-left: auto !important; }
+.mx-auto { margin-left: auto !important; margin-right: auto !important; }
+
+/* Sizing */
+.h-100 { height: 100% !important; }
+.w-100 { width: 100% !important; }
+
+/* Text utilities */
+.text-center { text-align: center !important; }
+.text-left   { text-align: left !important; }
+.text-right  { text-align: right !important; }
+.text-muted  { color: var(--clr-on-surface-muted) !important; }
+
+/* Float */
+.float-right { float: right !important; }
+.float-left  { float: left !important; }
+
+/* Screen-reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Modal layout helpers (used in ReviewModal) */
+.modal-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.modal-heading {
+  font-family: var(--font-heading);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--clr-on-surface);
+  margin: 0;
+}
+
+.modal-close-btn {
+  background: none;
   border: none;
-  padding: 0!important;
-  /*optional*/
-  font-family: arial, sans-serif;
-  /*input has OS specific font-family*/
-  color: #069;
+  font-size: 1.25rem;
   cursor: pointer;
+  color: var(--clr-on-surface-muted);
+  line-height: 1;
+  padding: 0.25rem;
+}
+
+.modal-body-content {
+  overflow-y: auto;
+  max-height: 60vh;
+  margin-bottom: 1rem;
+}
+
+.modal-footer-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
 }

@@ -10,7 +10,7 @@ import { outcomeService } from '../../services/outcome/outcome.service';
 import { tagsService } from '../../services/tags/tags.service';
 import { responsesService } from '../../services/responses/responses.service';
 import AnswerValue from "../../components/answerValue";
-import { ConfirmModal } from "react-bootstrap4-modal";
+import { ConfirmModal } from "../../components/Modal";
 import moment from 'moment'
 import { getDownloadURL } from '../../utils/files';
 import TagSelectorDialog from '../../components/TagSelectorDialog';
@@ -37,6 +37,7 @@ class ResponsePage extends Component {
             outcome: {'status':null,'timestamp':null},
             isOutcomeDropdownOpen: false,
             isStatusDropdownOpen: false,
+            reviewerModalVisible: false,
         }
     };
 
@@ -641,15 +642,17 @@ class ResponsePage extends Component {
     // Render Review Modal
     renderReviewerModal() {
         if (!this.state.reviewResponses || !this.state.applicationData) {
-            return <div></div>
+            return null;
         }
-        return < ReviewModal
+        return <ReviewModal
+            visible={this.state.reviewerModalVisible}
+            onClose={() => this.setState({ reviewerModalVisible: false })}
             handlePost={(data) => this.postReviewerService(data)}
             response={this.state.applicationData}
             reviewers={this.state.availableReviewers.filter(r => !this.state.applicationData.reviewers.some(rr => rr.reviewer_user_id === r.reviewer_user_id))}
             event={this.props.event}
             t={this.props.t}
-        />
+        />;
     };
 
     renderDeleteReviewerModal() {
@@ -748,9 +751,8 @@ class ResponsePage extends Component {
                                 {this.renderReviews()}
                                 <div className="add-reviewer">
                                     <button
-                                        data-toggle="modal"
                                         type="button"
-                                        data-target="#exampleModalReview"
+                                        onClick={() => this.setState({ reviewerModalVisible: true })}
                                         className="btn btn-light">
                                         {t("Assign Reviewer")}
                                     </button>

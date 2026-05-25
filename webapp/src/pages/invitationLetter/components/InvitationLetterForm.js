@@ -1,6 +1,5 @@
 // TOOD: ADD TRANSLATION
 import React, { Component } from "react";
-import { createColClassName } from "../../../utils/styling/styling";
 import validationFields from "../../../utils/validation/validationFields";
 import FormTextBox from "../../../components/form/FormTextBox";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
@@ -13,7 +12,6 @@ import FormSelect from "../../../components/form/FormSelect";
 import { getCountries } from "../../../utils/validation/contentHelpers";
 import Address from "./Address.js";
 import { registrationService } from "../../../services/registration";
-import Loading from "../../../components/Loading";
 import { withRouter } from "react-router";
 import { withTranslation } from 'react-i18next';
 
@@ -331,11 +329,15 @@ class InvitationLetterForm extends Component {
     } = this.state;
 
     if (loadingPage) {
-      return <Loading />;
+      return (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      );
     }
 
     if (!available) {
-      return <div className="alert alert-warning">{this.props.t("Invitation letter is not yet available, please check again at a later date.")}</div>;
+      return <div className="bg-warning/10 text-warning-text border border-warning-border p-4 rounded-xl text-sm w-full text-center mt-6">{this.props.t("Invitation letter is not yet available, please check again at a later date.")}</div>;
     }
 
     const nationalityValue = this.getContentValue(
@@ -348,15 +350,13 @@ class InvitationLetterForm extends Component {
       residence
     );
 
-    const passportDetailsStyleLine = createColClassName(12, 3, 4, 4);
-    const nationResidenceDetailsStyle = createColClassName(12, 3, 4, 4);
     return (
-      <div className="InvitationLetter">
-        <form onSubmit={this.handleSubmit}>
-          <p className="h5 text-center mb-4">Invitation Letter</p>
+      <div className="w-full max-w-5xl mx-auto pt-6">
+        <form onSubmit={this.handleSubmit} className="bg-white rounded-2xl shadow-sm border border-border p-8 space-y-6 text-left">
+          <h1 className="font-heading text-2xl font-bold text-foreground text-center mb-6">Invitation Letter</h1>
 
-          <div className="row">
-            <div className={passportDetailsStyleLine}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
               <FormTextBox
                 id={validationFields.fullNameOnPassport.name}
                 type="text"
@@ -370,7 +370,7 @@ class InvitationLetterForm extends Component {
               />
             </div>
 
-            <div className={passportDetailsStyleLine}>
+            <div>
               <FormTextBox
                 id={validationFields.passportNumber.name}
                 type="text"
@@ -381,7 +381,7 @@ class InvitationLetterForm extends Component {
               />
             </div>
 
-            <div class={passportDetailsStyleLine}>
+            <div>
               <FormTextBox
                 id={validationFields.passportExpiryDate.name}
                 type="date"
@@ -395,8 +395,8 @@ class InvitationLetterForm extends Component {
             </div>
           </div>
 
-          <div className="row">
-            <div className={passportDetailsStyleLine}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+            <div>
               <FormTextBox
                 id={validationFields.passportIssuedByAuthority.name}
                 type="text"
@@ -409,7 +409,7 @@ class InvitationLetterForm extends Component {
               />
             </div>
 
-            <div className={passportDetailsStyleLine}>
+            <div>
               <FormTextBox
                 id={validationFields.letterAddressedTo.name}
                 type="text"
@@ -421,20 +421,22 @@ class InvitationLetterForm extends Component {
               />
             </div>
 
-            <div className={passportDetailsStyleLine}>
-              <div id="labelWorkAddress">
-                {"Are you currently employed ? "}
-                <input
-                  name="showWorkAddress"
-                  type="checkbox"
-                  checked={showWorkAddress}
-                  onChange={this.toggleWork}
-                />
-              </div>
+            <div className="flex items-center gap-2 pt-4">
+              <input
+                id="labelWorkAddress"
+                name="showWorkAddress"
+                type="checkbox"
+                className="rounded border-border text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                checked={showWorkAddress}
+                onChange={this.toggleWork}
+              />
+              <label htmlFor="labelWorkAddress" className="text-sm font-medium text-foreground cursor-pointer select-none">
+                Are you currently employed?
+              </label>
             </div>
           </div>
 
-          <div className="row">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <Address
               onChange={this.handleChange}
               handleChangeDropdown={this.handleChangeDropdown}
@@ -470,8 +472,8 @@ class InvitationLetterForm extends Component {
             )}
           </div>
 
-          <div class="row">
-            <div class={nationResidenceDetailsStyle}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
               <FormSelect
                 options={countryOptions}
                 id={validationFields.nationality.name}
@@ -482,7 +484,7 @@ class InvitationLetterForm extends Component {
               />
             </div>
 
-            <div class={nationResidenceDetailsStyle}>
+            <div>
               <FormSelect
                 options={countryOptions}
                 id={validationFields.residence.name}
@@ -493,7 +495,7 @@ class InvitationLetterForm extends Component {
               />
             </div>
 
-            <div class={nationResidenceDetailsStyle}>
+            <div>
               <FormTextBox
                 id={validationFields.dateOfBirth.name}
                 type="date"
@@ -505,27 +507,26 @@ class InvitationLetterForm extends Component {
             </div>
           </div>
 
-          <button
-            type="submit"
-            class="btn btn-primary"
-            id="btn-invitationLetter-submit"
-            disabled={!this.validateForm() || loading}
-          >
-            {loading && (
-              <span
-                className="spinner-grow spinner-grow-sm"
-                role="status"
-                aria-hidden="true"
-              />
-            )}
-            Request Invitation Letter
-          </button>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-border/50">
+            <div className="flex-1"></div>
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm disabled:opacity-50"
+              id="btn-invitationLetter-submit"
+              disabled={!this.validateForm() || loading}
+            >
+              {loading && (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              )}
+              Request Invitation Letter
+            </button>
+          </div>
 
           {errors && errors.$set && showErrors && this.getErrorMessages(errors)}
 
           {error && (
             <div
-              class="alert alert-danger alert-container"
+              className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-6"
               id="alert-invitation-letter-failure"
             >
               {error}
@@ -534,7 +535,7 @@ class InvitationLetterForm extends Component {
 
           {this.state.invitationLetterId && (
             <div
-              class="alert alert-success alert-container"
+              className="bg-green-50 text-green-700 border border-green-200 p-4 rounded-xl text-sm mb-6 mt-4 text-center"
               id="alert-invitation-letter-success"
             >
               Thank you, your invitation letter will be sent to your email address.

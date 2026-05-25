@@ -4,7 +4,6 @@ import { invitedGuestServices } from "../../../services/invitedGuests/invitedGue
 import { tagsService } from "../../../services/tags/tags.service";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
-import { createColClassName } from "../../../utils/styling/styling";
 import "react-table/react-table.css";
 import validationFields from "../../../utils/validation/validationFields";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
@@ -20,7 +19,7 @@ import {
 import {
   getTitleOptions
 } from "../../../utils/validation/contentHelpers";
-import { ConfirmModal } from "react-bootstrap4-modal";
+import { ConfirmModal } from "../../../components/Modal";
 
 const baseFieldValidations = [
   ruleRunner(validationFields.email, validEmail),
@@ -403,7 +402,6 @@ class InvitedGuests extends Component {
   }
 
   render() {
-    const threeColClassName = createColClassName(12, 4, 4, 4);  //xs, sm, md, lg
     const t = this.props.t;
     const { loading, error } = this.state;
     const roleOptions = invitedGuestServices.getRoles()
@@ -411,61 +409,67 @@ class InvitedGuests extends Component {
 
     if (loading) {
       return (
-        <div className="d-flex justify-content-center">
-          <div className="spinner-border" role="status">
-            <span className="sr-only">Loading...</span>
-          </div>
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       );
     }
 
     const columns = [{
       id: "user",
-      Header: <div className="invitedguest-fullname">{t("Full Name")}</div>,
+      Header: <div className="invitedguest-fullname text-left font-bold">{t("Full Name")}</div>,
       accessor: u =>
-        <div className="invitedguest-fullname">
+        <div className="invitedguest-fullname font-medium text-foreground">
           {u.user.user_title + " " + u.user.firstname + " " + u.user.lastname}
         </div>,
       minWidth: 150
     }, {
       id: "email",
-      Header: <div className="invitedguest-email">{t("Email")}</div>,
+      Header: <div className="invitedguest-email text-left font-bold">{t("Email")}</div>,
       accessor: u => u.user.email
     }, {
       id: "role",
-      Header: <div className="invitedguest-role">{t("Role")}</div>,
+      Header: <div className="invitedguest-role text-left font-bold">{t("Role")}</div>,
       accessor: u => u.role
     }, {
       id: "tags",
-      Header: <div className="invitedguest-tags">{t("Tags")}</div>,
-      Cell: props => <div>
+      Header: <div className="invitedguest-tags text-left font-bold">{t("Tags")}</div>,
+      Cell: props => <div className="flex flex-wrap gap-1 items-center">
         {props.original.tags.map(t => 
-            <span className="tag badge badge-primary" onClick={()=>this.removeTag(props.original, t)} key={`tag_${props.original.invited_guest_id}_${t.id}`}>{t.name}</span>)}
-        <i className="fa fa-plus-circle add-tag" onClick={() => this.addTag(props.original)}></i>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20 cursor-pointer select-none" onClick={()=>this.removeTag(props.original, t)} key={`tag_${props.original.invited_guest_id}_${t.id}`}>{t.name}</span>)}
+        <i className="fa fa-plus-circle text-primary hover:text-primary/80 transition-colors text-base cursor-pointer ml-1" onClick={() => this.addTag(props.original)}></i>
       </div>,
       accessor: u => u.tags.map(t => t.name).join("; ")
     },
     {
       id: "remove",
-      Header: <div className="invitedguest-remove">{t("Remove")}</div>,
-      accessor: u => <i className="fa fa-trash" onClick={() => this.removeGuest(u)}></i>
+      Header: <div className="invitedguest-remove text-left font-bold">{t("Remove")}</div>,
+      accessor: u => (
+        <button 
+          className="inline-flex items-center justify-center p-2 rounded-lg text-sm font-semibold transition-colors bg-error/10 text-error hover:bg-error/20 border border-error/20 cursor-pointer"
+          onClick={() => this.removeGuest(u)}
+        >
+          <i className="fa fa-trash"></i>
+        </button>
+      )
     }
   ];
 
   const guestName = this.state.selectedGuest ? this.state.selectedGuest.user.user_title + " " + this.state.selectedGuest.user.firstname + " " + this.state.selectedGuest.user.lastname : "";
 
     return (
-      <div className="InvitedGuests container-fluid pad-top-30-md">
-        {error &&
-          <div className={"alert alert-danger alert-container"}>
+      <div className="w-full max-w-5xl mx-auto pt-6 text-left space-y-6">
+        {error && (
+          <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-6">
             {JSON.stringify(error)}
-          </div>}
+          </div>
+        )}
 
-        <div className="card no-padding-h">
-          <p className="h5 text-center mb-4">{t("Invited Guests")}</p>
+        <div className="bg-white rounded-2xl shadow-sm border border-border p-8 space-y-6" key="tag-table">
+          <h1 className="font-heading text-2xl font-bold text-foreground mb-6">{t("Invited Guests")}</h1>
 
-          <div className="row">
-            <div className={threeColClassName}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-2">
               <FormTextBox
                 id="s"
                 type="text"
@@ -476,7 +480,7 @@ class InvitedGuests extends Component {
                 value={this.state.nameSearch} />
             </div>
 
-            <div className={threeColClassName}>
+            <div className="space-y-2">
               <FormSelect
                 options={searchRoleOptions}
                 id="RoleFilter"
@@ -486,7 +490,7 @@ class InvitedGuests extends Component {
                 defaultValue={this.state.roleSearch || "all"} />
             </div>
 
-            <div className={threeColClassName}>
+            <div className="space-y-2">
               <FormSelect
                 options={[
                   { value: 'all', label: t('All Tags') },
@@ -504,47 +508,51 @@ class InvitedGuests extends Component {
             </div>
           </div>
 
-          {this.state.guestList &&
-            this.state.guestList.length > 0 &&
-            <ReactTable
-              data={this.state.filteredList}
-              columns={columns}
-              minRows={0} />
-          }
+          {this.state.guestList && this.state.guestList.length > 0 && (
+            <div className="react-table">
+              <ReactTable
+                data={this.state.filteredList}
+                columns={columns}
+                minRows={0}
+                className="ReactTable"
+              />
+            </div>
+          )}
 
-          {(!this.state.guestList || this.state.guestList.length === 0) &&
-            <div className="alert alert-danger alert-container">
+          {(!this.state.guestList || this.state.guestList.length === 0) && (
+            <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center">
               {t("No invited guests")}
-              </div>
-          }
+            </div>
+          )}
 
-          <div className="col-12">
+          <div className="flex justify-end pt-4">
             <button
-              className="pull-right link-style"
+              className="inline-flex items-center justify-center px-4 py-2 rounded-lg text-xs font-semibold transition-colors border border-border text-muted-foreground hover:bg-slate-50 cursor-pointer bg-white"
               onClick={() => this.downloadCsv()}>
+              <i className="fas fa-download mr-1.5"></i>
               {t("Download csv")}
-              </button>
+            </button>
           </div>
         </div>
 
         {this.state.addedSucess && (
-          <div className="card flat-card success">
+          <div className="bg-green-50 text-green-700 border border-green-200 p-4 rounded-xl text-sm text-center">
             {this.state.successMessage}
           </div>
         )}
 
         {this.state.addedSucess === false && this.state.conflict && (
-          <div className="card flat-card conflict">
+          <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm text-center">
             {t("Invited guest with this email already exists.")}
           </div>
         )}
 
-        <form>
-          <div className="card">
-            <p className="h5 text-center mb-4">{t("Add Guest")}</p>
+        <form onSubmit={e => e.preventDefault()}>
+          <div className="bg-white rounded-2xl shadow-sm border border-border p-8 space-y-6">
+            <h3 className="text-lg font-bold text-foreground/90">{t("Add Guest")}</h3>
 
-            <div className="row">
-              <div className={threeColClassName}>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+              <div className="space-y-2">
                 <FormTextBox
                   id={validationFields.email.name}
                   type="email"
@@ -556,7 +564,7 @@ class InvitedGuests extends Component {
                   value={this.state.user[validationFields.email.name] || ""} />
               </div>
 
-              <div className={threeColClassName}>
+              <div className="space-y-2">
                 <FormSelect
                   options={roleOptions}
                   id={validationFields.role.name}
@@ -568,63 +576,58 @@ class InvitedGuests extends Component {
                   defaultValue={this.state.user[validationFields.role.name] || ""}
                   value={this.state.user[validationFields.role.name] || ""} />
               </div>
-              <div className={threeColClassName}>
-                <div className="form-group">
-                  <label>{t("Tags")}</label>
-                  <div className="tag-selector">
-                    {this.state.newGuestTags.map(tag => (
-                      <span key={`new-guest-tag-${tag.id}`} className="tag badge badge-primary">
+              
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-foreground/90 mb-1">{t("Tags")}</label>
+                <div className="flex flex-wrap gap-1 items-center min-h-[46px] border border-border rounded-lg px-4 py-1.5 bg-white">
+                  {this.state.newGuestTags.map(tag => (
+                    <span key={`new-guest-tag-${tag.id}`} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
                       {tag.name}
                       <i 
-                        className="fa fa-times ml-1" 
+                        className="fa fa-times ml-1.5 cursor-pointer text-primary hover:text-primary/80 transition-colors" 
                         onClick={() => this.setState({
                           newGuestTags: this.state.newGuestTags.filter(t => t.id !== tag.id)
                         })} 
                       />
                     </span>
                   ))}
-                    <i 
-                      className="fa fa-plus-circle add-tag" 
-                      onClick={() => this.setState({
-                        tagSelectorVisible: true,
-                        filteredTags: this.state.tags.filter(tag => 
-                          !this.state.newGuestTags.some(t => t.id === tag.id) && 
-                          this.assignable_tag_types.includes(tag.tag_type)
-                        )
-                      })}
-                    />
-                  </div>
+                  <i 
+                    className="fa fa-plus-circle text-primary hover:text-primary/80 transition-colors text-lg cursor-pointer ml-1" 
+                    onClick={() => this.setState({
+                      tagSelectorVisible: true,
+                      filteredTags: this.state.tags.filter(tag => 
+                        !this.state.newGuestTags.some(t => t.id === tag.id) && 
+                        this.assignable_tag_types.includes(tag.tag_type)
+                      )
+                    })}
+                  />
                 </div>
               </div>
-              <div className={threeColClassName}>
+
+              <div>
                 {!this.state.notFound ? (
-                  <>
-                    <button
-                      type="button"
-                      className="btn btn-primary stretched margin-top-32"
-                      onClick={() => this.buttonSubmit()}
-                      disabled={this.state.adding}>
-                      {this.state.adding && (
-                        <span
-                          className="spinner-grow spinner-grow-sm"
-                          role="status"
-                          aria-hidden="true" />
-                      )}
-                      {t("Add")}
-                    </button>
-                  </>
+                  <button
+                    type="button"
+                    className="w-full inline-flex items-center justify-center px-5 py-3 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm cursor-pointer h-[46px]"
+                    onClick={() => this.buttonSubmit()}
+                    disabled={this.state.adding}>
+                    {this.state.adding && (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-1.5"></div>
+                    )}
+                    {t("Add")}
+                  </button>
                 ) : !this.state.addedSucess && this.state.notFound ? (
-                  <span className="text-warning not-found">
-                    {t("User does not exist, please add these details")}:
+                  <span className="text-warning font-semibold text-sm">
+                    {t("User does not exist, please add details below")}:
                   </span>
                 ) : null}
               </div>
             </div>
 
-            {!this.state.addedSucess && this.state.notFound &&
-              <div>
-                <div className="row">
-                  <div className={threeColClassName}>
+            {!this.state.addedSucess && this.state.notFound && (
+              <div className="space-y-6 pt-6 border-t border-border/50">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
                     <FormSelect
                       options={this.state.titleOptions}
                       id={validationFields.title.name}
@@ -637,7 +640,7 @@ class InvitedGuests extends Component {
                       value={this.state.user[validationFields.title.name] || ""} />
                   </div>
 
-                  <div className={threeColClassName}>
+                  <div className="space-y-2">
                     <FormTextBox
                       id={validationFields.firstName.name}
                       type="text"
@@ -649,7 +652,7 @@ class InvitedGuests extends Component {
                       value={this.state.user[validationFields.firstName.name] || ""} />
                   </div>
 
-                  <div className={threeColClassName}>
+                  <div className="space-y-2">
                     <FormTextBox
                       id={validationFields.lastName.name}
                       type="text"
@@ -662,24 +665,20 @@ class InvitedGuests extends Component {
                   </div>
                 </div>
 
-                <div className="row">
-                  <div className={threeColClassName}>
-                    <button
-                      type="button"
-                      className="btn btn-primary stretched margin-top-32"
-                      onClick={() => this.submitCreate()}
-                      disabled={this.state.adding}>
-                      {this.state.adding && (
-                        <span
-                          className="spinner-grow spinner-grow-sm"
-                          role="status"
-                          aria-hidden="true" />
-                      )}
-                      {t("Create Invited Guest")}
-                    </button>
-                  </div>
+                <div className="flex justify-end pt-4">
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-center px-5 py-3 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm cursor-pointer"
+                    onClick={() => this.submitCreate()}
+                    disabled={this.state.adding}>
+                    {this.state.adding && (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-1.5"></div>
+                    )}
+                    {t("Create Invited Guest")}
+                  </button>
                 </div>
-              </div>}
+              </div>
+            )}
           </div>
         </form>
 

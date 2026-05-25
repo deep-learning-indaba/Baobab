@@ -364,45 +364,42 @@ class EventConfigComponent extends Component {
 
   renderDatePickerTable = () => {
     const datePickers = [];
-    
+
     for (const [i, [open_date_field, close_date_field]] of this.state.requiredDateFields.entries()) {
       const open_date_name = DATE_NAMES[open_date_field];
       const close_date_name = DATE_NAMES[close_date_field];
       datePickers.push(
-        <div className={"form-group row"} key={i}>
-          <label
-            id={open_date_field + "_label"}
-            className={"col-sm-2 col-form-label"}
-            htmlFor={open_date_field}>
-            <span className="required-indicator">*</span>
-            {this.props.t(open_date_name)}
-          </label>
-
-          <div className="col-sm-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4" key={i}>
+          <div className="space-y-1">
+            <label
+              id={open_date_field + "_label"}
+              className="block text-sm font-medium text-foreground/80"
+              htmlFor={open_date_field}>
+              <span className="text-error font-bold mr-1">*</span>
+              {this.props.t(open_date_name)}
+            </label>
             <FormDate
               id={open_date_field}
               name={open_date_field}
               value={this.state.updatedEvent[open_date_field].slice(0,10)}
               required={true}
-              onChange={e =>
-                this.updateEventDateTimePicker(open_date_field, e)}/>
+              onChange={e => this.updateEventDateTimePicker(open_date_field, e)}
+            />
           </div>
-
-          <label
-            className={"col-sm-2 col-form-label"}
-            htmlFor={close_date_field}>
-            <span className="required-indicator">*</span>
-            {this.props.t(close_date_name)}
-          </label>
-
-          <div className="col-sm-4">
+          <div className="space-y-1">
+            <label
+              className="block text-sm font-medium text-foreground/80"
+              htmlFor={close_date_field}>
+              <span className="text-error font-bold mr-1">*</span>
+              {this.props.t(close_date_name)}
+            </label>
             <FormDate
               id={close_date_field}
               name={close_date_field}
               value={this.state.updatedEvent[close_date_field].slice(0,10)}
               required={true}
-              onChange={e =>
-                this.updateEventDateTimePicker(close_date_field, e)} />
+              onChange={e => this.updateEventDateTimePicker(close_date_field, e)}
+            />
           </div>
         </div>
       );
@@ -422,87 +419,75 @@ class EventConfigComponent extends Component {
       isNewEvent
     } = this.state;
 
-    const loadingStyle = {
-      width: "3rem",
-      height: "3rem"
-    };
-
     if (loading) {
       return (
-        <div className="d-flex justify-content-center">
-          <div className="spinner-border"
-            style={loadingStyle}
-            role="status">
-            <span className="sr-only">Loading...</span>
-          </div>
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       );
     }
 
     if (error) {
-      return <div className="alert alert-danger alert-container">
-        {error}
-      </div>;
+      return (
+        <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-6">
+          {error}
+        </div>
+      );
     }
 
     const t = this.props.t;
 
     return (
-      <div>
-        <div className="card">
-          <form>
-            <div className={"form-group row"}>
+      <div className="w-full max-w-5xl mx-auto pt-6 text-left">
+        <div className="bg-white rounded-2xl shadow-sm border border-border p-8 space-y-8">
+          <h1 className="font-heading text-2xl font-bold text-foreground mb-6">
+            {isNewEvent ? t("Create New Event") : t("Event Settings")}
+          </h1>
+          <form className="space-y-6">
+            <div className="space-y-2">
               <label
-                className={"col-sm-2 col-form-label"}
+                className="block text-sm font-semibold text-foreground/90"
                 htmlFor="organisation_name">
                 {t("Organisation")}
               </label>
-
-              <div className="col-sm-10">
-                <input
-                  readOnly
-                  type="text"
-                  className={"form-control-plaintext readonly"}
-                  id="organisation_name"
-                  name="organisation_name"
-                  value={this.props.organisation.name}
-                />
-              </div>
+              <input
+                readOnly
+                type="text"
+                className="w-full bg-slate-50 border border-border rounded-lg px-4 py-3 text-sm text-muted-foreground outline-none cursor-not-allowed"
+                id="organisation_name"
+                name="organisation_name"
+                value={this.props.organisation.name}
+              />
             </div>
 
-
             {this.props.organisation.languages.map((lang) => (
-              <div className={"form-group row"} key={"name_div"+lang.code}>
+              <div className="space-y-2" key={"name_div"+lang.code}>
                 <label
-                  className={"col-sm-2 col-form-label"} 
+                  className="block text-sm font-semibold text-foreground/90" 
                   htmlFor={"name_" + lang.code}>
-                  <span className="required-indicator">*</span>
+                  <span className="text-error mr-1">*</span>
                   {isMultiLingual ? t(this.getFieldNameWithLanguage("Event Name", lang.description)) : t("Event Name")}
                 </label>
-
-                <div className="col-sm-10">
-                  <FormTextBox
-                    id={"name_" + lang.code}
-                    name={"name_" + lang.code}
-                    type="text"
-                    placeholder={isMultiLingual ? t(this.getFieldNameWithLanguage("Name of event", lang.description)) : t("Name of event")}
-                    required={true}
-                    onChange={e => this.updateEventTextField("name", e, lang.code)}
-                    value={updatedEvent.name[lang.code]}
-                  />
-                </div>
+                <FormTextBox
+                  id={"name_" + lang.code}
+                  name={"name_" + lang.code}
+                  type="text"
+                  placeholder={isMultiLingual ? t(this.getFieldNameWithLanguage("Name of event", lang.description)) : t("Name of event")}
+                  required={true}
+                  onChange={e => this.updateEventTextField("name", e, lang.code)}
+                  value={updatedEvent.name[lang.code]}
+                />
               </div>
             ))}
 
-            <div className={"form-group row"}>
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="event_type">
-                <span className="required-indicator">*</span>
-                {t("Event Type")}
-              </label>
-
-              <div className="col-sm-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label
+                  className="block text-sm font-semibold text-foreground/90"
+                  htmlFor="event_type">
+                  <span className="text-error mr-1">*</span>
+                  {t("Event Type")}
+                </label>
                 <FormSelect
                   id="event_type"
                   name="event_type"
@@ -518,17 +503,14 @@ class EventConfigComponent extends Component {
                   ]}
                 />
               </div>
-            </div>
 
-            <div className={"form-group row"}>
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="travel_grant">
-                <span className="required-indicator">*</span>
-                {t("Awards Travel Grants")}
-              </label>
-
-              <div className="col-sm-10">
+              <div className="space-y-2">
+                <label
+                  className="block text-sm font-semibold text-foreground/90"
+                  htmlFor="travel_grant">
+                  <span className="text-error mr-1">*</span>
+                  {t("Awards Travel Grants")}
+                </label>
                 <FormSelect
                   id="travel_grant"
                   name="travel_grant"
@@ -543,57 +525,50 @@ class EventConfigComponent extends Component {
               </div>
             </div>
 
-            <div className={"form-group row"}>
+            <div className="space-y-2">
               <label 
-                className={"col-sm-2 col-form-label"}
+                className="block text-sm font-semibold text-foreground/90"
                 htmlFor="key">
-                <span className="required-indicator">*</span>
+                <span className="text-error mr-1">*</span>
                 {t("Event Key")}
               </label>
-
-              <div className="col-sm-10">
-                <FormTextBox
-                  id="key"
-                  name="key"
-                  type="text"
-                  placeholder={t("Event key for URLs (e.g. indaba2023)")}
-                  required={true}
-                  onChange={e => this.updateEventTextField("key", e)}
-                  value={updatedEvent.key}
-                />
-              </div>
+              <FormTextBox
+                id="key"
+                name="key"
+                type="text"
+                placeholder={t("Event key for URLs (e.g. indaba2023)")}
+                required={true}
+                onChange={e => this.updateEventTextField("key", e)}
+                value={updatedEvent.key}
+              />
             </div>
 
             {this.props.organisation.languages.map((lang) => (
-              <div className={"form-group row"} key={"description_div"+lang.code}>
+              <div className="space-y-2" key={"description_div"+lang.code}>
                 <label
-                  className={"col-sm-2 col-form-label"}
+                  className="block text-sm font-semibold text-foreground/90"
                   htmlFor={"description_" + lang.code}>
-                  <span className="required-indicator">*</span>
+                  <span className="text-error mr-1">*</span>
                   {isMultiLingual ? t(this.getFieldNameWithLanguage("Event Description", lang.description)) : t("Event Description")}
                 </label>
-
-                <div className="col-sm-10">
-                  <FormTextArea
-                    id={"description_" + lang.code}
-                    name={"description_" + lang.code}
-                    placeholder={isMultiLingual ? t(this.getFieldNameWithLanguage("Description of event", lang.description)) : t("Description of event")}
-                    required={true}
-                    rows={2}
-                    onChange={e => this.updateEventTextField("description", e, lang.code)}
-                    value={updatedEvent.description[lang.code]}
-                  />
-                </div>
+                <FormTextArea
+                  id={"description_" + lang.code}
+                  name={"description_" + lang.code}
+                  placeholder={isMultiLingual ? t(this.getFieldNameWithLanguage("Description of event", lang.description)) : t("Description of event")}
+                  required={true}
+                  rows={4}
+                  onChange={e => this.updateEventTextField("description", e, lang.code)}
+                  value={updatedEvent.description[lang.code]}
+                />
               </div>
             ))}
 
-            <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"} htmlFor="email_from">
-                <span className="required-indicator">*</span>
-                {t("Email From")}
-              </label>
-
-              <div className="col-sm-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-foreground/90" htmlFor="email_from">
+                  <span className="text-error mr-1">*</span>
+                  {t("Email From")}
+                </label>
                 <FormTextBox
                   id="email_from"
                   name="email_from"
@@ -602,18 +577,14 @@ class EventConfigComponent extends Component {
                   required={true}
                   value={updatedEvent.email_from}
                   onChange={e => this.updateEventTextField("email_from", e)}
-                  />
+                />
               </div>
-            </div>
 
-            <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"}
-                htmlFor="url">
-                <span className="required-indicator">*</span>
-                {t("Event Website")}
-              </label>
-
-              <div className="col-sm-10">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-foreground/90" htmlFor="url">
+                  <span className="text-error mr-1">*</span>
+                  {t("Event Website")}
+                </label>
                 <FormTextBox
                   id="url"
                   name="url"
@@ -622,45 +593,47 @@ class EventConfigComponent extends Component {
                   value={updatedEvent.url}
                   required={true}
                   onChange={e => this.updateEventTextField("url", e)}
-                  />
+                />
               </div>
             </div>
 
-            {updatedEvent.event_type && this.renderDatePickerTable()}
-
+            {updatedEvent.event_type && (
+              <div className="space-y-6 pt-4 border-t border-border/50">
+                <h3 className="text-lg font-semibold text-foreground/90 mb-4">{t("Event Key Dates")}</h3>
+                <div className="space-y-6">
+                  {this.renderDatePickerTable()}
+                </div>
+              </div>
+            )}
           </form>
 
-          <hr></hr>
-
-          <div className={"form-group row"}>
-            <div className={"col-sm-4 ml-md-auto"}>
-              <Link to=".." className="btn btn-danger btn-lg btn-block">
-                {t("Cancel")}
-              </Link>
-            </div>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border-border/50">
+            <Link 
+              to=".." 
+              className="inline-flex items-center justify-center px-6 py-3 rounded-lg text-sm font-semibold transition-colors bg-error text-error-foreground hover:bg-error/90 shadow-sm w-full md:w-auto text-center"
+            >
+              {t("Cancel")}
+            </Link>
             
-            <div className={"col-sm-4 "}>
-              {isNewEvent ? (
-                <button
-                  onClick={() => this.onClickCreate()}
-                  className="btn btn-success btn-lg btn-block"
-                  disabled={!allFieldsComplete}>
-                  {t("Create Event")}
-                </button>
-                ) :
-                (
-                <button
-                  onClick={() => this.onClickUpdate()}
-                  className="btn btn-success btn-lg btn-block"
-                  disabled={!allFieldsComplete}>
-                  {t("Update Event")}
-                </button>
-              )}
-            </div>
+            {isNewEvent ? (
+              <button
+                onClick={() => this.onClickCreate()}
+                className="inline-flex items-center justify-center px-6 py-3 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm w-full md:w-auto disabled:opacity-50"
+                disabled={!allFieldsComplete}>
+                {t("Create Event")}
+              </button>
+            ) : (
+              <button
+                onClick={() => this.onClickUpdate()}
+                className="inline-flex items-center justify-center px-6 py-3 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm w-full md:w-auto disabled:opacity-50"
+                disabled={!allFieldsComplete}>
+                {t("Update Event")}
+              </button>
+            )}
           </div>
 
-          <div className={"form-group-row"}>
-              {errors && showErrors && this.getErrorMessages(errors)}
+          <div className="space-y-2">
+            {errors && showErrors && this.getErrorMessages(errors)}
           </div>
         </div>
       </div>

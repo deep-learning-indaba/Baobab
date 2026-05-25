@@ -1,9 +1,6 @@
-import "react-app-polyfill/ie9";
-import "array-flat-polyfill";
 import React, { Component, Suspense } from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import "./index.css";
-import * as serviceWorker from "./serviceWorker";
 import { ErrorPage } from "./components/ErrorPage";
 import { ErrorBoundary } from "react-error-boundary";
 import i18nInit from './i18n';
@@ -11,31 +8,26 @@ import Loading from "./components/Loading";
 import { organisationService } from "./services/organisation/organisation.service";
 import ContextProvider from './context/ContextProvider';
 
-// a function to retry loading a chunk to avoid chunk load error for out of date code
+// Retry lazy-loaded chunks to avoid stale-deploy chunk errors
 const lazyRetry = function(componentImport) {
   return new Promise((resolve, reject) => {
-      // check if the window has already been refreshed
       const hasRefreshed = JSON.parse(
           window.sessionStorage.getItem('retry-lazy-refreshed') || 'false'
       );
-      // try to import the component
       componentImport().then((component) => {
-          window.sessionStorage.setItem('retry-lazy-refreshed', 'false'); // success so reset the refresh
+          window.sessionStorage.setItem('retry-lazy-refreshed', 'false');
           resolve(component);
       }).catch((error) => {
-          if (!hasRefreshed) { // not been refreshed yet
-              window.sessionStorage.setItem('retry-lazy-refreshed', 'true'); // we are now going to refresh
-              return window.location.reload(); // refresh the page
+          if (!hasRefreshed) {
+              window.sessionStorage.setItem('retry-lazy-refreshed', 'true');
+              return window.location.reload();
           }
-          reject(error); // Default error behaviour as already tried refresh
+          reject(error);
       });
   });
 };
 
-
-const App = React.lazy(() => lazyRetry(() => import('./App'))); // Lazy-loaded with retry
-
-require("dotenv").config();
+const App = React.lazy(() => lazyRetry(() => import('./App')));
 
 class Bootstrap extends Component {
   constructor(props) {
@@ -75,16 +67,11 @@ class Bootstrap extends Component {
   }
 }
 
-ReactDOM.render(
+const root = createRoot(document.getElementById("root"));
+root.render(
   <ErrorBoundary FallbackComponent={ErrorPage}>
     <ContextProvider>
       <Bootstrap />
     </ContextProvider>
   </ErrorBoundary>
-  , document.getElementById("root")
 );
-
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: http://bit.ly/CRA-PWA
-serviceWorker.unregister();

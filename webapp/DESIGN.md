@@ -160,7 +160,7 @@ Background motifs should feature organic "branching" lines (representing both th
 
 ## Components
 
-- **Buttons:** Primary buttons use the Baobab Green to Blue gradient with white text. Ghost buttons use a 1px teal border.
+- **Buttons:** Primary buttons use the Baobab Green with white text. Ghost buttons use a 1px teal border.
 - **Inputs:** Clean, white fills with a subtle 1px border. On focus, the border transitions to Electric Blue with a soft outer glow.
 - **Chips/Tags:** Used for AI categories or skills. Use a low-opacity fill of the accent colors (e.g., 10% Blue fill with Blue text).
 - **Cards:** White background, subtle border, and soft elevation. Community cards should feature larger padding (32px), while data cards use 16px.

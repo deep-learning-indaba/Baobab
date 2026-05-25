@@ -1,6 +1,6 @@
 import React,
 {
-  useState, forwardRef, createRef, useEffect
+  useState, forwardRef, createRef, useEffect, useRef
 } from 'react';
 import { Trans } from 'react-i18next';
 import Question from './Question';
@@ -25,6 +25,18 @@ export const Section = forwardRef(({
   const [style, setStyle] = useState({});
   const [hideOrShowDetails, setHideOrShowDetails] = useState(false);
   const [isKeyOn, setIsKeyOn] = useState(false);
+  const [sectionMenuOpen, setSectionMenuOpen] = useState(false);
+  const sectionMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (sectionMenuRef.current && !sectionMenuRef.current.contains(e.target)) {
+        setSectionMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   const key = inputs.key;
   let maxSurrogateId = 1;
   sections.forEach(s => {
@@ -299,16 +311,20 @@ export const Section = forwardRef(({
             <span className='tooltiptext-error'>{t('Name is Required')}</span>
           )}
           <div
+            ref={sectionMenuRef}
+            className="section-menu-wrapper"
+          >
+          <div
             id="toggleTitle"
             className="title-desc-toggle"
             role="button"
-            data-toggle="dropdown"
+            onClick={() => setSectionMenuOpen(o => !o)}
             aria-haspopup="true"
-            aria-expanded="false"
+            aria-expanded={sectionMenuOpen}
           >
             <i className='fa fa-ellipsis-v fa-lg fa-dropdown'></i>
           </div>
-          <div className="dropdown-menu" aria-labelledby="toggleTitle">
+          {sectionMenuOpen && <div className="dropdown-menu show" aria-labelledby="toggleTitle">
             <button
               className="dropdown-item delete-section"
               disabled={isDeleteDisabled}
@@ -350,6 +366,7 @@ export const Section = forwardRef(({
                 {t("Add Key")}
               </button>
             )}
+          </div>}
           </div>
           <div
             className='toogle-section-details-wrapper'

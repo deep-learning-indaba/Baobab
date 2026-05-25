@@ -13,15 +13,10 @@ What happened after that (the error)?
 Error Message: 
 `;
 
-// Consider logging componentStack and error
-export const ErrorPage = ({ componentStack, error }) => {
+export const ErrorPage = ({ error }) => {
   if (errorHandler){
-    var errorMessage= {};
-    errorMessage.componentStack = componentStack;
-    errorMessage.error  = error;
-    var jsonString= JSON.stringify(errorMessage);
-    errorHandler.report(jsonString);
-  } 
+    errorHandler.report(JSON.stringify({ error: error?.toString() }));
+  }
 
   const bug_mailto =
     "mailto:baobab@deeplearningindaba.com?subject=" +

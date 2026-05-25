@@ -9,7 +9,7 @@ import 'react-table/react-table.css'
 import FormTextBox from "../../../components/form/FormTextBox";
 import { tagsService } from '../../../services/tags/tags.service';
 import TagSelectorDialog from '../../../components/TagSelectorDialog';
-import { ConfirmModal } from "react-bootstrap4-modal";
+import { ConfirmModal } from "../../../components/Modal";
 
 class ReviewAssignmentComponent extends Component {
   constructor(props) {
@@ -206,7 +206,7 @@ class ReviewAssignmentComponent extends Component {
   renderEditable = cellInfo => {
     return (
       <div
-        style={{ backgroundColor: "#fafafa" }}
+        className="bg-slate-50 border border-border rounded px-2 py-1 text-center outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-sm font-medium"
         contentEditable
         suppressContentEditableWarning
 
@@ -252,7 +252,7 @@ class ReviewAssignmentComponent extends Component {
   renderAssignButton = cellInfo => {
     return (
       <button
-        className="btn btn-primary btn-sm"
+        className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm disabled:opacity-50 cursor-pointer"
         onClick={() => this.assignReviewers(cellInfo.row.email, cellInfo.row.reviews_to_assign)}
         disabled={!Number.isInteger(cellInfo.row.reviews_to_assign)}>
         {this.props.t("Assign")}
@@ -263,7 +263,7 @@ class ReviewAssignmentComponent extends Component {
   renderRemoveButton = cellInfo => {
     return (
       <button
-        className="btn btn-primary btn-sm"
+        className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors bg-error text-error-foreground hover:bg-error/90 shadow-sm disabled:opacity-50 cursor-pointer"
         onClick={() => this.removeReviewers(cellInfo.row.email, cellInfo.row.reviews_to_remove)}
         disabled={!Number.isInteger(cellInfo.row.reviews_to_remove)}>
         {this.props.t("Remove")}
@@ -364,113 +364,136 @@ class ReviewAssignmentComponent extends Component {
   render() {
     const { loading, filteredReviewers, error, newReviewerEmail, reviewSummary } = this.state;
 
-    const loadingStyle = {
-      "width": "3rem",
-      "height": "3rem"
-    }
-
     const t = this.props.t;
 
     if (loading) {
       return (
-        <div class="d-flex justify-content-center">
-          <div class="spinner-border" style={loadingStyle} role="status">
-            <span class="sr-only">Loading...</span>
-          </div>
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
-      )
+      );
     }
 
     const columns = [{
-      Header: t("Title"),
-      accessor: 'user_title' // String-based value accessors!
+      Header: <div className="text-left font-bold">{t("Title")}</div>,
+      accessor: 'user_title'
     }, {
-      Header: t("Email"),
+      Header: <div className="text-left font-bold">{t("Email")}</div>,
       accessor: 'email'
     }, {
-      id: 'fullName', // Required because our accessor is not a string
-      Header: t("Name"),
-      accessor: d => d.firstname + " " + d.lastname // Custom value accessors!
+      id: 'fullName',
+      Header: <div className="text-left font-bold">{t("Name")}</div>,
+      accessor: d => d.firstname + " " + d.lastname
     }, {
       id: "tags",
-      Header: <div className="response-tags">{t("Tags")}</div>,
-      Cell: props => <div className="tags">
+      Header: <div className="response-tags text-left font-bold">{t("Tags")}</div>,
+      Cell: props => <div className="tags flex flex-wrap gap-1 items-center">
         {props.original.tags.map(t => 
-            <span className="tag badge badge-primary" onClick={()=>this.removeTag(props.original, t)} key={`tag_${props.original.response_id}_${t.id}`}>{t.name}</span>)}
-        <i className="fa fa-plus-circle" onClick={() => this.addTag(props.original)}></i>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20 cursor-pointer select-none" onClick={()=>this.removeTag(props.original, t)} key={`tag_${props.original.response_id}_${t.id}`}>{t.name}</span>)}
+        <i className="fa fa-plus-circle text-primary hover:text-primary/80 transition-colors text-base cursor-pointer" onClick={() => this.addTag(props.original)}></i>
       </div>,
       accessor: u => u.tags.map(t => t.name).join("; "),
       minWidth: 150
     }, {
-      Header: t("No. Allocated"),
+      Header: <div className="text-left font-bold">{t("No. Allocated")}</div>,
       accessor: 'reviews_allocated'
     }, {
-      Header: t("No. Completed"),
+      Header: <div className="text-left font-bold">{t("No. Completed")}</div>,
       accessor: 'reviews_completed'
     }, {
       id: "percent_complete",
-      Header: t("% Completed"),
+      Header: <div className="text-left font-bold">{t("% Completed")}</div>,
       accessor: u => u.reviews_allocated === 0 ? 100 : (u.reviews_completed / u.reviews_allocated) * 100,
       Cell: props => <div> {props.value.toLocaleString(undefined, { minimumFractionDigits: 1 })} </div>
     }, {
-      Header: t("No. to Assign"),
+      Header: <div className="text-left font-bold">{t("No. to Assign")}</div>,
       accessor: 'reviews_to_assign',
       Cell: this.renderEditable
     }, {
-      Header: t("Assign"),
+      Header: <div className="text-left font-bold">{t("Assign")}</div>,
       Cell: this.renderAssignButton
     }, {
-      Header: t("No. to Remove"),
+      Header: <div className="text-left font-bold">{t("No. to Remove")}</div>,
       accessor: 'reviews_to_remove',
       Cell: this.renderEditable
     }, {
-      Header: t("Remove"),
+      Header: <div className="text-left font-bold">{t("Remove")}</div>,
       Cell: this.renderRemoveButton
     }
   ];
 
     return (
-      <section className="review-assignment-wrapper">
-        {error && <div class="alert alert-danger alert-container">
-          {error}
-        </div>}
+      <div className="w-full max-w-5xl mx-auto pt-6 text-left space-y-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-border p-8 space-y-6">
+          {error && (
+            <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-6">
+              {error}
+            </div>
+          )}
 
-        <h2 className="heading">{t('Review Assignment')}</h2>
+          <div>
+            <h1 className="font-heading text-2xl font-bold text-foreground mb-1">{t('Review Assignment')}</h1>
+            <p className="text-sm text-muted-foreground">{t('Review allocations and assign candidates to reviewers.')}</p>
+          </div>
 
-        <div className="tag-filter">
-          <span className="tag-filter-label">{t("Filter by tag")}</span>
-          <span className="tags">
-            {this.state.tags.map(tag => <span key={"tag_" + tag.id} className={"tag badge " + (tag.active ? "badge-success" : "badge-secondary")} onClick={()=> {this.toggleTag(tag)}}>{tag.name}</span>)}
-          </span>
-        </div>
+          <div className="space-y-2">
+            <span className="block text-sm font-semibold text-foreground/90">{t("Filter by tag")}</span>
+            <div className="flex flex-wrap gap-2">
+              {this.state.tags.map(tag => (
+                <span 
+                  key={"tag_" + tag.id} 
+                  className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold cursor-pointer border transition-colors select-none ${tag.active ? "bg-green-50 text-green-700 border-green-200" : "bg-slate-50 text-muted-foreground border-border hover:bg-slate-100"}`} 
+                  onClick={()=> {this.toggleTag(tag)}}
+                >
+                  {tag.name}
+                </span>
+              ))}
+            </div>
+          </div>
 
-        {reviewSummary &&
-         <span className="review-unallocated">{t("Total Unallocated Reviews") + ": " + reviewSummary.reviews_unallocated}</span>
-        }
-       
-        <div className="review-assignment-note">{t("review-assignment-filter-note")}</div>
+          {reviewSummary && (
+            <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 text-sm font-semibold text-primary">
+              {t("Total Unallocated Reviews") + ": " + reviewSummary.reviews_unallocated}
+            </div>
+          )}
+        
+          <div className="text-xs text-muted-foreground leading-relaxed italic bg-slate-50 border border-border/50 p-4 rounded-xl">
+            {t("review-assignment-filter-note")}
+          </div>
 
-        <ReactTable
-          data={filteredReviewers}
-          columns={columns}
-          minRows={0} />
-        <br />
-        <div>
-          <FormTextBox
-            id={"newReviewEmail"}
-            name={'newReviewEmail'}
-            label={t("Add new reviewer's email (they must already have an account)")}
-            placeholder={t("Review email")}
-            onChange={this.handleChange}
-            value={newReviewerEmail}
-            key={"i_newReviewEmail"} />
+          <div className="react-table">
+            <ReactTable
+              data={filteredReviewers}
+              columns={columns}
+              minRows={0}
+              className="ReactTable"
+            />
+          </div>
 
-          <button
-            class="btn btn-primary float-right"
-            onClick={() => { this.assignReviewers(this.state.newReviewerEmail, 0) }}>
-            {t("Add")}
-            </button>
-
+          <div className="pt-6 border-t border-border/50 space-y-4">
+            <h3 className="text-base font-bold text-foreground/90">{t("Add New Reviewer")}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+              <div className="md:col-span-3">
+                <FormTextBox
+                  id={"newReviewEmail"}
+                  name={'newReviewEmail'}
+                  label={t("Add new reviewer's email (they must already have an account)")}
+                  placeholder={t("Review email")}
+                  onChange={this.handleChange}
+                  value={newReviewerEmail}
+                  key={"i_newReviewEmail"}
+                />
+              </div>
+              <div>
+                <button
+                  type="button"
+                  className="w-full inline-flex items-center justify-center px-5 py-3 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm cursor-pointer"
+                  onClick={() => { this.assignReviewers(this.state.newReviewerEmail, 0) }}>
+                  {t("Add")}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <TagSelectorDialog
@@ -491,7 +514,7 @@ class ReviewAssignmentComponent extends Component {
             </p>
         </ConfirmModal>
           
-      </section>
+      </div>
     )
   }
 }

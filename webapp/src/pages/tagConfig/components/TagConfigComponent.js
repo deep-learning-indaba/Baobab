@@ -6,7 +6,7 @@ import FormTextBox from "../../../components/form/FormTextBox";
 import FormTextArea from "../../../components/form/FormTextArea";
 import FormSelect from "../../../components/form/FormSelect";
 import ReactTable from 'react-table';
-import { ConfirmModal } from "react-bootstrap4-modal";
+import { ConfirmModal } from "../../../components/Modal";
 
 //TODO test multilingual language
 
@@ -226,18 +226,20 @@ class TagConfigComponent extends Component {
 
   renderTagEntry = () => {
     const t = this.props.t;
-    return <div className={"form-group margin-top-20px"} key="tag-entry-form">
-      <div className={"form-group row"}>
-        <label
-          className={"col-sm-2 col-form-label"}
-          htmlFor={"tag_type"}>
-          <span className="required-indicator">*</span>
-          {t("Tag Type")}
-        </label>
-        <div className="col-sm-10">
+    return (
+      <div className="space-y-6 p-6 bg-slate-50/50 rounded-xl border border-border mt-6 text-left" key="tag-entry-form">
+        <h3 className="text-lg font-semibold text-foreground/90 pb-2 border-b border-border/50">{t("Tag Details")}</h3>
+        
+        <div className="space-y-2">
+          <label
+            className="block text-sm font-semibold text-foreground/90"
+            htmlFor="tag_type">
+            <span className="text-error mr-1">*</span>
+            {t("Tag Type")}
+          </label>
           <FormSelect
-            id={"tag_type"}
-            name={"tag_type"}
+            id="tag_type"
+            name="tag_type"
             required={true}
             defaultValue={this.state.updatedTag.tag_type || null}
             onChange={this.updateDropDown}
@@ -249,19 +251,16 @@ class TagConfigComponent extends Component {
             }
           />
         </div>
-      </div>
 
-      {this.props.organisation.languages.map((lang) => (
-        <div className={"form-group row"} key={"name_div"+lang.code}>
-          <label
-            className={"col-sm-2 col-form-label"}
-            htmlFor={"name_" + lang.code}>
-            <span className="required-indicator">*</span>
-            {this.state.isMultiLingual ? t(this.getFieldNameWithLanguage("Tag Name", lang.description)) : t("Tag Name")}
-          </label>
-
-          <div className="col-sm-10">
-              <FormTextBox
+        {this.props.organisation.languages.map((lang) => (
+          <div className="space-y-2" key={"name_div"+lang.code}>
+            <label
+              className="block text-sm font-semibold text-foreground/90"
+              htmlFor={"name_" + lang.code}>
+              <span className="text-error mr-1">*</span>
+              {this.state.isMultiLingual ? t(this.getFieldNameWithLanguage("Tag Name", lang.description)) : t("Tag Name")}
+            </label>
+            <FormTextBox
               id={"name_" + lang.code}
               name={"name_" + lang.code}
               type="text"
@@ -269,54 +268,49 @@ class TagConfigComponent extends Component {
               required={true}
               onChange={e => this.updateTextField("name", e, lang.code)}
               value={this.state.updatedTag.name[lang.code] || ""}
-              />
+            />
           </div>
-        </div>
-      ))}
-      {this.props.organisation.languages.map((lang) => (
-        <div className={"form-group row"} key={"description_div"+lang.code}>
-          <label
-            className={"col-sm-2 col-form-label"}
-            htmlFor={"description_" + lang.code}>
-            <span className="required-indicator">*</span>
-            {this.state.isMultiLingual ? t(this.getFieldNameWithLanguage("Tag Description", lang.description)) : t("Tag Description")}
-          </label>
-            
-          <div className="col-sm-10">
-              <FormTextArea
+        ))}
+
+        {this.props.organisation.languages.map((lang) => (
+          <div className="space-y-2" key={"description_div"+lang.code}>
+            <label
+              className="block text-sm font-semibold text-foreground/90"
+              htmlFor={"description_" + lang.code}>
+              <span className="text-error mr-1">*</span>
+              {this.state.isMultiLingual ? t(this.getFieldNameWithLanguage("Tag Description", lang.description)) : t("Tag Description")}
+            </label>
+            <FormTextArea
               id={"description_" + lang.code}
               name={"description_" + lang.code}
-              type="text"
               placeholder={this.state.isMultiLingual ? t(this.getFieldNameWithLanguage("Description of the tag", lang.description)) : t("Description of the tag")}
               required={true}
+              rows={3}
               onChange={e => this.updateTextField("description", e, lang.code)}
               value={this.state.updatedTag.description[lang.code] || ""}
-              />
+            />
+            {this.state.updatedTag.tag_type && this.state.updatedTag.tag_type === "GRANT" && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {t("Note, the grant name and description will be visible to users when asked to accept/reject the grant.")}
+              </p>
+            )}
           </div>
+        ))}
 
-          {this.state.updatedTag.tag_type && this.state.updatedTag.tag_type === "GRANT" &&
-            <div className="required-indicator ml-2">{t("Note, the grant name and description will be visible to users when asked to accept/reject the grant.")}
-            </div>}
-        </div>
-      ))}
-      
-      <div className={"form-group row"} key="save-tag">
-        <div className="col-sm-2 ml-md-auto pr-2 pl-2">
+        <div className="flex flex-col md:flex-row items-center justify-end gap-4 pt-4 border-t border-border/50" key="save-tag">
           <button
             onClick={() => this.setState({ tagEntryVisible: false })}
-            className="btn btn-danger btn-block">
+            className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors bg-error text-error-foreground hover:bg-error/90 shadow-sm w-full md:w-auto">
             {t("Cancel")}
           </button>
-        </div>
-        <div className="col-sm-2 pr-2 pl-2">
           <button
             onClick={() => this.onClickSave()}
-            className="btn btn-primary btn-block">
+            className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm w-full md:w-auto">
             {t("Save Tag")}
-            </button>
+          </button>
         </div>
       </div>
-    </div>;
+    );
   }
 
   setTagEntryVisible = () => {
@@ -336,27 +330,20 @@ class TagConfigComponent extends Component {
       tagEntryVisible
     } = this.state;
 
-    const loadingStyle = {
-      width: "3rem",
-      height: "3rem"
-    };
-
     if (loading) {
       return (
-        <div className="d-flex justify-content-center">
-          <div className="spinner-border"
-            style={loadingStyle}
-            role="status">
-            <span className="sr-only">Loading...</span>
-          </div>
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       );
     }
 
     if (error) {
-      return <div className="alert alert-danger alert-container">
-        {error}
-      </div>;
+      return (
+        <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-6">
+          {error}
+        </div>
+      );
     }
 
     const t = this.props.t;
@@ -364,34 +351,34 @@ class TagConfigComponent extends Component {
 
     const columns = [{
       id: "tag_name",
-      Header: <div className="tag-name">{t("Tag Name")}</div>,
+      Header: <div className="tag-name text-left font-bold">{t("Tag Name")}</div>,
       accessor: u => u.name[current_lang],
       minWidth: 150
   }, {
       id: "tag_description",
-      Header: <div className="tag-description">{t("Tag Description")}</div>,
+      Header: <div className="tag-description text-left font-bold">{t("Tag Description")}</div>,
       accessor: u => u.description[current_lang],
       minWidth: 150
   }, {
       id: "tag_type",
-      Header: <div className="tag-type">{t("Tag Type")}</div>,
+      Header: <div className="tag-type text-left font-bold">{t("Tag Type")}</div>,
       accessor: u => u.tag_type,
       minWidth: 80
   }, {
       id: "actions",
       Header: <div className="actions"/>,
-      Cell: props => <div className="action-buttons">
-        <i className="fa fa-edit" onClick={() => this.onClickEdit(props.original)}></i>
-        <i className="fa fa-trash" onClick={() => this.onClickDelete(props.original)}></i>
+      Cell: props => <div className="action-buttons flex gap-2">
+        <i className="fa fa-edit cursor-pointer hover:text-primary transition-colors text-lg" onClick={() => this.onClickEdit(props.original)}></i>
+        <i className="fa fa-trash cursor-pointer hover:text-error transition-colors text-lg" onClick={() => this.onClickDelete(props.original)}></i>
       </div>,
       minWidth: 50
     }
   ];
 
     return (
-      <div key='card-container'>
-        <p className="h4 text-center mb-4">{t("Tags")}</p>
-        <div className="card" key="tag-table">
+      <div key='card-container' className="w-full max-w-5xl mx-auto pt-6 text-left">
+        <div className="bg-white rounded-2xl shadow-sm border border-border p-8 space-y-6" key="tag-table">
+          <h1 className="font-heading text-2xl font-bold text-foreground mb-6">{t("Tags")}</h1>
           <div className="react-table">
               <ReactTable
                 className="ReactTable"
@@ -401,10 +388,10 @@ class TagConfigComponent extends Component {
               />
             </div>
           {!tagEntryVisible && 
-            <div className={"row-mb-3"}>
+            <div className="flex justify-end pt-4">
               <button
                 onClick={() => this.setTagEntryVisible()}
-                className="btn btn-primary float-right margin-top-10px">
+                className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm">
                 {t("New Tag")}
               </button>
             </div>

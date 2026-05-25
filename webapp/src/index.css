@@ -1,14 +1,74 @@
-body {
-  margin: 0;
-  padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@import "tailwindcss";
+
+/* ══════════════════════════════════════════════════════════
+   BAOBAB DESIGN TOKENS — Tailwind v4 @theme
+   All values map directly from DESIGN.md
+   ══════════════════════════════════════════════════════════ */
+@theme {
+  /* ── Fonts ──────────────────────────────────────────────── */
+  --font-sans:    'Inter', 'Segoe UI', sans-serif;
+  --font-heading: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+  --font-mono:    'Source Code Pro', Menlo, Consolas, monospace;
+
+  /* ── Brand Green ────────────────────────────────────────── */
+  --color-primary:            #0f5238;
+  --color-primary-foreground: #ffffff;
+  --color-primary-container:  #2d6a4f;
+  --color-on-primary-container: #a8e7c5;
+
+  /* ── Secondary Green ────────────────────────────────────── */
+  --color-secondary:           #3f6653;
+  --color-secondary-foreground:#ffffff;
+  --color-secondary-container: #beead1;
+
+  /* ── Electric Blue (actions, focus rings) ───────────────── */
+  --color-action:              #0132c5;
+  --color-action-foreground:   #ffffff;
+  --color-action-container:    #2f4fdd;
+
+  /* ── Surfaces ───────────────────────────────────────────── */
+  --color-surface:             #f8f9fa;
+  --color-surface-low:         #f3f4f5;
+  --color-surface-mid:         #edeeef;
+  --color-surface-high:        #e7e8e9;
+  --color-background:          #f8f9fa;
+  --color-foreground:          #191c1d;
+  --color-muted:               #edeeef;
+  --color-muted-foreground:    #707973;
+
+  /* ── Borders ────────────────────────────────────────────── */
+  --color-border:              #bfc9c1;
+  --color-ring:                #0132c5;
+
+  /* ── Semantic ───────────────────────────────────────────── */
+  --color-error:               #ba1a1a;
+  --color-error-foreground:    #ffffff;
+  --color-error-container:     #ffdad6;
+  --color-on-error-container:  #93000a;
+  --color-warning:             #b45309;
+  --color-warning-bg:          #fef3c7;
+
+  /* ── Radius ─────────────────────────────────────────────── */
+  --radius-none: 0;
+  --radius-sm:   0.25rem;
+  --radius-md:   0.5rem;
+  --radius-DEFAULT: 0.5rem;
+  --radius-lg:   1rem;
+  --radius-xl:   1.5rem;
+  --radius-2xl:  2rem;
+  --radius-full: 9999px;
+
+  /* ── Shadows ────────────────────────────────────────────── */
+  --shadow-card:     0 4px 20px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-elevated: 0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+  --shadow-sm:       0 1px 2px rgba(0,0,0,0.04);
+
+  /* ── Spacing extras ─────────────────────────────────────── */
+  --spacing-18: 4.5rem;
+  --spacing-22: 5.5rem;
 }
 
+/* ── Base ──────────────────────────────────────────────────── */
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
-    monospace;
+  font-family: var(--font-mono);
 }

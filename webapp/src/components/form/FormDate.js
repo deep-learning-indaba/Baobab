@@ -3,7 +3,7 @@ import DateTimePicker from 'react-datetime-picker'
 import FormGroup from "./FormGroup";
 import FormToolTip from "./FormToolTip";
 import "./Style.css";
-import * as moment from 'moment';
+import moment from 'moment';
 import MarkdownRenderer from "../MarkdownRenderer";
 
 class FormDate extends React.Component {
@@ -12,7 +12,7 @@ class FormDate extends React.Component {
 
   };
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     if (nextProps.showFocus) {
       this.dateInput.focus();
     }

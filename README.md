@@ -42,12 +42,12 @@ Tasks are managed via the [Issues](https://github.com/deep-learning-indaba/Baoba
 **Frontend**
 * **Language**: [Javascript](https://developer.mozilla.org/bm/docs/Web/JavaScript)
 * **Components**: [ReactJS](https://reactjs.org/)
-* **CSS**: [Bootstrap 4](https://getbootstrap.com/)
+* **CSS**: [Tailwind CSS](https://tailwindcss.com/)
 
 **Continuous Integration**
 We are using [CircleCI](https://circleci.com/gh/deep-learning-indaba/Baobab) to build, test and deploy the project. 
 
-You don't need to be familar with all of these technologies to work on the project. We've tried to make the application decoupled, especially the front-end and back-end. If you want to work on a front-end task, you need to know a little Javascript, ReactJS and Bootstrap, but don't need to know anything about Flask/SQLAlchemy etc!  
+You don't need to be familar with all of these technologies to work on the project. We've tried to make the application decoupled, especially the front-end and back-end. If you want to work on a front-end task, you need to know a little Javascript, ReactJS and Tailwind CSS, but don't need to know anything about Flask/SQLAlchemy etc!  
 
 ## Running with Docker
 We are using Docker which means you don't need to install any of the dependencies on your local machine (except for docker itself). If you are already familiar with Docker and the technologies listed above, you can clone the repository to you local machine and bring up the database, back-end and front-end together with:

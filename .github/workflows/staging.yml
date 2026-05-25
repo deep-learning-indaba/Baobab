@@ -231,21 +231,23 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version-file: webapp/.nvmrc
-          cache: yarn
-          cache-dependency-path: webapp/yarn.lock
+          cache: pnpm
+          cache-dependency-path: webapp/pnpm-lock.yaml
 
       - name: Install frontend dependencies
-        run: yarn install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Build staging frontend
-        run: yarn build-test
-        env:
-          CI: true
-          GENERATE_SOURCEMAP: false
+        run: pnpm build-test
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2

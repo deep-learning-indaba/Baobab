@@ -91,47 +91,51 @@ class ConfirmPasswordResetForm extends Component {
     const t = this.props.t;
 
     return (
-      <div className="ResetPassword">
-        {error &&
-          <div className={"alert alert-danger alert-container"}>
-            {error}
-          </div>}
+      <div className="flex flex-col items-center justify-center min-h-[75vh] py-12 px-4 sm:px-6 lg:px-8 text-left">
+        <form onSubmit={this.handleSubmit} className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-border p-8 space-y-6">
+          <div className="text-center space-y-2">
+            <h3 className="font-heading text-xl font-bold tracking-tight text-foreground">{t("Reset Password")}</h3>
+            <p className="text-sm text-muted-foreground">
+              {t("Please enter and confirm your new password below.")}
+            </p>
+          </div>
 
-        <form onSubmit={this.handleSubmit}>
-          <p className="h5 text-center mb-4">{t("Reset Password")}</p>
+          <div className="space-y-4">
+            <FormTextBox
+              id={validationFields.password.name}
+              type="password"
+              placeholder={t(validationFields.password.display)}
+              onChange={this.handleChange(validationFields.password)}
+              value={password}
+              label={t(validationFields.password.display)}
+            />
 
-          <div className="col">
-            <div>
-              <FormTextBox
-                id={validationFields.password.name}
-                type="password"
-                placeholder={t(validationFields.password.display)}
-                onChange={this.handleChange(validationFields.password)}
-                value={password}
-                label={t(validationFields.password.display)} />
-            </div>
+            <FormTextBox
+              id={validationFields.confirmPassword.name}
+              type="password"
+              placeholder={t(validationFields.confirmPassword.display)}
+              onChange={this.handleChange(validationFields.confirmPassword)}
+              value={confirmPassword}
+              label={t(validationFields.confirmPassword.display)}
+            />
 
-            <div>
-              <FormTextBox
-                id={validationFields.confirmPassword.name}
-                type="password"
-                placeholder={t(validationFields.confirmPassword.display)}
-                onChange={this.handleChange(validationFields.confirmPassword)}
-                value={confirmPassword}
-                label={t(validationFields.confirmPassword.display)} />
-            </div>
-
-            <div>
+            <div className="pt-2">
               <button
                 type="submit"
-                className="btn btn-primary"
+                className="w-full inline-flex items-center justify-center px-5 py-3 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm disabled:opacity-50 cursor-pointer"
                 disabled={!this.validateForm() || loading}>
-                {loading && <span className="spinner-grow spinner-grow-sm"
-                  role="status"
-                  aria-hidden="true"></span>}
+                {loading && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-1.5"></div>
+                )}
                 {t("Submit")}
               </button>
             </div>
+
+            {error && (
+              <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-4">
+                {error}
+              </div>
+            )}
           </div>
         </form>
       </div>

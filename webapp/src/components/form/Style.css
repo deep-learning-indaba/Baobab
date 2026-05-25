@@ -1,66 +1,116 @@
+/* ── Form Components ─────────────────────────────────────── */
+
+/* Horizontal row layout */
 .rowC {
   display: flex;
   flex-direction: row;
+  gap: 0.5rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
 }
 
+/* Tooltip icon */
 .fa-question-circle {
-  padding-left: 15px;
+  padding-left: 0.5rem;
+  color: var(--clr-outline);
+  cursor: pointer;
+  transition: color var(--transition);
 }
 
-.react-datetime-picker.error {
-  border-radius: 5px;
-  border: 1px solid red !important;
+.fa-question-circle:hover {
+  color: var(--clr-primary);
 }
 
+/* ── Date picker ─────────────────────────── */
+.react-datetime-picker {
+  width: 100%;
+}
+
+.react-datetime-picker__wrapper {
+  border: 1px solid var(--clr-outline-variant) !important;
+  border-radius: var(--r-lg) !important;
+  padding: 0.4375rem 0.875rem !important;
+  background: var(--clr-white) !important;
+  font-family: var(--font-body) !important;
+  transition: border-color var(--transition), box-shadow var(--transition) !important;
+}
+
+.react-datetime-picker__wrapper:focus-within {
+  border-color: var(--clr-action) !important;
+  box-shadow: 0 0 0 3px var(--clr-action-glow) !important;
+}
+
+.react-datetime-picker.error .react-datetime-picker__wrapper {
+  border-color: var(--clr-error) !important;
+}
+
+/* ── File upload button ──────────────────── */
 .add-file-btn {
-  padding: 3px 10px;
-  margin-top: 8px;
-  width: 99px;
-  border: 1px solid lightgrey;
-  background: hsl(214deg 32% 18%);
-  color: white;
-  font-size: 1rem;
-  border-radius: 5px;
+  padding: 0.375rem 0.875rem;
+  margin-top: 0.5rem;
+  width: auto;
+  border: 1px solid transparent;
+  background: var(--clr-primary);
+  color: var(--clr-on-primary);
+  font-size: 0.8375rem;
+  font-family: var(--font-body);
+  font-weight: 600;
+  border-radius: var(--r-lg);
+  cursor: pointer;
+  transition: background var(--transition), box-shadow var(--transition);
 }
 
+.add-file-btn:hover {
+  background: var(--clr-primary-container);
+  box-shadow: 0 2px 8px rgba(15, 82, 56, 0.25);
+}
 
-/* MultiFileComponent */
+/* ── MultiFileComponent ──────────────────── */
 
 .upload-item-wrapper {
-  margin-bottom: 18px;
+  margin-bottom: 1.125rem;
 }
 
+.upload-item-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Error text */
 .errorText {
   display: none;
-  color: red;
+  color: var(--clr-error);
+  font-size: 0.8rem;
+  margin-top: 0.2rem;
 }
 
 .errorText.display {
   display: block;
 }
 
-.upload-item-container {
-  display: flex;
-  flex-direction: column;
-}
-
-.file-name.enter .input-field {
-  border: 1px solid hsl(169deg 37% 57%);
-  }
-
+/* Inline filename field */
 .input-field {
-  width: 40%;
-  padding: 3px 5px;
-  border: 1px solid lightgrey;
+  width: 45%;
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--clr-outline-variant);
+  border-radius: var(--r-md);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--clr-on-surface);
+  background: var(--clr-white);
   outline: none;
-  border-radius: 5px;
+  transition: border-color var(--transition), box-shadow var(--transition);
   margin-bottom: 0;
 }
 
+.input-field:focus {
+  border-color: var(--clr-action);
+  box-shadow: 0 0 0 3px var(--clr-action-glow);
+}
 
-.upload-item-container input#file-upload-button {
-  background: hsl(211deg 100% 50%);
-  color: white;
+.file-name.enter .input-field {
+  border-color: var(--clr-secondary);
 }
 
 .input-field.lock {
@@ -69,89 +119,117 @@
 }
 
 .input-field.alert {
-  border: 1px solid red;
+  border-color: var(--clr-error);
 }
 
-
-
+/* Filename + controls row */
 .file-name {
   display: flex;
-  margin-bottom: 10px;
-  height: 35px;
+  margin-bottom: 0.5rem;
   align-items: center;
+  gap: 0.5rem;
+  min-height: 2.125rem;
 }
 
+/* Save filename button */
 .btn-submit {
   display: none;
-  height: 29px;
-  margin: 0 10px;
+  height: 2rem;
+  padding: 0 0.75rem;
   border: none;
-  color: white;
-  background: hsl(205deg 34% 28%);
-  border-radius: 5px;
-  transition: 1000ms;
+  color: var(--clr-on-primary);
+  background: var(--clr-primary);
+  border-radius: var(--r-md);
+  font-size: 0.8125rem;
+  font-family: var(--font-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition);
 }
 
 .btn-submit.show {
-  display: block;
+  display: inline-block;
 }
 
-.edit img {
-  width: 33px;
+.btn-submit:hover {
+  background: var(--clr-primary-container);
 }
 
+/* Edit icon */
 .edit {
   display: none;
-  margin: 0 10px;
+  margin: 0 0.375rem;
+  cursor: pointer;
+  align-items: center;
 }
 
 .edit.show {
-  display: block;
+  display: inline-flex;
 }
 
+.edit img {
+  width: 28px;
+  height: 28px;
+}
+
+/* File input wrapper */
 .file-input-wrapper {
   display: flex;
+  align-items: center;
+  gap: 0.5rem;
   opacity: 1;
   pointer-events: all;
+  transition: opacity var(--transition);
 }
 
 .file-input-wrapper.lock {
-  opacity: 0.5;
+  opacity: 0.4;
   pointer-events: none;
 }
 
+/* Delete icon */
 .bin {
-  margin: 0 10px;
   display: none;
+  margin: 0 0.375rem;
+  cursor: pointer;
+  color: var(--clr-error);
 }
 
-.bin.show{
-display: block;
+.bin.show {
+  display: inline-block;
 }
 
+/* Native file input */
 .file-input {
-  width: 30%;
+  font-size: 0.875rem;
+  font-family: var(--font-body);
 }
 
 .file-input.error {
-  width: 31%;
-  color: red;
+  color: var(--clr-error);
 }
 
+/* Uploaded file display */
 .file-uploaded {
-display: flex;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.875rem;
 }
 
 .file-uploaded img {
-  width: 20px;
-  height: 20px;
-  margin: 0 5px;
-  }
+  width: 18px;
+  height: 18px;
+}
 
-  .view {
-    margin: 0 10px;
-  }
+.view {
+  margin: 0 0.375rem;
+}
 
+/* Multi-checkbox list */
 .multi-checkbox-list {
-  margin-top: 1em;
+  margin-top: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
 }

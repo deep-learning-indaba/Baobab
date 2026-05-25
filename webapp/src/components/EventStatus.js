@@ -295,7 +295,7 @@ class EventStatus extends Component {
         this.props.t("will open on") +
         ` ${event.application_open_date}. ` +
         this.props.t("Please check back later to apply"),
-      shortText: this.props.t(`Applications will be opened on ${event.application_open_date}`),
+      shortText: this.props.t('Applications will be opened on {{date}}', { date: event.application_open_date }),
     };
   };
 
@@ -434,19 +434,25 @@ class EventStatus extends Component {
   };
 
   renderButton = (definition) => {
+    // If it's a longForm button, we might want to use modern button variants
+    const btnClasses = this.props.longForm 
+      ? "inline-flex items-center justify-center gap-2 whitespace-nowrap font-sans font-semibold text-sm leading-none rounded-lg transition-all duration-150 cursor-pointer px-5 py-2.5 bg-primary text-primary-foreground hover:bg-primary-container shadow-sm"
+      : "btn " + definition.linkClass;
+
+    const subBtnClasses = this.props.longForm 
+      ? "inline-flex items-center justify-center gap-2 whitespace-nowrap font-sans font-semibold text-sm leading-none rounded-lg transition-all duration-150 cursor-pointer px-5 py-2.5 bg-surface-high text-foreground hover:bg-surface-high/80 border border-border"
+      : "btn " + definition.submissionLinkClass;
+
     if (definition.link && this.props.submissionLink) {
       return (
-        <div className="inline-btn-container">
-          <div className="inline-btn-container">
-            <a
-              href={definition.submissionLink}
-              className={"btn " + definition.submissionLinkClass}
-            >
+        <div className={this.props.longForm ? "flex flex-wrap gap-3 mt-4" : "inline-btn-container"}>
+          <div className={this.props.longForm ? "" : "inline-btn-container"}>
+            <a href={definition.submissionLink} className={subBtnClasses}>
               {definition.submissionShortText}
             </a>
           </div>
-          <div className="inline-btn-container">
-            <a href={definition.link} className={"btn " + definition.linkClass}>
+          <div className={this.props.longForm ? "" : "inline-btn-container"}>
+            <a href={definition.link} className={btnClasses}>
               {definition.shortText}
             </a>
           </div>
@@ -454,23 +460,29 @@ class EventStatus extends Component {
       );
     } else {
       return (
-        <a href={definition.link} className={"btn " + definition.linkClass}>
-          {definition.shortText}
-        </a>
+        <div className={this.props.longForm ? "mt-4" : ""}>
+          <a href={definition.link} className={btnClasses}>
+            {definition.shortText}
+          </a>
+        </div>
       );
     }
   };
+
   render() {
     const definition = this.mapStatus(this.props.event);
     if (this.props.longForm) {
+      // Map legacy bootstrap text classes to modern tailwind colors
+      const titleColorClass = definition.titleClass?.includes('text-success') ? 'text-green-700' :
+                              definition.titleClass?.includes('text-danger') ? 'text-error' :
+                              definition.titleClass?.includes('text-warning') ? 'text-warning' :
+                              'text-primary';
+      
       return (
-        <div>
-          <h3 className={definition.titleClass}>{definition.title}</h3>
-          <p>{definition.longText}</p>
-          <br />
-          {definition.shortText &&
-            definition.link &&
-            this.renderButton(definition)}
+        <div className="space-y-3">
+          <h3 className={`text-xl font-bold ${titleColorClass}`}>{definition.title}</h3>
+          <p className="text-base text-foreground/80 leading-relaxed max-w-2xl">{definition.longText}</p>
+          {definition.shortText && definition.link && this.renderButton(definition)}
         </div>
       );
     } else {

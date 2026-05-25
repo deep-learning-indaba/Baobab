@@ -1,14 +1,12 @@
-# If you change node version here, also change it in ./circleci/config.yml .
-FROM node:13
+FROM node:22-alpine
 
-ADD yarn.lock /yarn.lock
-ADD package.json /package.json
-
-ENV NODE_PATH=/node_modules
-ENV PATH=$PATH:/node_modules/.bin
-RUN yarn
+RUN npm install -g pnpm@10
 
 WORKDIR /webapp
-ADD . /webapp
+COPY pnpm-lock.yaml package.json ./
+RUN pnpm install --frozen-lockfile
+
+COPY . .
 
 EXPOSE 3000
+CMD ["pnpm", "start"]

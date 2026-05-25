@@ -59,35 +59,35 @@ class FormConfigPage extends Component {
 
         if (isLoading) {
             return (
-                <div className="d-flex justify-content-center mt-5">
-                    <div className="spinner-border" role="status">
-                        <span className="sr-only">{t('Loading')}</span>
-                    </div>
+                <div className="flex justify-center items-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
             );
         }
 
         if (error) {
             return (
-                <div className="alert alert-danger mt-3">
+                <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-6">
                     {error}
                 </div>
             );
         }
 
         return (
-            <div className="container-fluid mt-4">
-                <h2>{t('Form Configuration')}</h2>
-                <p className="text-muted">
-                    {t('Manage which form system is used for each form type for this event.')}
-                </p>
+            <div className="w-full max-w-5xl mx-auto pt-6 text-left space-y-6">
+                <div>
+                    <h1 className="font-heading text-2xl font-bold text-foreground mb-1">{t('Form Configuration')}</h1>
+                    <p className="text-sm text-muted-foreground">
+                        {t('Manage which form system is used for each form type for this event.')}
+                    </p>
+                </div>
 
                 {createError && (
-                    <div className="alert alert-danger alert-dismissible fade show" role="alert">
-                        {createError}
+                    <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm flex justify-between items-center w-full" role="alert">
+                        <span>{createError}</span>
                         <button
                             type="button"
-                            className="close"
+                            className="text-error hover:text-error/80 transition-colors text-lg font-bold"
                             onClick={function() { this.setState({ createError: null }); }.bind(this)}
                             aria-label={t('Close')}
                         >
@@ -96,90 +96,76 @@ class FormConfigPage extends Component {
                     </div>
                 )}
 
-                <div className="row">
-                    <div className="col-md-4">
-                        <FormTypeCard
-                            title={t('Application Form')}
-                            formTypeData={config && config.application}
-                            eventKey={eventKey}
-                            onCreateNew={function() { this.handleCreateTypedForm('application'); }.bind(this)}
-                            isCreating={creatingType === 'application'}
-                        />
-                    </div>
-                    <div className="col-md-4">
-                        <FormTypeCard
-                            title={t('Review Form')}
-                            formTypeData={config && config.review}
-                            eventKey={eventKey}
-                            onCreateNew={function() { this.handleCreateTypedForm('review', 1); }.bind(this)}
-                            isCreating={creatingType === 'review'}
-                        />
-                    </div>
-                    <div className="col-md-4">
-                        <FormTypeCard
-                            title={t('Registration Form')}
-                            formTypeData={config && config.registration}
-                            eventKey={eventKey}
-                            onCreateNew={function() { this.handleCreateTypedForm('registration'); }.bind(this)}
-                            isCreating={creatingType === 'registration'}
-                        />
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <FormTypeCard
+                        title={t('Application Form')}
+                        formTypeData={config && config.application}
+                        eventKey={eventKey}
+                        onCreateNew={function() { this.handleCreateTypedForm('application'); }.bind(this)}
+                        isCreating={creatingType === 'application'}
+                    />
+                    <FormTypeCard
+                        title={t('Review Form')}
+                        formTypeData={config && config.review}
+                        eventKey={eventKey}
+                        onCreateNew={function() { this.handleCreateTypedForm('review', 1); }.bind(this)}
+                        isCreating={creatingType === 'review'}
+                    />
+                    <FormTypeCard
+                        title={t('Registration Form')}
+                        formTypeData={config && config.registration}
+                        eventKey={eventKey}
+                        onCreateNew={function() { this.handleCreateTypedForm('registration'); }.bind(this)}
+                        isCreating={creatingType === 'registration'}
+                    />
                 </div>
 
                 {config && config.review && config.review.system === 'new' && (
-                    <div className="row">
-                        <div className="col-12">
-                            <div className="card mb-3">
-                                <div className="card-header">
-                                    <h5 className="mb-0">{t('Review Stages')}</h5>
-                                </div>
-                                <div className="card-body">
-                                    <div className="table-responsive">
-                                        <table className="table table-sm">
-                                            <thead>
-                                                <tr>
-                                                    <th>{t('Stage')}</th>
-                                                    <th>{t('Form Name')}</th>
-                                                    <th>{t('Required Reviews')}</th>
-                                                    <th>{t('Completed')}</th>
-                                                    <th>{t('Actions')}</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {config.review.stages.map(function(stage) {
-                                                    return (
-                                                        <tr key={stage.stage}>
-                                                            <td>{stage.stage}</td>
-                                                            <td>{stage.form_name || t('Untitled')}</td>
-                                                            <td>{stage.num_reviews_required}</td>
-                                                            <td>{stage.completed_count} / {stage.total_count}</td>
-                                                            <td>
-                                                                <a
-                                                                    href={"/" + eventKey + "/forms/" + stage.form_id + "/edit"}
-                                                                    className="btn btn-sm btn-outline-primary"
-                                                                >
-                                                                    {t('Edit')}
-                                                                </a>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
+                    <div className="bg-white rounded-2xl shadow-sm border border-border p-6 space-y-4">
+                        <div className="border-b border-border/50 pb-4">
+                            <h2 className="text-lg font-semibold text-foreground/90">{t('Review Stages')}</h2>
+                        </div>
+                        <div className="overflow-x-auto rounded-xl border border-border">
+                            <table className="min-w-full divide-y divide-border">
+                                <thead className="bg-slate-50">
+                                    <tr>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('Stage')}</th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('Form Name')}</th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('Required Reviews')}</th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('Completed')}</th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('Actions')}</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-border">
+                                    {config.review.stages.map(function(stage) {
+                                        return (
+                                            <tr key={stage.stage} className="hover:bg-slate-50/50 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{stage.stage}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground font-medium">{stage.form_name || t('Untitled')}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{stage.num_reviews_required}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{stage.completed_count} / {stage.total_count}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                                                    <a
+                                                        href={"/" + eventKey + "/forms/" + stage.form_id + "/edit"}
+                                                        className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold border border-primary text-primary hover:bg-primary/10 transition-colors"
+                                                    >
+                                                        {t('Edit')}
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 )}
 
-                <div className="row">
-                    <div className="col-12">
-                        <GenericFormsList
-                            forms={config && config.generic_forms}
-                            eventKey={eventKey}
-                        />
-                    </div>
+                <div>
+                    <GenericFormsList
+                        forms={config && config.generic_forms}
+                        eventKey={eventKey}
+                    />
                 </div>
             </div>
         );

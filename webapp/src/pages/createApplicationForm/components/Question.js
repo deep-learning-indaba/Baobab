@@ -1,4 +1,4 @@
-import React, { useState, forwardRef, useEffect, useMemo } from 'react';
+import React, { useState, forwardRef, useEffect, useMemo, useRef } from 'react';
 import { default as ReactSelect } from "react-select";
 import {
   option, Modal, handleMove, Dependency, dependencyChange,
@@ -16,6 +16,18 @@ const Question = forwardRef(({
   const [isModelVisible, setIsModelVisible] = useState(false);
   const [isValidateOn, setIsvalidateOn] = useState(false);
   const [isKeyOn, setIsKeyOn] = useState(false);
+  const [questionMenuOpen, setQuestionMenuOpen] = useState(false);
+  const questionMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (questionMenuRef.current && !questionMenuRef.current.contains(e.target)) {
+        setQuestionMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   const [errorMessage, setErrorMessage] = useState('');
   const [emptyOptions, setEmptyOptions] = useState(false);
   const opts = inputs.options && inputs.options[lang];
@@ -1103,19 +1115,20 @@ const Question = forwardRef(({
               )}
             </div>
           </div>
+          <div ref={questionMenuRef} className="section-menu-wrapper">
           <div
             id="toggleTitle"
             className="title-desc-toggle toggle-questions"
             role="button"
-            data-toggle="dropdown"
+            onClick={() => setQuestionMenuOpen(o => !o)}
             aria-haspopup="true"
-            aria-expanded="false"
+            aria-expanded={questionMenuOpen}
           >
             <i
               className='fa fa-ellipsis-v fa-lg fa-dropdown fa-question-toogle'
               ></i>
           </div>
-          <div className="dropdown-menu" aria-labelledby="toggleTitle">
+          {questionMenuOpen && <div className="dropdown-menu show" aria-labelledby="toggleTitle">
             <button
               className="dropdown-item delete-section"
               onClick={handleValidation}
@@ -1141,6 +1154,7 @@ const Question = forwardRef(({
                   {t("Key")}
               </button>
             )}
+          </div>}
           </div>
         </div>
         {isModelVisible && (

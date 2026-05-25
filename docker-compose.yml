@@ -44,15 +44,14 @@ services:
 
   webapp:
     build: ./webapp
-    command: yarn start
+    command: pnpm start
     volumes:
-      - ./webapp:/usr/src/app
       - ./webapp:/webapp
+      - /webapp/node_modules
     ports:
       - "8080:3000"
     environment:
       - NODE_ENV=development
-      - CHOKIDAR_USEPOLLING=true
     links:
       - web
 
@@ -60,19 +59,18 @@ services:
     build:
       context: ./webapp
       dockerfile: Dockerfile-test
-    command: yarn test-ci
+    command: pnpm test-ci
 
   webappintegration:
     build: ./webapp
-    command: yarn start-integration
+    command: pnpm start-integration
     volumes:
-      - ./webapp:/usr/src/app
       - ./webapp:/webapp
+      - /webapp/node_modules
     ports:
       - "8081:3000"
     environment:
       - NODE_ENV=development
-      - CHOKIDAR_USEPOLLING=true
 
   cypress:
     ipc: host

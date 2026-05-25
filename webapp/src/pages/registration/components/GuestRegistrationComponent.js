@@ -13,7 +13,6 @@ import FormMultiCheckboxOther from "../../../components/form/FormMultiCheckboxOt
 import FormDate from '../../../components/form/FormDate';
 import { registrationService } from "../../../services/registration";
 import FileUploadComponent from "../../../components/FileUpload";
-import Loading from "../../../components/Loading";
 import _ from "lodash";
 
 const SHORT_TEXT = "short-text";
@@ -419,29 +418,31 @@ class GuestRegistrationComponent extends Component {
 
     if (isLoading) {
       return (
-        <Loading />
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
       );
     }
 
     if (error) {
-      return <div className={"alert alert-danger alert-container"}>
+      return <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-6">
         {error}
       </div>;
     }
 
     return (
-      <div className="registration container-fluid pad-top-30-md">
+      <div className="w-full max-w-5xl mx-auto space-y-6 pt-6">
         {this.state.formSuccess ? (
           <div>
-            <div className="card flat-card success stretched">
-              <h5>Successfully Registered</h5>
+            <div className="bg-green-50 text-green-800 border border-green-200 p-6 rounded-2xl shadow-sm space-y-4">
+              <h5 className="text-xl font-bold font-heading">Successfully Registered</h5>
               <p>We look forward to welcoming you at {this.props.event.name}!</p>
             </div>
             <br/><br/>
             <div className="col-12">
               <button
                 type="button"
-                class="btn btn-primary"
+                className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
                 onClick={() => this.resetPage()}>
                 Edit Answers
               </button>
@@ -449,19 +450,19 @@ class GuestRegistrationComponent extends Component {
           </div>
         ) : (
             <div
-              className={this.state.formSuccess ? "display-none" : "stretched"}>
-              <h2>Registration</h2>
+              className={this.state.formSuccess ? "hidden" : "w-full"}>
+              <h2 className="font-heading text-2xl font-bold text-foreground mb-6">Registration</h2>
             </div>
           )}
 
         {this.state.formFailure && (
-          <div className="alert alert-danger stretched alert-container">
+          <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-6">
             <div>{this.state.error}, please try again</div>
           </div>
         )}
 
         {this.state.registrationId && !this.state.formSuccess && (
-          <div class="alert alert-success alert-container">
+          <div className="bg-green-50 text-green-700 border border-green-200 p-4 rounded-xl text-sm mb-6 mt-4 text-center">
             You have already registered, but feel free to update your answers
             below if they've changed!
           </div>
@@ -469,14 +470,15 @@ class GuestRegistrationComponent extends Component {
 
         {this.state.questionSections.length > 0 &&
           !this.state.formSuccess ? (
-            <div>
+            <div className="space-y-6">
               {this.state.questionSections.map(section => (
-                <div class="card stretched" key={"section_" + section.id}>
-                  <h3>{section.name}</h3>
-                  <div className="padding-v-15 mb-4 text-left">
+                <div className="bg-white rounded-2xl shadow-sm border border-border p-6 space-y-6" key={"section_" + section.id}>
+                  <h3 className="text-xl font-bold font-heading text-foreground">{section.name}</h3>
+                  <div className="text-muted-foreground text-sm leading-relaxed registration-section-description">
                     <MarkdownRenderer children={section.description}/>
                   </div>
 
+                  <div className="border-t border-border/50 pt-6 space-y-8">
                   {section.registration_questions
                     .sort((a, b) => a.order - b.order)
                     .filter(question => {
@@ -490,9 +492,9 @@ class GuestRegistrationComponent extends Component {
                     .map(question => {
                       return (
                         <div
-                          className="registration-question"
+                          className="registration-question space-y-3"
                           key={"question_" + question.id}>
-                          <h5 className="form-label">{question.is_required && <span className="required-indicator">*</span>} 
+                          <h5 className="font-semibold text-foreground text-sm">{question.is_required && <span className="text-error mr-1">*</span>} 
                           {question.headline}</h5>
                           {this.formControl(
                             question.id,
@@ -509,33 +511,34 @@ class GuestRegistrationComponent extends Component {
                         </div>
                       );
                     })}
+                  </div>
                 </div>
               ))}
 
-              <button
-                type="submit"
-                class="btn btn-primary margin-top-32"
-                onClick={this.buttonSubmit}>
-                {isSubmitting && (
-                  <span
-                    class="spinner-grow spinner-grow-sm"
-                    role="status"
-                    aria-hidden="true" />
-                )}
-                Submit reponse
-            </button>
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-8 pt-4 border-t border-border/50">
+                {hasValidated && !validationStale && !isValid ? (
+                  <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full md:w-auto flex-1">
+                    There are one or more validation errors, please correct before submitting.
+                  </div>
+                ) : <div className="flex-1"></div>}
 
-              {hasValidated && !validationStale && !isValid && (
-                <div class="alert alert-danger alert-container">
-                  There are one or more validation errors, please correct before submitting.
-                </div>
-              )}
+                <button
+                  type="submit"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm disabled:opacity-50"
+                  disabled={isSubmitting}
+                  onClick={this.buttonSubmit}>
+                  {isSubmitting && (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  )}
+                  Submit response
+                </button>
+              </div>
             </div>
           ) : (
             <div>
               {this.state.formSuccess !== true &&
                 this.state.formFailure !== true && (
-                  <div className="alert alert-danger alert-container">
+                  <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-6">
                     Registration not available
                   </div>
                 )}

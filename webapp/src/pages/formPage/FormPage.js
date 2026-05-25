@@ -4,7 +4,6 @@ import FormRenderer from '../formRenderer/FormRenderer';
 import { formServices } from '../../services/form';
 import { formResponseService } from '../../services/formResponse';
 import history from '../../History';
-import './FormPage.css';
 
 /**
  * FormPage - Main page for responding to forms
@@ -211,17 +210,19 @@ const FormPage = (props) => {
   // Render response list (for multiple responses mode)
   const renderResponseList = () => {
     return (
-      <div className="form-page-responses">
-        <div className="responses-header">
-          <h1>{form.name && form.name[i18n.language] ? form.name[i18n.language] : t('Form Responses')}</h1>
-          <p className="responses-subtitle">
+      <div className="w-full max-w-4xl mx-auto space-y-6">
+        <div className="text-center mb-8">
+          <h1 className="font-heading text-2xl font-bold text-foreground mb-2">
+            {form.name && form.name[i18n.language] ? form.name[i18n.language] : t('Form Responses')}
+          </h1>
+          <p className="text-muted-foreground text-sm">
             {t('You have {{count}} response(s) for this form', { count: responses.length })}
           </p>
         </div>
 
-        <div className="responses-actions">
+        <div className="flex justify-center mb-8">
           <button
-            className="btn btn-primary"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
             onClick={handleCreateNewResponse}
           >
             <i className="fas fa-plus"></i>
@@ -229,7 +230,7 @@ const FormPage = (props) => {
           </button>
         </div>
 
-        <div className="responses-list">
+        <div className="space-y-4">
           {responses.map(response => {
             const startedDate = new Date(response.started_timestamp);
             const submittedDate = response.submitted_timestamp 
@@ -238,51 +239,55 @@ const FormPage = (props) => {
             const isWithdrawn = response.is_withdrawn;
 
             return (
-              <div key={response.id} className={`response-card ${response.is_submitted ? 'submitted' : 'draft'}`}>
-                <div className="response-header">
-                  <div className="response-status">
+              <div 
+                key={response.id} 
+                className={`bg-white rounded-2xl shadow-sm border p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-all hover:shadow-md ${
+                  response.is_submitted ? 'border-green-200 bg-green-50/20' : 'border-amber-200 bg-amber-50/20'
+                }`}
+              >
+                <div className="space-y-3 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {response.is_submitted ? (
-                      <>
-                        <i className="fas fa-check-circle text-success"></i>
-                        <span className="status-text">{t('Submitted')}</span>
-                      </>
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                        <i className="fas fa-check-circle text-xs"></i>
+                        {t('Submitted')}
+                      </span>
                     ) : (
-                      <>
-                        <i className="fas fa-edit text-warning"></i>
-                        <span className="status-text">{t('Draft')}</span>
-                      </>
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                        <i className="fas fa-edit text-xs"></i>
+                        {t('Draft')}
+                      </span>
                     )}
                     {isWithdrawn && (
-                      <>
-                        <i className="fas fa-ban text-danger"></i>
-                        <span className="status-text">{t('Withdrawn')}</span>
-                      </>
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                        <i className="fas fa-ban text-xs"></i>
+                        {t('Withdrawn')}
+                      </span>
                     )}
                   </div>
-                  <div className="response-meta">
-                    <div className="meta-item">
+                  
+                  <div className="flex gap-4 text-xs text-muted-foreground flex-wrap">
+                    <span className="flex items-center gap-1.5">
                       <i className="far fa-clock"></i>
                       {t('Started')}: {startedDate.toLocaleDateString()}
-                    </div>
+                    </span>
                     {submittedDate && (
-                      <div className="meta-item">
+                      <span className="flex items-center gap-1.5">
                         <i className="far fa-calendar-check"></i>
                         {t('Submitted')}: {submittedDate.toLocaleDateString()}
-                      </div>
+                      </span>
                     )}
                   </div>
-                </div>
 
-                <div className="response-body">
-                  <p className="response-info">
+                  <p className="text-sm text-foreground/80">
                     {t('{{count}} answer(s) provided', { count: response.answers ? response.answers.length : 0 })}
                   </p>
                 </div>
 
-                <div className="response-actions">
+                <div className="flex gap-2 w-full md:w-auto">
                   {!response.is_submitted && !isWithdrawn && (
                     <button
-                      className="btn btn-outline-primary btn-sm"
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm w-full md:w-auto"
                       onClick={() => handleEditResponse(response)}
                     >
                       <i className="fas fa-edit"></i>
@@ -291,7 +296,7 @@ const FormPage = (props) => {
                   )}
                   {response.is_submitted && !isWithdrawn && (
                     <button
-                      className="btn btn-outline-secondary btn-sm"
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-colors bg-surface-high text-foreground hover:bg-surface-high/80 border border-border w-full md:w-auto"
                       onClick={() => handleEditResponse(response)}
                       disabled
                     >
@@ -311,16 +316,16 @@ const FormPage = (props) => {
   // Render success message
   const renderSuccess = () => {
     return (
-      <div className="form-page-success">
-        <div className="success-message">
-          <i className="fas fa-check-circle"></i>
-          <h2>{t('Form Submitted Successfully!')}</h2>
-          <p>{t('Thank you for your submission.')}</p>
+      <div className="w-full max-w-lg mx-auto flex items-center justify-center min-h-[400px] py-12">
+        <div className="bg-white rounded-2xl shadow-sm border border-green-200 p-8 text-center space-y-6">
+          <i className="fas fa-check-circle text-5xl text-green-500"></i>
+          <h2 className="font-heading text-xl font-bold text-foreground">{t('Form Submitted Successfully!')}</h2>
+          <p className="text-muted-foreground text-sm">{t('Thank you for your submission.')}</p>
           
-          <div className="success-actions">
+          <div className="flex flex-wrap gap-3 justify-center">
             {form && form.multiple_responses && (
               <button
-                className="btn btn-primary"
+                className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
                 onClick={handleBackToList}
               >
                 <i className="fas fa-list"></i>
@@ -328,7 +333,7 @@ const FormPage = (props) => {
               </button>
             )}
             <button
-              className="btn btn-outline-secondary"
+              className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors bg-surface-high text-foreground hover:bg-surface-high/80 border border-border"
               onClick={() => history.goBack()}
             >
               <i className="fas fa-arrow-left"></i>
@@ -343,11 +348,9 @@ const FormPage = (props) => {
   // Render loading state
   if (loading) {
     return (
-      <div className="form-page-loading">
-        <div className="spinner-border" role="status">
-          <span className="sr-only">{t('Loading...')}</span>
-        </div>
-        <p>{t('Loading form...')}</p>
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 py-12">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+        <p className="text-muted-foreground text-sm">{t('Loading form...')}</p>
       </div>
     );
   }
@@ -355,13 +358,13 @@ const FormPage = (props) => {
   // Render error state
   if (error) {
     return (
-      <div className="form-page-error">
-        <div className="alert alert-danger">
-          <i className="fas fa-exclamation-triangle"></i>
-          <h3>{t('Error')}</h3>
-          <p>{error}</p>
+      <div className="w-full max-w-lg mx-auto flex items-center justify-center min-h-[400px] py-12">
+        <div className="bg-error/10 text-error border border-error/20 p-6 rounded-2xl text-center space-y-4">
+          <i className="fas fa-exclamation-triangle text-4xl block"></i>
+          <h3 className="text-lg font-bold font-heading">{t('Error')}</h3>
+          <p className="text-sm">{error}</p>
           <button
-            className="btn btn-primary"
+            className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
             onClick={() => history.goBack()}
           >
             {t('Go Back')}
@@ -374,7 +377,7 @@ const FormPage = (props) => {
   // Render success view
   if (submitSuccess) {
     return (
-      <div className="form-page">
+      <div className="w-full max-w-5xl mx-auto pt-6">
         {renderSuccess()}
       </div>
     );
@@ -382,7 +385,7 @@ const FormPage = (props) => {
 
   // Render main content
   return (
-    <div className="form-page">
+    <div className="w-full max-w-5xl mx-auto pt-6">
       {view === 'list' && renderResponseList()}
       
       {view === 'form' && form && (
