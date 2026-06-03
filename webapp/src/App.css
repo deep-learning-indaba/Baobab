@@ -735,6 +735,11 @@ div.card-container  { margin: 0 auto; }
 /* ── 20. Navbar Responsive Collapse (replaces Bootstrap JS) ─── */
 .navbar-toggler { display: none; }
 
+/* Always reset visibility so Tailwind's "collapse" utility (visibility:collapse) doesn't hide navbar contents */
+.collapse.navbar-collapse {
+  visibility: visible !important;
+}
+
 @media (min-width: 992px) {
   .collapse.navbar-collapse {
     display: flex !important;

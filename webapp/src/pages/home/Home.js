@@ -145,42 +145,37 @@ function FeaturedEventCard({ event, t }) {
 
 /* ── Upcoming Event Card ────────────────────────────────── */
 function UpcomingEventCard({ event, t }) {
-  // Mock image based on type or just a placeholder
-  const imageUrl = event.event_type === 'EVENT' ? 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80' : 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80';
-  
-  // Mock date and location
-  const dateStr = event.start_date ? event.start_date.substring(0, 6) : 'Oct 25';
-  const locationText = event.event_type === 'EVENT' ? 'iHub, Nairobi' : 'Virtual Event';
-  const locationIcon = event.event_type === 'EVENT' ? (
-    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-  ) : (
-    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-  );
+  const imageUrl = event.event_type === 'EVENT'
+    ? 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80'
+    : 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80';
+
+  const dateStr = event.start_date || null;
+
+  const typeLabel = {
+    EVENT: t('Event'), AWARD: t('Award'), PROGRAMME: t('Programme'),
+    CALL: t('Call'), JOURNAL: t('Journal'),
+  }[event.event_type] || event.event_type;
 
   return (
-    <Card className="overflow-hidden flex flex-col rounded-2xl shadow-sm border border-border">
-      <div className="relative h-40 w-full overflow-hidden">
+    <Card className="overflow-hidden flex flex-row rounded-2xl shadow-sm border border-border">
+      <div className="w-36 sm:w-48 shrink-0 overflow-hidden">
         <img src={imageUrl} alt={event.description} className="w-full h-full object-cover" />
-        <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-md text-xs font-semibold text-foreground flex items-center gap-1.5 shadow-sm">
-          <svg className="w-3.5 h-3.5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-          {dateStr}
-        </div>
       </div>
-      <div className="p-4 flex flex-col flex-1">
-        <h3 className="font-bold text-foreground leading-snug mb-2 line-clamp-2">
-          <NavLink to={`/${event.key}`} className="hover:text-primary transition-colors">
+      <div className="p-4 flex flex-col flex-1 min-w-0">
+        <span className="inline-flex items-center self-start px-2 py-0.5 rounded-md text-xs font-medium bg-surface-high text-foreground border border-border mb-2">
+          {typeLabel}
+        </span>
+        <h3 className="font-bold text-foreground leading-snug line-clamp-2">
+          <NavLink to={`/${event.key}`} className="text-foreground hover:text-primary transition-colors">
             {event.description}
           </NavLink>
         </h3>
-        <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-4">
-          {locationIcon}
-          <span>{locationText}</span>
-        </div>
-        <div className="mt-auto">
-          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-surface-high text-foreground border border-border">
-            {event.event_type === 'EVENT' ? 'Workshop' : 'Webinar'}
-          </span>
-        </div>
+        {dateStr && (
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-auto pt-3">
+            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            <span>{t('Starts')} {dateStr}</span>
+          </div>
+        )}
       </div>
     </Card>
   );
@@ -333,29 +328,21 @@ class Home extends Component {
           </div>
         ))}
 
-        {/* Welcome header */}
-        <div className="mb-8 flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="font-heading text-3xl font-bold text-foreground">
-              {t('Welcome back')}{firstName ? `, ${firstName}` : ''}
-            </h1>
-            <p className="text-sm text-muted-foreground mt-2">
-              {t('Here is a summary of your recent activities and upcoming events in the Baobab network.')}
-            </p>
-          </div>
-          {user.is_admin && (
-            <a href="../eventConfig" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm border border-transparent !text-white !bg-action hover:!bg-action-container">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              {t('Create New Event')}
-            </a>
-          )}
-        </div>
-
         {/* Dashboard 2-column grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
           {/* Main column */}
           <div className="lg:col-span-2 space-y-8">
+
+            {/* Welcome header */}
+            <div className="text-left">
+              <h1 className="font-heading text-3xl font-bold text-foreground">
+                {t('Welcome back')}{firstName ? `, ${firstName}` : ''}
+              </h1>
+              <p className="text-sm text-muted-foreground mt-2">
+                {t('Here is a summary of your recent activities and upcoming events in the Baobab network.')}
+              </p>
+            </div>
 
             {/* Featured active application with status stepper */}
             {featuredEvent && (
@@ -373,11 +360,19 @@ class Home extends Component {
                     {t('View All')} &rarr;
                   </a>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-4">
                   {openEvents.map((e) => (
                     <UpcomingEventCard key={e.key} event={e} t={t} />
                   ))}
                 </div>
+                {user.is_admin && (
+                  <div className="mt-4">
+                    <a href="../eventConfig" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm border border-transparent !text-white !bg-action hover:!bg-action-container">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      {t('Create New Event')}
+                    </a>
+                  </div>
+                )}
               </section>
             )}
 

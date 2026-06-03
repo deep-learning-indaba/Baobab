@@ -11,6 +11,7 @@ __pycache__/
 # Distribution / packaging
 .idea/
 .windsurf/
+.claude/
 .Python
 build/
 develop-eggs/

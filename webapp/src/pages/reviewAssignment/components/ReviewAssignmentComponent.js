@@ -484,7 +484,7 @@ class ReviewAssignmentComponent extends Component {
                   key={"i_newReviewEmail"}
                 />
               </div>
-              <div>
+              <div className="pb-5">
                 <button
                   type="button"
                   className="w-full inline-flex items-center justify-center px-5 py-3 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm cursor-pointer"

@@ -296,11 +296,13 @@ export const Section = forwardRef(({
       </div>
       <div className="title-description">
         <div className="section-header">
+          <label className="form-label section-name-label">{t('Section name')}</label>
           <span className="key-wrapper">
             <input
               type="text"
               value={inputs.name[lang]}
               onChange={handleChange('name')}
+              placeholder={t('Section name')}
               className="section-inputs section-title"
               draggable={true}
               onDragStart={handleStopPropagation}
@@ -308,8 +310,10 @@ export const Section = forwardRef(({
             <span className="tooltiptext">{t('Title')}</span>
           </span>
           {!inputs.name[lang] && (
-            <span className='tooltiptext-error'>{t('Name is Required')}</span>
+            <span className='tooltiptext-error section-name-error'>{t('Name is Required')}</span>
           )}
+        </div>
+        <div className="section-controls">
           <div
             ref={sectionMenuRef}
             className="section-menu-wrapper"
@@ -379,14 +383,13 @@ export const Section = forwardRef(({
                 <i className="fas fa-chevron-down fa-move fa-hide-show-details"></i>
                 <i className="fas fa-chevron-up fa-move fa-hide-show-details"></i>
               </div>
-            ): 
+            ):
               <div className='toogle-section-details' style={style}>
                 <i className="fas fa-chevron-up fa-move fa-hide-show-details"></i>
                 <i className="fas fa-chevron-down fa-move fa-hide-show-details"></i>
               </div>
             }
           </div>
-          
         </div>
         <div
           className='desc-dependency-div'

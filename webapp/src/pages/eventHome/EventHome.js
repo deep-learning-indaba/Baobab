@@ -153,7 +153,7 @@ class EventHome extends Component {
     const sidebarClass = `event-sidebar${sidebarOpen ? ' event-sidebar--open' : ''}`;
 
     return (
-      <div className="flex min-h-[calc(100vh-64px)] bg-[#f8f9fa] -mx-4 md:-mx-8 -mt-8 -mb-8 md:-mb-12">
+      <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-[#f8f9fa] -mx-4 md:-mx-8 -mt-8 -mb-8 md:-mb-12">
         {/* Backdrop — mobile only, shown when drawer is open */}
         {sidebarOpen && (
           <div
@@ -186,7 +186,7 @@ class EventHome extends Component {
           />
         </div>
 
-        <div className="flex-1 py-8 px-4 md:px-8 max-w-[1200px] min-w-0">
+        <div className="flex-1 overflow-y-auto py-8 px-4 md:px-8 max-w-[1200px] min-w-0">
           {/* Mobile hamburger button */}
           <button
             className="mobile-only items-center gap-2 mb-6 px-3 py-2 rounded-lg bg-white border border-border shadow-sm text-sm font-medium text-foreground hover:bg-surface-low transition-colors"

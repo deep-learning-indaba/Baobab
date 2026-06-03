@@ -734,80 +734,84 @@ const Question = forwardRef(({
       >
         <div className="headline-description">
           <div className="question-header">
-          {inputs.type === 'information' ? (
-            <SelectQuestion
-              options={appQuestionsOptions}
-              inputs={inputs}
-              handleAppFormQuestionSelect={handleAppFormQuestionSelect}
-              t={t}
-            />
-          ) : (
-            <span className="key-wrapper">
-            {!inputs.headline[lang] && (
-              <span className='tooltiptext-error'>
-                {t('Headline is Required')}
-              </span>
-            )}
-              <input
-                type="text"
-                name="headline"
-                value={inputs.headline[lang]}
-                onChange={handleChange('headline')}
-                placeholder={inputs.headline['en'] || t('Headline')}
-                className="section-inputs question-title"
-                draggable={true}
-                onDragStart={handleStopPropagation}
-              />
-              <span className="tooltiptext">{t('Headline')}</span>
-            </span>
-          )}
-            {!type && (
-              <span className='tooltiptext-error'>
-                {t('Type is Required')}
-              </span>
-            )}
-            {inputs.type !== 'information' && (
-              <ReactSelect
-                options={options}
-                placeholder={t('Choose type')}
-                onChange={e => handleTypeChange(e)}
-                defaultValue={inputs.type || null}
-                value={options.find(o => o.value === inputs.type)}
-                className='select-form'
-                styles={{
-                  control: (base, state) => ({
-                    ...base,
-                    boxShadow: "none",
-                    border: state.isFocused && "none",
-                    transition: state.isFocused && 'color,background-color 1.5s ease-out',
-                    background: state.isFocused && 'lightgray',
-                    color: '#fff'
-                  }),
-                  option: (base, state) => ({
-                    ...base,
-                    backgroundColor: state.isFocused && "lightgray",
-                    color: state.isFocused && "#fff"
-                  })
-                }}
-                menuPlacement="auto"
-              />
-            )}
-            <div className='move-btns-wrapper'>
-              <button
-                className="move-btn"
-                data-title={t("Move up")}
-                onClick={handleMoveQuestionUp}
-              >
-                <i className="fas fa-chevron-up fa-move"></i>
-              </button>
-              <button
-                className="move-btn"
-                data-title={t("Move down")}
-                onClick={handleMoveQuestionDown}
-              >
-                <i className="fas fa-chevron-down fa-move"></i>
-              </button>
+            <div className="question-type-row">
+              {inputs.type === 'information' ? (
+                <SelectQuestion
+                  options={appQuestionsOptions}
+                  inputs={inputs}
+                  handleAppFormQuestionSelect={handleAppFormQuestionSelect}
+                  t={t}
+                />
+              ) : (
+                <>
+                  {!type && (
+                    <span className='tooltiptext-error'>
+                      {t('Type is Required')}
+                    </span>
+                  )}
+                  <ReactSelect
+                    options={options}
+                    placeholder={t('Choose type')}
+                    onChange={e => handleTypeChange(e)}
+                    defaultValue={inputs.type || null}
+                    value={options.find(o => o.value === inputs.type)}
+                    className='select-form'
+                    styles={{
+                      control: (base, state) => ({
+                        ...base,
+                        boxShadow: "none",
+                        border: state.isFocused && "none",
+                        transition: state.isFocused && 'color,background-color 1.5s ease-out',
+                        background: state.isFocused && 'lightgray',
+                        color: '#fff'
+                      }),
+                      option: (base, state) => ({
+                        ...base,
+                        backgroundColor: state.isFocused && "lightgray",
+                        color: state.isFocused && "#fff"
+                      })
+                    }}
+                    menuPlacement="auto"
+                  />
+                </>
+              )}
+              <div className='move-btns-wrapper'>
+                <button
+                  className="move-btn"
+                  data-title={t("Move up")}
+                  onClick={handleMoveQuestionUp}
+                >
+                  <i className="fas fa-chevron-up fa-move"></i>
+                </button>
+                <button
+                  className="move-btn"
+                  data-title={t("Move down")}
+                  onClick={handleMoveQuestionDown}
+                >
+                  <i className="fas fa-chevron-down fa-move"></i>
+                </button>
+              </div>
             </div>
+            {inputs.type !== 'information' && (
+              <span className="key-wrapper question-headline-row">
+                {!inputs.headline[lang] && (
+                  <span className='tooltiptext-error'>
+                    {t('Headline is Required')}
+                  </span>
+                )}
+                <input
+                  type="text"
+                  name="headline"
+                  value={inputs.headline[lang]}
+                  onChange={handleChange('headline')}
+                  placeholder={inputs.headline['en'] || t('Headline')}
+                  className="section-inputs question-title"
+                  draggable={true}
+                  onDragStart={handleStopPropagation}
+                />
+                <span className="tooltiptext">{t('Headline')}</span>
+              </span>
+            )}
           </div>
           {inputs.type === 'information' && (
             <span className="key-wrapper">
@@ -1083,6 +1087,47 @@ const Question = forwardRef(({
               />
           )}
           <div className="action-btns">
+            <div ref={questionMenuRef} className="section-menu-wrapper">
+              <div
+                id="toggleTitle"
+                className="title-desc-toggle toggle-questions"
+                role="button"
+                onClick={() => setQuestionMenuOpen(o => !o)}
+                aria-haspopup="true"
+                aria-expanded={questionMenuOpen}
+              >
+                <i
+                  className='fa fa-ellipsis-v fa-lg fa-dropdown fa-question-toogle'
+                  ></i>
+              </div>
+              {questionMenuOpen && <div className="dropdown-menu show" aria-labelledby="toggleTitle">
+                <button
+                  className="dropdown-item delete-section"
+                  onClick={handleValidation}
+                  disabled={!withRegex.includes(inputs.type)}
+                  >
+                  <span className="check-icon">
+                    {isValidateOn
+                      && <i className="fas fa-check fa-validation"></i>
+                    }
+                  </span>
+                    {t("Validation")}
+                </button>
+                {hasKey && (
+                  <button
+                    className="dropdown-item delete-section"
+                    onClick={handleKey}
+                    >
+                    <span className="check-icon">
+                      {isKeyOn
+                        && <i className="fas fa-check fa-validation"></i>
+                      }
+                    </span>
+                      {t("Key")}
+                  </button>
+                )}
+              </div>}
+            </div>
             <div className="question-footer">
               <button
                 className="delete-qstion duplicate-qstion"
@@ -1114,47 +1159,6 @@ const Question = forwardRef(({
                 </div>
               )}
             </div>
-          </div>
-          <div ref={questionMenuRef} className="section-menu-wrapper">
-          <div
-            id="toggleTitle"
-            className="title-desc-toggle toggle-questions"
-            role="button"
-            onClick={() => setQuestionMenuOpen(o => !o)}
-            aria-haspopup="true"
-            aria-expanded={questionMenuOpen}
-          >
-            <i
-              className='fa fa-ellipsis-v fa-lg fa-dropdown fa-question-toogle'
-              ></i>
-          </div>
-          {questionMenuOpen && <div className="dropdown-menu show" aria-labelledby="toggleTitle">
-            <button
-              className="dropdown-item delete-section"
-              onClick={handleValidation}
-              disabled={!withRegex.includes(inputs.type)}
-              >
-              <span className="check-icon">
-                {isValidateOn
-                  && <i className="fas fa-check fa-validation"></i>
-                }
-              </span>
-                {t("Validation")}
-            </button>
-            {hasKey && (
-              <button
-                className="dropdown-item delete-section"
-                onClick={handleKey}
-                >
-                <span className="check-icon">
-                  {isKeyOn
-                    && <i className="fas fa-check fa-validation"></i>
-                  }
-                </span>
-                  {t("Key")}
-              </button>
-            )}
-          </div>}
           </div>
         </div>
         {isModelVisible && (

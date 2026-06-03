@@ -152,29 +152,41 @@ const FormCreator = ({
         </div>
       ) : (
         <div className='application-form-wrap'>
-          <TopBar
-            title={title}
-            t={t} />
-          <div
-            style={{ textAlign: 'end', width: '61%' }}
-            className='add-section-btn-wrapper'
-            >
-            <button
-              className='add-section-btn'
-              data-title="Add Section"
-              onMouseUp={() => addSection()}
-              >
-              <i className="fas fa-plus fa-lg add-section-icon"></i>
-            </button>
-            <input
-              type="button"
-              value="Save"
-              style={!isReview ? { marginTop: '16em'} : {}}
-              className='save-form-btn'
-              data-title="Save"
-              onClick={handleSave}
-              disabled={isSaveDisabled || disableSaveBtn}
+          <div className='form-header-bar'>
+            <TopBar title={title} t={t} />
+            <div className='form-header-actions'>
+              <ReactSelect
+                id='select-language'
+                options={options()}
+                onChange={e => handleLanguageChange(e)}
+                value={language}
+                defaultValue={language}
+                className='select-language'
+                styles={{
+                  control: (base, state) => ({
+                    ...base,
+                    boxShadow: "none",
+                    border: state.isFocused && "none",
+                    transition: state.isFocused && 'color,background-color 1.5s ease-out',
+                    background: state.isFocused && 'lightgray',
+                    color: '#fff'
+                  }),
+                  option: (base, state) => ({
+                    ...base,
+                    backgroundColor: state.isFocused && "#1f2d3e",
+                    color: state.isFocused && "#fff"
+                  })
+                }}
+                menuPlacement="auto"
               />
+              <input
+                type="button"
+                value={t("Save")}
+                className='save-form-btn'
+                onClick={handleSave}
+                disabled={isSaveDisabled || disableSaveBtn}
+              />
+            </div>
           </div>
           <div className="application-form-wrapper">
             <EventMeta
@@ -184,30 +196,6 @@ const FormCreator = ({
               evnt={evnt}
               editable={editable}
               setEditable={setEditable}
-              />
-            <ReactSelect
-              id='select-language'
-              options={options()}
-              onChange={e => handleLanguageChange(e)}
-              value={language}
-              defaultValue={language}
-              className='select-language'
-              styles={{
-                control: (base, state) => ({
-                  ...base,
-                  boxShadow: "none",
-                  border: state.isFocused && "none",
-                  transition: state.isFocused && 'color,background-color 1.5s ease-out',
-                  background: state.isFocused && 'lightgray',
-                  color: '#fff'
-                }),
-                option: (base, state) => ({
-                    ...base,
-                    backgroundColor: state.isFocused && "#1f2d3e",
-                    color: state.isFocused && "#fff"
-                })
-              }}
-              menuPlacement="auto"
             />
             {!saved && !leaveStage && showingModal && (
               <StageModal
@@ -226,8 +214,7 @@ const FormCreator = ({
               setApplytransition={setApplytransition}
             >
               {
-                sections
-                .map((section, i) => (
+                sections.map((section, i) => (
                   <Section
                     t={t}
                     key={section.id}
@@ -258,6 +245,15 @@ const FormCreator = ({
                 ))
               }
             </AnimateSections>
+            <div className='add-section-btn-wrapper'>
+              <button
+                className='add-section-btn'
+                onMouseUp={() => addSection()}
+              >
+                <i className="fas fa-plus add-section-icon"></i>
+                {t('Add Section')}
+              </button>
+            </div>
           </div>
         </div>
       )}

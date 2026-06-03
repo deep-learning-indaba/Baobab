@@ -577,7 +577,7 @@ class InvitedGuests extends Component {
                   value={this.state.user[validationFields.role.name] || ""} />
               </div>
               
-              <div className="space-y-2">
+              <div className="space-y-2 pb-5">
                 <label className="block text-sm font-semibold text-foreground/90 mb-1">{t("Tags")}</label>
                 <div className="flex flex-wrap gap-1 items-center min-h-[46px] border border-border rounded-lg px-4 py-1.5 bg-white">
                   {this.state.newGuestTags.map(tag => (
@@ -604,7 +604,7 @@ class InvitedGuests extends Component {
                 </div>
               </div>
 
-              <div>
+              <div className="pb-5">
                 {!this.state.notFound ? (
                   <button
                     type="button"
