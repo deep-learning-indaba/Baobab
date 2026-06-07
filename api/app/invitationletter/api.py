@@ -147,7 +147,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             tags = [t.tag.get_translation('en').name for t in offer.offer_tags if t.accepted]
 
         accommodation = 'Accommodation' in tags
-        travel = 'Travel' in tags
+        travel = 'Transport' in tags or 'Travel' in tags
 
         LOGGER.info(f"Generating invitation letter for {passport_name} with accommodation: {accommodation}, Travel: {travel}")
         

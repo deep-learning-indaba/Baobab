@@ -109,9 +109,11 @@ class EventConfigComponent extends Component {
 
   addTimeToDates = event => {
     const u = {...event}
-    for (let i = 0; i < ALL_DATE_FIELDS.length; i++) {
-      u[ALL_DATE_FIELDS[i][0]] = u[ALL_DATE_FIELDS[i][0]].substring(0, 10) + "T00:00:00Z"; //start date
-      u[ALL_DATE_FIELDS[i][1]] = u[ALL_DATE_FIELDS[i][1]].substring(0, 10) + "T23:59:59Z"; //end date
+    if (u.event_type !== "JOURNAL") {
+      for (let i = 0; i < ALL_DATE_FIELDS.length; i++) {
+        u[ALL_DATE_FIELDS[i][0]] = u[ALL_DATE_FIELDS[i][0]].substring(0, 10) + "T00:00:00Z"; //start date
+        u[ALL_DATE_FIELDS[i][1]] = u[ALL_DATE_FIELDS[i][1]].substring(0, 10) + "T23:59:59Z"; //end date
+      }
     }
     return u;
   }
@@ -236,25 +238,6 @@ class EventConfigComponent extends Component {
         errors.push(this.props.t("Application open date cannot be in the past"));
       }
 
-      //working backwards, check each phase ends before the previous phase starts
-      if (this.state.requiredDateFields.includes("start_date") && this.state.requiredDateFields.includes("registration_close")) {
-        if (this.state.updatedEvent.start_date <= this.state.updatedEvent.registration_close) {
-          errors.push(this.props.t("Event start date must be after registration close date"));
-        }
-      }
-      if (this.state.requiredDateFields.includes("registration_open") && this.state.requiredDateFields.includes("review_close")) {
-        if (this.state.updatedEvent.registration_open <= this.state.updatedEvent.review_close) {
-          errors.push(this.props.t("Registration open date must be after review close date"));
-        }
-      }
-      if (this.state.requiredDateFields.includes("offer_open") && this.state.requiredDateFields.includes("review_close")) {
-        if (this.state.updatedEvent.offer_open <= this.state.updatedEvent.review_close) {
-          errors.push(this.props.t("Offer open date must be after review close date"));
-        }
-      }
-      if (this.state.updatedEvent.selection_open <= this.state.updatedEvent.review_close) {
-        errors.push(this.props.t("Selection open date must be after review close date"));
-      }
       //check date ranges
       if (this.state.updatedEvent.application_open >= this.state.updatedEvent.application_close) {
         errors.push(this.props.t("Application close date must be after application open date"));
