@@ -26,6 +26,7 @@ def check_opening(open):
     if open:
         return now < open
     return True
+
 class Event(db.Model):
 
     __tablename__ = "event"
@@ -50,6 +51,8 @@ class Event(db.Model):
     event_type = db.Column(db.Enum(EventType, name="event_type"), nullable=False)
     travel_grant = db.Column(db.Boolean(), nullable=False)
     miniconf_url = db.Column(db.String(100), nullable=True)
+    contact_email = db.Column(db.String(255), nullable=True)
+    image = db.Column(db.String(255), nullable=True)
 
     organisation = db.relationship('Organisation', foreign_keys=[organisation_id])
     application_forms = db.relationship('ApplicationForm')
@@ -80,7 +83,9 @@ class Event(db.Model):
         registration_close,
         event_type,
         travel_grant,
-        miniconf_url=None
+        miniconf_url=None,
+        contact_email=None,
+        image=None
     ):
         self.start_date = start_date
         self.end_date = None if event_type == EventType.JOURNAL else end_date
@@ -102,6 +107,8 @@ class Event(db.Model):
         self.event_type = event_type
         self.travel_grant = travel_grant
         self.miniconf_url = miniconf_url
+        self.contact_email = contact_email
+        self.image = image
         self.event_fees = []
 
         self.add_event_translations(names, descriptions)
@@ -225,7 +232,9 @@ class Event(db.Model):
                registration_close,
                event_type,
                travel_grant,
-               miniconf_url=None):
+               miniconf_url=None,
+               contact_email=None,
+               image=None):
         self.start_date = start_date
         self.end_date = end_date
         self.key = key
@@ -245,6 +254,8 @@ class Event(db.Model):
         self.event_type = event_type
         self.travel_grant = travel_grant
         self.miniconf_url = miniconf_url
+        self.contact_email = contact_email
+        self.image = image
 
         self.event_translations.delete()
         self.add_event_translations(names, descriptions)

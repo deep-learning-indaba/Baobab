@@ -772,5 +772,21 @@
     "Review Stages": "Étapes d'examen",
     "Required Reviews": "Évaluations requises",
     "Untitled": "Sans titre",
-    "responses": "réponses"
+    "responses": "réponses",
+    "Response Status": "Statut de la réponse",
+    "Un-withdraw": "Annuler le retrait",
+    "Un-submit": "Annuler la soumission",
+    "No reviewers assigned.": "Aucun évaluateur assigné.",
+    "Assign Reviewer": "Assigner un évaluateur",
+    "Reviewer email": "Email de l'évaluateur",
+    "Assigning...": "Assignation en cours...",
+    "Reviewer assigned successfully.": "Évaluateur assigné avec succès.",
+    "Remove reviewer": "Supprimer l'évaluateur",
+    "Outcome": "Résultat",
+    "No outcome options configured for this event type.": "Aucune option de résultat configurée pour ce type d'événement.",
+    "Missing required parameters": "Paramètres requis manquants",
+    "No files uploaded": "Aucun fichier téléchargé",
+    "Show withdrawn only": "Afficher uniquement les retraits",
+    "{{count}} total": "{{count}} au total",
+    "Back": "Retour"
 }

@@ -162,7 +162,15 @@ def serialize_response(response):
             'value': answer.value,
             'is_active': answer.is_active
         })
-    
+
+    tags_data = []
+    for rt in response.response_tags:
+        tag_translation = rt.tag.get_translation('en')
+        tags_data.append({
+            'id': rt.tag_id,
+            'name': tag_translation.name if tag_translation else ''
+        })
+
     return {
         'id': response.id,
         'form_id': response.form_id,
@@ -174,7 +182,8 @@ def serialize_response(response):
         'started_timestamp': response.started_timestamp.isoformat() if response.started_timestamp else None,
         'language': response.language,
         'linked_response_id': response.linked_response_id,
-        'answers': answers_data
+        'answers': answers_data,
+        'tags': tags_data
     }
 
 
@@ -1671,6 +1680,180 @@ class FormResponseTagAPI(restful.Resource):
 
         except Exception as e:
             LOGGER.error('Error removing tag from form response {}: {}'.format(response_id, str(e)))
+            LOGGER.error(traceback.format_exc())
+            db.session.rollback()
+            return errors.DB_NOT_AVAILABLE
+
+
+class FormResponseAdminUpdateAPI(restful.Resource):
+    """Admin endpoint to update response status (submit/withdraw/unsubmit/unwithdraw)."""
+
+    @event_admin_required
+    def patch(self, form_id, response_id, event_id):
+        try:
+            response = db.session.query(FormResponse).filter_by(
+                id=response_id, form_id=form_id
+            ).first()
+            if not response:
+                return {'error': 'Response not found'}, 404
+
+            args = request.get_json() or {}
+
+            if 'is_submitted' in args:
+                response.is_submitted = bool(args['is_submitted'])
+                if response.is_submitted and not response.submitted_timestamp:
+                    response.submitted_timestamp = datetime.now()
+                elif not response.is_submitted:
+                    response.submitted_timestamp = None
+
+            if 'is_withdrawn' in args:
+                response.is_withdrawn = bool(args['is_withdrawn'])
+                if response.is_withdrawn and not response.withdrawn_timestamp:
+                    response.withdrawn_timestamp = datetime.now()
+                elif not response.is_withdrawn:
+                    response.withdrawn_timestamp = None
+
+            db.session.commit()
+            return serialize_response(response), 200
+
+        except Exception as e:
+            LOGGER.error('Error updating response {} status: {}'.format(response_id, str(e)))
+            LOGGER.error(traceback.format_exc())
+            db.session.rollback()
+            return errors.DB_NOT_AVAILABLE
+
+
+class FormResponseReviewsAdminAPI(restful.Resource):
+    """Admin endpoints to list, assign, and remove reviewers for a specific application response."""
+
+    def _get_review_form(self, form_id, event_id):
+        return db.session.query(Form).filter_by(
+            linked_form_id=form_id,
+            form_type='review',
+            event_id=event_id
+        ).first()
+
+    @event_admin_required
+    def get(self, form_id, response_id, event_id):
+        """List all review assignments (reviewer + status) for an application response."""
+        try:
+            review_form = self._get_review_form(form_id, event_id)
+            if not review_form:
+                return [], 200
+
+            rows = (
+                db.session.query(FormResponse, AppUser)
+                .join(AppUser, FormResponse.user_id == AppUser.id)
+                .filter(
+                    FormResponse.form_id == review_form.id,
+                    FormResponse.linked_response_id == response_id,
+                    FormResponse.is_withdrawn == False
+                )
+                .all()
+            )
+
+            return [
+                {
+                    'review_response_id': rr.id,
+                    'reviewer_user_id': reviewer.id,
+                    'user_title': reviewer.user_title,
+                    'firstname': reviewer.firstname,
+                    'lastname': reviewer.lastname,
+                    'email': reviewer.email,
+                    'is_submitted': rr.is_submitted,
+                    'submitted_timestamp': rr.submitted_timestamp.isoformat() if rr.submitted_timestamp else None
+                }
+                for rr, reviewer in rows
+            ], 200
+
+        except Exception as e:
+            LOGGER.error('Error getting reviews for response {}: {}'.format(response_id, str(e)))
+            LOGGER.error(traceback.format_exc())
+            return errors.DB_NOT_AVAILABLE
+
+    @event_admin_required
+    def post(self, form_id, response_id, event_id):
+        """Assign a reviewer to an application response by email."""
+        try:
+            args = request.get_json() or {}
+            reviewer_email = args.get('reviewer_email', '').strip()
+            if not reviewer_email:
+                return {'error': 'reviewer_email is required'}, 400
+
+            reviewer = db.session.query(AppUser).filter(
+                db.func.lower(AppUser.email) == reviewer_email.lower()
+            ).first()
+            if not reviewer:
+                return {'error': 'No user found with that email address'}, 404
+
+            review_form = self._get_review_form(form_id, event_id)
+            if not review_form:
+                return {'error': 'No review form is configured for this event'}, 404
+
+            existing = db.session.query(FormResponse).filter_by(
+                form_id=review_form.id,
+                user_id=reviewer.id,
+                linked_response_id=response_id
+            ).first()
+            if existing and not existing.is_withdrawn:
+                return {'error': 'This reviewer is already assigned'}, 400
+
+            review_response = FormResponse(
+                form_id=review_form.id,
+                user_id=reviewer.id,
+                language='en',
+                linked_response_id=response_id
+            )
+            db.session.add(review_response)
+            db.session.commit()
+
+            return {
+                'review_response_id': review_response.id,
+                'reviewer_user_id': reviewer.id,
+                'user_title': reviewer.user_title,
+                'firstname': reviewer.firstname,
+                'lastname': reviewer.lastname,
+                'email': reviewer.email,
+                'is_submitted': False,
+                'submitted_timestamp': None
+            }, 201
+
+        except Exception as e:
+            LOGGER.error('Error assigning reviewer to response {}: {}'.format(response_id, str(e)))
+            LOGGER.error(traceback.format_exc())
+            db.session.rollback()
+            return errors.DB_NOT_AVAILABLE
+
+    @event_admin_required
+    def delete(self, form_id, response_id, event_id):
+        """Remove a not-yet-submitted reviewer assignment."""
+        try:
+            args = request.get_json() or {}
+            reviewer_user_id = args.get('reviewer_user_id')
+            if not reviewer_user_id:
+                return {'error': 'reviewer_user_id is required'}, 400
+
+            review_form = self._get_review_form(form_id, event_id)
+            if not review_form:
+                return errors.FORM_NOT_FOUND
+
+            review_response = db.session.query(FormResponse).filter_by(
+                form_id=review_form.id,
+                user_id=reviewer_user_id,
+                linked_response_id=response_id
+            ).first()
+            if not review_response:
+                return errors.OBJECT_NOT_FOUND
+
+            if review_response.is_submitted:
+                return {'error': 'Cannot remove a reviewer who has already submitted their review'}, 400
+
+            db.session.delete(review_response)
+            db.session.commit()
+            return {}, 200
+
+        except Exception as e:
+            LOGGER.error('Error removing reviewer from response {}: {}'.format(response_id, str(e)))
             LOGGER.error(traceback.format_exc())
             db.session.rollback()
             return errors.DB_NOT_AVAILABLE

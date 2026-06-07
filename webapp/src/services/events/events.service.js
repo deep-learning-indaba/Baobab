@@ -61,7 +61,9 @@ export function create(event) {
         registration_close: event.registration_close,
         event_type: event.event_type,
         travel_grant: event.travel_grant,
-        miniconf_url: event.miniconf_url
+        miniconf_url: event.miniconf_url,
+        contact_email: event.contact_email,
+        image: event.image
       },
       { headers: authHeader() }
     )
@@ -110,7 +112,9 @@ export function update(event) {
         registration_close: event.registration_close,
         event_type: event.event_type,
         travel_grant: event.travel_grant,
-        miniconf_url: event.miniconf_url
+        miniconf_url: event.miniconf_url,
+        contact_email: event.contact_email,
+        image: event.image
       },
       { headers: authHeader() }
     )

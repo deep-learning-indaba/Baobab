@@ -80,6 +80,8 @@ def event_info(user_id, event, status, language):
         'application_close_date': event.application_close.strftime("%d %B %Y") if event.application_close is not None else None,
         'status': status_info(status),
         'email_from': event.email_from,
+        'contact_email': event.contact_email,
+        'image': event.image,
         'organisation_name': event.organisation.name,
         'organisation_id': event.organisation.id,
         'url': event.url,
@@ -127,7 +129,9 @@ event_fields = {
     'registration_close': fields.DateTime(dt_format='iso8601'),
     'event_type': fields.Raw(attribute=lambda event: event.event_type.value.upper()),
     'travel_grant': fields.Boolean,
-    'miniconf_url': fields.String
+    'miniconf_url': fields.String,
+    'contact_email': fields.String,
+    'image': fields.String
 }
 
 
@@ -188,11 +192,13 @@ def make_journal_event(
     url,
     event_type,
     travel_grant,
-    miniconf_url=None):
+    miniconf_url=None,
+    contact_email=None,
+    image=None):
     return Event(
                 names=names,
                 descriptions=descriptions,
-                start_date=start_date, 
+                start_date=start_date,
                 end_date=None,
                 key=key,
                 organisation_id=organisation_id,
@@ -210,9 +216,11 @@ def make_journal_event(
                 registration_close=None,
                 event_type=event_type,
                 travel_grant=travel_grant,
-                miniconf_url=miniconf_url
+                miniconf_url=miniconf_url,
+                contact_email=contact_email,
+                image=image
     )
-    
+
 def update_journal_event(
     event,
     names,
@@ -224,11 +232,13 @@ def update_journal_event(
     url,
     event_type,
     travel_grant,
-    miniconf_url=None):
+    miniconf_url=None,
+    contact_email=None,
+    image=None):
     return event.update(
                 names=names,
                 descriptions=descriptions,
-                start_date=start_date, 
+                start_date=start_date,
                 end_date=None,
                 key=key,
                 organisation_id=organisation_id,
@@ -246,7 +256,9 @@ def update_journal_event(
                 registration_close=None,
                 event_type=event_type,
                 travel_grant=travel_grant,
-                miniconf_url=miniconf_url
+                miniconf_url=miniconf_url,
+                contact_email=contact_email,
+                image=image
     )
   
 class EventAPI(EventMixin, restful.Resource):
@@ -300,7 +312,9 @@ class EventAPI(EventMixin, restful.Resource):
                 args['url'],
                 EventType[args['event_type'].upper()],
                 args['travel_grant'],
-                args['miniconf_url']
+                args['miniconf_url'],
+                args['contact_email'],
+                args['image']
             )
 
         else:
@@ -325,7 +339,9 @@ class EventAPI(EventMixin, restful.Resource):
                 args['registration_close'],
                 EventType[args['event_type'].upper()],
                 args['travel_grant'],
-                args['miniconf_url']
+                args['miniconf_url'],
+                args['contact_email'],
+                args['image']
             )
 
         event.add_event_role('admin', user_id)
@@ -381,7 +397,9 @@ class EventAPI(EventMixin, restful.Resource):
                 args['url'],
                 EventType[args['event_type'].upper()],
                 args['travel_grant'],
-                args['miniconf_url']
+                args['miniconf_url'],
+                args['contact_email'],
+                args['image']
             )
         else:
             event.update(
@@ -405,7 +423,9 @@ class EventAPI(EventMixin, restful.Resource):
                 args['registration_close'],
                 EventType[args['event_type'].upper()],
                 args['travel_grant'],
-                args['miniconf_url']
+                args['miniconf_url'],
+                args['contact_email'],
+                args['image']
             )
         db.session.commit()
 

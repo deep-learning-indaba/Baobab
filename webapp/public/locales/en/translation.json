@@ -773,5 +773,21 @@
     "Review Stages": "Review Stages",
     "Required Reviews": "Required Reviews",
     "Untitled": "Untitled",
-    "responses": "responses"
+    "responses": "responses",
+    "Response Status": "Response Status",
+    "Un-withdraw": "Un-withdraw",
+    "Un-submit": "Un-submit",
+    "No reviewers assigned.": "No reviewers assigned.",
+    "Assign Reviewer": "Assign Reviewer",
+    "Reviewer email": "Reviewer email",
+    "Assigning...": "Assigning...",
+    "Reviewer assigned successfully.": "Reviewer assigned successfully.",
+    "Remove reviewer": "Remove reviewer",
+    "Outcome": "Outcome",
+    "No outcome options configured for this event type.": "No outcome options configured for this event type.",
+    "Missing required parameters": "Missing required parameters",
+    "No files uploaded": "No files uploaded",
+    "Show withdrawn only": "Show withdrawn only",
+    "{{count}} total": "{{count}} total",
+    "Back": "Back"
 }

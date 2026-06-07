@@ -35,6 +35,7 @@ import FormManagement from "../formManagement";
 import FormPreviewPage from "../formPreview";
 import FormResponseList from "../formResponseList";
 import FormResponseDetail from "../formResponseDetail";
+import ApplicationFormResponsePage from "../applicationFormResponse";
 import FormConfigPage from "../formConfig";
 import { Card } from '../../components/ui/card';
 
@@ -392,13 +393,25 @@ class EventHome extends Component {
         <Route
           exact
           path={`${match.path}/form-responses/:formId/:responseId`}
-          render={(props) => (
-            <FormResponseDetail
-              {...props}
-              event={event}
-              user={this.props.user}
-            />
-          )}
+          render={(props) => {
+            const formId = parseInt(props.match.params.formId, 10);
+            if (event && event.application_form_id === formId) {
+              return (
+                <ApplicationFormResponsePage
+                  {...props}
+                  event={event}
+                  user={this.props.user}
+                />
+              );
+            }
+            return (
+              <FormResponseDetail
+                {...props}
+                event={event}
+                user={this.props.user}
+              />
+            );
+          }}
         />
         <Route
           exact

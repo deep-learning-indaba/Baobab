@@ -29,16 +29,20 @@ class FormResponseListComponent extends Component {
     this.loadResponses();
   }
 
+  getFormId() {
+    return this.props.formId || (this.props.match && this.props.match.params && this.props.match.params.formId);
+  }
+
   loadResponses = async () => {
     this.setState({ loading: true, error: null });
 
-    const formId = this.props.match.params.formId;
+    const formId = this.getFormId();
     const eventId = this.props.event ? this.props.event.id : null;
 
     if (!eventId) {
-      this.setState({ 
-        loading: false, 
-        error: this.props.t("Event information not available") 
+      this.setState({
+        loading: false,
+        error: this.props.t("Event information not available")
       });
       return;
     }
@@ -92,14 +96,19 @@ class FormResponseListComponent extends Component {
   };
 
   handleViewResponse = (responseId) => {
-    const formId = this.props.match.params.formId;
+    const formId = this.getFormId();
     const eventKey = this.props.event ? this.props.event.key : null;
     this.props.history.push(`/${eventKey}/form-responses/${formId}/${responseId}`);
   };
 
-  handleBackToForms = () => {
-    const eventKey = this.props.event ? this.props.event.key : null;
-    this.props.history.push(`/${eventKey}/formManagement`);
+  handleBack = () => {
+    if (this.props.formId) {
+      // Rendered from /responseList context — go back
+      this.props.history.goBack();
+    } else {
+      const eventKey = this.props.event ? this.props.event.key : null;
+      this.props.history.push(`/${eventKey}/formManagement`);
+    }
   };
 
   render() {
@@ -108,74 +117,66 @@ class FormResponseListComponent extends Component {
 
     if (loading && responses.length === 0) {
       return (
-        <div className="response-list-page">
-          <div className="loading-container">
-            <div className="spinner-border" role="status">
-              <span className="sr-only">{t("Loading...")}</span>
-            </div>
-            <p>{t("Loading responses...")}</p>
-          </div>
+        <div className="flex justify-center items-center py-16">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       );
     }
 
     if (error && responses.length === 0) {
       return (
-        <div className="response-list-page">
-          <div className="error-container">
-            <div className="alert alert-danger">
-              <i className="fas fa-exclamation-triangle"></i>
-              <h3>{t("Error")}</h3>
-              <p>{error}</p>
-              <button className="btn btn-primary" onClick={this.handleBackToForms}>
-                {t("Back to Forms")}
-              </button>
-            </div>
+        <div className="max-w-3xl mx-auto pt-8 px-4">
+          <div className="bg-error/10 text-error border border-error/20 p-6 rounded-xl text-sm">
+            <p className="font-semibold mb-1">{t("Error")}</p>
+            <p>{error}</p>
+            <button className="mt-4 text-sm font-medium text-primary hover:underline" onClick={this.handleBack}>
+              ← {t("Go Back")}
+            </button>
           </div>
         </div>
       );
     }
 
     return (
-      <div className="response-list-page">
-        <div className="response-list-header">
-          <div className="header-left">
-            <button className="btn-back" onClick={this.handleBackToForms}>
-              <i className="fas fa-arrow-left"></i>
-              {t("Back to Forms")}
-            </button>
-            <h1>{t("Form Responses")}</h1>
+      <div className="w-full max-w-5xl mx-auto pt-6 text-left space-y-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-border p-8 space-y-6">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <h1 className="font-heading text-2xl font-bold text-foreground">{t("Response List")}</h1>
+            {!this.props.formId && (
+              <button onClick={this.handleBack}
+                      className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+                ← {t("Back to Forms")}
+              </button>
+            )}
           </div>
-        </div>
 
-        <div className="response-list-filters">
-          <form onSubmit={this.handleSearchSubmit} className="filters-form">
-            <div className="filter-group">
-              <label>{t("Search by Email")}</label>
+          <form onSubmit={this.handleSearchSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-foreground/90">{t("Filter by email")}</label>
               <input
                 type="text"
-                className="form-control"
-                placeholder={t("Enter email")}
+                className="w-full px-3 py-2 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                placeholder={t("Search")}
                 value={filters.email}
-                onChange={(e) => this.handleFilterChange('email', e.target.value)}
+                onChange={(e) => this.setState(p => ({ filters: { ...p.filters, email: e.target.value } }))}
               />
             </div>
 
-            <div className="filter-group">
-              <label>{t("Search by Name")}</label>
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-foreground/90">{t("Filter by name")}</label>
               <input
                 type="text"
-                className="form-control"
-                placeholder={t("Enter name")}
+                className="w-full px-3 py-2 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                placeholder={t("Search")}
                 value={filters.name}
-                onChange={(e) => this.handleFilterChange('name', e.target.value)}
+                onChange={(e) => this.setState(p => ({ filters: { ...p.filters, name: e.target.value } }))}
               />
             </div>
 
-            <div className="filter-group">
-              <label>{t("Status")}</label>
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-foreground/90">{t("Status")}</label>
               <select
-                className="form-control"
+                className="w-full px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30"
                 value={filters.is_submitted}
                 onChange={(e) => this.handleFilterChange('is_submitted', e.target.value)}
               >
@@ -185,136 +186,110 @@ class FormResponseListComponent extends Component {
               </select>
             </div>
 
-            <div className="filter-group">
-              <label>{t("Withdrawn")}</label>
-              <select
-                className="form-control"
-                value={filters.is_withdrawn}
-                onChange={(e) => this.handleFilterChange('is_withdrawn', e.target.value)}
-              >
-                <option value="">{t("All")}</option>
-                <option value="true">{t("Yes")}</option>
-                <option value="false">{t("No")}</option>
-              </select>
-            </div>
-
-            <div className="filter-actions">
-              <button type="submit" className="btn btn-primary">
-                <i className="fas fa-search"></i>
+            <div className="flex items-end pb-0">
+              <button type="submit"
+                      className="w-full inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm">
                 {t("Search")}
               </button>
             </div>
           </form>
-        </div>
 
-        {responses.length === 0 ? (
-          <div className="empty-state">
-            <i className="fas fa-inbox"></i>
-            <h3>{t("No responses found")}</h3>
-            <p>{t("No responses match your current filters.")}</p>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="show_withdrawn"
+              className="rounded border-border text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+              checked={filters.is_withdrawn === 'true'}
+              onChange={e => this.handleFilterChange('is_withdrawn', e.target.checked ? 'true' : '')}
+            />
+            <label htmlFor="show_withdrawn" className="text-sm font-medium text-foreground cursor-pointer select-none">
+              {t("Show withdrawn only")}
+            </label>
           </div>
-        ) : (
-          <>
-            <div className="response-list-table">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>{t("User")}</th>
-                    <th>{t("Email")}</th>
-                    <th>{t("Status")}</th>
-                    <th>{t("Started")}</th>
-                    <th>{t("Submitted")}</th>
-                    <th>{t("Answers")}</th>
-                    <th>{t("Actions")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {responses.map(response => (
-                    <tr key={response.id} className={response.is_withdrawn ? 'withdrawn-row' : ''}>
-                      <td>
-                        <div className="user-name">
-                          {response.user.user_title} {response.user.firstname} {response.user.lastname}
-                        </div>
-                      </td>
-                      <td>{response.user.email}</td>
-                      <td>
-                        <span className={`status-badge ${response.is_submitted ? 'submitted' : 'draft'}`}>
-                          {response.is_withdrawn ? (
-                            <>
-                              <i className="fas fa-ban"></i> {t("Withdrawn")}
-                            </>
-                          ) : response.is_submitted ? (
-                            <>
-                              <i className="fas fa-check-circle"></i> {t("Submitted")}
-                            </>
-                          ) : (
-                            <>
-                              <i className="fas fa-edit"></i> {t("Draft")}
-                            </>
-                          )}
-                        </span>
-                      </td>
-                      <td>
-                        {response.started_timestamp ? 
-                          new Date(response.started_timestamp).toLocaleDateString() : 
-                          '-'
-                        }
-                      </td>
-                      <td>
-                        {response.submitted_timestamp ? 
-                          new Date(response.submitted_timestamp).toLocaleDateString() : 
-                          '-'
-                        }
-                      </td>
-                      <td>
-                        <span className="answer-count">{response.answer_count}</span>
-                      </td>
-                      <td>
-                        <button 
-                          className="btn btn-sm btn-outline-primary"
-                          onClick={() => this.handleViewResponse(response.id)}
-                        >
-                          <i className="fas fa-eye"></i>
-                          {t("View")}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+
+          {responses.length === 0 ? (
+            <div className="py-12 text-center text-muted-foreground">
+              <p className="text-sm">{t("No responses match your current filters.")}</p>
             </div>
-
-            {pagination.pages > 1 && (
-              <div className="pagination-controls">
-                <button
-                  className="btn btn-outline-secondary"
-                  disabled={pagination.page === 1}
-                  onClick={() => this.handlePageChange(pagination.page - 1)}
-                >
-                  <i className="fas fa-chevron-left"></i>
-                  {t("Previous")}
-                </button>
-                
-                <span className="pagination-info">
-                  {t("Page {{current}} of {{total}}", { 
-                    current: pagination.page, 
-                    total: pagination.pages 
-                  })}
-                  {" "}({t("{{count}} total responses", { count: pagination.total })})
-                </span>
-
-                <button
-                  className="btn btn-outline-secondary"
-                  disabled={pagination.page === pagination.pages}
-                  onClick={() => this.handlePageChange(pagination.page + 1)}
-                >
-                  {t("Next")}
-                  <i className="fas fa-chevron-right"></i>
-                </button>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left font-bold py-2 pr-4 text-foreground/80">{t("Name")}</th>
+                      <th className="text-left font-bold py-2 pr-4 text-foreground/80">{t("Email")}</th>
+                      <th className="text-left font-bold py-2 pr-4 text-foreground/80">{t("Status")}</th>
+                      <th className="text-left font-bold py-2 pr-4 text-foreground/80">{t("Started")}</th>
+                      <th className="text-left font-bold py-2 pr-4 text-foreground/80">{t("Submitted")}</th>
+                      <th className="text-left font-bold py-2 pr-4 text-foreground/80">{t("Answers")}</th>
+                      <th className="py-2"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {responses.map(response => (
+                      <tr key={response.id}
+                          className={`border-b border-border/40 hover:bg-surface-low/50 transition-colors ${response.is_withdrawn ? 'opacity-60' : ''}`}>
+                        <td className="py-2 pr-4 font-medium">
+                          {response.user.user_title} {response.user.firstname} {response.user.lastname}
+                        </td>
+                        <td className="py-2 pr-4 text-muted-foreground">{response.user.email}</td>
+                        <td className="py-2 pr-4">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${
+                            response.is_withdrawn ? 'bg-error/10 text-error border-error/20' :
+                            response.is_submitted ? 'bg-green-50 text-green-700 border-green-200' :
+                            'bg-amber-50 text-amber-700 border-amber-200'
+                          }`}>
+                            {response.is_withdrawn ? t("Withdrawn") :
+                             response.is_submitted ? t("Submitted") : t("Draft")}
+                          </span>
+                        </td>
+                        <td className="py-2 pr-4 text-muted-foreground">
+                          {response.started_timestamp ? new Date(response.started_timestamp).toLocaleDateString() : '-'}
+                        </td>
+                        <td className="py-2 pr-4 text-muted-foreground">
+                          {response.submitted_timestamp ? new Date(response.submitted_timestamp).toLocaleDateString() : '-'}
+                        </td>
+                        <td className="py-2 pr-4 text-muted-foreground">{response.answer_count}</td>
+                        <td className="py-2">
+                          <button
+                            onClick={() => this.handleViewResponse(response.id)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold border border-primary/30 text-primary hover:bg-primary/5 transition-colors"
+                          >
+                            {t("View")}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            )}
-          </>
-        )}
+
+              {pagination.pages > 1 && (
+                <div className="flex items-center justify-between pt-4 border-t border-border/40">
+                  <button
+                    className="inline-flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold border border-border text-foreground hover:bg-surface-high transition-colors disabled:opacity-40"
+                    disabled={pagination.page === 1}
+                    onClick={() => this.handlePageChange(pagination.page - 1)}
+                  >
+                    ← {t("Previous")}
+                  </button>
+                  <span className="text-sm text-muted-foreground">
+                    {t("Page {{current}} of {{total}}", { current: pagination.page, total: pagination.pages })}
+                    {" "}({t("{{count}} total", { count: pagination.total })})
+                  </span>
+                  <button
+                    className="inline-flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold border border-border text-foreground hover:bg-surface-high transition-colors disabled:opacity-40"
+                    disabled={pagination.page === pagination.pages}
+                    onClick={() => this.handlePageChange(pagination.page + 1)}
+                  >
+                    {t("Next")} →
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     );
   }

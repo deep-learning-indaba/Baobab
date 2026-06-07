@@ -11,7 +11,13 @@ export const formResponseService = {
     submitResponse,
     withdrawResponse,
     getResponseListAdmin,
-    getResponseDetailAdmin
+    getResponseDetailAdmin,
+    adminUpdateResponseStatus,
+    tagFormResponse,
+    removeFormResponseTag,
+    getResponseReviews,
+    assignResponseReviewer,
+    removeResponseReviewer
 }
 
 /**
@@ -256,4 +262,67 @@ function getResponseDetailAdmin(eventId, formId, responseId) {
             statusCode: error.response && error.response.status
         };
     });
+}
+
+function adminUpdateResponseStatus(formId, responseId, eventId, statusPatch) {
+    const params = new URLSearchParams({ event_id: eventId });
+    return axios.patch(
+        baseUrl + `/api/v1/forms/${formId}/responses/${responseId}/admin-status?${params}`,
+        statusPatch,
+        { headers: authHeader() }
+    )
+    .then(r => ({ response: r.data, error: '', statusCode: r.status }))
+    .catch(e => ({ response: null, error: extractErrorMessage(e), statusCode: e.response && e.response.status }));
+}
+
+function tagFormResponse(formId, responseId, eventId, tagId) {
+    const params = new URLSearchParams({ event_id: eventId });
+    return axios.post(
+        baseUrl + `/api/v1/forms/${formId}/responses/${responseId}/tags?${params}`,
+        { tag_id: tagId },
+        { headers: authHeader() }
+    )
+    .then(r => ({ tag: r.data, error: '', statusCode: r.status }))
+    .catch(e => ({ tag: null, error: extractErrorMessage(e), statusCode: e.response && e.response.status }));
+}
+
+function removeFormResponseTag(formId, responseId, eventId, tagId) {
+    const params = new URLSearchParams({ event_id: eventId });
+    return axios.delete(
+        baseUrl + `/api/v1/forms/${formId}/responses/${responseId}/tags?${params}`,
+        { headers: authHeader(), data: { tag_id: tagId } }
+    )
+    .then(r => ({ error: '', statusCode: r.status }))
+    .catch(e => ({ error: extractErrorMessage(e), statusCode: e.response && e.response.status }));
+}
+
+function getResponseReviews(formId, responseId, eventId) {
+    const params = new URLSearchParams({ event_id: eventId });
+    return axios.get(
+        baseUrl + `/api/v1/forms/${formId}/responses/${responseId}/reviews?${params}`,
+        { headers: authHeader() }
+    )
+    .then(r => ({ reviews: r.data, error: '', statusCode: r.status }))
+    .catch(e => ({ reviews: [], error: extractErrorMessage(e), statusCode: e.response && e.response.status }));
+}
+
+function assignResponseReviewer(formId, responseId, eventId, reviewerEmail) {
+    const params = new URLSearchParams({ event_id: eventId });
+    return axios.post(
+        baseUrl + `/api/v1/forms/${formId}/responses/${responseId}/reviews?${params}`,
+        { reviewer_email: reviewerEmail },
+        { headers: authHeader() }
+    )
+    .then(r => ({ reviewer: r.data, error: '', statusCode: r.status }))
+    .catch(e => ({ reviewer: null, error: extractErrorMessage(e), statusCode: e.response && e.response.status }));
+}
+
+function removeResponseReviewer(formId, responseId, eventId, reviewerUserId) {
+    const params = new URLSearchParams({ event_id: eventId });
+    return axios.delete(
+        baseUrl + `/api/v1/forms/${formId}/responses/${responseId}/reviews?${params}`,
+        { headers: authHeader(), data: { reviewer_user_id: reviewerUserId } }
+    )
+    .then(r => ({ error: '', statusCode: r.status }))
+    .catch(e => ({ error: extractErrorMessage(e), statusCode: e.response && e.response.status }));
 }

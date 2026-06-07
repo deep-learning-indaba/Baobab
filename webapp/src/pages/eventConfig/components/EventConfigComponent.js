@@ -62,7 +62,9 @@ class EventConfigComponent extends Component {
       registration_close: "",
       event_type: "",
       travel_grant: "",
-      miniconf_url: ""
+      miniconf_url: "",
+      contact_email: "",
+      image: ""
     }
 
     this.state = {
@@ -70,7 +72,7 @@ class EventConfigComponent extends Component {
       isNewEvent: this.props.event && this.props.event.id ? false : true,
       isMultiLingual: this.props.organisation.languages.length > 1,
       allFieldsComplete: false,
-      optionalFields: ["miniconf_url"],
+      optionalFields: ["miniconf_url", "contact_email", "image"],
       requiredDateFields: [],
       isValid: false,
       loading: false,
@@ -593,6 +595,36 @@ class EventConfigComponent extends Component {
                   value={updatedEvent.url}
                   required={true}
                   onChange={e => this.updateEventTextField("url", e)}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-foreground/90" htmlFor="contact_email">
+                  {t("Support Contact Email")}
+                </label>
+                <FormTextBox
+                  id="contact_email"
+                  name="contact_email"
+                  type="email"
+                  placeholder={t("Contact email shown to applicants (e.g. indabax@example.com)")}
+                  value={updatedEvent.contact_email}
+                  onChange={e => this.updateEventTextField("contact_email", e)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-foreground/90" htmlFor="image">
+                  {t("Event Image URL")}
+                </label>
+                <FormTextBox
+                  id="image"
+                  name="image"
+                  type="text"
+                  placeholder={t("URL of image to display on event cards")}
+                  value={updatedEvent.image}
+                  onChange={e => this.updateEventTextField("image", e)}
                 />
               </div>
             </div>

@@ -39,12 +39,6 @@ function GuestHero({ organisation, t }) {
 }
 
 /* ── Application status stepper ─────────────────────────────── */
-const STEPPER_STEPS = [
-  { label: 'Application Submitted', subtitle: 'Oct 12, 2023', icon: 'check' },
-  { label: 'Under Review', subtitle: 'In Progress', icon: 'eye' },
-  { label: 'Final Decision', subtitle: 'Est. Nov 01', icon: 'user' }
-];
-
 function getApplicationStep(event) {
   const s = event?.status;
   if (!s) return 0;
@@ -55,15 +49,33 @@ function getApplicationStep(event) {
 
 function StatusStepper({ event, t }) {
   const current = getApplicationStep(event);
+
+  const steps = [
+    {
+      label: 'Application Submitted',
+      subtitle: event.application_close_date ? `${t('Closed')} ${event.application_close_date}` : t('Submitted'),
+      icon: 'check',
+    },
+    {
+      label: 'Under Review',
+      subtitle: t('In Progress'),
+      icon: 'eye',
+    },
+    {
+      label: 'Final Decision',
+      subtitle: event.start_date || t('Pending'),
+      icon: 'user',
+    },
+  ];
+
   return (
     <div className="flex items-start w-full relative pt-2">
-      {/* Background line */}
       <div className="absolute top-6 left-[15%] right-[15%] h-0.5 bg-border z-0" />
-      
-      {STEPPER_STEPS.map((step, i) => {
+
+      {steps.map((step, i) => {
         const done = i < current;
         const active = i === current;
-        
+
         let Icon;
         if (step.icon === 'check') {
           Icon = <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />;
@@ -77,7 +89,7 @@ function StatusStepper({ event, t }) {
           <div key={step.label} className="flex-1 flex flex-col items-center gap-2 relative z-10">
             <div className={cn(
               'w-8 h-8 rounded-full flex items-center justify-center transition-all bg-surface',
-              (done || active) && step.icon === 'check' ? 'bg-primary text-primary-foreground' : 
+              (done || active) && step.icon === 'check' ? 'bg-primary text-primary-foreground' :
               active && step.icon === 'eye' ? 'bg-blue-50 text-blue-600 ring-4 ring-blue-50' :
               !done && !active ? 'bg-surface-high text-muted-foreground border-2 border-border' :
               'bg-surface-high text-foreground border-2 border-border'
@@ -94,7 +106,7 @@ function StatusStepper({ event, t }) {
                 {t(step.label)}
               </span>
               <span className="block text-xs text-muted-foreground mt-0.5">
-                {t(step.subtitle)}
+                {step.subtitle}
               </span>
             </div>
           </div>
@@ -106,9 +118,13 @@ function StatusStepper({ event, t }) {
 
 /* ── Featured active application card ───────────────────────── */
 function FeaturedEventCard({ event, t }) {
-  // Mock status text based on step
-  const currentStep = getApplicationStep(event);
-  const statusPill = currentStep === 0 ? t('Applied') : currentStep === 1 ? t('Pending Review') : t('Decision Made');
+  const statusPill = event.status?.offer_status || event.status?.outcome_status
+    ? t('Decision Made')
+    : event.is_application_open
+    ? t('Applied')
+    : t('Pending Review');
+
+  const contactEmail = event.contact_email || 'support@baobab.network';
 
   return (
     <Card className="overflow-hidden p-6 rounded-2xl shadow-sm border border-border">
@@ -126,7 +142,7 @@ function FeaturedEventCard({ event, t }) {
           {statusPill}
         </div>
       </div>
-      
+
       <div className="mt-8 mb-8">
         <StatusStepper event={event} t={t} />
       </div>
@@ -135,7 +151,7 @@ function FeaturedEventCard({ event, t }) {
         <a href={`/${event.key}/apply`} className={cn(buttonVariants({ variant: 'secondary' }))}>
           {t('View Application')}
         </a>
-        <a href={`mailto:support@baobab.network`} className={cn(buttonVariants({ variant: 'default' }))}>
+        <a href={`mailto:${contactEmail}`} className={cn(buttonVariants({ variant: 'default' }))}>
           {t('Contact Support')}
         </a>
       </div>
@@ -143,12 +159,27 @@ function FeaturedEventCard({ event, t }) {
   );
 }
 
+/* ── Event type image placeholder ───────────────────────────── */
+function EventImagePlaceholder({ eventType }) {
+  const colors = {
+    EVENT: 'bg-blue-100 text-blue-400',
+    AWARD: 'bg-amber-100 text-amber-400',
+    PROGRAMME: 'bg-purple-100 text-purple-400',
+    CALL: 'bg-green-100 text-green-400',
+    JOURNAL: 'bg-rose-100 text-rose-400',
+  };
+  const cls = colors[eventType] || 'bg-surface-high text-muted-foreground';
+  return (
+    <div className={cn('w-full h-full flex items-center justify-center', cls)}>
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+      </svg>
+    </div>
+  );
+}
+
 /* ── Upcoming Event Card ────────────────────────────────── */
 function UpcomingEventCard({ event, t }) {
-  const imageUrl = event.event_type === 'EVENT'
-    ? 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80'
-    : 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80';
-
   const dateStr = event.start_date || null;
 
   const typeLabel = {
@@ -159,7 +190,10 @@ function UpcomingEventCard({ event, t }) {
   return (
     <Card className="overflow-hidden flex flex-row rounded-2xl shadow-sm border border-border">
       <div className="w-36 sm:w-48 shrink-0 overflow-hidden">
-        <img src={imageUrl} alt={event.description} className="w-full h-full object-cover" />
+        {event.image
+          ? <img src={event.image} alt={event.description} className="w-full h-full object-cover" />
+          : <EventImagePlaceholder eventType={event.event_type} />
+        }
       </div>
       <div className="p-4 flex flex-col flex-1 min-w-0">
         <span className="inline-flex items-center self-start px-2 py-0.5 rounded-md text-xs font-medium bg-surface-high text-foreground border border-border mb-2">
@@ -181,12 +215,11 @@ function UpcomingEventCard({ event, t }) {
   );
 }
 
+
 /* ── Activity Stats Card ────────────────────────────────────── */
 function ActivityStatsCard({ allEvents, attended, t }) {
   const submitted = allEvents.filter((e) => e.status?.application_status === 'Submitted').length;
   const attendedCount = attended ? attended.length : 0;
-  
-  // Calculate offers/outcomes
   const offersCount = allEvents.filter((e) => e.status?.offer_status).length;
 
   return (
@@ -204,7 +237,7 @@ function ActivityStatsCard({ allEvents, attended, t }) {
           </div>
           <span className="text-lg font-bold text-foreground">{submitted}</span>
         </div>
-        
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-green-50 text-green-600 flex items-center justify-center">
@@ -244,6 +277,7 @@ class Home extends Component {
       organisation: null,
       errors: [],
       loading: true,
+      pastEventsExpanded: false,
     };
   }
 
@@ -285,7 +319,7 @@ class Home extends Component {
 
   render() {
     const { t, user, i18n } = this.props;
-    const { organisation, upcomingEvents, awards, journals, calls, programmes, attended, allEvents, errors, loading } = this.state;
+    const { organisation, upcomingEvents, awards, journals, calls, programmes, attended, allEvents, errors, loading, pastEventsExpanded } = this.state;
 
     let logo = organisation?.large_logo;
     if (organisation?.name === 'AI4D Africa' && i18n?.language === 'fr') {
@@ -309,32 +343,24 @@ class Home extends Component {
         && !e.status?.outcome_status
     );
 
-    const openEvents = [
-      ...(upcomingEvents || []),
-      ...(awards || []),
-      ...(calls || []),
-      ...(programmes || []),
-      ...(journals || []),
-    ];
+    const hasOpenOpportunities = (upcomingEvents?.length || 0) + (awards?.length || 0) +
+      (calls?.length || 0) + (programmes?.length || 0) + (journals?.length || 0) > 0;
 
-    const isEmpty = !loading && openEvents.length === 0 && (!attended || attended.length === 0);
+    const isEmpty = !loading && !hasOpenOpportunities && (!attended || attended.length === 0);
 
     return (
       <div className="py-6">
-        {/* Error banners */}
         {errors.map((err, i) => (
           <div key={i} className="mb-4 rounded-lg bg-error-container text-on-error-container px-4 py-3 text-sm">
             {err}
           </div>
         ))}
 
-        {/* Dashboard 2-column grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
           {/* Main column */}
           <div className="lg:col-span-2 space-y-8">
 
-            {/* Welcome header */}
             <div className="text-left">
               <h1 className="font-heading text-3xl font-bold text-foreground">
                 {t('Welcome back')}{firstName ? `, ${firstName}` : ''}
@@ -344,67 +370,83 @@ class Home extends Component {
               </p>
             </div>
 
-            {/* Featured active application with status stepper */}
             {featuredEvent && (
               <section>
                 <FeaturedEventCard event={featuredEvent} t={t} />
               </section>
             )}
 
-            {/* Open opportunities grid */}
-            {openEvents.length > 0 && (
+            {hasOpenOpportunities && (
               <section>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-foreground">{t('Upcoming Events')}</h2>
-                  <a href="/events" className="text-sm font-semibold text-primary flex items-center gap-1 hover:underline">
-                    {t('View All')} &rarr;
-                  </a>
+                  <h2 className="text-xl font-bold text-foreground">{t('Upcoming Opportunities')}</h2>
                 </div>
                 <div className="space-y-4">
-                  {openEvents.map((e) => (
+                  {[...(upcomingEvents || []), ...(awards || []), ...(calls || []), ...(programmes || []), ...(journals || [])].map((e) => (
                     <UpcomingEventCard key={e.key} event={e} t={t} />
                   ))}
                 </div>
-                {user.is_admin && (
-                  <div className="mt-4">
-                    <a href="../eventConfig" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm border border-transparent !text-white !bg-action hover:!bg-action-container">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                      {t('Create New Event')}
-                    </a>
-                  </div>
+              </section>
+            )}
+
+            {user.is_admin && hasOpenOpportunities && (
+              <div>
+                <a href="../eventConfig" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm border border-transparent !text-white !bg-action hover:!bg-action-container">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  {t('Create New Event')}
+                </a>
+              </div>
+            )}
+
+            {/* Past events — collapsible */}
+            {attended && attended.length > 0 && (
+              <section>
+                <button
+                  onClick={() => this.setState((s) => ({ pastEventsExpanded: !s.pastEventsExpanded }))}
+                  className="flex items-center justify-between w-full mb-4 group"
+                >
+                  <h2 className="text-xl font-bold text-foreground">{t('Past Events')}</h2>
+                  <span className="flex items-center gap-1.5 text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                    <span>{pastEventsExpanded ? t('Hide') : t('Show')} ({attended.length})</span>
+                    <svg
+                      width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                      className={cn('transition-transform', pastEventsExpanded ? 'rotate-180' : '')}
+                    >
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </span>
+                </button>
+
+                {pastEventsExpanded && (
+                  <Card className="p-0 overflow-hidden">
+                    {attended.map((e, i) => (
+                      <div
+                        key={e.key}
+                        className={cn(
+                          'flex items-center justify-between gap-4 px-5 py-4 hover:bg-surface-low transition-colors',
+                          i < attended.length - 1 && 'border-b border-border/50'
+                        )}
+                      >
+                        <div className="flex flex-col min-w-0">
+                          <NavLink
+                            to={`/${e.key}`}
+                            className="text-sm font-medium text-foreground hover:text-primary transition-colors truncate"
+                          >
+                            {e.description}
+                          </NavLink>
+                          {e.end_date && (
+                            <span className="text-xs text-muted-foreground mt-0.5">{e.end_date}</span>
+                          )}
+                        </div>
+                        <Badge variant="secondary" className="shrink-0">{t('Attended')}</Badge>
+                      </div>
+                    ))}
+                  </Card>
                 )}
               </section>
             )}
 
-            {/* Past events list */}
-            {attended && attended.length > 0 && (
-              <section>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-foreground">{t('Past Events')}</h2>
-                </div>
-                <Card className="p-0 overflow-hidden">
-                  {attended.map((e, i) => (
-                    <div
-                      key={e.key}
-                      className={cn(
-                        'flex items-center justify-between gap-4 px-5 py-4 hover:bg-surface-low transition-colors',
-                        i < attended.length - 1 && 'border-b border-border/50'
-                      )}
-                    >
-                      <NavLink
-                        to={`/${e.key}`}
-                        className="text-sm font-medium text-foreground hover:text-primary transition-colors truncate"
-                      >
-                        {e.description}
-                      </NavLink>
-                      <Badge variant="secondary" className="shrink-0">{t('Attended')}</Badge>
-                    </div>
-                  ))}
-                </Card>
-              </section>
-            )}
-
-            {/* Empty state */}
             {isEmpty && (
               <div className="text-center py-20 border border-dashed border-border rounded-2xl text-muted-foreground">
                 <p className="font-heading font-semibold text-foreground text-lg mb-1">
