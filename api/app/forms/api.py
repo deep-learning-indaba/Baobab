@@ -416,6 +416,20 @@ class FormAPI(restful.Resource):
             return errors.DB_NOT_AVAILABLE
 
 
+def _remap_dependency_expression(expression, id_map):
+    """Recursively remap question_id values in a dependency expression using id_map."""
+    if expression is None or not id_map:
+        return expression
+    if isinstance(expression, dict):
+        if 'question_id' in expression:
+            qid = expression.get('question_id')
+            if qid in id_map:
+                return {**expression, 'question_id': id_map[qid]}
+        elif 'conditions' in expression:
+            return {**expression, 'conditions': [_remap_dependency_expression(c, id_map) for c in expression['conditions']]}
+    return expression
+
+
 class FormStructureAPI(restful.Resource):
     """Manage form structure - sections and questions"""
     
@@ -486,7 +500,13 @@ class FormStructureAPI(restful.Resource):
                 form.linked_form_id = args['linked_form_id']
             
             sections_data = args.get('sections', [])
-            
+
+            # Maps frontend client_id of new questions to their real DB id after flush
+            client_id_to_real_id = {}
+            # (object, raw_dep_expr) pairs for second-pass remapping
+            sections_needing_dep_remap = []
+            questions_needing_dep_remap = []
+
             # Track which sections/questions are in the incoming data
             incoming_section_ids = [s['id'] for s in sections_data if 'id' in s]
             incoming_question_ids = []
@@ -532,7 +552,9 @@ class FormStructureAPI(restful.Resource):
                     section.key = section_data.get('key', section.key)
                     section.dependency_expression = section_data.get('dependency_expression', section.dependency_expression)
                     section.updated_at = datetime.now()
-                    
+                    if section_data.get('dependency_expression'):
+                        sections_needing_dep_remap.append((section, section_data['dependency_expression']))
+
                     # Update translations
                     for lang, name in section_data.get('name', {}).items():
                         trans = section.translations.filter_by(language=lang).first()
@@ -557,7 +579,9 @@ class FormStructureAPI(restful.Resource):
                     )
                     db.session.add(section)
                     db.session.flush()
-                    
+                    if section_data.get('dependency_expression'):
+                        sections_needing_dep_remap.append((section, section_data['dependency_expression']))
+
                     # Add translations
                     for lang, name in section_data.get('name', {}).items():
                         trans = FormSectionTranslation(
@@ -594,7 +618,9 @@ class FormStructureAPI(restful.Resource):
                         question.dependency_expression = question_data.get('dependency_expression', question.dependency_expression)
                         question.linked_question_id = question_data.get('linked_question_id', question.linked_question_id)
                         question.updated_at = datetime.now()
-                        
+                        if question_data.get('dependency_expression'):
+                            questions_needing_dep_remap.append((question, question_data['dependency_expression']))
+
                         # Update translations
                         for lang, headline in question_data.get('headline', {}).items():
                             trans = question.translations.filter_by(language=lang).first()
@@ -632,7 +658,11 @@ class FormStructureAPI(restful.Resource):
                         )
                         db.session.add(question)
                         db.session.flush()
-                        
+                        if 'client_id' in question_data:
+                            client_id_to_real_id[question_data['client_id']] = question.id
+                        if question_data.get('dependency_expression'):
+                            questions_needing_dep_remap.append((question, question_data['dependency_expression']))
+
                         # Add translations
                         for lang, headline in question_data.get('headline', {}).items():
                             trans = FormQuestionTranslation(
@@ -646,10 +676,17 @@ class FormStructureAPI(restful.Resource):
                                 options=question_data.get('options', {}).get(lang)
                             )
                             db.session.add(trans)
-            
+
+            # Second pass: remap dependency expressions that reference client IDs of newly created questions
+            if client_id_to_real_id:
+                for section, dep_expr in sections_needing_dep_remap:
+                    section.dependency_expression = _remap_dependency_expression(dep_expr, client_id_to_real_id)
+                for question, dep_expr in questions_needing_dep_remap:
+                    question.dependency_expression = _remap_dependency_expression(dep_expr, client_id_to_real_id)
+
             form.updated_at = datetime.now()
             db.session.commit()
-            
+
             language = request.args.get('language', 'en')
             return serialize_form(form, language), 200
             
@@ -686,13 +723,12 @@ class FormResponseAPI(restful.Resource):
 
             # Check if multiple_responses is allowed
             if not form.multiple_responses:
-                # Check if user already has an unsubmitted response
+                # Check if user already has any response (submitted or not)
                 existing_response = db.session.query(FormResponse).filter_by(
                     form_id=form_id,
-                    user_id=user_id,
-                    is_submitted=False
-                ).first()
-                
+                    user_id=user_id
+                ).order_by(FormResponse.id.desc()).first()
+
                 if existing_response:
                     return {
                         'error': 'Response already exists',
@@ -780,9 +816,13 @@ class FormResponseAPI(restful.Resource):
                 if not VisibilityEvaluator.check_form_visibility(response.form, user_id, response.form.event_id):
                     return {'error': 'You do not have permission to access this form'}, 403
             
-            # Cannot update submitted response
-            if response.is_submitted:
+            # Cannot update submitted response unless the form allows edits
+            if response.is_submitted and not response.form.allow_edits:
                 return {'error': 'Cannot update a submitted response'}, 400
+            # If re-editing a submitted response, reset submission state
+            if response.is_submitted and response.form.allow_edits:
+                response.is_submitted = False
+                response.submitted_timestamp = None
             
             # Update answers
             if 'answers' in args:

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { formServices } from '../../../services/form/form.service';
-import './LinkedQuestionSelector.css';
 
 const LinkedQuestionSelector = ({ linkedFormId, linkedQuestionId, onChange, t, onQuestionDataLoad }) => {
   const [linkedFormQuestions, setLinkedFormQuestions] = useState([]);
@@ -8,10 +7,7 @@ const LinkedQuestionSelector = ({ linkedFormId, linkedQuestionId, onChange, t, o
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!linkedFormId) {
-      setLinkedFormQuestions([]);
-      return;
-    }
+    if (!linkedFormId) { setLinkedFormQuestions([]); return; }
 
     const fetchLinkedFormQuestions = async () => {
       setLoading(true);
@@ -20,16 +16,14 @@ const LinkedQuestionSelector = ({ linkedFormId, linkedQuestionId, onChange, t, o
         const response = await formServices.getForm(linkedFormId);
         if (response.form && response.form.sections) {
           const allQuestions = [];
-          response.form.sections.forEach((section, sectionIdx) => {
-            const sectionName = typeof section.name === 'object' 
-              ? (section.name.en || Object.values(section.name)[0]) 
+          response.form.sections.forEach((section) => {
+            const sectionName = typeof section.name === 'object'
+              ? (section.name.en || Object.values(section.name)[0])
               : section.name;
-            
             section.questions.forEach((question) => {
               const questionHeadline = typeof question.headline === 'object'
                 ? (question.headline.en || Object.values(question.headline)[0])
                 : question.headline;
-              
               allQuestions.push({
                 id: question.id,
                 label: `${sectionName} - ${questionHeadline || `Question ${question.order}`}`,
@@ -54,7 +48,7 @@ const LinkedQuestionSelector = ({ linkedFormId, linkedQuestionId, onChange, t, o
 
   if (!linkedFormId) {
     return (
-      <div className="linked-question-selector-info">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground italic py-2">
         <i className="fas fa-info-circle"></i>
         <span>{t('Please set a linked form in Form Settings first')}</span>
       </div>
@@ -63,7 +57,7 @@ const LinkedQuestionSelector = ({ linkedFormId, linkedQuestionId, onChange, t, o
 
   if (loading) {
     return (
-      <div className="linked-question-selector-loading">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
         <i className="fas fa-spinner fa-spin"></i>
         <span>{t('Loading questions from linked form...')}</span>
       </div>
@@ -72,7 +66,7 @@ const LinkedQuestionSelector = ({ linkedFormId, linkedQuestionId, onChange, t, o
 
   if (error) {
     return (
-      <div className="linked-question-selector-error">
+      <div className="flex items-center gap-2 text-sm text-error py-2">
         <i className="fas fa-exclamation-triangle"></i>
         <span>{error}</span>
       </div>
@@ -82,29 +76,23 @@ const LinkedQuestionSelector = ({ linkedFormId, linkedQuestionId, onChange, t, o
   const handleQuestionSelect = (questionId) => {
     const selectedQuestion = linkedFormQuestions.find(q => q.id === parseInt(questionId));
     onChange(questionId ? parseInt(questionId) : null);
-    
-    // Call the callback with the full question data so parent can auto-populate fields
-    if (onQuestionDataLoad && selectedQuestion) {
-      onQuestionDataLoad(selectedQuestion);
-    }
+    if (onQuestionDataLoad && selectedQuestion) onQuestionDataLoad(selectedQuestion);
   };
 
   return (
-    <div className="linked-question-selector">
-      <label>{t('Select Question from Linked Form')}</label>
+    <div>
+      <label className="block text-sm font-medium text-foreground mb-1">{t('Select Question from Linked Form')}</label>
       <select
         value={linkedQuestionId || ''}
         onChange={(e) => handleQuestionSelect(e.target.value)}
-        className="linked-question-select"
+        className="w-full px-3 py-2 border border-border rounded-md text-sm bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring"
       >
         <option value="">{t('Select a question...')}</option>
         {linkedFormQuestions.map((q) => (
-          <option key={q.id} value={q.id}>
-            {q.label} ({q.type})
-          </option>
+          <option key={q.id} value={q.id}>{q.label} ({q.type})</option>
         ))}
       </select>
-      <span className="linked-question-hint">
+      <span className="text-xs text-muted-foreground mt-1 block">
         {t('This will display the user\'s answer to the selected question from the linked form')}
       </span>
     </div>

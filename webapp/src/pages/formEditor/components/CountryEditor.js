@@ -7,146 +7,130 @@ import {
   getCountriesForRegions,
   buildCountryList
 } from '../../../utils/countryData';
-import './CountryEditor.css';
+
+const selectStyles = (multiValueColors) => ({
+  control: (base, state) => ({
+    ...base,
+    minHeight: '38px',
+    fontSize: '0.9rem',
+    borderColor: state.isFocused ? '#0132c5' : '#bfc9c1',
+    boxShadow: state.isFocused ? '0 0 0 3px rgba(1, 50, 197, 0.1)' : 'none',
+    '&:hover': { borderColor: '#0132c5' }
+  }),
+  multiValue: base => ({ ...base, backgroundColor: multiValueColors.bg, borderRadius: '4px' }),
+  multiValueLabel: base => ({ ...base, color: multiValueColors.text, fontWeight: 500 }),
+  multiValueRemove: base => ({
+    ...base,
+    color: multiValueColors.text,
+    '&:hover': { backgroundColor: multiValueColors.hoverBg, color: multiValueColors.hoverText }
+  }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isSelected ? '#0132c5' : state.isFocused ? '#e8ecfb' : 'white',
+    color: state.isSelected ? 'white' : '#333',
+    cursor: 'pointer'
+  }),
+  groupHeading: base => ({
+    ...base,
+    fontWeight: 600,
+    fontSize: '0.75rem',
+    color: '#6b7280',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em'
+  })
+});
 
 const CountryEditor = ({ settings, onChange, t }) => {
   const [showAllCountries, setShowAllCountries] = useState(false);
-  
-  // Handle null/undefined settings
-  const safeSettings = settings || {};
-  const {
-    regions = [],
-    countries = [],
-    excludeCountries = []
-  } = safeSettings;
 
-  // Build region options grouped by category
-  const regionOptions = useMemo(() => {
-    return Object.entries(REGION_CATEGORIES).map(([categoryKey, category]) => ({
+  const safeSettings = settings || {};
+  const { regions = [], countries = [], excludeCountries = [] } = safeSettings;
+
+  const regionOptions = useMemo(() => (
+    Object.entries(REGION_CATEGORIES).map(([, category]) => ({
       label: category.label,
       options: category.regions.map(regionKey => ({
         value: regionKey,
         label: `${REGIONS[regionKey].name} (${REGIONS[regionKey].countries.length} countries)`,
         description: REGIONS[regionKey].description
       }))
-    }));
-  }, []);
+    }))
+  ), []);
 
-  // Build country options
-  const countryOptions = useMemo(() => {
-    return ALL_COUNTRIES.map(country => ({
-      value: country.code,
-      label: `${country.flag} ${country.name}`,
-      country
-    }));
-  }, []);
+  const countryOptions = useMemo(() => (
+    ALL_COUNTRIES.map(country => ({ value: country.code, label: `${country.flag} ${country.name}`, country }))
+  ), []);
 
-  // Get currently selected region values
-  const selectedRegions = useMemo(() => {
-    return regions.map(regionKey => {
+  const selectedRegions = useMemo(() => (
+    regions.map(regionKey => {
       const region = REGIONS[regionKey];
-      return region ? {
-        value: regionKey,
-        label: `${region.name} (${region.countries.length} countries)`,
-        description: region.description
-      } : null;
-    }).filter(Boolean);
-  }, [regions]);
+      return region ? { value: regionKey, label: `${region.name} (${region.countries.length} countries)`, description: region.description } : null;
+    }).filter(Boolean)
+  ), [regions]);
 
-  // Get currently selected country values
-  const selectedCountries = useMemo(() => {
-    return countries.map(code => {
+  const selectedCountries = useMemo(() => (
+    countries.map(code => {
       const country = ALL_COUNTRIES.find(c => c.code === code);
-      return country ? {
-        value: country.code,
-        label: `${country.flag} ${country.name}`,
-        country
-      } : null;
-    }).filter(Boolean);
-  }, [countries]);
+      return country ? { value: country.code, label: `${country.flag} ${country.name}`, country } : null;
+    }).filter(Boolean)
+  ), [countries]);
 
-  // Get excluded country values
-  const excludedCountries = useMemo(() => {
-    return excludeCountries.map(code => {
+  const excludedCountries = useMemo(() => (
+    excludeCountries.map(code => {
       const country = ALL_COUNTRIES.find(c => c.code === code);
-      return country ? {
-        value: country.code,
-        label: `${country.flag} ${country.name}`,
-        country
-      } : null;
-    }).filter(Boolean);
-  }, [excludeCountries]);
+      return country ? { value: country.code, label: `${country.flag} ${country.name}`, country } : null;
+    }).filter(Boolean)
+  ), [excludeCountries]);
 
-  // Preview of included countries
-  const previewCountries = useMemo(() => {
-    return buildCountryList(settings);
-  }, [settings]);
+  const previewCountries = useMemo(() => buildCountryList(settings), [settings]);
+  const countriesFromRegions = useMemo(() => (regions.length ? getCountriesForRegions(regions) : []), [regions]);
 
-  const handleRegionsChange = (selected) => {
-    const newRegions = selected ? selected.map(opt => opt.value) : [];
-    onChange({
-      ...settings,
-      regions: newRegions
-    });
-  };
+  const handleRegionsChange = (selected) => onChange({ ...settings, regions: selected ? selected.map(o => o.value) : [] });
+  const handleCountriesChange = (selected) => onChange({ ...settings, countries: selected ? selected.map(o => o.value) : [] });
+  const handleExcludeChange = (selected) => onChange({ ...settings, excludeCountries: selected ? selected.map(o => o.value) : [] });
+  const handleClearAll = () => onChange({ regions: [], countries: [], excludeCountries: [] });
 
-  const handleCountriesChange = (selected) => {
-    const newCountries = selected ? selected.map(opt => opt.value) : [];
-    onChange({
-      ...settings,
-      countries: newCountries
-    });
-  };
-
-  const handleExcludeChange = (selected) => {
-    const newExclude = selected ? selected.map(opt => opt.value) : [];
-    onChange({
-      ...settings,
-      excludeCountries: newExclude
-    });
-  };
-
-  const handleClearAll = () => {
-    onChange({
-      regions: [],
-      countries: [],
-      excludeCountries: []
-    });
-  };
-
-  // Format option with description for regions
   const formatRegionOption = ({ label, description }, { context }) => {
     if (context === 'menu') {
       return (
-        <div className="region-option">
-          <div className="region-option-label">{label}</div>
-          {description && <div className="region-option-description">{description}</div>}
+        <div className="py-0.5">
+          <div className="font-medium">{label}</div>
+          {description && <div className="text-xs text-muted-foreground mt-0.5">{description}</div>}
         </div>
       );
     }
     return label;
   };
 
-  // Countries that come from selected regions (for reference)
-  const countriesFromRegions = useMemo(() => {
-    if (regions.length === 0) return [];
-    return getCountriesForRegions(regions);
-  }, [regions]);
+  const countryFilter = (option, inputValue) => {
+    if (!inputValue) return true;
+    const s = inputValue.toLowerCase();
+    return option.data.country.name.toLowerCase().includes(s) || option.data.country.code.toLowerCase().includes(s);
+  };
 
   const hasSelections = regions.length > 0 || countries.length > 0;
 
+  const gridItemCls = (isSelected, isFromRegion, isExcluded) => {
+    const base = 'flex flex-col items-center justify-center p-1.5 rounded border cursor-pointer transition-colors';
+    if (isExcluded) return `${base} bg-error-container border-error opacity-60`;
+    if (isSelected) return `${base} bg-[#dcfce7] border-[#22c55e]`;
+    if (isFromRegion) return `${base} bg-action/10 border-action/40`;
+    return `${base} bg-white border-border hover:bg-surface-low`;
+  };
+
   return (
-    <div className="country-editor">
-      <div className="country-editor-header">
-        <h4>{t('Country Selection')}</h4>
-        <p className="country-editor-hint">
+    <div className="bg-surface border border-border rounded-lg p-4 mt-3">
+      <div className="mb-4">
+        <h4 className="text-sm font-semibold text-foreground mb-1">{t('Country Selection')}</h4>
+        <p className="text-xs text-muted-foreground">
           {t('Select regions to include groups of countries, or add individual countries. Leave empty to include all countries.')}
         </p>
       </div>
 
-      <div className="country-editor-section">
-        <label className="country-editor-label">
-          <i className="fas fa-globe-africa"></i>
+      {/* Regions */}
+      <div className="mb-4">
+        <label className="flex items-center gap-1.5 text-sm font-medium text-foreground mb-1.5">
+          <i className="fas fa-globe-africa text-muted-foreground text-[0.9em]"></i>
           {t('Include Regions')}
         </label>
         <ReactSelect
@@ -156,77 +140,24 @@ const CountryEditor = ({ settings, onChange, t }) => {
           onChange={handleRegionsChange}
           placeholder={t('Select regions to include...')}
           formatOptionLabel={formatRegionOption}
-          className="country-editor-select"
-          classNamePrefix="country-select"
-          styles={{
-            control: (base, state) => ({
-              ...base,
-              minHeight: '38px',
-              borderColor: state.isFocused ? '#3b82f6' : '#d1d5db',
-              boxShadow: state.isFocused ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : 'none',
-              '&:hover': { borderColor: '#3b82f6' }
-            }),
-            multiValue: base => ({
-              ...base,
-              backgroundColor: '#e0e7ff',
-              borderRadius: '4px'
-            }),
-            multiValueLabel: base => ({
-              ...base,
-              color: '#3730a3',
-              fontWeight: 500
-            }),
-            multiValueRemove: base => ({
-              ...base,
-              color: '#3730a3',
-              '&:hover': {
-                backgroundColor: '#c7d2fe',
-                color: '#1e1b4b'
-              }
-            }),
-            option: (base, state) => ({
-              ...base,
-              backgroundColor: state.isSelected 
-                ? '#3b82f6' 
-                : state.isFocused 
-                  ? '#eff6ff' 
-                  : 'white',
-              color: state.isSelected ? 'white' : '#333'
-            }),
-            groupHeading: base => ({
-              ...base,
-              fontWeight: 600,
-              fontSize: '0.75rem',
-              color: '#6b7280',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em'
-            })
-          }}
+          styles={selectStyles({ bg: '#e8ecfb', text: '#3730a3', hoverBg: '#c7d2fe', hoverText: '#1e1b4b' })}
         />
       </div>
 
-      <div className="country-editor-section">
-        <div className="country-editor-label-row">
-          <label className="country-editor-label">
-            <i className="fas fa-plus-circle"></i>
+      {/* Individual countries */}
+      <div className="mb-4">
+        <div className="flex justify-between items-center mb-1.5">
+          <label className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+            <i className="fas fa-plus-circle text-muted-foreground text-[0.9em]"></i>
             {t('Add Individual Countries')}
           </label>
           <button
             type="button"
-            className="country-toggle-btn"
             onClick={() => setShowAllCountries(!showAllCountries)}
+            className="flex items-center gap-1 px-2 py-1 text-xs text-action border border-action rounded cursor-pointer hover:bg-action/5 transition-colors bg-transparent"
           >
-            {showAllCountries ? (
-              <>
-                <i className="fas fa-chevron-up"></i>
-                {t('Hide country list')}
-              </>
-            ) : (
-              <>
-                <i className="fas fa-chevron-down"></i>
-                {t('Show all countries')}
-              </>
-            )}
+            <i className={`fas fa-chevron-${showAllCountries ? 'up' : 'down'} text-[0.7em]`}></i>
+            {showAllCountries ? t('Hide country list') : t('Show all countries')}
           </button>
         </div>
         <ReactSelect
@@ -235,67 +166,26 @@ const CountryEditor = ({ settings, onChange, t }) => {
           value={selectedCountries}
           onChange={handleCountriesChange}
           placeholder={t('Search and add individual countries...')}
-          className="country-editor-select"
-          classNamePrefix="country-select"
-          filterOption={(option, inputValue) => {
-            if (!inputValue) return true;
-            const searchLower = inputValue.toLowerCase();
-            return (
-              option.data.country.name.toLowerCase().includes(searchLower) ||
-              option.data.country.code.toLowerCase().includes(searchLower)
-            );
-          }}
-          styles={{
-            control: (base, state) => ({
-              ...base,
-              minHeight: '38px',
-              borderColor: state.isFocused ? '#3b82f6' : '#d1d5db',
-              boxShadow: state.isFocused ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : 'none',
-              '&:hover': { borderColor: '#3b82f6' }
-            }),
-            multiValue: base => ({
-              ...base,
-              backgroundColor: '#dcfce7',
-              borderRadius: '4px'
-            }),
-            multiValueLabel: base => ({
-              ...base,
-              color: '#166534',
-              fontWeight: 500
-            }),
-            multiValueRemove: base => ({
-              ...base,
-              color: '#166534',
-              '&:hover': {
-                backgroundColor: '#bbf7d0',
-                color: '#14532d'
-              }
-            }),
-            option: (base, state) => ({
-              ...base,
-              backgroundColor: state.isSelected 
-                ? '#3b82f6' 
-                : state.isFocused 
-                  ? '#eff6ff' 
-                  : 'white',
-              color: state.isSelected ? 'white' : '#333'
-            })
-          }}
+          filterOption={countryFilter}
+          styles={selectStyles({ bg: '#dcfce7', text: '#166534', hoverBg: '#bbf7d0', hoverText: '#14532d' })}
         />
       </div>
 
+      {/* Country grid */}
       {showAllCountries && (
-        <div className="country-grid">
+        <div
+          className="grid gap-1 max-h-[300px] overflow-y-auto p-2 bg-white border border-border rounded-md mt-2 mb-4"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(60px, 1fr))' }}
+        >
           {ALL_COUNTRIES.map(country => {
             const isSelected = countries.includes(country.code);
             const isFromRegion = countriesFromRegions.some(c => c.code === country.code);
             const isExcluded = excludeCountries.includes(country.code);
-            
             return (
               <button
                 key={country.code}
                 type="button"
-                className={`country-grid-item ${isSelected ? 'selected' : ''} ${isFromRegion ? 'from-region' : ''} ${isExcluded ? 'excluded' : ''}`}
+                className={gridItemCls(isSelected, isFromRegion, isExcluded)}
                 onClick={() => {
                   if (isSelected) {
                     handleCountriesChange(selectedCountries.filter(c => c.value !== country.code));
@@ -305,126 +195,79 @@ const CountryEditor = ({ settings, onChange, t }) => {
                 }}
                 title={country.name}
               >
-                <span className="country-grid-flag">{country.flag}</span>
-                <span className="country-grid-code">{country.code}</span>
+                <span className="text-2xl leading-none">{country.flag}</span>
+                <span className="text-[0.65rem] text-muted-foreground mt-0.5">{country.code}</span>
               </button>
             );
           })}
         </div>
       )}
 
+      {/* Exclude countries */}
       {hasSelections && (
-        <div className="country-editor-section">
-          <label className="country-editor-label">
-            <i className="fas fa-minus-circle"></i>
+        <div className="mb-4">
+          <label className="flex items-center gap-1.5 text-sm font-medium text-foreground mb-1">
+            <i className="fas fa-minus-circle text-muted-foreground text-[0.9em]"></i>
             {t('Exclude Countries')}
           </label>
-          <p className="country-editor-hint">
-            {t('Remove specific countries from the selected regions')}
-          </p>
+          <p className="text-xs text-muted-foreground mb-1.5">{t('Remove specific countries from the selected regions')}</p>
           <ReactSelect
             isMulti
             options={countryOptions}
             value={excludedCountries}
             onChange={handleExcludeChange}
             placeholder={t('Select countries to exclude...')}
-            className="country-editor-select"
-            classNamePrefix="country-select"
-            filterOption={(option, inputValue) => {
-              if (!inputValue) return true;
-              const searchLower = inputValue.toLowerCase();
-              return (
-                option.data.country.name.toLowerCase().includes(searchLower) ||
-                option.data.country.code.toLowerCase().includes(searchLower)
-              );
-            }}
-            styles={{
-              control: (base, state) => ({
-                ...base,
-                minHeight: '38px',
-                borderColor: state.isFocused ? '#3b82f6' : '#d1d5db',
-                boxShadow: state.isFocused ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : 'none',
-                '&:hover': { borderColor: '#3b82f6' }
-              }),
-              multiValue: base => ({
-                ...base,
-                backgroundColor: '#fee2e2',
-                borderRadius: '4px'
-              }),
-              multiValueLabel: base => ({
-                ...base,
-                color: '#991b1b',
-                fontWeight: 500
-              }),
-              multiValueRemove: base => ({
-                ...base,
-                color: '#991b1b',
-                '&:hover': {
-                  backgroundColor: '#fecaca',
-                  color: '#7f1d1d'
-                }
-              }),
-              option: (base, state) => ({
-                ...base,
-                backgroundColor: state.isSelected 
-                  ? '#3b82f6' 
-                  : state.isFocused 
-                    ? '#eff6ff' 
-                    : 'white',
-                color: state.isSelected ? 'white' : '#333'
-              })
-            }}
+            filterOption={countryFilter}
+            styles={selectStyles({ bg: '#fee2e2', text: '#991b1b', hoverBg: '#fecaca', hoverText: '#7f1d1d' })}
           />
         </div>
       )}
 
-      <div className="country-editor-preview">
-        <div className="country-preview-header">
-          <span className="country-preview-title">
-            <i className="fas fa-eye"></i>
+      {/* Preview */}
+      <div className="bg-white border border-border rounded-md p-3 mt-4">
+        <div className="flex justify-between items-center mb-2">
+          <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+            <i className="fas fa-eye text-muted-foreground"></i>
             {t('Preview')}
           </span>
-          <span className="country-preview-count">
+          <span className="text-xs text-muted-foreground bg-surface px-2 py-0.5 rounded-full">
             {previewCountries.length === ALL_COUNTRIES.length
               ? t('All countries ({{count}})', { count: previewCountries.length })
               : t('{{count}} countries selected', { count: previewCountries.length })}
           </span>
         </div>
         {previewCountries.length > 0 && previewCountries.length <= 50 && (
-          <div className="country-preview-list">
+          <div className="flex flex-wrap gap-1">
             {previewCountries.map(country => (
-              <span key={country.code} className="country-preview-item" title={country.name}>
-                {country.flag}
-              </span>
+              <span key={country.code} className="text-xl leading-none cursor-default" title={country.name}>{country.flag}</span>
             ))}
           </div>
         )}
         {previewCountries.length > 50 && (
-          <div className="country-preview-overflow">
+          <div className="flex flex-wrap gap-1 items-center">
             {previewCountries.slice(0, 40).map(country => (
-              <span key={country.code} className="country-preview-item" title={country.name}>
-                {country.flag}
-              </span>
+              <span key={country.code} className="text-xl leading-none cursor-default" title={country.name}>{country.flag}</span>
             ))}
-            <span className="country-preview-more">
+            <span className="flex items-center text-xs text-muted-foreground px-2 py-0.5 bg-surface rounded">
               +{previewCountries.length - 40} {t('more')}
             </span>
           </div>
         )}
       </div>
 
-      <div className="country-editor-actions">
-        {hasSelections && (
+      {/* Actions */}
+      {hasSelections && (
+        <div className="flex gap-2 mt-3">
           <button
             type="button"
-            className="country-action-btn country-action-clear"
             onClick={handleClearAll}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted-foreground bg-white border border-border rounded cursor-pointer hover:bg-surface hover:text-foreground transition-colors"
           >
             <i className="fas fa-times"></i>
             {t('Clear selections (include all)')}
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

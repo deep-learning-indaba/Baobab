@@ -12,7 +12,7 @@ describe('FormDate Componenet Tests', () => {
         const wrapper = shallow(<FormDate />);
 
         wrapper.setProps({ id: "123", errorText: "There is an error" })
-        expect(wrapper.exists('.react-datetime-picker.error')).toEqual(true);
+        expect(wrapper.exists('.form-control.is-invalid')).toEqual(true);
     })
 
 });

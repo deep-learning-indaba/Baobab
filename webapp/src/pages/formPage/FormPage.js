@@ -54,7 +54,11 @@ const FormPage = (props) => {
         // Single response mode: show form immediately
         const existingResponse = userResponses.length > 0 ? userResponses[0] : null;
         setCurrentResponse(existingResponse);
-        setView('form');
+        if (existingResponse && existingResponse.is_submitted) {
+          setSubmitSuccess(true);
+        } else {
+          setView('form');
+        }
       } else if (userResponses.length === 0) {
         // Multiple responses allowed, but no responses yet: show form
         setCurrentResponse(null);
@@ -144,6 +148,7 @@ const FormPage = (props) => {
         }
 
         // Success!
+        setCurrentResponse(submitResult.response);
         setSubmitSuccess(true);
         return { success: true, data: submitResult.response };
       }
@@ -313,15 +318,21 @@ const FormPage = (props) => {
     );
   };
 
+  const handleEdit = () => {
+    setSubmitSuccess(false);
+    setView('form');
+  };
+
   // Render success message
   const renderSuccess = () => {
+    const allowEdits = form && form.allow_edits !== false;
     return (
       <div className="w-full max-w-lg mx-auto flex items-center justify-center min-h-[400px] py-12">
         <div className="bg-white rounded-2xl shadow-sm border border-green-200 p-8 text-center space-y-6">
           <i className="fas fa-check-circle text-5xl text-green-500"></i>
           <h2 className="font-heading text-xl font-bold text-foreground">{t('Form Submitted Successfully!')}</h2>
           <p className="text-muted-foreground text-sm">{t('Thank you for your submission.')}</p>
-          
+
           <div className="flex flex-wrap gap-3 justify-center">
             {form && form.multiple_responses && (
               <button
@@ -330,6 +341,15 @@ const FormPage = (props) => {
               >
                 <i className="fas fa-list"></i>
                 {t('View My Responses')}
+              </button>
+            )}
+            {allowEdits && !form.multiple_responses && (
+              <button
+                className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                onClick={handleEdit}
+              >
+                <i className="fas fa-edit"></i>
+                {t('Edit Response')}
               </button>
             )}
             <button

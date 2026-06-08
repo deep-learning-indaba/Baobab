@@ -50,8 +50,18 @@ class FormSelect extends React.Component {
                 : "select-control"
             }
             styles={{
-              // Fixes the overlapping problem of the component
-              menu: provided => ({ ...provided, zIndex: 9999 })
+              menu: provided => ({ ...provided, zIndex: 9999 }),
+              control: (provided, state) => ({
+                ...provided,
+                borderRadius: '1rem',
+                borderColor: state.isFocused ? 'var(--clr-action)' : 'var(--clr-outline-variant)',
+                boxShadow: state.isFocused ? '0 0 0 3px var(--clr-action-glow)' : 'none',
+                fontFamily: 'var(--font-body)',
+                fontSize: '0.9375rem',
+                padding: '0.0625rem 0.125rem',
+                '&:hover': { borderColor: state.isFocused ? 'var(--clr-action)' : 'var(--clr-outline-variant)' }
+              }),
+              menuList: provided => ({ ...provided, borderRadius: '0.75rem' }),
             }}
           />
         </FormGroup>

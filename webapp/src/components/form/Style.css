@@ -21,28 +21,6 @@
   color: var(--clr-primary);
 }
 
-/* ── Date picker ─────────────────────────── */
-.react-datetime-picker {
-  width: 100%;
-}
-
-.react-datetime-picker__wrapper {
-  border: 1px solid var(--clr-outline-variant) !important;
-  border-radius: var(--r-lg) !important;
-  padding: 0.4375rem 0.875rem !important;
-  background: var(--clr-white) !important;
-  font-family: var(--font-body) !important;
-  transition: border-color var(--transition), box-shadow var(--transition) !important;
-}
-
-.react-datetime-picker__wrapper:focus-within {
-  border-color: var(--clr-action) !important;
-  box-shadow: 0 0 0 3px var(--clr-action-glow) !important;
-}
-
-.react-datetime-picker.error .react-datetime-picker__wrapper {
-  border-color: var(--clr-error) !important;
-}
 
 /* ── File upload button ──────────────────── */
 .add-file-btn {

@@ -11,7 +11,6 @@ import FormMultiFile from '../../../components/form/FormMultiFile';
 import FormCountry from '../../../components/form/FormCountry';
 import MarkdownRenderer from '../../../components/MarkdownRenderer';
 import { fileService } from '../../../services/file/file.service';
-import './QuestionRenderer.css';
 
 const QuestionRenderer = ({
   question,
@@ -30,7 +29,6 @@ const QuestionRenderer = ({
 
   const id = `question_${question.id}`;
 
-  // Get translated content
   const getTranslatedField = (field) => {
     if (!question[field]) return null;
     if (typeof question[field] === 'object') {
@@ -43,14 +41,10 @@ const QuestionRenderer = ({
   const description = getTranslatedField('description');
   const placeholder = getTranslatedField('placeholder');
 
-  // Get options for choice-based questions
   const getOptions = () => {
     const optionsData = question.options;
     if (!optionsData) return [];
-
-    // If options is already an array of {value, label}
     if (Array.isArray(optionsData) && optionsData.length > 0 && optionsData[0].value !== undefined) {
-      // This might be the editor format with labels as i18n objects
       if (optionsData[0].labels) {
         return optionsData.map(opt => ({
           value: opt.value,
@@ -59,30 +53,20 @@ const QuestionRenderer = ({
       }
       return optionsData;
     }
-
-    // If options is an i18n object with arrays per language
     if (typeof optionsData === 'object' && !Array.isArray(optionsData)) {
       const langOptions = optionsData[language] || optionsData['en'] || Object.values(optionsData)[0];
-      if (Array.isArray(langOptions)) {
-        return langOptions;
-      }
+      if (Array.isArray(langOptions)) return langOptions;
     }
-
     return [];
   };
 
-  // Handle file upload
   const handleUploadFile = useCallback((file) => {
     setUploading(true);
     setUploadError('');
-
     return fileService.uploadFile(file, (progressEvent) => {
-      const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-      setUploadPercentComplete(percentCompleted);
+      setUploadPercentComplete(Math.round((progressEvent.loaded * 100) / progressEvent.total));
     }).then(response => {
-      if (response.fileId) {
-        onChange(question, JSON.stringify({ filename: response.fileId, rename: file.name }));
-      }
+      if (response.fileId) onChange(question, JSON.stringify({ filename: response.fileId, rename: file.name }));
       setUploaded(response.fileId !== '');
       setUploadError(response.error || '');
       setUploading(false);
@@ -93,35 +77,37 @@ const QuestionRenderer = ({
     });
   }, [question, onChange]);
 
-  // Handle standard input change
   const handleChange = useCallback((event) => {
-    const newValue = event && event.target ? event.target.value : event;
-    onChange(question, newValue);
+    onChange(question, event && event.target ? event.target.value : event);
   }, [question, onChange]);
 
-  // Handle checkbox change
   const handleCheckChange = useCallback((event) => {
-    const newValue = event.target.checked;
-    onChange(question, newValue ? 'true' : 'false');
+    onChange(question, event.target.checked ? 'true' : 'false');
+  }, [question, onChange]);
+
+  const handleDropdownChange = useCallback((name, selected) => {
+    onChange(question, selected ? selected.value : '');
+  }, [question, onChange]);
+
+  const handleCountryChange = useCallback((id, value) => {
+    onChange(question, value || '');
   }, [question, onChange]);
 
   const renderLinkedQuestion = () => {
     if (!question.linked_question_id || !linkedResponse) {
       return (
-        <div className="linked-question-no-data">
+        <div className="px-4 py-3 bg-surface border border-border rounded-md flex items-center gap-2 text-muted-foreground text-sm">
           <i className="fas fa-info-circle"></i>
           <span>{t('No linked response available')}</span>
         </div>
       );
     }
 
-    const linkedAnswer = linkedResponse.answers.find(
-      ans => ans.question_id === question.linked_question_id
-    );
+    const linkedAnswer = linkedResponse.answers.find(ans => ans.question_id === question.linked_question_id);
 
     if (!linkedAnswer || !linkedAnswer.value) {
       return (
-        <div className="linked-question-no-data">
+        <div className="px-4 py-3 bg-surface border border-border rounded-md flex items-center gap-2 text-muted-foreground text-sm">
           <i className="fas fa-info-circle"></i>
           <span>{t('No answer provided in linked form')}</span>
         </div>
@@ -129,259 +115,136 @@ const QuestionRenderer = ({
     }
 
     return (
-      <div className="linked-question-value">
-        <div className="linked-question-label">
+      <div className="p-4 bg-action/5 border border-action/30 rounded-md">
+        <div className="flex items-center gap-2 text-xs font-medium text-action mb-2">
           <i className="fas fa-link"></i>
           <span>{t('Value from linked form:')}</span>
         </div>
-        <div className="linked-question-display">
+        <div className="p-3 bg-white border border-action/20 rounded text-sm text-foreground whitespace-pre-wrap break-words">
           {linkedAnswer.value}
         </div>
       </div>
     );
   };
 
-  // Handle dropdown change
-  const handleDropdownChange = useCallback((name, selected) => {
-    onChange(question, selected ? selected.value : '');
-  }, [question, onChange]);
-
-  // Handle country change
-  const handleCountryChange = useCallback((id, value) => {
-    onChange(question, value || '');
-  }, [question, onChange]);
-
-  // Render the appropriate form control based on question type
   const renderControl = () => {
     const options = getOptions();
-    const questionType = question.type;
     const settings = question.settings || {};
 
-    switch (questionType) {
+    switch (question.type) {
       case 'short-text':
         return (
-          <FormTextBox
-            id={id}
-            name={id}
-            type="text"
-            placeholder={placeholder}
-            onChange={handleChange}
-            value={value || ''}
-            showError={!!validationError}
-            errorText={validationError}
-            isDisabled={disabled}
-          />
+          <FormTextBox id={id} name={id} type="text" placeholder={placeholder} onChange={handleChange}
+            value={value || ''} showError={!!validationError} errorText={validationError} isDisabled={disabled} />
         );
-
       case 'long-text':
       case 'long_text':
         return (
-          <FormTextArea
-            id={id}
-            name={id}
-            placeholder={placeholder}
-            onChange={handleChange}
-            value={value || ''}
-            rows={5}
-            showError={!!validationError}
-            errorText={validationError}
-          />
+          <FormTextArea id={id} name={id} placeholder={placeholder} onChange={handleChange}
+            value={value || ''} rows={5} showError={!!validationError} errorText={validationError} />
         );
-
       case 'markdown':
         return (
-          <FormTextArea
-            id={id}
-            name={id}
-            placeholder={placeholder || t('Markdown supported')}
-            onChange={handleChange}
-            value={value || ''}
-            rows={8}
-            showError={!!validationError}
-            errorText={validationError}
-          />
+          <FormTextArea id={id} name={id} placeholder={placeholder || t('Markdown supported')} onChange={handleChange}
+            value={value || ''} rows={8} showError={!!validationError} errorText={validationError} />
         );
-
       case 'numeric':
       case 'numeric-text':
         return (
-          <FormTextBox
-            id={id}
-            name={id}
-            type="number"
-            placeholder={placeholder}
-            onChange={handleChange}
-            value={value || ''}
-            showError={!!validationError}
-            errorText={validationError}
-            min={settings.min_value}
-            isDisabled={disabled}
-          />
+          <FormTextBox id={id} name={id} type="number" placeholder={placeholder} onChange={handleChange}
+            value={value || ''} showError={!!validationError} errorText={validationError}
+            min={settings.min_value} isDisabled={disabled} />
         );
-
       case 'combobox':
       case 'multi-choice':
         return (
-          <FormSelect
-            id={id}
-            name={id}
-            options={options}
-            placeholder={placeholder || t('Select an option...')}
-            onChange={handleDropdownChange}
-            defaultValue={value || null}
-            showError={!!validationError}
-            errorText={validationError}
-            searchable={options.length > 10}
-          />
+          <FormSelect id={id} name={id} options={options} placeholder={placeholder || t('Select an option...')}
+            onChange={handleDropdownChange} defaultValue={value || null}
+            showError={!!validationError} errorText={validationError} searchable={options.length > 10} />
         );
-
       case 'checkboxes':
       case 'multi-checkbox':
         return (
-          <FormMultiCheckbox
-            id={id}
-            name={id}
-            placeholder={placeholder}
-            options={options}
-            defaultValue={value || ''}
-            onChange={(newValue) => onChange(question, newValue)}
-            showError={!!validationError}
-            errorText={validationError}
-          />
+          <FormMultiCheckbox id={id} name={id} placeholder={placeholder} options={options}
+            defaultValue={value || ''} onChange={(v) => onChange(question, v)}
+            showError={!!validationError} errorText={validationError} />
         );
-
       case 'radio':
       case 'single-choice':
         return (
-          <FormRadio
-            id={id}
-            name={id}
-            options={options}
-            value={value || ''}
-            onChange={(event) => onChange(question, event.target.value)}
-            showError={!!validationError}
-            errorText={validationError}
-          />
+          <FormRadio id={id} name={id} options={options} value={value || ''}
+            onChange={(e) => onChange(question, e.target.value)}
+            showError={!!validationError} errorText={validationError} />
         );
-
       case 'single-checkbox':
         return (
-          <FormCheckbox
-            id={id}
-            name={id}
-            label={description || placeholder}
-            placeholder={placeholder}
-            onChange={handleCheckChange}
-            value={value === 'true' || value === true}
-            showError={!!validationError}
-            errorText={validationError}
-          />
+          <FormCheckbox id={id} name={id} label={description || placeholder} placeholder={placeholder}
+            onChange={handleCheckChange} value={value === 'true' || value === true}
+            showError={!!validationError} errorText={validationError} />
         );
-
       case 'date':
         return (
-          <FormDate
-            id={id}
-            name={id}
-            value={value || ''}
-            placeholder={placeholder}
-            onChange={handleChange}
-            showError={!!validationError}
-            errorText={validationError}
-            required={question.is_required}
-            disabled={disabled}
-          />
+          <FormDate id={id} name={id} value={value || ''} placeholder={placeholder} onChange={handleChange}
+            showError={!!validationError} errorText={validationError} required={question.is_required} disabled={disabled} />
         );
-
       case 'file':
         return (
-          <FormFileUpload
-            id={id}
-            name={id}
-            value={value}
-            showError={!!validationError || !!uploadError}
-            errorText={validationError || uploadError}
-            uploading={uploading}
-            uploadPercentComplete={uploadPercentComplete}
-            uploadFile={handleUploadFile}
-            uploaded={uploaded}
-            options={settings.accepted_extensions ? { accept: settings.accepted_extensions.join(',') } : null}
-          />
+          <FormFileUpload id={id} name={id} value={value} showError={!!validationError || !!uploadError}
+            errorText={validationError || uploadError} uploading={uploading}
+            uploadPercentComplete={uploadPercentComplete} uploadFile={handleUploadFile} uploaded={uploaded}
+            options={settings.accepted_extensions ? { accept: settings.accepted_extensions.join(',') } : null} />
         );
-
       case 'multi-file':
         return (
-          <FormMultiFile
-            id={id}
-            name={id}
-            value={value}
-            onChange={handleChange}
-            uploadFile={handleUploadFile}
-            errorText={validationError || uploadError}
-            placeholder={placeholder}
-            options={settings}
-          />
+          <FormMultiFile id={id} name={id} value={value} onChange={handleChange}
+            uploadFile={handleUploadFile} errorText={validationError || uploadError}
+            placeholder={placeholder} options={settings} />
         );
-
       case 'country':
         return (
-          <FormCountry
-            id={id}
-            name={id}
-            value={value || ''}
-            placeholder={placeholder || t('Select a country...')}
-            onChange={handleCountryChange}
-            options={settings.countryOptions || {}}
-            showError={!!validationError}
-            errorText={validationError}
-          />
+          <FormCountry id={id} name={id} value={value || ''} placeholder={placeholder || t('Select a country...')}
+            onChange={handleCountryChange} options={settings.countryOptions || {}}
+            showError={!!validationError} errorText={validationError} />
         );
-
       case 'information':
       case 'sub-heading':
         return description ? (
-          <div className="question-information">
+          <div className="text-muted-foreground leading-relaxed">
             <MarkdownRenderer source={description} />
           </div>
         ) : null;
-
       case 'linked-form-question':
         return renderLinkedQuestion();
-
       default:
-        return (
-          <p className="text-danger">
-            {t('Unknown question type')}: {questionType}
-          </p>
-        );
+        return <p className="text-error">{t('Unknown question type')}: {question.type}</p>;
     }
   };
 
-  // Don't render headline for information/sub-heading types
   const isDisplayOnly = ['information', 'sub-heading'].includes(question.type);
-  const headlineClass = isDisplayOnly ? 'question-headline display-only' : 'question-headline';
   const shouldShowDescription = description && !isDisplayOnly;
 
   return (
-    <div className={`question-renderer ${validationError ? 'has-error' : ''}`}>
+    <div className={`p-4 bg-surface rounded-md transition-colors text-left hover:bg-surface-low${validationError ? ' bg-error-container/10 border-l-[3px] border-error' : ''}`}>
       {headline && (
-        <div className={headlineClass}>
-          {question.is_required && !isDisplayOnly && (
-            <span className="required-indicator" aria-label={t('Required')}>*</span>
-          )}
+        <div className={isDisplayOnly ? 'mb-2' : 'mb-3'}>
           {isDisplayOnly ? (
-            <h3 className="display-headline">{headline}</h3>
+            <h3 className="text-xl font-semibold text-foreground m-0">{headline}</h3>
           ) : (
-            <h4 className="question-title">{headline}</h4>
+            <h4 className="text-[1.0625rem] font-semibold text-foreground m-0 inline">
+              {question.is_required && (
+                <span className="text-error font-bold mr-1" aria-label={t('Required')}>*</span>
+              )}
+              {headline}
+            </h4>
           )}
         </div>
       )}
       {shouldShowDescription && (
-        <div className="question-description">
+        <div className="text-muted-foreground text-[0.9375rem] leading-relaxed mt-2 mb-3">
           <MarkdownRenderer source={description} />
         </div>
       )}
-      <div className="question-control">
+      <div className="mt-2">
         {renderControl()}
       </div>
     </div>

@@ -117,6 +117,7 @@ export function transformToApiPayload(sections, languages) {
         
         return {
           ...(question.backendId && { id: question.backendId }),
+          ...(!question.backendId && { client_id: question.id }),
           order: question.order,
           type: question.type,
           is_required: question.is_required,

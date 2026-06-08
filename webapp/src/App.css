@@ -562,6 +562,10 @@ button.link-button:hover {
   outline: none;
 }
 
+.form-control.is-invalid {
+  border-color: var(--clr-error);
+}
+
 .form-control:disabled,
 .form-control[readonly] {
   background: var(--clr-surface-low);
