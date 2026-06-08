@@ -10,6 +10,7 @@ from app.events.repository import EventRepository as event_repository
 from app.offer.repository import OfferRepository as offer_repository
 from app.users.repository import UserRepository as user_repository
 from app.registration.repository import RegistrationRepository as registration_repository
+from app.invitedGuest.repository import InvitedGuestRepository as invited_guest_repository
 from app.utils.auth import auth_required
 from app.utils.emailer import email_user
 from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, ATTENDANCE_NOT_FOUND, EVENT_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, INDEMNITY_NOT_FOUND, INDEMNITY_NOT_SIGNED, NOT_A_GUEST
