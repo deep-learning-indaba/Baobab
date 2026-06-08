@@ -95,9 +95,11 @@ class EventConfigComponent extends Component {
 
   stripTimeFromDates = event => {
     const u = {...event}
-    if (u.event_type !== "JOURNAL"){
-      for (let i = 0; i < ALL_DATE_FIELDS.length; i++) {
+    for (let i = 0; i < ALL_DATE_FIELDS.length; i++) {
+      if (u[ALL_DATE_FIELDS[i][0]]) {
         u[ALL_DATE_FIELDS[i][0]] = u[ALL_DATE_FIELDS[i][0]].substring(0, 10);
+      }
+      if (u[ALL_DATE_FIELDS[i][1]]) {
         u[ALL_DATE_FIELDS[i][1]] = u[ALL_DATE_FIELDS[i][1]].substring(0, 10);
       }
     }
@@ -107,9 +109,11 @@ class EventConfigComponent extends Component {
 
   addTimeToDates = event => {
     const u = {...event}
-    if (u.event_type !== "JOURNAL") {
-      for (let i = 0; i < ALL_DATE_FIELDS.length; i++) {
+    for (let i = 0; i < ALL_DATE_FIELDS.length; i++) {
+      if (u[ALL_DATE_FIELDS[i][0]]) {
         u[ALL_DATE_FIELDS[i][0]] = u[ALL_DATE_FIELDS[i][0]].substring(0, 10) + "T00:00:00Z"; //start date
+      }
+      if (u[ALL_DATE_FIELDS[i][1]]) {
         u[ALL_DATE_FIELDS[i][1]] = u[ALL_DATE_FIELDS[i][1]].substring(0, 10) + "T23:59:59Z"; //end date
       }
     }

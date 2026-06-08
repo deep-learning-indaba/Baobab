@@ -14,6 +14,8 @@ from app.invitedGuest.repository import InvitedGuestRepository as invited_guest_
 from app.utils.auth import auth_required
 from app.utils.emailer import email_user
 from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, ATTENDANCE_NOT_FOUND, EVENT_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, INDEMNITY_NOT_FOUND, INDEMNITY_NOT_SIGNED, NOT_A_GUEST
+from app import LOGGER
+
 
 attendance_fields = {
     'id': fields.Integer,
