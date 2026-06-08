@@ -719,6 +719,42 @@ class EventAPITest(ApiTestCase):
         self.assertEqual(data['registration_open'], None)
         self.assertEqual(data['registration_close'], None)
         
+    def test_put_event_journal_naive_date(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for(self.test_admin_user.email)
+        self.test_journal_data_dict['id'] = 2
+        self.test_journal_data_dict['name'] = {'en': 'Test Journal'}
+        self.test_journal_data_dict['description'] = {'en': 'Test Journal Description'}
+        self.test_journal_data_dict['start_date'] = '2099-12-31T00:00:00'
+        self.test_journal_data_dict['end_date'] = '2099-12-31T00:00:00'
+        self.test_journal_data_dict['application_open'] = '2000-12-31T00:00:00'
+        self.test_journal_data_dict['application_close'] = '2099-12-31T00:00:00'
+        self.test_journal_data_dict['review_open'] = '2099-12-31T00:00:00'
+        self.test_journal_data_dict['review_close'] = '2099-12-31T00:00:00'
+        self.test_journal_data_dict['selection_open'] = '2099-12-31T00:00:00'
+        self.test_journal_data_dict['selection_close'] = '2099-12-31T00:00:00'
+        self.test_journal_data_dict['offer_open'] = '2099-12-31T00:00:00'
+        self.test_journal_data_dict['offer_close'] = '2099-12-31T00:00:00'
+        self.test_journal_data_dict['registration_open'] = '2099-12-31T00:00:00'
+        self.test_journal_data_dict['registration_close'] = '2099-12-31T00:00:00'
+        
+        response = self.app.post(
+            'api/v1/event',
+            headers=header, 
+            data=json.dumps(self.test_journal_data_dict),
+            content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        
+        self.test_journal_data_dict['name'] = {'en': 'Updated Test Journal'}
+        response = self.app.put(
+            'api/v1/event',
+            headers=header,
+            data=json.dumps(self.test_journal_data_dict),
+            content_type='application/json')
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data['name']['en'], 'Updated Test Journal')
+        
     def test_put_event_missing_date(self):
         self.seed_static_data()
         header = self.get_auth_header_for(self.test_admin_user.email)

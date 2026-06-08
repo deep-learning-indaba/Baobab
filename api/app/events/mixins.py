@@ -3,8 +3,17 @@ from datetime import datetime
 from flask_restful import reqparse
 
 
+def parse_iso8601(x):
+    for fmt in ('%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d'):
+        try:
+            return datetime.strptime(x, fmt)
+        except ValueError:
+            pass
+    raise ValueError("time data '{}' does not match format '%Y-%m-%dT%H:%M:%SZ'".format(x))
+
+
 class EventMixin(object):
-    dt_format = lambda x: datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ')
+    dt_format = parse_iso8601
 
     req_parser = reqparse.RequestParser()
     req_parser.add_argument('id', type=int, required=False)
