@@ -778,7 +778,6 @@
     "Un-withdraw": "Un-withdraw",
     "Un-submit": "Un-submit",
     "No reviewers assigned.": "No reviewers assigned.",
-    "Assign Reviewer": "Assign Reviewer",
     "Reviewer email": "Reviewer email",
     "Assigning...": "Assigning...",
     "Reviewer assigned successfully.": "Reviewer assigned successfully.",
@@ -789,5 +788,18 @@
     "No files uploaded": "No files uploaded",
     "Show withdrawn only": "Show withdrawn only",
     "{{count}} total": "{{count}} total",
-    "Back": "Back"
+    "Back": "Back",
+    "Programme Editor": "Programme Editor",
+    "Comms Officer": "Comms Officer",
+    "Event App": "Event App",
+    "Home": "Home",
+    "Announcements": "Announcements",
+    "Event Timezone": "Event Timezone",
+    "IANA timezone (e.g. UTC, Africa/Nairobi)": "IANA timezone (e.g. UTC, Africa/Nairobi)",
+    "Check-in Mode": "Check-in Mode",
+    "Per event": "Per event",
+    "Daily": "Daily",
+    "Resources": "Resources",
+    "Programme coming soon.": "Programme coming soon.",
+    "Announcements coming soon.": "Announcements coming soon."
 }

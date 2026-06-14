@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { NavLink } from 'react-router-dom';
 import { withTranslation } from 'react-i18next';
-import { isEventAdmin, isRegistrationAdmin, isRegistrationVolunteer, isEventReviewer } from '../utils/user';
+import { isEventAdmin, isRegistrationAdmin, isRegistrationVolunteer, isEventReviewer, isProgrammeEditor, isCommsOfficer } from '../utils/user';
 
 class EventNav extends Component {
   render() {
@@ -104,6 +104,18 @@ class EventNav extends Component {
           <SidebarSection title={t('Reviews')}>
             <SidebarLink to={`/${this.props.eventKey}/reviewlist`} label={t('Review')} />
             <SidebarLink to={`/${this.props.eventKey}/reviewHistory`} label={t('Review History')} />
+          </SidebarSection>
+        )}
+
+        {this.props.isConfirmedGuest && this.props.event && (
+          <SidebarSection title={t('Event App')}>
+            <SidebarLink to={`/${this.props.eventKey}/event-app`} label={t('Home')} />
+            {isProgrammeEditor(this.props.user, this.props.event) && (
+              <SidebarLink to={`/${this.props.eventKey}/event-app/programme`} label={t('Programme')} />
+            )}
+            {isCommsOfficer(this.props.user, this.props.event) && (
+              <SidebarLink to={`/${this.props.eventKey}/event-app/announcements`} label={t('Announcements')} />
+            )}
           </SidebarSection>
         )}
 

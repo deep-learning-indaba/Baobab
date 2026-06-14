@@ -26,6 +26,7 @@ import OfferAdmin from "../offerAdmin";
 import { InvoiceAdminList } from "../invoices";
 import EventStatus from "../../components/EventStatus";
 import { isEventAdmin } from "../../utils/user";
+import { attendanceService } from '../../services/attendance';
 import ResponseList from "../ResponseList/ResponseList";
 import ResponsePage from "../ResponsePage/ResponsePage";
 import ReviewDashboard from "../reviewDashboard";
@@ -38,6 +39,7 @@ import FormResponseDetail from "../formResponseDetail";
 import ApplicationFormResponsePage from "../applicationFormResponse";
 import FormConfigPage from "../formConfig";
 import { Card } from '../../components/ui/card';
+import { EventAppHome, EventAppProgramme, EventAppAnnouncements } from '../eventApp';
 
 class EventInfo extends Component {
   constructor(props) {
@@ -85,6 +87,7 @@ class EventHome extends Component {
       error: null,
       isLoading: true,
       sidebarOpen: false,
+      isConfirmedGuest: false,
     };
   }
 
@@ -105,8 +108,20 @@ class EventHome extends Component {
         },
         () => {
           this.props.setEvent(eventKey, this.state.event);
+          if (this.state.event) {
+            this.loadConfirmedGuest(this.state.event.id);
+          }
         }
       );
+    });
+  };
+
+  loadConfirmedGuest = (eventId) => {
+    if (!this.props.user || !eventId) {
+      return;
+    }
+    attendanceService.isConfirmedGuest(eventId).then(result => {
+      this.setState({ isConfirmedGuest: result.isConfirmedGuest });
     });
   };
 
@@ -184,6 +199,7 @@ class EventHome extends Component {
             user={this.props.user}
             organisation={organisation}
             onClose={closeSidebar}
+            isConfirmedGuest={this.state.isConfirmedGuest}
           />
         </div>
 
@@ -440,6 +456,39 @@ class EventHome extends Component {
           path={`${match.path}/forms/:formId`}
           render={(props) => (
             <FormPage
+              {...props}
+              event={event}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/event-app`}
+          render={(props) => (
+            <EventAppHome
+              {...props}
+              event={event}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/event-app/programme`}
+          render={(props) => (
+            <EventAppProgramme
+              {...props}
+              event={event}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/event-app/announcements`}
+          render={(props) => (
+            <EventAppAnnouncements
               {...props}
               event={event}
               user={this.props.user}

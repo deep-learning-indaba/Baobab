@@ -4,7 +4,7 @@ from app.invitedGuest.models import InvitedGuest
 from app.invoice.models import InvoicePaymentStatus, OfferInvoice, PaymentStatus
 from app.offer.models import Offer
 from app.users.models import AppUser
-from sqlalchemy import and_, case
+from sqlalchemy import and_, case, or_, exists
 from sqlalchemy.sql import func
 from sqlalchemy.dialects import postgresql
 
@@ -137,6 +137,40 @@ class AttendanceRepository():
         return query.all()
 
 
+
+    @staticmethod
+    def is_confirmed_guest(event_id, user_id):
+        is_invited = db.session.query(
+            exists().where(
+                and_(
+                    InvitedGuest.event_id == event_id,
+                    InvitedGuest.user_id == user_id,
+                )
+            )
+        ).scalar()
+
+        if is_invited:
+            return True
+
+        return db.session.query(
+            exists().where(
+                and_(
+                    Offer.event_id == event_id,
+                    Offer.user_id == user_id,
+                    Offer.candidate_response == True,
+                    or_(
+                        Offer.payment_required == False,
+                        exists().where(
+                            and_(
+                                OfferInvoice.offer_id == Offer.id,
+                                OfferInvoice.invoice_id == InvoicePaymentStatus.invoice_id,
+                                InvoicePaymentStatus.payment_status == PaymentStatus.PAID.value,
+                            )
+                        )
+                    )
+                )
+            )
+        ).scalar()
 
     @staticmethod
     def get_confirmed_attendees(event_id):

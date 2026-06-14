@@ -318,6 +318,10 @@ class Event(db.Model):
     def is_event_opening(self):
         return check_opening(self.start_date)
 
+    @property
+    def is_daily_checkin(self):
+        return self.checkin_mode == 'daily'
+
     def remove_event_role(self, role_id):
         event_role = [role for role in self.event_roles if role.id == role_id]
         event_role = event_role[0] if event_role else None
@@ -411,3 +415,30 @@ class EventFee(db.Model):
         self.is_active = False
         self.updated_at = datetime.now()
         self.updated_by_user_id = updated_by_user_id
+
+
+class EventResourceLink(db.Model):
+    __tablename__ = 'event_resource_link'
+    id = db.Column(db.Integer(), primary_key=True)
+    event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
+    title_en = db.Column(db.String(160), nullable=False)
+    title_fr = db.Column(db.String(160), nullable=True)
+    url = db.Column(db.String(1024), nullable=False)
+    category = db.Column(db.String(40), nullable=True)
+    icon = db.Column(db.String(40), nullable=True)
+    sort_order = db.Column(db.Integer(), nullable=False, default=0)
+    created_at = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow)
+
+    def __init__(self, event_id, title_en, url, title_fr=None, category=None, icon=None, sort_order=0):
+        self.event_id = event_id
+        self.title_en = title_en
+        self.title_fr = title_fr
+        self.url = url
+        self.category = category
+        self.icon = icon
+        self.sort_order = sort_order
+
+    def get_title(self, language):
+        if language == 'fr' and self.title_fr:
+            return self.title_fr
+        return self.title_en

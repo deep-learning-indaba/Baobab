@@ -64,7 +64,9 @@ class EventConfigComponent extends Component {
       travel_grant: "",
       miniconf_url: "",
       contact_email: "",
-      image: ""
+      image: "",
+      timezone: "UTC",
+      checkin_mode: "per_event"
     }
 
     this.state = {
@@ -72,7 +74,7 @@ class EventConfigComponent extends Component {
       isNewEvent: this.props.event && this.props.event.id ? false : true,
       isMultiLingual: this.props.organisation.languages.length > 1,
       allFieldsComplete: false,
-      optionalFields: ["miniconf_url", "contact_email", "image"],
+      optionalFields: ["miniconf_url", "contact_email", "image", "timezone", "checkin_mode"],
       requiredDateFields: [],
       isValid: false,
       loading: false,
@@ -579,6 +581,115 @@ class EventConfigComponent extends Component {
                   required={true}
                   onChange={e => this.updateEventTextField("url", e)}
                 />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-foreground/90" htmlFor="timezone">
+                  {t("Event Timezone")}
+                </label>
+                <FormSelect
+                  id="timezone"
+                  name="timezone"
+                  defaultValue={updatedEvent.timezone || "UTC"}
+                  onChange={this.updateEventDropDown}
+                  options={[
+                    { value: "Pacific/Honolulu", label: "(GMT-10) Pacific/Honolulu" },
+                    { value: "America/Anchorage", label: "(GMT-9) America/Anchorage" },
+                    { value: "America/Los_Angeles", label: "(GMT-8) America/Los_Angeles" },
+                    { value: "America/Vancouver", label: "(GMT-8) America/Vancouver" },
+                    { value: "America/Denver", label: "(GMT-7) America/Denver" },
+                    { value: "America/Chicago", label: "(GMT-6) America/Chicago" },
+                    { value: "America/Mexico_City", label: "(GMT-6) America/Mexico_City" },
+                    { value: "America/Bogota", label: "(GMT-5) America/Bogota" },
+                    { value: "America/New_York", label: "(GMT-5) America/New_York" },
+                    { value: "America/Toronto", label: "(GMT-5) America/Toronto" },
+                    { value: "America/Halifax", label: "(GMT-4) America/Halifax" },
+                    { value: "America/Argentina/Buenos_Aires", label: "(GMT-3) America/Buenos_Aires" },
+                    { value: "America/Sao_Paulo", label: "(GMT-3) America/Sao_Paulo" },
+                    { value: "UTC", label: "(GMT+0) UTC" },
+                    { value: "Africa/Abidjan", label: "(GMT+0) Africa/Abidjan" },
+                    { value: "Africa/Accra", label: "(GMT+0) Africa/Accra" },
+                    { value: "Atlantic/Reykjavik", label: "(GMT+0) Atlantic/Reykjavik" },
+                    { value: "Europe/Dublin", label: "(GMT+0) Europe/Dublin" },
+                    { value: "Europe/Lisbon", label: "(GMT+0) Europe/Lisbon" },
+                    { value: "Europe/London", label: "(GMT+0) Europe/London" },
+                    { value: "Africa/Casablanca", label: "(GMT+1) Africa/Casablanca" },
+                    { value: "Africa/Lagos", label: "(GMT+1) Africa/Lagos" },
+                    { value: "Africa/Tunis", label: "(GMT+1) Africa/Tunis" },
+                    { value: "Europe/Amsterdam", label: "(GMT+1) Europe/Amsterdam" },
+                    { value: "Europe/Berlin", label: "(GMT+1) Europe/Berlin" },
+                    { value: "Europe/Brussels", label: "(GMT+1) Europe/Brussels" },
+                    { value: "Europe/Budapest", label: "(GMT+1) Europe/Budapest" },
+                    { value: "Europe/Madrid", label: "(GMT+1) Europe/Madrid" },
+                    { value: "Europe/Oslo", label: "(GMT+1) Europe/Oslo" },
+                    { value: "Europe/Paris", label: "(GMT+1) Europe/Paris" },
+                    { value: "Europe/Prague", label: "(GMT+1) Europe/Prague" },
+                    { value: "Europe/Rome", label: "(GMT+1) Europe/Rome" },
+                    { value: "Europe/Stockholm", label: "(GMT+1) Europe/Stockholm" },
+                    { value: "Europe/Warsaw", label: "(GMT+1) Europe/Warsaw" },
+                    { value: "Europe/Zurich", label: "(GMT+1) Europe/Zurich" },
+                    { value: "Africa/Cairo", label: "(GMT+2) Africa/Cairo" },
+                    { value: "Africa/Johannesburg", label: "(GMT+2) Africa/Johannesburg" },
+                    { value: "Europe/Athens", label: "(GMT+2) Europe/Athens" },
+                    { value: "Europe/Helsinki", label: "(GMT+2) Europe/Helsinki" },
+                    { value: "Africa/Addis_Ababa", label: "(GMT+3) Africa/Addis_Ababa" },
+                    { value: "Africa/Kampala", label: "(GMT+3) Africa/Kampala" },
+                    { value: "Africa/Nairobi", label: "(GMT+3) Africa/Nairobi" },
+                    { value: "Europe/Istanbul", label: "(GMT+3) Europe/Istanbul" },
+                    { value: "Europe/Moscow", label: "(GMT+3) Europe/Moscow" },
+                    { value: "Asia/Tehran", label: "(GMT+3:30) Asia/Tehran" },
+                    { value: "Asia/Dubai", label: "(GMT+4) Asia/Dubai" },
+                    { value: "Asia/Karachi", label: "(GMT+5) Asia/Karachi" },
+                    { value: "Asia/Tashkent", label: "(GMT+5) Asia/Tashkent" },
+                    { value: "Asia/Colombo", label: "(GMT+5:30) Asia/Colombo" },
+                    { value: "Asia/Kolkata", label: "(GMT+5:30) Asia/Kolkata" },
+                    { value: "Asia/Bangkok", label: "(GMT+7) Asia/Bangkok" },
+                    { value: "Asia/Jakarta", label: "(GMT+7) Asia/Jakarta" },
+                    { value: "Asia/Hong_Kong", label: "(GMT+8) Asia/Hong_Kong" },
+                    { value: "Asia/Kuala_Lumpur", label: "(GMT+8) Asia/Kuala_Lumpur" },
+                    { value: "Asia/Shanghai", label: "(GMT+8) Asia/Shanghai" },
+                    { value: "Asia/Singapore", label: "(GMT+8) Asia/Singapore" },
+                    { value: "Australia/Perth", label: "(GMT+8) Australia/Perth" },
+                    { value: "Asia/Seoul", label: "(GMT+9) Asia/Seoul" },
+                    { value: "Asia/Tokyo", label: "(GMT+9) Asia/Tokyo" },
+                    { value: "Australia/Adelaide", label: "(GMT+9:30) Australia/Adelaide" },
+                    { value: "Australia/Brisbane", label: "(GMT+10) Australia/Brisbane" },
+                    { value: "Australia/Melbourne", label: "(GMT+10) Australia/Melbourne" },
+                    { value: "Australia/Sydney", label: "(GMT+10) Australia/Sydney" },
+                    { value: "Pacific/Auckland", label: "(GMT+12) Pacific/Auckland" },
+                    { value: "Pacific/Fiji", label: "(GMT+12) Pacific/Fiji" },
+                  ]}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-foreground/90">
+                  {t("Check-in Mode")}
+                </label>
+                <div className="flex items-center gap-6 pt-1">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="radio"
+                      name="checkin_mode"
+                      value="per_event"
+                      checked={updatedEvent.checkin_mode === "per_event"}
+                      onChange={e => this.updateEventTextField("checkin_mode", e)}
+                    />
+                    {t("Per event")}
+                  </label>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="radio"
+                      name="checkin_mode"
+                      value="daily"
+                      checked={updatedEvent.checkin_mode === "daily"}
+                      onChange={e => this.updateEventTextField("checkin_mode", e)}
+                    />
+                    {t("Daily")}
+                  </label>
+                </div>
               </div>
             </div>
 

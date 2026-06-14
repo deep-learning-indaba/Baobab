@@ -292,6 +292,18 @@ class GuestListApi(restful.Resource):
         return guest_list_with_status
 
 
+class ConfirmedGuestAPI(restful.Resource):
+    @auth_required
+    def get(self):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
+        args = req_parser.parse_args()
+        event_id = args['event_id']
+        user_id = g.current_user['id']
+        is_guest = attendance_repository.is_confirmed_guest(event_id, user_id)
+        return {'is_confirmed_guest': is_guest}
+
+
 class AttendeesApi(restful.Resource):
     @auth_required
     def get(self):

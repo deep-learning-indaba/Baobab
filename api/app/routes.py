@@ -144,6 +144,7 @@ rest_api.add_resource(invoice_api.InvoicePaymentStatusApi, '/api/v1/invoice-paym
 rest_api.add_resource(invoice_api.PaymentsAPI, '/api/v1/payment')
 rest_api.add_resource(invoice_api.PaymentsWebhookAPI, '/api/v1/stripe-webhook')
 rest_api.add_resource(attendance_api.GuestListApi, '/api/v1/guestlist')
+rest_api.add_resource(attendance_api.ConfirmedGuestAPI, '/api/v1/confirmed-guest')
 rest_api.add_resource(attendance_api.IndemnityAPI, '/api/v1/indemnity')
 rest_api.add_resource(offer_api.OfferListAPI, '/api/v1/offerlist')
 rest_api.add_resource(reporting_api.ApplicationResponseReportAPI, '/api/v1/reporting/applications')
@@ -152,6 +153,7 @@ rest_api.add_resource(reporting_api.RegistrationsReportAPI, '/api/v1/reporting/r
 rest_api.add_resource(reviews_api.ReviewerTagAPI, '/api/v1/reviewertag')
 rest_api.add_resource(offer_api.OfferAdminAPI, '/api/v1/offerAdmin')
 rest_api.add_resource(events_api.EventRoleAPI, '/api/v1/event-roles')
+rest_api.add_resource(events_api.EventResourceLinkAPI, '/api/v1/event-resource-links')
 rest_api.add_resource(invitation_letter_api.InvitationLetterAvailableAPI, '/api/v1/invitation-letter/available')
 # Generic Form System Routes
 rest_api.add_resource(forms_api.FormListAPI, '/api/v1/forms')

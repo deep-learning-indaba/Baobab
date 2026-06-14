@@ -137,6 +137,8 @@ class EventRoleAdminComponent extends Component {
                             <option value="registration-admin">{this.props.t("Registration Admin")}</option>
                             <option value="registration-volunteer">{this.props.t("Registration Volunteer")}</option>
                             <option value="treasurer">{this.props.t("Event Treasurer")}</option>
+                            <option value="programme-editor">{this.props.t("Programme Editor")}</option>
+                            <option value="comms-officer">{this.props.t("Comms Officer")}</option>
                         </select>
                     </div>
                     <div className="pt-2">

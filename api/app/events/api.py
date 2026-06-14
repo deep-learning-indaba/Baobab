@@ -7,7 +7,7 @@ from flask_restful import reqparse, fields, marshal_with, marshal
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.email_template.repository import EmailRepository as email_repository
-from app.events.models import Event, EventRole, EventFee
+from app.events.models import Event, EventRole, EventFee, EventResourceLink
 from app.events.mixins import EventsMixin, EventsKeyMixin, EventMixin, EventFeeMixin, EventRoleMixin
 from app.users.models import AppUser
 from app.users.repository import UserRepository as user_repository
@@ -19,6 +19,7 @@ from app.registration.repository import RegistrationRepository as registration_r
 from app.guestRegistrations.repository import GuestRegistrationRepository as guest_registration_repository
 
 from app import db, bcrypt, LOGGER
+import pytz
 from app.utils.errors import (
     EVENT_NOT_FOUND,
     EVENT_FEE_NOT_FOUND,
@@ -32,7 +33,10 @@ from app.utils.errors import (
     EVENT_MUST_HAVE_DATES,
     EVENT_ROLE_NOT_FOUND,
     USER_NOT_FOUND,
-    EVENT_ROLE_ALREADY_EXISTS
+    EVENT_ROLE_ALREADY_EXISTS,
+    INVALID_TIMEZONE,
+    INVALID_CHECKIN_MODE,
+    EVENT_RESOURCE_LINK_NOT_FOUND
 )
 
 from app.utils.auth import auth_optional, auth_required, event_admin_required
@@ -102,7 +106,9 @@ def event_info(user_id, event, status, language):
         "miniconf_url": event.miniconf_url,
         'registration_form_id': new_reg_form.id if new_reg_form else None,
         'application_form_id': new_app_form.id if new_app_form else None,
-        'review_form_id': new_review_form.id if new_review_form else None
+        'review_form_id': new_review_form.id if new_review_form else None,
+        'timezone': event.timezone,
+        'checkin_mode': event.checkin_mode
     }
 
 
@@ -131,7 +137,9 @@ event_fields = {
     'travel_grant': fields.Boolean,
     'miniconf_url': fields.String,
     'contact_email': fields.String,
-    'image': fields.String
+    'image': fields.String,
+    'timezone': fields.String,
+    'checkin_mode': fields.String
 }
 
 
@@ -194,7 +202,9 @@ def make_journal_event(
     travel_grant,
     miniconf_url=None,
     contact_email=None,
-    image=None):
+    image=None,
+    timezone='UTC',
+    checkin_mode='per_event'):
     return Event(
                 names=names,
                 descriptions=descriptions,
@@ -218,7 +228,9 @@ def make_journal_event(
                 travel_grant=travel_grant,
                 miniconf_url=miniconf_url,
                 contact_email=contact_email,
-                image=image
+                image=image,
+                timezone=timezone,
+                checkin_mode=checkin_mode
     )
 
 def update_journal_event(
@@ -234,7 +246,9 @@ def update_journal_event(
     travel_grant,
     miniconf_url=None,
     contact_email=None,
-    image=None):
+    image=None,
+    timezone='UTC',
+    checkin_mode='per_event'):
     return event.update(
                 names=names,
                 descriptions=descriptions,
@@ -258,7 +272,9 @@ def update_journal_event(
                 travel_grant=travel_grant,
                 miniconf_url=miniconf_url,
                 contact_email=contact_email,
-                image=image
+                image=image,
+                timezone=timezone,
+                checkin_mode=checkin_mode
     )
   
 class EventAPI(EventMixin, restful.Resource):
@@ -281,7 +297,14 @@ class EventAPI(EventMixin, restful.Resource):
 
         if event_repository.exists_by_key(args['key']):
             return EVENT_KEY_IN_USE
-        
+
+        timezone = args['timezone'] or 'UTC'
+        if timezone not in pytz.all_timezones_set:
+            return INVALID_TIMEZONE
+        checkin_mode = args['checkin_mode'] or 'per_event'
+        if checkin_mode not in ('per_event', 'daily'):
+            return INVALID_CHECKIN_MODE
+
         if len(args['name']) == 0 or len(args['description']) == 0:
             return EVENT_MUST_CONTAIN_TRANSLATION
         
@@ -314,7 +337,9 @@ class EventAPI(EventMixin, restful.Resource):
                 args['travel_grant'],
                 args['miniconf_url'],
                 args['contact_email'],
-                args['image']
+                args['image'],
+                timezone=timezone,
+                checkin_mode=checkin_mode
             )
 
         else:
@@ -341,7 +366,9 @@ class EventAPI(EventMixin, restful.Resource):
                 args['travel_grant'],
                 args['miniconf_url'],
                 args['contact_email'],
-                args['image']
+                args['image'],
+                timezone=timezone,
+                checkin_mode=checkin_mode
             )
 
         event.add_event_role('admin', user_id)
@@ -372,6 +399,13 @@ class EventAPI(EventMixin, restful.Resource):
         if not current_user.is_event_admin(event.id):
             return FORBIDDEN
 
+        timezone = args['timezone'] or 'UTC'
+        if timezone not in pytz.all_timezones_set:
+            return INVALID_TIMEZONE
+        checkin_mode = args['checkin_mode'] or 'per_event'
+        if checkin_mode not in ('per_event', 'daily'):
+            return INVALID_CHECKIN_MODE
+
         if (not (args['end_date'] and
             args['application_open'] and
             args['application_close'] and
@@ -399,7 +433,9 @@ class EventAPI(EventMixin, restful.Resource):
                 args['travel_grant'],
                 args['miniconf_url'],
                 args['contact_email'],
-                args['image']
+                args['image'],
+                timezone=timezone,
+                checkin_mode=checkin_mode
             )
         else:
             event.update(
@@ -425,7 +461,9 @@ class EventAPI(EventMixin, restful.Resource):
                 args['travel_grant'],
                 args['miniconf_url'],
                 args['contact_email'],
-                args['image']
+                args['image'],
+                timezone=timezone,
+                checkin_mode=checkin_mode
             )
         db.session.commit()
 
@@ -778,4 +816,146 @@ class EventRoleAPI(EventRoleMixin, restful.Resource):
         if not removed:
             return EVENT_ROLE_NOT_FOUND
         
+        return {}, 200
+
+
+event_resource_link_fields = {
+    'id': fields.Integer,
+    'event_id': fields.Integer,
+    'title': fields.String,
+    'title_en': fields.String,
+    'title_fr': fields.String,
+    'url': fields.String,
+    'category': fields.String,
+    'icon': fields.String,
+    'sort_order': fields.Integer,
+}
+
+
+class EventResourceLinkAPI(restful.Resource):
+
+    resource_get_parser = reqparse.RequestParser()
+    resource_get_parser.add_argument('event_id', type=int, required=True, location='args')
+    resource_get_parser.add_argument('language', type=str, required=False, location='args')
+
+    resource_post_parser = reqparse.RequestParser()
+    resource_post_parser.add_argument('event_id', type=int, required=True)
+    resource_post_parser.add_argument('title_en', type=str, required=True)
+    resource_post_parser.add_argument('title_fr', type=str, required=False)
+    resource_post_parser.add_argument('url', type=str, required=True)
+    resource_post_parser.add_argument('category', type=str, required=False)
+    resource_post_parser.add_argument('icon', type=str, required=False)
+    resource_post_parser.add_argument('sort_order', type=int, required=False)
+
+    resource_put_parser = reqparse.RequestParser()
+    resource_put_parser.add_argument('id', type=int, required=True)
+    resource_put_parser.add_argument('event_id', type=int, required=True)
+    resource_put_parser.add_argument('title_en', type=str, required=True)
+    resource_put_parser.add_argument('title_fr', type=str, required=False)
+    resource_put_parser.add_argument('url', type=str, required=True)
+    resource_put_parser.add_argument('category', type=str, required=False)
+    resource_put_parser.add_argument('icon', type=str, required=False)
+    resource_put_parser.add_argument('sort_order', type=int, required=False)
+
+    resource_delete_parser = reqparse.RequestParser()
+    resource_delete_parser.add_argument('id', type=int, required=True, location='args')
+    resource_delete_parser.add_argument('event_id', type=int, required=True, location='args')
+
+    @auth_optional
+    def get(self):
+        args = self.resource_get_parser.parse_args()
+        language = args['language'] or 'en'
+        links = db.session.query(EventResourceLink).filter_by(
+            event_id=args['event_id']
+        ).order_by(EventResourceLink.sort_order).all()
+        result = []
+        for link in links:
+            result.append({
+                'id': link.id,
+                'event_id': link.event_id,
+                'title': link.get_title(language),
+                'title_en': link.title_en,
+                'title_fr': link.title_fr,
+                'url': link.url,
+                'category': link.category,
+                'icon': link.icon,
+                'sort_order': link.sort_order,
+            })
+        return result, 200
+
+    @auth_required
+    def post(self):
+        args = self.resource_post_parser.parse_args()
+        user_id = g.current_user['id']
+        current_user = user_repository.get_by_id(user_id)
+        if not current_user.is_event_admin(args['event_id']):
+            return FORBIDDEN
+        link = EventResourceLink(
+            event_id=args['event_id'],
+            title_en=args['title_en'],
+            url=args['url'],
+            title_fr=args['title_fr'],
+            category=args['category'],
+            icon=args['icon'],
+            sort_order=args['sort_order'] or 0
+        )
+        db.session.add(link)
+        db.session.commit()
+        return {
+            'id': link.id,
+            'event_id': link.event_id,
+            'title': link.title_en,
+            'title_en': link.title_en,
+            'title_fr': link.title_fr,
+            'url': link.url,
+            'category': link.category,
+            'icon': link.icon,
+            'sort_order': link.sort_order,
+        }, 201
+
+    @auth_required
+    def put(self):
+        args = self.resource_put_parser.parse_args()
+        user_id = g.current_user['id']
+        current_user = user_repository.get_by_id(user_id)
+        if not current_user.is_event_admin(args['event_id']):
+            return FORBIDDEN
+        link = db.session.query(EventResourceLink).filter_by(
+            id=args['id'], event_id=args['event_id']
+        ).first()
+        if not link:
+            return EVENT_RESOURCE_LINK_NOT_FOUND
+        link.title_en = args['title_en']
+        link.title_fr = args['title_fr']
+        link.url = args['url']
+        link.category = args['category']
+        link.icon = args['icon']
+        link.sort_order = args['sort_order'] if args['sort_order'] is not None else link.sort_order
+        db.session.commit()
+        return {
+            'id': link.id,
+            'event_id': link.event_id,
+            'title': link.title_en,
+            'title_en': link.title_en,
+            'title_fr': link.title_fr,
+            'url': link.url,
+            'category': link.category,
+            'icon': link.icon,
+            'sort_order': link.sort_order,
+        }, 200
+
+    @auth_required
+    def delete(self):
+        args = self.resource_delete_parser.parse_args()
+        user_id = g.current_user['id']
+        current_user = user_repository.get_by_id(user_id)
+        if not current_user.is_event_admin(args['event_id']):
+            return FORBIDDEN
+        link = db.session.query(EventResourceLink).filter_by(
+            id=args['id'], event_id=args['event_id']
+        ).first()
+        if not link:
+            return EVENT_RESOURCE_LINK_NOT_FOUND
+        db.session.delete(link)
+        db.session.commit()
         return {}, 200

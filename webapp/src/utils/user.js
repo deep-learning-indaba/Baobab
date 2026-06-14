@@ -56,3 +56,35 @@ export const isEventAdmin = (user, event) => {
       )
     );
   };
+
+  export const isProgrammeEditor = (user, event) => {
+    if (!user) {
+      return false;
+    }
+    return (
+      user.is_admin ||
+      (user.roles &&
+        user.roles.some(
+          r =>
+            (r.role === "admin" || r.role === "programme-editor") &&
+            event &&
+            r.event_id === event.id
+        ))
+    );
+  };
+
+  export const isCommsOfficer = (user, event) => {
+    if (!user) {
+      return false;
+    }
+    return (
+      user.is_admin ||
+      (user.roles &&
+        user.roles.some(
+          r =>
+            (r.role === "admin" || r.role === "comms-officer") &&
+            event &&
+            r.event_id === event.id
+        ))
+    );
+  };

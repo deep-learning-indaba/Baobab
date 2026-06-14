@@ -777,7 +777,6 @@
     "Un-withdraw": "Annuler le retrait",
     "Un-submit": "Annuler la soumission",
     "No reviewers assigned.": "Aucun évaluateur assigné.",
-    "Assign Reviewer": "Assigner un évaluateur",
     "Reviewer email": "Email de l'évaluateur",
     "Assigning...": "Assignation en cours...",
     "Reviewer assigned successfully.": "Évaluateur assigné avec succès.",
@@ -788,5 +787,18 @@
     "No files uploaded": "Aucun fichier téléchargé",
     "Show withdrawn only": "Afficher uniquement les retraits",
     "{{count}} total": "{{count}} au total",
-    "Back": "Retour"
+    "Back": "Retour",
+    "Programme Editor": "Éditeur de programme",
+    "Comms Officer": "Responsable communication",
+    "Event App": "Application événement",
+    "Home": "Accueil",
+    "Announcements": "Annonces",
+    "Event Timezone": "Fuseau horaire de l'événement",
+    "IANA timezone (e.g. UTC, Africa/Nairobi)": "Fuseau horaire IANA (ex. UTC, Africa/Nairobi)",
+    "Check-in Mode": "Mode d'enregistrement",
+    "Per event": "Par événement",
+    "Daily": "Quotidien",
+    "Resources": "Ressources",
+    "Programme coming soon.": "Programme bientôt disponible.",
+    "Announcements coming soon.": "Annonces bientôt disponibles."
 }

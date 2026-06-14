@@ -3,7 +3,7 @@ import warnings
 
 from datetime import datetime, date, timedelta
 from app import app, db, LOGGER
-from app.events.models import Event, EventFee
+from app.events.models import Event, EventFee, EventResourceLink
 from app.utils.testing import ApiTestCase
 from app.responses.models import Response, Answer
 from app.email_template.models import EmailTemplate
@@ -20,6 +20,7 @@ import app.events.status as event_status
 from app.registration.models import Registration
 from app.offer.models import Offer
 from app.forms.models import Form
+from app.attendance.repository import AttendanceRepository
 
 class EventsAPITest(ApiTestCase):
 
@@ -1309,3 +1310,321 @@ class EventsByKeyRegistrationFormIdTest(ApiTestCase):
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertIsNone(data['review_form_id'])
+
+
+class EventTimezoneCheckinModeTest(ApiTestCase):
+    """Tests for timezone and checkin_mode on event create/update."""
+
+    def seed_static_data(self):
+        self.add_organisation('Test Indaba', 'blah.png', 'blah_big.png', 'testindaba')
+        country = Country('Test Land')
+        db.session.add(country)
+        db.session.commit()
+        category = UserCategory('TestYear')
+        db.session.add(category)
+        db.session.commit()
+        self.admin_user = AppUser(
+            email='admin@test.com', firstname='Admin', lastname='User',
+            user_title='Mr', password='abc', organisation_id=1, is_admin=True
+        )
+        self.admin_user.verify()
+        db.session.add(self.admin_user)
+        db.session.commit()
+        self.event = self.add_event(
+            {'en': 'TZ Test'}, {'en': 'TZ Test Desc'},
+            datetime(2025, 6, 1), datetime(2025, 6, 10), 'TZTEST'
+        )
+
+    def _base_payload(self):
+        return {
+            'name': {'en': 'TZ Event'},
+            'description': {'en': 'TZ Event Desc'},
+            'start_date': datetime(2025, 6, 1).strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'end_date': datetime(2025, 6, 10).strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'key': 'tzev001',
+            'organisation_id': 1,
+            'email_from': 'test@test.com',
+            'url': 'test.com',
+            'application_open': datetime(2025, 1, 1).strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'application_close': datetime(2025, 2, 1).strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'review_open': datetime(2025, 2, 1).strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'review_close': datetime(2025, 3, 1).strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'selection_open': datetime(2025, 3, 1).strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'selection_close': datetime(2025, 4, 1).strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'offer_open': datetime(2025, 4, 1).strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'offer_close': datetime(2025, 5, 1).strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'registration_open': datetime(2025, 5, 1).strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'registration_close': datetime(2025, 5, 25).strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'event_type': 'EVENT',
+            'travel_grant': False,
+        }
+
+    def test_create_event_with_valid_timezone(self):
+        self.seed_static_data()
+        payload = self._base_payload()
+        payload['timezone'] = 'Africa/Nairobi'
+        payload['checkin_mode'] = 'daily'
+        header = self.get_auth_header_for('admin@test.com')
+        response = self.app.post(
+            'api/v1/event',
+            headers=header,
+            data=json.dumps(payload),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 201)
+        data = json.loads(response.data)
+        self.assertEqual(data['timezone'], 'Africa/Nairobi')
+        self.assertEqual(data['checkin_mode'], 'daily')
+
+    def test_create_event_with_invalid_timezone(self):
+        self.seed_static_data()
+        payload = self._base_payload()
+        payload['timezone'] = 'Not/ATimezone'
+        header = self.get_auth_header_for('admin@test.com')
+        response = self.app.post(
+            'api/v1/event',
+            headers=header,
+            data=json.dumps(payload),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.data)
+        self.assertIn('timezone', data['message'].lower())
+
+    def test_create_event_with_invalid_checkin_mode(self):
+        self.seed_static_data()
+        payload = self._base_payload()
+        payload['timezone'] = 'UTC'
+        payload['checkin_mode'] = 'invalid_mode'
+        header = self.get_auth_header_for('admin@test.com')
+        response = self.app.post(
+            'api/v1/event',
+            headers=header,
+            data=json.dumps(payload),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.data)
+        self.assertIn('check-in mode', data['message'].lower())
+
+    def test_create_event_defaults_to_utc_and_per_event(self):
+        self.seed_static_data()
+        payload = self._base_payload()
+        header = self.get_auth_header_for('admin@test.com')
+        response = self.app.post(
+            'api/v1/event',
+            headers=header,
+            data=json.dumps(payload),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 201)
+        data = json.loads(response.data)
+        self.assertEqual(data['timezone'], 'UTC')
+        self.assertEqual(data['checkin_mode'], 'per_event')
+
+    def test_is_daily_checkin_property(self):
+        self.seed_static_data()
+        self.event.checkin_mode = 'daily'
+        db.session.commit()
+        self.assertTrue(self.event.is_daily_checkin)
+
+        self.event.checkin_mode = 'per_event'
+        db.session.commit()
+        self.assertFalse(self.event.is_daily_checkin)
+
+
+class IsConfirmedGuestTest(ApiTestCase):
+    """Tests for AttendanceRepository.is_confirmed_guest."""
+
+    def seed_static_data(self):
+        self.add_organisation('Test Org', 'a.png', 'b.png', 'testorg')
+        country = Country('Test Land')
+        db.session.add(country)
+        db.session.commit()
+        category = UserCategory('TestYear')
+        db.session.add(category)
+        db.session.commit()
+        self.guest_user = self.add_user('guest@test.com')
+        self.other_user = self.add_user('other@test.com')
+        self.event = self.add_event(
+            {'en': 'Guest Event'}, {'en': 'Desc'},
+            datetime(2025, 6, 1), datetime(2025, 6, 10), 'GUESTEV'
+        )
+
+    def test_invited_guest_is_confirmed(self):
+        self.seed_static_data()
+        invited = InvitedGuest(event_id=self.event.id, user_id=self.guest_user.id, role='Guest')
+        db.session.add(invited)
+        db.session.commit()
+        self.assertTrue(AttendanceRepository.is_confirmed_guest(self.event.id, self.guest_user.id))
+
+    def test_non_guest_is_not_confirmed(self):
+        self.seed_static_data()
+        invited = InvitedGuest(event_id=self.event.id, user_id=self.guest_user.id, role='Guest')
+        db.session.add(invited)
+        db.session.commit()
+        self.assertFalse(AttendanceRepository.is_confirmed_guest(self.event.id, self.other_user.id))
+
+    def test_offer_accepted_is_confirmed(self):
+        self.seed_static_data()
+        self.add_offer(self.guest_user.id, self.event.id, candidate_response=True)
+        self.assertTrue(AttendanceRepository.is_confirmed_guest(self.event.id, self.guest_user.id))
+
+    def test_offer_rejected_is_not_confirmed(self):
+        self.seed_static_data()
+        self.add_offer(self.guest_user.id, self.event.id, candidate_response=False)
+        self.assertFalse(AttendanceRepository.is_confirmed_guest(self.event.id, self.guest_user.id))
+
+
+class EventResourceLinkAPITest(ApiTestCase):
+    """Tests for EventResourceLink CRUD API."""
+
+    def seed_static_data(self):
+        self.add_organisation('Test Org', 'a.png', 'b.png', 'testorg')
+        country = Country('Test Land')
+        db.session.add(country)
+        db.session.commit()
+        category = UserCategory('TestYear')
+        db.session.add(category)
+        db.session.commit()
+        self.admin_user = AppUser(
+            email='admin@test.com', firstname='Admin', lastname='User',
+            user_title='Mr', password='abc', organisation_id=1, is_admin=True
+        )
+        self.admin_user.verify()
+        db.session.add(self.admin_user)
+        self.regular_user = self.add_user('user@test.com')
+        db.session.commit()
+        self.event = self.add_event(
+            {'en': 'Resource Event'}, {'en': 'Desc'},
+            datetime(2025, 6, 1), datetime(2025, 6, 10), 'RESEV'
+        )
+        self.event_id = self.event.id
+        self.add_event_role('admin', self.admin_user.id, self.event_id)
+
+    def test_get_resource_links_empty(self):
+        self.seed_static_data()
+        response = self.app.get(
+            '/api/v1/event-resource-links',
+            query_string={'event_id': self.event_id}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data, [])
+
+    def test_create_resource_link_as_admin(self):
+        self.seed_static_data()
+        payload = {
+            'event_id': self.event_id,
+            'title_en': 'Schedule PDF',
+            'url': 'https://example.com/schedule.pdf',
+            'category': 'schedule',
+            'icon': 'pdf',
+            'sort_order': 1
+        }
+        header = self.get_auth_header_for('admin@test.com')
+        response = self.app.post(
+            '/api/v1/event-resource-links',
+            headers=header,
+            data=json.dumps(payload),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 201)
+        data = json.loads(response.data)
+        self.assertEqual(data['title_en'], 'Schedule PDF')
+        self.assertEqual(data['category'], 'schedule')
+
+    def test_create_resource_link_forbidden_for_non_admin(self):
+        self.seed_static_data()
+        payload = {
+            'event_id': self.event_id,
+            'title_en': 'Schedule PDF',
+            'url': 'https://example.com/schedule.pdf',
+        }
+        header = self.get_auth_header_for('user@test.com')
+        response = self.app.post(
+            '/api/v1/event-resource-links',
+            headers=header,
+            data=json.dumps(payload),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_update_resource_link(self):
+        self.seed_static_data()
+        link = EventResourceLink(
+            event_id=self.event_id,
+            title_en='Old Title',
+            url='https://example.com/old.pdf'
+        )
+        db.session.add(link)
+        db.session.commit()
+        link_id = link.id
+
+        payload = {
+            'id': link_id,
+            'event_id': self.event_id,
+            'title_en': 'New Title',
+            'url': 'https://example.com/new.pdf',
+        }
+        header = self.get_auth_header_for('admin@test.com')
+        response = self.app.put(
+            '/api/v1/event-resource-links',
+            headers=header,
+            data=json.dumps(payload),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['title_en'], 'New Title')
+
+    def test_delete_resource_link(self):
+        self.seed_static_data()
+        link = EventResourceLink(
+            event_id=self.event_id,
+            title_en='To Delete',
+            url='https://example.com/delete.pdf'
+        )
+        db.session.add(link)
+        db.session.commit()
+        link_id = link.id
+
+        header = self.get_auth_header_for('admin@test.com')
+        response = self.app.delete(
+            '/api/v1/event-resource-links',
+            headers=header,
+            query_string={'event_id': self.event_id, 'id': link_id}
+        )
+        self.assertEqual(response.status_code, 200)
+        remaining = db.session.query(EventResourceLink).filter_by(id=link_id).first()
+        self.assertIsNone(remaining)
+
+    def test_delete_resource_link_not_found(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('admin@test.com')
+        response = self.app.delete(
+            '/api/v1/event-resource-links',
+            headers=header,
+            query_string={'event_id': self.event_id, 'id': 99999}
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_resource_links_language(self):
+        self.seed_static_data()
+        link = EventResourceLink(
+            event_id=self.event_id,
+            title_en='English Title',
+            title_fr='French Title',
+            url='https://example.com/doc.pdf'
+        )
+        db.session.add(link)
+        db.session.commit()
+
+        response = self.app.get(
+            '/api/v1/event-resource-links',
+            query_string={'event_id': self.event_id, 'language': 'fr'}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]['title'], 'French Title')
