@@ -55,7 +55,13 @@
     "typecheck": "tsc --noEmit"
   },
   "eslintConfig": {
-    "extends": "react-app"
+    "extends": "react-app",
+    "overrides": [
+      {
+        "files": ["public/sw.js"],
+        "env": { "serviceworker": true }
+      }
+    ]
   },
   "browserslist": {
     "production": [

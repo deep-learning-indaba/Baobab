@@ -1,4 +1,3 @@
-from google.cloud import translate_v2 as translate
 from app import LOGGER
 import os
 
@@ -13,18 +12,19 @@ class TranslationService:
         """Get or create the translation client"""
         if cls._client is None:
             try:
-                # Initialize the client with API key
-                # For google-cloud-translate v2, we need to set the API key as an environment variable
+                from google.cloud import translate_v2 as translate
                 api_key = os.getenv('GCP_API_KEY')
                 if not api_key:
                     LOGGER.error("GCP_API_KEY not found in environment variables")
                     return None
                 
-                # Set the API key in the environment for the client to use
                 os.environ['GOOGLE_API_KEY'] = api_key
                 cls._client = translate.Client()
+            except ImportError:
+                LOGGER.warning("google-cloud-translate not installed; translation unavailable")
+                return None
             except Exception as e:
-                LOGGER.error(f"Failed to initialize Google Translate client: {str(e)}")
+                LOGGER.error("Failed to initialize Google Translate client: {}".format(str(e)))
                 return None
         return cls._client
     

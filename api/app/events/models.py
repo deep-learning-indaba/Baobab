@@ -53,6 +53,8 @@ class Event(db.Model):
     miniconf_url = db.Column(db.String(100), nullable=True)
     contact_email = db.Column(db.String(255), nullable=True)
     image = db.Column(db.String(255), nullable=True)
+    timezone = db.Column(db.String(64), nullable=False, server_default='UTC')
+    checkin_mode = db.Column(db.String(16), nullable=False, server_default='per_event')
 
     organisation = db.relationship('Organisation', foreign_keys=[organisation_id])
     application_forms = db.relationship('ApplicationForm')
@@ -85,7 +87,9 @@ class Event(db.Model):
         travel_grant,
         miniconf_url=None,
         contact_email=None,
-        image=None
+        image=None,
+        timezone='UTC',
+        checkin_mode='per_event'
     ):
         self.start_date = start_date
         self.end_date = None if event_type == EventType.JOURNAL else end_date
@@ -109,6 +113,8 @@ class Event(db.Model):
         self.miniconf_url = miniconf_url
         self.contact_email = contact_email
         self.image = image
+        self.timezone = timezone
+        self.checkin_mode = checkin_mode
         self.event_fees = []
 
         self.add_event_translations(names, descriptions)
@@ -234,7 +240,9 @@ class Event(db.Model):
                travel_grant,
                miniconf_url=None,
                contact_email=None,
-               image=None):
+               image=None,
+               timezone='UTC',
+               checkin_mode='per_event'):
         self.start_date = start_date
         self.end_date = end_date
         self.key = key
@@ -256,6 +264,8 @@ class Event(db.Model):
         self.miniconf_url = miniconf_url
         self.contact_email = contact_email
         self.image = image
+        self.timezone = timezone
+        self.checkin_mode = checkin_mode
 
         self.event_translations.delete()
         self.add_event_translations(names, descriptions)

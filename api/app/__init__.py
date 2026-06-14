@@ -108,6 +108,13 @@ from .reviews.models import ReviewForm, ReviewQuestion
 from .registration.models import RegistrationForm, RegistrationSection, RegistrationQuestion, Registration, RegistrationAnswer
 from .offer.models import Offer
 from .invitationletter.models import InvitationTemplate, InvitationLetterRequest
+from .attendance.models import EventQRToken, Checkin
+from .users.models import UserConsent
+from .profiles.models import MemberProfile, MemberProfileLink, MemberProfileInterest
+from .connections.models import Connection, ConnectionReport
+from .programme.models import Session, SessionTranslation, Speaker, SessionSpeaker, SessionTag
+from .announcements.models import Announcement, AnnouncementTranslation, AnnouncementReceipt, PushSubscription
+from .engagement.models import EngagementEvent
 # Define login and registration forms (for flask-login)
 class LoginForm(form.Form):
     email = fields.TextField(validators=[validators.required()])
@@ -217,4 +224,18 @@ admin.add_view(BaobabModelView(RegistrationAnswer, db.session))
 admin.add_view(BaobabModelView(InvitationTemplate, db.session))
 admin.add_view(BaobabModelView(InvitationLetterRequest, db.session))
 admin.add_view(BaobabModelView(EmailTemplate, db.session))
+
+admin.add_view(BaobabModelView(EventQRToken, db.session))
+admin.add_view(BaobabModelView(Checkin, db.session))
+admin.add_view(BaobabModelView(UserConsent, db.session))
+admin.add_view(BaobabModelView(MemberProfile, db.session))
+admin.add_view(BaobabModelView(MemberProfileLink, db.session))
+admin.add_view(BaobabModelView(MemberProfileInterest, db.session))
+admin.add_view(BaobabModelView(Connection, db.session))
+admin.add_view(BaobabModelView(ConnectionReport, db.session))
+admin.add_view(BaobabModelView(Session, db.session))
+admin.add_view(BaobabModelView(Speaker, db.session))
+admin.add_view(BaobabModelView(Announcement, db.session))
+admin.add_view(BaobabModelView(PushSubscription, db.session))
+admin.add_view(BaobabModelView(EngagementEvent, db.session))
 

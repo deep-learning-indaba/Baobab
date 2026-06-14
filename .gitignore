@@ -96,6 +96,8 @@ celerybeat-schedule
 
 # Environments
 .env
+.env.production
+*.pem
 .venv
 env/
 venv/
@@ -142,4 +144,4 @@ integration-tests/cypress/screenshots/
 integration-tests/cypress/plugins/
 
 # Temporary Docs
-/docs/temp/
+# /docs/temp/
