@@ -3,7 +3,7 @@ FROM node:22-alpine
 RUN npm install -g pnpm@10
 
 WORKDIR /webapp
-COPY pnpm-lock.yaml package.json ./
+COPY .npmrc pnpm-lock.yaml package.json ./
 RUN pnpm install --frozen-lockfile
 
 COPY . .

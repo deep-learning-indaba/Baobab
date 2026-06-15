@@ -44,7 +44,7 @@ services:
 
   webapp:
     build: ./webapp
-    command: pnpm start
+    command: sh -c "pnpm install --no-frozen-lockfile && pnpm start"
     volumes:
       - ./webapp:/webapp
       - /webapp/node_modules
@@ -52,6 +52,7 @@ services:
       - "8080:3000"
     environment:
       - NODE_ENV=development
+      - CI=true
     links:
       - web
 
@@ -63,7 +64,7 @@ services:
 
   webappintegration:
     build: ./webapp
-    command: pnpm start-integration
+    command: sh -c "pnpm install --no-frozen-lockfile && pnpm start-integration"
     volumes:
       - ./webapp:/webapp
       - /webapp/node_modules
@@ -71,6 +72,7 @@ services:
       - "8081:3000"
     environment:
       - NODE_ENV=development
+      - CI=true
 
   cypress:
     ipc: host

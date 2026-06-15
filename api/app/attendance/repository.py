@@ -1,5 +1,5 @@
 from app import db
-from app.attendance.models import Attendance, EventIndemnity
+from app.attendance.models import Attendance, EventIndemnity, EventQRToken, Checkin
 from app.invitedGuest.models import InvitedGuest
 from app.invoice.models import InvoicePaymentStatus, OfferInvoice, PaymentStatus
 from app.offer.models import Offer
@@ -202,3 +202,46 @@ class IndemnityRepository():
         return (db.session.query(EventIndemnity)
                 .filter_by(event_id=event_id)
                 .first())
+
+
+class QRTokenRepository():
+    @staticmethod
+    def get_or_create(event_id, user_id):
+        token = db.session.query(EventQRToken).filter_by(event_id=event_id, user_id=user_id).first()
+        if token is None:
+            token = EventQRToken(event_id, user_id)
+            db.session.add(token)
+            db.session.commit()
+        return token
+
+    @staticmethod
+    def resolve(token_str):
+        return db.session.query(EventQRToken).filter_by(token=token_str).first()
+
+
+class CheckinRepository():
+    @staticmethod
+    def is_checked_in(event_id, user_id, day=None):
+        q = db.session.query(Checkin).filter_by(event_id=event_id, user_id=user_id)
+        if day is not None:
+            q = q.filter_by(day=day)
+        return q.first() is not None
+
+    @staticmethod
+    def get_latest(event_id, user_id):
+        return (db.session.query(Checkin)
+                .filter_by(event_id=event_id, user_id=user_id)
+                .order_by(Checkin.checked_in_at.desc())
+                .first())
+
+    @staticmethod
+    def create(event_id, user_id, by_user_id, method, day):
+        c = Checkin(event_id=event_id, user_id=user_id,
+                    checked_in_by_user_id=by_user_id, method=method, day=day)
+        db.session.add(c)
+        db.session.commit()
+        return c
+
+    @staticmethod
+    def list_for_event(event_id):
+        return db.session.query(Checkin).filter_by(event_id=event_id).all()

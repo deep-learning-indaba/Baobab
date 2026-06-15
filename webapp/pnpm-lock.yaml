@@ -20,6 +20,12 @@ importers:
       country-list:
         specifier: ^2.1.0
         version: 2.4.1
+      history:
+        specifier: ^4.10.1
+        version: 4.10.1
+      html5-qrcode:
+        specifier: ^2.3.8
+        version: 2.3.8
       i18next:
         specifier: ^19.8.3
         version: 19.9.2
@@ -29,15 +35,27 @@ importers:
       i18next-http-backend:
         specifier: ^1.0.17
         version: 1.4.5
+      katex:
+        specifier: ^0.16.45
+        version: 0.16.45
+      lodash:
+        specifier: ^4.18.1
+        version: 4.18.1
       lodash.isequal:
         specifier: ^4.5.0
         version: 4.5.0
       moment:
         specifier: 2.24.0
         version: 2.24.0
+      promise:
+        specifier: ^8.3.0
+        version: 8.3.0
       prop-types:
         specifier: ^15.8.1
         version: 15.8.1
+      qrcode.react:
+        specifier: ^4.2.0
+        version: 4.2.0(react@18.3.1)
       query-string:
         specifier: ^6.13.7
         version: 6.14.1
@@ -77,6 +95,9 @@ importers:
       react-password-strength-bar:
         specifier: ^0.3.2
         version: 0.3.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react-router:
+        specifier: ^4.3.1
+        version: 4.3.1(react@18.3.1)
       react-router-dom:
         specifier: ^4.3.1
         version: 4.3.1(react@18.3.1)
@@ -104,6 +125,9 @@ importers:
       stackdriver-errors-js:
         specifier: ^0.5.0
         version: 0.5.0
+      stacktrace-js:
+        specifier: ^2.0.2
+        version: 2.0.2
       tailwind-merge:
         specifier: ^3.6.0
         version: 3.6.0
@@ -1072,6 +1096,9 @@ packages:
     resolution: {integrity: sha512-BNoCY6SXXPQ7gF2opIP4GBE+Xw7U+pHMYKuzjgCN3GwiaIR09UUeKfheyIry77QtrCBlC0KK0q5/TER/tYh3PQ==}
     engines: {node: '>= 0.4'}
 
+  asap@2.0.6:
+    resolution: {integrity: sha512-BSHWgDSAiKs50o2Re8ppvp3seVHXSRM44cdSsT9FfNEUUZLOGWVCsiWaRPWM1Znn+mqZ1OfVZ3z3DWEzSp7hRA==}
+
   asn1@0.2.6:
     resolution: {integrity: sha512-ix/FxPn0MDjeyJ7i/yoHGFt/EX6LyNbxSEhPPXODPL+KB0VPk86UYfL0lMdy+KCnv+fmvIzySwaK5COwqVbWTQ==}
 
@@ -1845,6 +1872,9 @@ packages:
 
   html-parse-stringify@3.0.1:
     resolution: {integrity: sha512-KknJ50kTInJ7qIScF3jeaFRpMpE8/lfiTdzf/twXyPBLAGrLRTmkz3AdTnKeh40X8k9L2fdYwEp/42WGXIRGcg==}
+
+  html5-qrcode@2.3.8:
+    resolution: {integrity: sha512-jsr4vafJhwoLVEDW3n1KvPnCCXWaQfRng0/EEYk1vNcQGcG/htAdhJX0be8YyqMoSz7+hZvOZSTAepsabiuhiQ==}
 
   htmlparser2@10.1.0:
     resolution: {integrity: sha512-VTZkM9GWRAtEpveh7MSF6SjjrpNVNNVJfFup7xTY3UpFtm67foy9HDVXneLtFVt4pMz5kZtgNcvCniNFb1hlEQ==}
@@ -2684,6 +2714,9 @@ packages:
   process-nextick-args@2.0.1:
     resolution: {integrity: sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==}
 
+  promise@8.3.0:
+    resolution: {integrity: sha512-rZPNPKTOYVNEEKFaq1HqTgOwZD+4/YHS5ukLzQCypkj+OkYx7iv0mA91lJlpPPZ8vMau3IIGj5Qlwrx+8iiSmg==}
+
   prop-types-exact@1.2.7:
     resolution: {integrity: sha512-A4RaV6mg3jocQqBYmqi2ojJ2VnV4AKTEHhl3xHsud08/u87gcVJc8DUOtgnPegoOCQv/shUqEk4eZGYibjnHzQ==}
     engines: {node: '>= 0.8'}
@@ -2706,6 +2739,11 @@ packages:
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
+
+  qrcode.react@4.2.0:
+    resolution: {integrity: sha512-QpgqWi8rD9DsS9EP3z7BT+5lY5SFhsqGjpgW5DY/i3mK4M9DTBNz3ErMi8BWYEfI3L0d8GIbGmcdFAS1uIRGjA==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   qs@6.10.7:
     resolution: {integrity: sha512-SU8Tw69GDcmdCwqC8OksqrQ6w/TGMsKRWGOj5rOaFt1xVwLbReX87/icjHrGDVuS3yfZUHKo2Q26IoAVucBS3Q==}
@@ -4445,6 +4483,8 @@ snapshots:
       get-intrinsic: 1.3.0
       is-array-buffer: 3.0.5
 
+  asap@2.0.6: {}
+
   asn1@0.2.6:
     dependencies:
       safer-buffer: 2.1.2
@@ -5457,6 +5497,8 @@ snapshots:
     dependencies:
       void-elements: 3.1.0
 
+  html5-qrcode@2.3.8: {}
+
   htmlparser2@10.1.0:
     dependencies:
       domelementtype: 2.3.0
@@ -6451,6 +6493,10 @@ snapshots:
 
   process-nextick-args@2.0.1: {}
 
+  promise@8.3.0:
+    dependencies:
+      asap: 2.0.6
+
   prop-types-exact@1.2.7:
     dependencies:
       call-bound: 1.0.4
@@ -6480,6 +6526,10 @@ snapshots:
   punycode@1.4.1: {}
 
   punycode@2.3.1: {}
+
+  qrcode.react@4.2.0(react@18.3.1):
+    dependencies:
+      react: 18.3.1
 
   qs@6.10.7:
     dependencies:

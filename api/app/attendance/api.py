@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import g
 import flask_restful as restful
 from flask_restful import reqparse, fields, marshal
@@ -6,13 +7,18 @@ from app.attendance.models import Attendance
 from app.tags.models import TagType
 from app.attendance.repository import AttendanceRepository as attendance_repository
 from app.attendance.repository import IndemnityRepository as indemnity_repository
+from app.attendance.repository import QRTokenRepository as qr_token_repository
+from app.attendance.repository import CheckinRepository as checkin_repository
 from app.events.repository import EventRepository as event_repository
+from app.invitedGuest.repository import InvitedGuestRepository as invited_guest_repository
 from app.offer.repository import OfferRepository as offer_repository
 from app.users.repository import UserRepository as user_repository
 from app.registration.repository import RegistrationRepository as registration_repository
 from app.utils.auth import auth_required
 from app.utils.emailer import email_user
-from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, ATTENDANCE_NOT_FOUND, EVENT_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, INDEMNITY_NOT_FOUND, INDEMNITY_NOT_SIGNED, NOT_A_GUEST
+from app.utils.misc import get_baobab_host
+from app.utils.datetime_utils import event_local_date
+from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, ATTENDANCE_NOT_FOUND, EVENT_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, INDEMNITY_NOT_FOUND, INDEMNITY_NOT_SIGNED, NOT_A_GUEST, INVALID_QR, NOT_ON_GUEST_LIST
 
 attendance_fields = {
     'id': fields.Integer,
@@ -320,3 +326,177 @@ class AttendeesApi(restful.Resource):
         confirmed = attendance_repository.get_confirmed_attendee_users(event_id)
 
         return marshal(confirmed, _attendee_fields)
+
+
+class MyTicketAPI(restful.Resource):
+    @auth_required
+    def get(self):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
+        args = req_parser.parse_args()
+        event_id = args['event_id']
+        current_user_id = g.current_user['id']
+
+        if not attendance_repository.is_confirmed_guest(event_id, current_user_id):
+            return NOT_A_GUEST
+
+        event = event_repository.get_by_id(event_id)
+        if event is None:
+            return EVENT_NOT_FOUND
+
+        user = user_repository.get_by_id(current_user_id)
+        token = qr_token_repository.get_or_create(event_id, current_user_id)
+        host = get_baobab_host()
+        qr_url = '{}/{}/connect?t={}'.format(host, event.key, token.token)
+
+        invited_guest = attendance_repository.get_invited_guest(event_id, current_user_id)
+        role = invited_guest.role if invited_guest else 'General Attendee'
+
+        latest_checkin = checkin_repository.get_latest(event_id, current_user_id)
+
+        return {
+            'token': token.token,
+            'qr_url': qr_url,
+            'fullname': user.full_name,
+            'role': role,
+            'event_name': event.get_name('en'),
+            'checked_in': latest_checkin is not None,
+            'checked_in_at': latest_checkin.checked_in_at.isoformat() + 'Z' if latest_checkin else None,
+        }, 200
+
+
+class CheckinResolveAPI(restful.Resource):
+    @auth_required
+    def get(self):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
+        req_parser.add_argument('t', type=str, required=True)
+        args = req_parser.parse_args()
+        event_id = args['event_id']
+        token_str = args['t']
+        volunteer_id = g.current_user['id']
+
+        volunteer = user_repository.get_by_id(volunteer_id)
+        if not volunteer.is_registration_volunteer(event_id):
+            return FORBIDDEN
+
+        qr = qr_token_repository.resolve(token_str)
+        if qr is None or qr.event_id != event_id:
+            return INVALID_QR
+
+        if not attendance_repository.is_confirmed_guest(event_id, qr.user_id):
+            return NOT_ON_GUEST_LIST
+
+        user = user_repository.get_by_id(qr.user_id)
+        invited_guest = attendance_repository.get_invited_guest(event_id, qr.user_id)
+        role = invited_guest.role if invited_guest else 'General Attendee'
+        attendance = attendance_repository.get(event_id, qr.user_id)
+        indemnity_signed = attendance.indemnity_signed if attendance else False
+
+        event = event_repository.get_by_id(event_id)
+        if event.is_daily_checkin:
+            day = event_local_date(datetime.utcnow(), event.timezone)
+        else:
+            day = None
+        already_checked_in = checkin_repository.is_checked_in(event_id, qr.user_id, day)
+
+        return {
+            'user_id': qr.user_id,
+            'token': token_str,
+            'fullname': user.full_name,
+            'role': role,
+            'indemnity_signed': indemnity_signed,
+            'already_checked_in': already_checked_in,
+        }, 200
+
+
+class CheckinAPI(restful.Resource):
+    @auth_required
+    def post(self):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
+        req_parser.add_argument('token', type=str, required=True)
+        args = req_parser.parse_args()
+        event_id = args['event_id']
+        current_user_id = g.current_user['id']
+
+        event = event_repository.get_by_id(event_id)
+        if event is None:
+            return EVENT_NOT_FOUND
+
+        current_user = user_repository.get_by_id(current_user_id)
+        if not current_user.is_registration_volunteer(event_id):
+            return FORBIDDEN
+        qr = qr_token_repository.resolve(args['token'])
+        if qr is None or qr.event_id != event_id:
+            return INVALID_QR
+        target_user_id = qr.user_id
+        method = 'scan'
+        by_user_id = current_user_id
+
+        if not attendance_repository.is_confirmed_guest(event_id, target_user_id):
+            return NOT_ON_GUEST_LIST
+
+        if event.is_daily_checkin:
+            day = event_local_date(datetime.utcnow(), event.timezone)
+        else:
+            day = None
+
+        if checkin_repository.is_checked_in(event_id, target_user_id, day):
+            user = user_repository.get_by_id(target_user_id)
+            return {'already_checked_in': True, 'fullname': user.full_name}, 200
+
+        checkin = checkin_repository.create(event_id, target_user_id, by_user_id, method, day)
+
+        attendance = attendance_repository.get(event_id, target_user_id)
+        if attendance is None:
+            attendance = Attendance(event_id, target_user_id, current_user_id)
+            attendance_repository.add(attendance)
+        if not attendance.confirmed:
+            attendance.confirm()
+        attendance_repository.save()
+
+        user = user_repository.get_by_id(target_user_id)
+        return {
+            'checked_in': True,
+            'fullname': user.full_name,
+            'checked_in_at': checkin.checked_in_at.isoformat() + 'Z',
+        }, 201
+
+
+class BadgeExportAPI(restful.Resource):
+    @auth_required
+    def get(self):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
+        args = req_parser.parse_args()
+        event_id = args['event_id']
+        current_user_id = g.current_user['id']
+
+        current_user = user_repository.get_by_id(current_user_id)
+        if not current_user.is_registration_volunteer(event_id):
+            return FORBIDDEN
+
+        event = event_repository.get_by_id(event_id)
+        if event is None:
+            return EVENT_NOT_FOUND
+
+        guests = attendance_repository.get_all_guests_for_event(event_id)
+        host = get_baobab_host()
+
+        result = []
+        for row in guests:
+            user = row.AppUser
+            token = qr_token_repository.get_or_create(event_id, user.id)
+            qr_url = '{}/{}/connect?t={}'.format(host, event.key, token.token)
+            invited_guest = attendance_repository.get_invited_guest(event_id, user.id)
+            role = invited_guest.role if invited_guest else 'General Attendee'
+            result.append({
+                'user_id': user.id,
+                'fullname': user.full_name,
+                'role': role,
+                'token': token.token,
+                'qr_url': qr_url,
+            })
+
+        return result, 200

@@ -2,8 +2,10 @@ from datetime import datetime
 import json
 
 from app import db
-from app.attendance.models import Attendance
+from app.attendance.models import Attendance, EventQRToken, Checkin
 from app.attendance.repository import AttendanceRepository as attendance_repository
+from app.attendance.repository import QRTokenRepository as qr_token_repository
+from app.attendance.repository import CheckinRepository as checkin_repository
 from app.events.models import EventRole
 from app.users.models import Country, UserCategory
 from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, FORBIDDEN
@@ -323,3 +325,245 @@ class AttendanceApiTest(ApiTestCase):
         attendance = attendance_repository.get(1, 1)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(attendance, None)
+
+
+class MyTicketAPITest(ApiTestCase):
+
+    def seed_static_data(self):
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
+        self.guest = self.add_user('guest@test.com')
+        self.non_guest = self.add_user('nongGuest@test.com')
+        self.guest_fullname = self.guest.full_name
+        self.event = self.add_event(
+            {'en': 'Ticket Event'}, {'en': 'Desc'},
+            datetime(2025, 6, 1), datetime(2025, 6, 10), 'TICKEV'
+        )
+        self.event_id = self.event.id
+        self.guest_id = self.guest.id
+        self.non_guest_id = self.non_guest.id
+        offer = Offer(
+            user_id=self.guest_id,
+            event_id=self.event_id,
+            offer_date=datetime.now(),
+            expiry_date=datetime.now() + timedelta(days=15),
+            payment_required=False,
+            candidate_response=True,
+        )
+        db.session.add(offer)
+        db.session.commit()
+
+    def test_my_ticket_returns_qr_for_confirmed_guest(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('guest@test.com')
+        response = self.app.get(
+            '/api/v1/my-ticket', headers=header,
+            query_string={'event_id': self.event_id}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertIn('token', data)
+        self.assertIn('qr_url', data)
+        self.assertEqual(data['fullname'], self.guest_fullname)
+        self.assertEqual(data['role'], 'General Attendee')
+        self.assertFalse(data['checked_in'])
+
+    def test_my_ticket_returns_not_a_guest_for_non_guest(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('nongGuest@test.com')
+        response = self.app.get(
+            '/api/v1/my-ticket', headers=header,
+            query_string={'event_id': self.event_id}
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_my_ticket_returns_invited_guest_role(self):
+        self.seed_static_data()
+        ig = InvitedGuest(event_id=self.event_id, user_id=self.non_guest_id, role='Speaker')
+        db.session.add(ig)
+        db.session.commit()
+        header = self.get_auth_header_for('nongGuest@test.com')
+        response = self.app.get(
+            '/api/v1/my-ticket', headers=header,
+            query_string={'event_id': self.event_id}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['role'], 'Speaker')
+
+    def test_my_ticket_shows_checked_in_after_checkin(self):
+        self.seed_static_data()
+        token = qr_token_repository.get_or_create(self.event_id, self.guest_id)
+        checkin_repository.create(self.event_id, self.guest_id, None, 'self', None)
+        header = self.get_auth_header_for('guest@test.com')
+        response = self.app.get(
+            '/api/v1/my-ticket', headers=header,
+            query_string={'event_id': self.event_id}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertTrue(data['checked_in'])
+
+
+class CheckinAPITest(ApiTestCase):
+
+    def seed_static_data(self):
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
+        self.guest = self.add_user('guest@test.com')
+        self.volunteer = self.add_user('volunteer@test.com')
+        self.non_guest = self.add_user('nongGuest@test.com')
+        self.guest_fullname = self.guest.full_name
+        self.guest_id = self.guest.id
+        self.non_guest_id = self.non_guest.id
+        self.event = self.add_event(
+            {'en': 'Checkin Event'}, {'en': 'Desc'},
+            datetime(2025, 6, 1), datetime(2025, 6, 10), 'CHKEV'
+        )
+        self.event_id = self.event.id
+        self.add_event_role('registration-volunteer', self.volunteer.id, self.event_id)
+        offer = Offer(
+            user_id=self.guest_id,
+            event_id=self.event_id,
+            offer_date=datetime.now(),
+            expiry_date=datetime.now() + timedelta(days=15),
+            payment_required=False,
+            candidate_response=True,
+        )
+        db.session.add(offer)
+        db.session.commit()
+        self.token = qr_token_repository.get_or_create(self.event_id, self.guest_id)
+        self.token_str = self.token.token
+
+    def test_volunteer_can_checkin_guest_by_token(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('volunteer@test.com')
+        response = self.app.post(
+            '/api/v1/checkin', headers=header,
+            data={'event_id': self.event_id, 'token': self.token_str}
+        )
+        self.assertEqual(response.status_code, 201)
+        data = json.loads(response.data)
+        self.assertTrue(data['checked_in'])
+        self.assertEqual(data['fullname'], self.guest_fullname)
+
+    def test_checkin_is_idempotent_per_event(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('volunteer@test.com')
+        self.app.post(
+            '/api/v1/checkin', headers=header,
+            data={'event_id': self.event_id, 'token': self.token_str}
+        )
+        response = self.app.post(
+            '/api/v1/checkin', headers=header,
+            data={'event_id': self.event_id, 'token': self.token_str}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertTrue(data['already_checked_in'])
+
+    def test_non_volunteer_cannot_checkin_with_token(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('nongGuest@test.com')
+        response = self.app.post(
+            '/api/v1/checkin', headers=header,
+            data={'event_id': self.event_id, 'token': self.token_str}
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_invalid_token_returns_invalid_qr(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('volunteer@test.com')
+        response = self.app.post(
+            '/api/v1/checkin', headers=header,
+            data={'event_id': self.event_id, 'token': 'notarealtoken'}
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_non_guest_token_returns_not_on_guest_list(self):
+        self.seed_static_data()
+        non_guest_token_obj = qr_token_repository.get_or_create(self.event_id, self.non_guest_id)
+        non_guest_token_str = non_guest_token_obj.token
+        header = self.get_auth_header_for('volunteer@test.com')
+        response = self.app.post(
+            '/api/v1/checkin', headers=header,
+            data={'event_id': self.event_id, 'token': non_guest_token_str}
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_resolve_returns_preview_for_volunteer(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('volunteer@test.com')
+        response = self.app.get(
+            '/api/v1/checkin/resolve', headers=header,
+            query_string={'event_id': self.event_id, 't': self.token_str}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['fullname'], self.guest_fullname)
+        self.assertFalse(data['already_checked_in'])
+
+    def test_resolve_forbidden_for_non_volunteer(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('nongGuest@test.com')
+        response = self.app.get(
+            '/api/v1/checkin/resolve', headers=header,
+            query_string={'event_id': self.event_id, 't': self.token_str}
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_resolve_invalid_token_returns_invalid_qr(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('volunteer@test.com')
+        response = self.app.get(
+            '/api/v1/checkin/resolve', headers=header,
+            query_string={'event_id': self.event_id, 't': 'badtoken'}
+        )
+        self.assertEqual(response.status_code, 400)
+
+
+class BadgeExportAPITest(ApiTestCase):
+
+    def seed_static_data(self):
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
+        self.admin = self.add_user('admin@test.com')
+        self.guest = self.add_user('guest@test.com')
+        self.guest_fullname = self.guest.full_name
+        self.guest_id = self.guest.id
+        self.event = self.add_event(
+            {'en': 'Badge Event'}, {'en': 'Desc'},
+            datetime(2025, 6, 1), datetime(2025, 6, 10), 'BDGEV'
+        )
+        self.event_id = self.event.id
+        self.add_event_role('admin', self.admin.id, self.event_id)
+        offer = Offer(
+            user_id=self.guest_id,
+            event_id=self.event_id,
+            offer_date=datetime.now(),
+            expiry_date=datetime.now() + timedelta(days=15),
+            payment_required=False,
+            candidate_response=True,
+        )
+        db.session.add(offer)
+        db.session.commit()
+
+    def test_badge_export_returns_guest_list_with_qr(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('admin@test.com')
+        response = self.app.get(
+            '/api/v1/checkin/badge-export', headers=header,
+            query_string={'event_id': self.event_id}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]['fullname'], self.guest_fullname)
+        self.assertIn('token', data[0])
+        self.assertIn('qr_url', data[0])
+
+    def test_badge_export_forbidden_for_non_admin(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('guest@test.com')
+        response = self.app.get(
+            '/api/v1/checkin/badge-export', headers=header,
+            query_string={'event_id': self.event_id}
+        )
+        self.assertEqual(response.status_code, 403)

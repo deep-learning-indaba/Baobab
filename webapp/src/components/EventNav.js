@@ -110,6 +110,7 @@ class EventNav extends Component {
         {this.props.isConfirmedGuest && this.props.event && (
           <SidebarSection title={t('Event App')}>
             <SidebarLink to={`/${this.props.eventKey}/event-app`} label={t('Home')} />
+            <SidebarLink to={`/${this.props.eventKey}/app/ticket`} label={t('My Ticket')} />
             {isProgrammeEditor(this.props.user, this.props.event) && (
               <SidebarLink to={`/${this.props.eventKey}/event-app/programme`} label={t('Programme')} />
             )}
@@ -126,6 +127,12 @@ class EventNav extends Component {
             )}
             {isRegistrationVolunteer(this.props.user, this.props.event) && (
               <SidebarLink to={`/${this.props.eventKey}/eventAttendance`} label={t('Event Attendance')} />
+            )}
+            {isRegistrationVolunteer(this.props.user, this.props.event) && (
+              <SidebarLink to={`/${this.props.eventKey}/checkin`} label={t('Check-in Console')} />
+            )}
+            {isRegistrationAdmin(this.props.user, this.props.event) && (
+              <SidebarLink to={`/${this.props.eventKey}/checkin/badges`} label={t('Badge Export')} />
             )}
           </SidebarSection>
         )}

@@ -39,7 +39,7 @@ import FormResponseDetail from "../formResponseDetail";
 import ApplicationFormResponsePage from "../applicationFormResponse";
 import FormConfigPage from "../formConfig";
 import { Card } from '../../components/ui/card';
-import { EventAppHome, EventAppProgramme, EventAppAnnouncements } from '../eventApp';
+import { EventAppHome, EventAppProgramme, EventAppAnnouncements, MyTicket, CheckinConsole, BadgeExport } from '../eventApp';
 
 class EventInfo extends Component {
   constructor(props) {
@@ -489,6 +489,39 @@ class EventHome extends Component {
           path={`${match.path}/event-app/announcements`}
           render={(props) => (
             <EventAppAnnouncements
+              {...props}
+              event={event}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/app/ticket`}
+          render={(props) => (
+            <MyTicket
+              {...props}
+              event={event}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/checkin`}
+          render={(props) => (
+            <CheckinConsole
+              {...props}
+              event={event}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/checkin/badges`}
+          render={(props) => (
+            <BadgeExport
               {...props}
               event={event}
               user={this.props.user}
