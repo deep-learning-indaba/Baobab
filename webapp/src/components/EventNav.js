@@ -111,6 +111,8 @@ class EventNav extends Component {
           <SidebarSection title={t('Event App')}>
             <SidebarLink to={`/${this.props.eventKey}/event-app`} label={t('Home')} />
             <SidebarLink to={`/${this.props.eventKey}/app/ticket`} label={t('My Ticket')} />
+            <SidebarLink to={`/${this.props.eventKey}/app/profile`} label={t('My Profile')} />
+            <SidebarLink to={`/${this.props.eventKey}/app/community`} label={t('Browse attendees')} />
             {isProgrammeEditor(this.props.user, this.props.event) && (
               <SidebarLink to={`/${this.props.eventKey}/event-app/programme`} label={t('Programme')} />
             )}

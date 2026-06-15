@@ -39,7 +39,8 @@ import FormResponseDetail from "../formResponseDetail";
 import ApplicationFormResponsePage from "../applicationFormResponse";
 import FormConfigPage from "../formConfig";
 import { Card } from '../../components/ui/card';
-import { EventAppHome, EventAppProgramme, EventAppAnnouncements, MyTicket, CheckinConsole, BadgeExport } from '../eventApp';
+import { EventAppHome, EventAppProgramme, EventAppAnnouncements, MyTicket, CheckinConsole, BadgeExport, MyProfile, ViewMemberProfile, ProfileBrowser } from '../eventApp';
+import ConsentGate from '../../components/ConsentGate';
 
 class EventInfo extends Component {
   constructor(props) {
@@ -528,6 +529,40 @@ class EventHome extends Component {
             />
           )}
         />
+        <Route
+          exact
+          path={`${match.path}/app/profile`}
+          render={(props) => (
+            <MyProfile
+              {...props}
+              event={event}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/app/profile/:userId`}
+          render={(props) => (
+            <ViewMemberProfile
+              {...props}
+              event={event}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/app/community`}
+          render={(props) => (
+            <ProfileBrowser
+              {...props}
+              event={event}
+              user={this.props.user}
+            />
+          )}
+        />
+        <ConsentGate event={event} />
         </div>
       </div>
     );

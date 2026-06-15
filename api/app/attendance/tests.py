@@ -374,7 +374,7 @@ class MyTicketAPITest(ApiTestCase):
             '/api/v1/my-ticket', headers=header,
             query_string={'event_id': self.event_id}
         )
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 403)
 
     def test_my_ticket_returns_invited_guest_role(self):
         self.seed_static_data()

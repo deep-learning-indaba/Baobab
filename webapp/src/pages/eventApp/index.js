@@ -4,3 +4,6 @@ export { default as EventAppAnnouncements } from './EventAppAnnouncements';
 export { default as MyTicket } from './MyTicket';
 export { default as CheckinConsole } from './CheckinConsole';
 export { default as BadgeExport } from './BadgeExport';
+export { default as MyProfile } from './MyProfile';
+export { default as ViewMemberProfile } from './ViewMemberProfile';
+export { default as ProfileBrowser } from './ProfileBrowser';
