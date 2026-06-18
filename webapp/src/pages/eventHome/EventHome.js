@@ -39,7 +39,7 @@ import FormResponseDetail from "../formResponseDetail";
 import ApplicationFormResponsePage from "../applicationFormResponse";
 import FormConfigPage from "../formConfig";
 import { Card } from '../../components/ui/card';
-import { EventAppHome, EventAppProgramme, EventAppAnnouncements, MyTicket, CheckinConsole, BadgeExport, MyProfile, ViewMemberProfile, ProfileBrowser } from '../eventApp';
+import { EventAppHome, EventAppProgramme, ProgrammeEditor, EventAppAnnouncements, AnnouncementDetail, AnnouncementsAdmin, MyTicket, CheckinConsole, BadgeExport, MyProfile, ViewMemberProfile, ProfileBrowser, ScanConnect, Connections, ConnectLanding } from '../eventApp';
 import ConsentGate from '../../components/ConsentGate';
 
 class EventInfo extends Component {
@@ -487,9 +487,42 @@ class EventHome extends Component {
         />
         <Route
           exact
+          path={`${match.path}/programmeEditor`}
+          render={(props) => (
+            <ProgrammeEditor
+              {...props}
+              event={event}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
           path={`${match.path}/event-app/announcements`}
           render={(props) => (
             <EventAppAnnouncements
+              {...props}
+              event={event}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/event-app/announcements/:announcementId`}
+          render={(props) => (
+            <AnnouncementDetail
+              {...props}
+              event={event}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/announcementsAdmin`}
+          render={(props) => (
+            <AnnouncementsAdmin
               {...props}
               event={event}
               user={this.props.user}
@@ -556,6 +589,39 @@ class EventHome extends Component {
           path={`${match.path}/app/community`}
           render={(props) => (
             <ProfileBrowser
+              {...props}
+              event={event}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/app/scan`}
+          render={(props) => (
+            <ScanConnect
+              {...props}
+              event={event}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/app/connections`}
+          render={(props) => (
+            <Connections
+              {...props}
+              event={event}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/connect`}
+          render={(props) => (
+            <ConnectLanding
               {...props}
               event={event}
               user={this.props.user}

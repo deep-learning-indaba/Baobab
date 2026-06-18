@@ -66,7 +66,7 @@ function ProfileBrowser(props) {
   }
 
   return (
-    <div className="max-w-3xl mx-auto py-6 px-4 space-y-4">
+    <div className="w-full max-w-5xl mx-auto pt-6 space-y-4">
       <h1 className="text-2xl font-bold text-foreground">{t('Browse attendees')}</h1>
 
       <div className="flex gap-3 flex-wrap">

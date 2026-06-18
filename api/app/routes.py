@@ -23,6 +23,9 @@ from .reporting import api as reporting_api
 from .forms import api as forms_api
 from .utils import translation_api
 from .profiles import api as profiles_api
+from .programme import api as programme_api
+from .announcements import api as announcements_api
+from .connections import api as connections_api
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
 rest_api.add_resource(users_api.UserCommentAPI, '/api/v1/user-comment')
@@ -177,9 +180,29 @@ rest_api.add_resource(forms_api.FormResponseSubmitAPI, '/api/v1/forms/<int:form_
 rest_api.add_resource(forms_api.FormResponseWithdrawAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/withdraw')
 rest_api.add_resource(forms_api.FormResponseListAdminAPI, '/api/v1/forms/<int:form_id>/responses/admin')
 rest_api.add_resource(forms_api.FormResponseDetailAdminAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/admin')
+# Programme routes
+rest_api.add_resource(programme_api.SessionListAPI, '/api/v1/programme/sessions')
+rest_api.add_resource(programme_api.SessionAPI, '/api/v1/programme/sessions/<int:session_id>')
+rest_api.add_resource(programme_api.SpeakerListAPI, '/api/v1/programme/speakers')
+rest_api.add_resource(programme_api.SpeakerAPI, '/api/v1/programme/speakers/<int:speaker_id>')
+rest_api.add_resource(programme_api.SessionTypeListAPI, '/api/v1/programme/session-types')
+rest_api.add_resource(programme_api.TrackListAPI, '/api/v1/programme/tracks')
 rest_api.add_resource(forms_api.EventFormConfigAPI, '/api/v1/form-config')
 rest_api.add_resource(forms_api.FormReviewAssignmentAPI, '/api/v1/forms/<int:form_id>/review-assignments')
 rest_api.add_resource(forms_api.FormResponseTagAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/tags')
 rest_api.add_resource(forms_api.FormReviewSummaryAPI, '/api/v1/forms/<int:form_id>/review-summary')
 rest_api.add_resource(forms_api.FormResponseAdminUpdateAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/admin-status')
 rest_api.add_resource(forms_api.FormResponseReviewsAdminAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/reviews')
+# Announcement routes — register static paths before the <int:id> route
+rest_api.add_resource(announcements_api.AnnouncementActiveAPI, '/api/v1/announcement/active')
+rest_api.add_resource(announcements_api.AnnouncementAdminAPI, '/api/v1/announcement/admin')
+rest_api.add_resource(announcements_api.AnnouncementListAPI, '/api/v1/announcement')
+rest_api.add_resource(announcements_api.AnnouncementDetailAPI, '/api/v1/announcement/<int:announcement_id>')
+rest_api.add_resource(announcements_api.PushSubscriptionAPI, '/api/v1/push-subscription')
+# Connection routes — static paths before dynamic
+rest_api.add_resource(connections_api.ConnectionResolveAPI, '/api/v1/connection/resolve')
+rest_api.add_resource(connections_api.ConnectionRespondAPI, '/api/v1/connection/respond')
+rest_api.add_resource(connections_api.ConnectionWithdrawAPI, '/api/v1/connection/withdraw')
+rest_api.add_resource(connections_api.ConnectionListAPI, '/api/v1/connection/list')
+rest_api.add_resource(connections_api.ConnectionReportAPI, '/api/v1/connection/report')
+rest_api.add_resource(connections_api.ConnectionAPI, '/api/v1/connection')

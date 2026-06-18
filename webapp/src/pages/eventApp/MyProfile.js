@@ -127,7 +127,7 @@ function MyProfile(props) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-6 px-4 space-y-6">
+    <div className="w-full max-w-5xl mx-auto pt-6 space-y-6">
       <h1 className="text-2xl font-bold text-foreground">{t('My Profile')}</h1>
 
       {profile && (

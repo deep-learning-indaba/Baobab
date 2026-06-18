@@ -97,6 +97,15 @@ class EventNav extends Component {
             <SidebarLink to={`/${this.props.eventKey}/invoices-admin`} label={t('Invoices')} />
             <SidebarLink to={`/${this.props.eventKey}/eventRoleAdmin`} label={t('Event Roles')} />
             <SidebarLink to={`/${this.props.eventKey}/formConfig`} label={t('Form Configuration')} />
+            {isProgrammeEditor(this.props.user, this.props.event) && (
+              <SidebarLink to={`/${this.props.eventKey}/programmeEditor`} label={t('Programme Editor')} />
+            )}
+          </SidebarSection>
+        )}
+
+        {isCommsOfficer(this.props.user, this.props.event) && this.props.event && (
+          <SidebarSection title={t('Communications')}>
+            <SidebarLink to={`/${this.props.eventKey}/announcementsAdmin`} label={t('Announcements Admin')} />
           </SidebarSection>
         )}
 
@@ -113,12 +122,10 @@ class EventNav extends Component {
             <SidebarLink to={`/${this.props.eventKey}/app/ticket`} label={t('My Ticket')} />
             <SidebarLink to={`/${this.props.eventKey}/app/profile`} label={t('My Profile')} />
             <SidebarLink to={`/${this.props.eventKey}/app/community`} label={t('Browse attendees')} />
-            {isProgrammeEditor(this.props.user, this.props.event) && (
-              <SidebarLink to={`/${this.props.eventKey}/event-app/programme`} label={t('Programme')} />
-            )}
-            {isCommsOfficer(this.props.user, this.props.event) && (
-              <SidebarLink to={`/${this.props.eventKey}/event-app/announcements`} label={t('Announcements')} />
-            )}
+            <SidebarLink to={`/${this.props.eventKey}/app/scan`} label={t('Scan Badge')} />
+            <SidebarLink to={`/${this.props.eventKey}/app/connections`} label={t('Connections')} />
+            <SidebarLink to={`/${this.props.eventKey}/event-app/programme`} label={t('Programme')} />
+            <SidebarLink to={`/${this.props.eventKey}/event-app/announcements`} label={t('Announcements')} />
           </SidebarSection>
         )}
 

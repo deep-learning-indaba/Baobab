@@ -1,9 +1,14 @@
 export { default as EventAppHome } from './EventAppHome';
 export { default as EventAppProgramme } from './EventAppProgramme';
-export { default as EventAppAnnouncements } from './EventAppAnnouncements';
+export { default as ProgrammeEditor } from './ProgrammeEditor';
+export { default as EventAppAnnouncements, AnnouncementDetail } from './EventAppAnnouncements';
+export { default as AnnouncementsAdmin } from './AnnouncementsAdmin';
 export { default as MyTicket } from './MyTicket';
 export { default as CheckinConsole } from './CheckinConsole';
 export { default as BadgeExport } from './BadgeExport';
 export { default as MyProfile } from './MyProfile';
 export { default as ViewMemberProfile } from './ViewMemberProfile';
 export { default as ProfileBrowser } from './ProfileBrowser';
+export { default as ScanConnect } from './ScanConnect';
+export { default as Connections } from './Connections';
+export { default as ConnectLanding } from './ConnectLanding';

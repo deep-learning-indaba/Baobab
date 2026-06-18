@@ -199,7 +199,7 @@ function UpcomingEventCard({ event, t }) {
         <span className="inline-flex items-center self-start px-2 py-0.5 rounded-md text-xs font-medium bg-surface-high text-foreground border border-border mb-2">
           {typeLabel}
         </span>
-        <h3 className="font-bold text-foreground leading-snug line-clamp-2">
+        <h3 className="font-bold text-foreground leading-snug line-clamp-2 text-left">
           <NavLink to={`/${event.key}`} className="text-foreground hover:text-primary transition-colors">
             {event.description}
           </NavLink>
