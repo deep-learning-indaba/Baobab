@@ -128,7 +128,7 @@ class FormConfigPage extends Component {
                 </div>
 
                 <div className="flex items-start gap-2 text-xs text-muted-foreground bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
-                    <svg className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                    <i className="fas fa-info-circle text-slate-400 shrink-0 mt-0.5" style={{ fontSize: 15 }} />
                     <span>{t('Application and review forms must use the same system. If one is legacy, the other must be too.')}</span>
                 </div>
 

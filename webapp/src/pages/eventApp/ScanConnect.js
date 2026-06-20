@@ -119,7 +119,7 @@ function ConnectionCard({ target, connectionState, eventKey, eventId, onStateCha
         )}
         {localState === 'connected' && (
           <div className="flex items-center justify-center gap-2 py-2 text-green-700 font-semibold text-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <i className="fas fa-check" style={{ fontSize: 15 }} />
             {t('Connected')}
           </div>
         )}

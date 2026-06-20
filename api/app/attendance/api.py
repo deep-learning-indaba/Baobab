@@ -18,7 +18,7 @@ from app.utils.auth import auth_required
 from app.utils.emailer import email_user
 from app.utils.misc import get_baobab_host
 from app.utils.datetime_utils import event_local_date
-from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, ATTENDANCE_NOT_FOUND, EVENT_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, INDEMNITY_NOT_FOUND, INDEMNITY_NOT_SIGNED, NOT_A_GUEST, INVALID_QR, NOT_ON_GUEST_LIST
+from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, ATTENDANCE_NOT_FOUND, EVENT_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, INDEMNITY_NOT_FOUND, INDEMNITY_NOT_SIGNED, NOT_A_GUEST, INVALID_QR, NOT_ON_GUEST_LIST, MISSING_FIELDS
 
 attendance_fields = {
     'id': fields.Integer,
@@ -194,6 +194,9 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
         if attendance is None:
             return ATTENDANCE_NOT_FOUND
 
+        # Undo the check-in: remove the canonical Checkin record(s) and the
+        # Attendance record so both stores stay consistent.
+        checkin_repository.delete_for_event_user(event_id, user_id)
         attendance_repository.delete(attendance)
 
         return 200
@@ -284,7 +287,17 @@ class GuestListApi(restful.Resource):
         if not registration_user.is_registration_volunteer(event_id):
             return FORBIDDEN
 
+        event = event_repository.get_by_id(event_id)
+        if event is None:
+            return EVENT_NOT_FOUND
+
         all_attendees = attendance_repository.get_all_guests_for_event(event_id)
+
+        if event.is_daily_checkin:
+            day = event_local_date(datetime.utcnow(), event.timezone)
+        else:
+            day = None
+        checked_in_ids = checkin_repository.checked_in_user_ids(event_id, day)
 
         guest_list_with_status = [{
             'id': u.AppUser.id,
@@ -292,7 +305,7 @@ class GuestListApi(restful.Resource):
             'firstname': u.AppUser.firstname,
             'lastname': u.AppUser.lastname,
             'user_title': u.AppUser.user_title,
-            'checked_in': u.Attendance is not None and u.Attendance.confirmed
+            'checked_in': u.AppUser.id in checked_in_ids
         } for u in all_attendees]
 
         return guest_list_with_status
@@ -415,7 +428,9 @@ class CheckinAPI(restful.Resource):
     def post(self):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('event_id', type=int, required=True)
-        req_parser.add_argument('token', type=str, required=True)
+        req_parser.add_argument('token', type=str, required=False)
+        req_parser.add_argument('user_id', type=int, required=False)
+        req_parser.add_argument('indemnity_signed', type=bool, required=False)
         args = req_parser.parse_args()
         event_id = args['event_id']
         current_user_id = g.current_user['id']
@@ -427,11 +442,22 @@ class CheckinAPI(restful.Resource):
         current_user = user_repository.get_by_id(current_user_id)
         if not current_user.is_registration_volunteer(event_id):
             return FORBIDDEN
-        qr = qr_token_repository.resolve(args['token'])
-        if qr is None or qr.event_id != event_id:
-            return INVALID_QR
-        target_user_id = qr.user_id
-        method = 'scan'
+
+        # Resolve the target user from either a scanned QR token or a manual
+        # name/email selection (user_id fallback). Both paths funnel through
+        # the same eligibility, idempotency and Checkin-creation logic.
+        if args['token']:
+            qr = qr_token_repository.resolve(args['token'])
+            if qr is None or qr.event_id != event_id:
+                return INVALID_QR
+            target_user_id = qr.user_id
+            method = 'scan'
+        elif args['user_id']:
+            target_user_id = args['user_id']
+            method = 'manual'
+        else:
+            return MISSING_FIELDS
+
         by_user_id = current_user_id
 
         if not attendance_repository.is_confirmed_guest(event_id, target_user_id):
@@ -452,11 +478,22 @@ class CheckinAPI(restful.Resource):
         if attendance is None:
             attendance = Attendance(event_id, target_user_id, current_user_id)
             attendance_repository.add(attendance)
+        if args['indemnity_signed']:
+            attendance.sign_indemnity()
+        is_first_checkin = not attendance.confirmed
         if not attendance.confirmed:
             attendance.confirm()
         attendance_repository.save()
 
         user = user_repository.get_by_id(target_user_id)
+
+        if is_first_checkin:
+            email_user(
+                'attendance-confirmation',
+                event=event,
+                user=user
+            )
+
         return {
             'checked_in': True,
             'fullname': user.full_name,

@@ -212,10 +212,7 @@ class AnnouncementsAdmin extends Component {
                 disabled={s.isTranslating || (!s.titleEn && !s.bodyEn)}
                 className="flex items-center gap-2 px-4 py-2 rounded-full border border-primary text-primary text-sm font-medium hover:bg-primary/5 disabled:opacity-40 transition-colors"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m5 8 6 6" /><path d="m4 14 6-6 2-3" /><path d="M2 5h12" /><path d="M7 2h1" />
-                  <path d="m22 22-5-10-5 10" /><path d="M14 18h6" />
-                </svg>
+                <i className="fas fa-language" style={{ fontSize: 14 }} />
                 {s.isTranslating ? t('Translating...') : t('Auto-translate to French')}
               </button>
             </div>
@@ -325,10 +322,7 @@ class AnnouncementsAdmin extends Component {
                       className="text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
                       title={t('Delete')}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" />
-                        <path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4h6v2" />
-                      </svg>
+                      <i className="fas fa-trash-alt" style={{ fontSize: 15 }} />
                     </button>
                   </div>
                   <div className="flex gap-4 text-xs text-muted-foreground">

@@ -262,7 +262,7 @@ class Connections extends Component {
                   t={t}
                   actions={
                     <span className="text-xs text-green-700 font-semibold flex items-center gap-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      <i className="fas fa-check" style={{ fontSize: 11 }} />
                       {t('Connected')}
                     </span>
                   }

@@ -62,10 +62,10 @@ class UserDropdown extends Component {
             className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white hover:text-white/80 focus:outline-none transition-colors"
           >
             <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <i className="fas fa-user" style={{ fontSize: 14 }} />
             </div>
             <span>{this.state.user.firstname} {this.state.user.lastname}</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            <i className="fas fa-chevron-down" style={{ fontSize: 11 }} />
           </button>
 
           {this.state.isOpen && (

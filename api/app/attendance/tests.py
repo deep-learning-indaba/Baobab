@@ -432,6 +432,7 @@ class CheckinAPITest(ApiTestCase):
         db.session.commit()
         self.token = qr_token_repository.get_or_create(self.event_id, self.guest_id)
         self.token_str = self.token.token
+        self.add_email_template('attendance-confirmation')
 
     def test_volunteer_can_checkin_guest_by_token(self):
         self.seed_static_data()
@@ -518,6 +519,92 @@ class CheckinAPITest(ApiTestCase):
             query_string={'event_id': self.event_id, 't': 'badtoken'}
         )
         self.assertEqual(response.status_code, 400)
+
+    def test_volunteer_can_checkin_guest_by_user_id(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('volunteer@test.com')
+        response = self.app.post(
+            '/api/v1/checkin', headers=header,
+            data={'event_id': self.event_id, 'user_id': self.guest_id}
+        )
+        self.assertEqual(response.status_code, 201)
+        data = json.loads(response.data)
+        self.assertTrue(data['checked_in'])
+        self.assertEqual(data['fullname'], self.guest_fullname)
+        checkin = checkin_repository.get_latest(self.event_id, self.guest_id)
+        self.assertEqual(checkin.method, 'manual')
+
+    def test_manual_checkin_is_idempotent(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('volunteer@test.com')
+        self.app.post(
+            '/api/v1/checkin', headers=header,
+            data={'event_id': self.event_id, 'user_id': self.guest_id}
+        )
+        response = self.app.post(
+            '/api/v1/checkin', headers=header,
+            data={'event_id': self.event_id, 'user_id': self.guest_id}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertTrue(data['already_checked_in'])
+
+    def test_manual_checkin_non_guest_returns_not_on_guest_list(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('volunteer@test.com')
+        response = self.app.post(
+            '/api/v1/checkin', headers=header,
+            data={'event_id': self.event_id, 'user_id': self.non_guest_id}
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_checkin_without_token_or_user_id_returns_missing_fields(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('volunteer@test.com')
+        response = self.app.post(
+            '/api/v1/checkin', headers=header,
+            data={'event_id': self.event_id}
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_guestlist_reflects_checkin(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('volunteer@test.com')
+        response = self.app.get(
+            '/api/v1/guestlist', headers=header,
+            query_string={'event_id': self.event_id}
+        )
+        data = json.loads(response.data)
+        guest_row = [g for g in data if g['id'] == self.guest_id][0]
+        self.assertFalse(guest_row['checked_in'])
+
+        self.app.post(
+            '/api/v1/checkin', headers=header,
+            data={'event_id': self.event_id, 'user_id': self.guest_id}
+        )
+        response = self.app.get(
+            '/api/v1/guestlist', headers=header,
+            query_string={'event_id': self.event_id}
+        )
+        data = json.loads(response.data)
+        guest_row = [g for g in data if g['id'] == self.guest_id][0]
+        self.assertTrue(guest_row['checked_in'])
+
+    def test_undo_removes_checkin(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('volunteer@test.com')
+        self.app.post(
+            '/api/v1/checkin', headers=header,
+            data={'event_id': self.event_id, 'user_id': self.guest_id}
+        )
+        self.assertTrue(checkin_repository.is_checked_in(self.event_id, self.guest_id))
+        response = self.app.delete(
+            '/api/v1/attendance', headers=header,
+            data={'event_id': self.event_id, 'user_id': self.guest_id}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(checkin_repository.is_checked_in(self.event_id, self.guest_id))
+        self.assertIsNone(attendance_repository.get(self.event_id, self.guest_id))
 
 
 class BadgeExportAPITest(ApiTestCase):

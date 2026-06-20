@@ -284,10 +284,7 @@ class SessionFormModal extends Component {
             onClick: self.props.onClose,
             className: 'text-muted-foreground hover:text-foreground p-1'
           },
-            React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', width: '20', height: '20', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round', strokeLinejoin: 'round' },
-              React.createElement('line', { x1: '18', y1: '6', x2: '6', y2: '18' }),
-              React.createElement('line', { x1: '6', y1: '6', x2: '18', y2: '18' })
-            )
+            React.createElement('i', { className: 'fas fa-times', style: { fontSize: 18 } })
           )
         ),
 
@@ -337,14 +334,7 @@ class SessionFormModal extends Component {
             disabled: self.state.isTranslating,
             className: 'flex items-center gap-1 text-xs text-primary border border-primary/30 rounded-lg px-3 py-1.5 hover:bg-primary/5 transition-colors'
           },
-            React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', width: '14', height: '14', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round', strokeLinejoin: 'round' },
-              React.createElement('path', { d: 'M5 8l6 6' }),
-              React.createElement('path', { d: 'm4 14 6-6 2-3' }),
-              React.createElement('path', { d: 'M2 5h12' }),
-              React.createElement('path', { d: 'M7 2h1' }),
-              React.createElement('path', { d: 'm22 22-5-10-5 10' }),
-              React.createElement('path', { d: 'M14 18h6' })
-            ),
+            React.createElement('i', { className: 'fas fa-language', style: { fontSize: 13 } }),
             self.state.isTranslating ? t('Translating...') : t('Auto-translate to French')
           ),
 
@@ -522,9 +512,7 @@ class SessionFormModal extends Component {
                     className: 'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ' +
                       (selected ? 'bg-primary border-primary' : 'border-border')
                   },
-                    selected && React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', width: '12', height: '12', viewBox: '0 0 24 24', fill: 'none', stroke: 'white', strokeWidth: '3', strokeLinecap: 'round', strokeLinejoin: 'round' },
-                      React.createElement('polyline', { points: '20 6 9 17 4 12' })
-                    )
+                    selected && React.createElement('i', { className: 'fas fa-check', style: { fontSize: 10, color: 'white' } })
                   ),
                   spk.photo_url && React.createElement('img', {
                     src: spk.photo_url,
@@ -617,10 +605,7 @@ function EditorSessionCard(props) {
             session.venue && React.createElement('span', {
               className: 'text-xs text-muted-foreground flex items-center gap-0.5'
             },
-              React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', width: '11', height: '11', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round', strokeLinejoin: 'round' },
-                React.createElement('path', { d: 'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z' }),
-                React.createElement('circle', { cx: '12', cy: '10', r: '3' })
-              ),
+              React.createElement('i', { className: 'fas fa-map-marker-alt', style: { fontSize: 11 } }),
               session.venue
             )
           ),
@@ -639,23 +624,14 @@ function EditorSessionCard(props) {
               className: 'p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-lg transition-colors',
               title: t('Edit')
             },
-              React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', width: '16', height: '16', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round', strokeLinejoin: 'round' },
-                React.createElement('path', { d: 'M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7' }),
-                React.createElement('path', { d: 'M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z' })
-              )
+              React.createElement('i', { className: 'fas fa-pen', style: { fontSize: 14 } })
             ),
             React.createElement('button', {
               onClick: function() { props.onDelete(session); },
               className: 'p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-lg transition-colors',
               title: t('Delete')
             },
-              React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', width: '16', height: '16', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round', strokeLinejoin: 'round' },
-                React.createElement('polyline', { points: '3 6 5 6 21 6' }),
-                React.createElement('path', { d: 'M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6' }),
-                React.createElement('path', { d: 'M10 11v6' }),
-                React.createElement('path', { d: 'M14 11v6' }),
-                React.createElement('path', { d: 'M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2' })
-              )
+              React.createElement('i', { className: 'fas fa-trash-alt', style: { fontSize: 14 } })
             )
           )
         )
@@ -815,10 +791,7 @@ class ProgrammeEditor extends Component {
           onClick: self.handleNewSession,
           className: 'flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm'
         },
-          React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', width: '16', height: '16', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '2.5', strokeLinecap: 'round', strokeLinejoin: 'round' },
-            React.createElement('line', { x1: '12', y1: '5', x2: '12', y2: '19' }),
-            React.createElement('line', { x1: '5', y1: '12', x2: '19', y2: '12' })
-          ),
+          React.createElement('i', { className: 'fas fa-plus', style: { fontSize: 14 } }),
           t('New Session')
         )
       ),
@@ -850,12 +823,7 @@ class ProgrammeEditor extends Component {
         ? React.createElement('div', {
             className: 'text-center py-16 border-2 border-dashed border-border rounded-2xl'
           },
-            React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', width: '40', height: '40', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '1.5', strokeLinecap: 'round', strokeLinejoin: 'round', className: 'text-muted-foreground/50 mb-3 mx-auto' },
-              React.createElement('rect', { x: '3', y: '4', width: '18', height: '18', rx: '2', ry: '2' }),
-              React.createElement('line', { x1: '16', y1: '2', x2: '16', y2: '6' }),
-              React.createElement('line', { x1: '8', y1: '2', x2: '8', y2: '6' }),
-              React.createElement('line', { x1: '3', y1: '10', x2: '21', y2: '10' })
-            ),
+            React.createElement('i', { className: 'fas fa-calendar-alt text-muted-foreground/50 mb-3 mx-auto block', style: { fontSize: 40 } }),
             React.createElement('p', { className: 'text-muted-foreground text-sm mb-4' }, t('No sessions for this day yet.')),
             React.createElement('button', {
               onClick: self.handleNewSession,

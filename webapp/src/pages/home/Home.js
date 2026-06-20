@@ -76,14 +76,6 @@ function StatusStepper({ event, t }) {
         const done = i < current;
         const active = i === current;
 
-        let Icon;
-        if (step.icon === 'check') {
-          Icon = <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />;
-        } else if (step.icon === 'eye') {
-          Icon = <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />;
-        } else {
-          Icon = <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2 M12 11a4 4 0 100-8 4 4 0 000 8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />;
-        }
 
         return (
           <div key={step.label} className="flex-1 flex flex-col items-center gap-2 relative z-10">
@@ -94,9 +86,11 @@ function StatusStepper({ event, t }) {
               !done && !active ? 'bg-surface-high text-muted-foreground border-2 border-border' :
               'bg-surface-high text-foreground border-2 border-border'
             )}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                {Icon}
-              </svg>
+              <i className={
+                step.icon === 'check' ? 'fas fa-check' :
+                step.icon === 'eye' ? 'fas fa-eye' :
+                'fas fa-user'
+              } style={{ fontSize: 13 }} />
             </div>
             <div className="text-center">
               <span className={cn(
@@ -138,7 +132,7 @@ function FeaturedEventCard({ event, t }) {
           </p>
         </div>
         <div className="bg-primary/10 text-primary text-xs font-semibold px-3 py-1.5 rounded-md flex items-center gap-1.5 whitespace-nowrap">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <i className="fas fa-dollar-sign" style={{ fontSize: 12 }} />
           {statusPill}
         </div>
       </div>
@@ -171,9 +165,7 @@ function EventImagePlaceholder({ eventType }) {
   const cls = colors[eventType] || 'bg-surface-high text-muted-foreground';
   return (
     <div className={cn('w-full h-full flex items-center justify-center', cls)}>
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
-      </svg>
+      <i className="fas fa-calendar" style={{ fontSize: 26 }} />
     </div>
   );
 }
@@ -206,7 +198,7 @@ function UpcomingEventCard({ event, t }) {
         </h3>
         {dateStr && (
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-auto pt-3">
-            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            <i className="fas fa-calendar-alt shrink-0" style={{ fontSize: 13 }} />
             <span>{t('Starts')} {dateStr}</span>
           </div>
         )}
@@ -231,7 +223,7 @@ function ActivityStatsCard({ allEvents, attended, t }) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              <i className="fas fa-file-alt" style={{ fontSize: 14 }} />
             </div>
             <span className="text-sm font-medium text-foreground">{t('Applications in Progress')}</span>
           </div>
@@ -241,7 +233,7 @@ function ActivityStatsCard({ allEvents, attended, t }) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-green-50 text-green-600 flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <i className="fas fa-check-circle" style={{ fontSize: 14 }} />
             </div>
             <span className="text-sm font-medium text-foreground">{t('Offers Received')}</span>
           </div>
@@ -251,7 +243,7 @@ function ActivityStatsCard({ allEvents, attended, t }) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <i className="fas fa-users" style={{ fontSize: 14 }} />
             </div>
             <span className="text-sm font-medium text-foreground">{t('Events Attended')}</span>
           </div>
@@ -392,7 +384,7 @@ class Home extends Component {
             {user.is_admin && (
               <div>
                 <a href="../eventConfig" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm border border-transparent !text-white !bg-action hover:!bg-action-container">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  <i className="fas fa-plus" style={{ fontSize: 14 }} />
                   {t('Create New Event')}
                 </a>
               </div>
@@ -408,13 +400,7 @@ class Home extends Component {
                   <h2 className="text-xl font-bold text-foreground">{t('Past Events')}</h2>
                   <span className="flex items-center gap-1.5 text-sm text-muted-foreground group-hover:text-foreground transition-colors">
                     <span>{pastEventsExpanded ? t('Hide') : t('Show')} ({attended.length})</span>
-                    <svg
-                      width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                      className={cn('transition-transform', pastEventsExpanded ? 'rotate-180' : '')}
-                    >
-                      <polyline points="6 9 12 15 18 9"/>
-                    </svg>
+                    <i className={cn('fas fa-chevron-down transition-transform', pastEventsExpanded ? 'rotate-180' : '')} style={{ fontSize: 13 }} />
                   </span>
                 </button>
 

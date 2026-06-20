@@ -34,10 +34,7 @@ function SessionCard(props) {
           session.title
         ),
         session.venue && React.createElement('div', { className: 'flex items-center gap-1 text-xs text-muted-foreground' },
-          React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', width: '11', height: '11', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round', strokeLinejoin: 'round' },
-            React.createElement('path', { d: 'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z' }),
-            React.createElement('circle', { cx: '12', cy: '10', r: '3' })
-          ),
+          React.createElement('i', { className: 'fas fa-map-marker-alt', style: { fontSize: 11 } }),
           session.venue
         ),
         session.description && React.createElement('p', { className: 'text-xs text-muted-foreground line-clamp-2' },
@@ -206,10 +203,7 @@ class EventAppProgramme extends Component {
 
         // Search
         React.createElement('div', { className: 'relative' },
-          React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', width: '16', height: '16', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round', strokeLinejoin: 'round', className: 'absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground' },
-            React.createElement('circle', { cx: '11', cy: '11', r: '8' }),
-            React.createElement('line', { x1: '21', y1: '21', x2: '16.65', y2: '16.65' })
-          ),
+          React.createElement('i', { className: 'fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground', style: { fontSize: 14 } }),
           React.createElement('input', {
             type: 'text',
             placeholder: t('Search sessions or speakers...'),

@@ -228,6 +228,13 @@ class CheckinRepository():
         return q.first() is not None
 
     @staticmethod
+    def checked_in_user_ids(event_id, day=None):
+        q = db.session.query(Checkin.user_id).filter_by(event_id=event_id)
+        if day is not None:
+            q = q.filter_by(day=day)
+        return set(row[0] for row in q.distinct().all())
+
+    @staticmethod
     def get_latest(event_id, user_id):
         return (db.session.query(Checkin)
                 .filter_by(event_id=event_id, user_id=user_id)
@@ -245,3 +252,8 @@ class CheckinRepository():
     @staticmethod
     def list_for_event(event_id):
         return db.session.query(Checkin).filter_by(event_id=event_id).all()
+
+    @staticmethod
+    def delete_for_event_user(event_id, user_id):
+        db.session.query(Checkin).filter_by(event_id=event_id, user_id=user_id).delete()
+        db.session.commit()
