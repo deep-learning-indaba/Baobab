@@ -987,5 +987,17 @@
   "Documents": "Documents",
   "Travel": "Voyage",
   "Information": "Information",
-  "Social & Comms": "Réseaux & communication"
+  "Social & Comms": "Réseaux & communication",
+  "Welcome back": "Bienvenue",
+  "Here is a summary of your recent activities and upcoming events in the Baobab network.": "Voici un résumé de vos activités récentes et des événements à venir dans le réseau Baobab.",
+  "Summary Statistics": "Statistiques récapitulatives",
+  "Applications in Progress": "Candidatures en cours",
+  "Offers Received": "Offres reçues",
+  "Events Attended": "Événements auxquels vous avez participé",
+  "Show": "Afficher",
+  "Hide": "Masquer",
+  "Support Contact Email": "E-mail de contact du support",
+  "Contact email shown to applicants (e.g. indabax@example.com)": "E-mail de contact affiché aux candidats (ex. indabax@example.com)",
+  "Event Image URL": "URL de l'image de l'événement",
+  "URL of image to display on event cards": "URL de l'image à afficher sur les cartes d'événement"
 }

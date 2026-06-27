@@ -2,7 +2,7 @@ service: staging-frontend
 runtime: python312
 
 handlers:
-  - url: /(.*\.(gif|png|jpg|css|js|pdf|json))$
+  - url: /(.*\.(gif|png|jpg|css|js|pdf|json|webmanifest))$
     static_files: build/\1
     upload: build/(.*)
     secure: always

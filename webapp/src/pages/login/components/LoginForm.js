@@ -39,15 +39,8 @@ class LoginForm extends Component {
         if (this.props.loggedIn) {
           this.props.loggedIn(user);
         }
-        // Login was successful, redirect to referring location.
-        if (this.props.location.state) {
-          this.props.history.push(this.props.location.state);
-        }
-        else {
-          //  TODO Fix properly
-          // this.props.history.goBack();
-          this.props.history.push('/')
-        }
+        const from = this.props.location.state && this.props.location.state.from;
+        this.props.history.push(from || '/');
 
       },
       e =>
