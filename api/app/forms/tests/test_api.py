@@ -622,10 +622,14 @@ class TestFormAPI(ApiTestCase):
         self.assertEqual(data['error'], 'Response not found')
     
     def test_put_submitted_response(self):
-        """Test that PUT cannot update submitted response"""
+        """Test that PUT cannot update submitted response when allow_edits is False"""
         self.seed_static_data()
         form, section, question = self._create_test_form()
-        
+
+        # Disable edits so submitted responses are locked
+        form.allow_edits = False
+        db.session.commit()
+
         # Create and submit response
         response = FormResponse(form_id=form.id, user_id=self.user.id)
         response.is_submitted = True
