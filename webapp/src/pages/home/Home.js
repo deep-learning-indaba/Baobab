@@ -7,7 +7,7 @@ import { organisationService } from '../../services/organisation/organisation.se
 import { Card, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { buttonVariants } from '../../components/ui/button';
-import { cn } from '../../lib/utils';
+import { cn } from '../../utils/styling/styling';
 
 /* ── Guest hero ─────────────────────────────────────────────── */
 function GuestHero({ organisation, t }) {
