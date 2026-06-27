@@ -87,6 +87,7 @@ class EventNav extends Component {
 
         {isEventAdmin(this.props.user, this.props.event) && (
           <SidebarSection title={t('Event Admin')}>
+            <SidebarLink to={`/${this.props.eventKey}/dashboard`} label={t('Dashboard')} />
             <SidebarLink to={`/${this.props.eventKey}/eventConfig`} label={t('Edit Event Details')} />
             <SidebarLink to={`/${this.props.eventKey}/reviewAssignment`} label={t('Review Assignment')} />
             <SidebarLink to={`/${this.props.eventKey}/invitedGuests`} label={t('Invited Guests')} />
@@ -97,6 +98,7 @@ class EventNav extends Component {
             <SidebarLink to={`/${this.props.eventKey}/invoices-admin`} label={t('Invoices')} />
             <SidebarLink to={`/${this.props.eventKey}/eventRoleAdmin`} label={t('Event Roles')} />
             <SidebarLink to={`/${this.props.eventKey}/formConfig`} label={t('Form Configuration')} />
+            <SidebarLink to={`/${this.props.eventKey}/resourceLinks`} label={t('Resource Links')} />
             {isProgrammeEditor(this.props.user, this.props.event) && (
               <SidebarLink to={`/${this.props.eventKey}/programmeEditor`} label={t('Programme Editor')} />
             )}
@@ -118,7 +120,6 @@ class EventNav extends Component {
 
         {this.props.isConfirmedGuest && this.props.event && (
           <SidebarSection title={t('Event App')}>
-            <SidebarLink to={`/${this.props.eventKey}/event-app`} label={t('Home')} />
             <SidebarLink to={`/${this.props.eventKey}/app/ticket`} label={t('My Ticket')} />
             <SidebarLink to={`/${this.props.eventKey}/app/profile`} label={t('My Profile')} />
             <SidebarLink to={`/${this.props.eventKey}/app/community`} label={t('Browse attendees')} />
