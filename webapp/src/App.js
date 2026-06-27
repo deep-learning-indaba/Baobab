@@ -12,6 +12,8 @@ import VerifyEmail from "./pages/verifyEmail";
 import Profile from "./pages/profile";
 import { PrivateRoute } from "./components";
 import UserDropdown from "./components/User";
+import InstallBanner from "./components/InstallBanner";
+import { InstallProvider } from "./context/InstallContext";
 import ViewFile from "./components/ViewFile";
 import Reference from "./pages/references";
 import CookieConsent from "react-cookie-consent";
@@ -188,6 +190,7 @@ class AppComponent extends Component {
   render() {
     const t = this.props.t;
     return (
+      <InstallProvider>
       <Router history={history}>
         <div className="notranslate" translate="no">
           <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -369,6 +372,7 @@ class AppComponent extends Component {
               </div>
             </div>
           </footer>
+          <InstallBanner />
           <CookieConsent
             cookieName="baobab-cookie-consent"
             style={{ background: "#343a40" }}
@@ -395,6 +399,7 @@ class AppComponent extends Component {
           </CookieConsent>
         </div>
       </Router>
+      </InstallProvider>
     );
   }
 }

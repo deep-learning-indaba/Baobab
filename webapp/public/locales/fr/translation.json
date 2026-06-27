@@ -999,5 +999,12 @@
   "Support Contact Email": "E-mail de contact du support",
   "Contact email shown to applicants (e.g. indabax@example.com)": "E-mail de contact affiché aux candidats (ex. indabax@example.com)",
   "Event Image URL": "URL de l'image de l'événement",
-  "URL of image to display on event cards": "URL de l'image à afficher sur les cartes d'événement"
+  "URL of image to display on event cards": "URL de l'image à afficher sur les cartes d'événement",
+  "Add Baobab to your home screen": "Ajoutez Baobab à votre écran d'accueil",
+  "Tap": "Appuyez sur",
+  "then": "puis",
+  "Add to Home Screen": "Sur l'écran d'accueil",
+  "Install": "Installer",
+  "Dismiss": "Fermer",
+  "Add app to home screen": "Ajouter l'application à l'écran d'accueil"
 }

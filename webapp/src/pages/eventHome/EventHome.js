@@ -38,7 +38,8 @@ import FormResponseList from "../formResponseList";
 import FormResponseDetail from "../formResponseDetail";
 import ApplicationFormResponsePage from "../applicationFormResponse";
 import FormConfigPage from "../formConfig";
-import { withTranslation } from 'react-i18next';
+import { withTranslation, useTranslation } from 'react-i18next';
+import { useInstall } from '../../context/InstallContext';
 import { EventAppProgramme, ProgrammeEditor, EventAppAnnouncements, AnnouncementDetail, AnnouncementsAdmin, MyTicket, CheckinConsole, BadgeExport, MyProfile, ViewMemberProfile, ProfileBrowser, ScanConnect, Connections, ConnectLanding } from '../eventApp';
 import EventDashboard from '../eventDashboard';
 import ResourceLinksAdmin from '../resourceLinks';
@@ -306,9 +307,47 @@ class EventInfo extends Component {
           </div>
         )}
 
+        <InstallHint />
       </div>
     );
   }
+}
+
+function InstallHint() {
+  const { t } = useTranslation();
+  const { linkVisible, isIOS, install } = useInstall();
+  const [showIOSHint, setShowIOSHint] = React.useState(false);
+
+  if (!linkVisible) return null;
+
+  return (
+    <div className="md:hidden mt-8 pt-6 border-t border-border text-center">
+      {isIOS ? (
+        <>
+          <button
+            onClick={() => setShowIOSHint(h => !h)}
+            className="text-xs text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1.5"
+          >
+            <i className="fas fa-mobile-alt" />
+            {t('Add app to home screen')}
+          </button>
+          {showIOSHint && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              {t('Tap')} <i className="fas fa-share-square" /> {t('then')} <strong>{t('Add to Home Screen')}</strong>
+            </p>
+          )}
+        </>
+      ) : (
+        <button
+          onClick={install}
+          className="text-xs text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1.5"
+        >
+          <i className="fas fa-mobile-alt" />
+          {t('Add app to home screen')}
+        </button>
+      )}
+    </div>
+  );
 }
 
 const EventInfoWithI18n = withTranslation()(EventInfo);
