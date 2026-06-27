@@ -7,7 +7,6 @@ import i18nInit from './i18n';
 import Loading from "./components/Loading";
 import { organisationService } from "./services/organisation/organisation.service";
 import ContextProvider from './context/ContextProvider';
-import { initInstallPrompt } from './utils/pwa';
 
 // Retry lazy-loaded chunks to avoid stale-deploy chunk errors
 const lazyRetry = function(componentImport) {
@@ -76,8 +75,6 @@ root.render(
     </ContextProvider>
   </ErrorBoundary>
 );
-
-initInstallPrompt();
 
 if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
   window.addEventListener('load', function () {

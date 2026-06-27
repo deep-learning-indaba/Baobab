@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { subscribeToPush } from '../utils/push';
+import { announcementService } from '../services/eventApp/announcement.service';
 
 const DISMISSED_KEY = 'pwa-install-dismissed';
 const CONSENT_COOKIE = 'baobab-cookie-consent';
@@ -27,7 +29,12 @@ export function InstallProvider({ children }) {
     if (ios && safari) { setIsIOS(true); return; }
 
     const onPrompt = e => { e.preventDefault(); setDeferredPrompt(e); };
-    const onInstalled = () => setInstalled(true);
+    const onInstalled = () => {
+      setInstalled(true);
+      subscribeToPush().then(result => {
+        if (result.ok) announcementService.subscribePush(result.subscription);
+      });
+    };
     window.addEventListener('beforeinstallprompt', onPrompt);
     window.addEventListener('appinstalled', onInstalled);
     return () => {
