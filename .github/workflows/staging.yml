@@ -156,6 +156,9 @@ jobs:
               "GCP_PROJECT_ID",
               "STAGING_BACKEND_BUCKET",
               "STAGING_CLOUD_SQL_INSTANCE",
+              "STAGING_GCP_API_KEY",
+              "VAPID_PUBLIC_KEY",
+              "VAPID_PRIVATE_KEY",
           ]
           missing = [name for name in required if not os.environ.get(name)]
           if missing:
@@ -179,6 +182,9 @@ jobs:
               "GCP_BUCKET_NAME": os.environ["STAGING_BACKEND_BUCKET"],
               "FILE_SIZE_LIMIT": "10485760",
               "BOABAB_HOST": os.environ.get("STAGING_BAOBAB_HOST", "https://test-baobab.deeplearningindaba.com/"),
+              "GCP_API_KEY": os.environ["STAGING_GCP_API_KEY"],
+              "VAPID_PUBLIC_KEY": os.environ["VAPID_PUBLIC_KEY"],
+              "VAPID_PRIVATE_KEY": os.environ["VAPID_PRIVATE_KEY"],
           }
 
           def scalar(value):
@@ -216,6 +222,9 @@ jobs:
           STAGING_BACKEND_BUCKET: ${{ secrets.STAGING_BACKEND_BUCKET }}
           STAGING_BAOBAB_HOST: ${{ secrets.STAGING_BAOBAB_HOST }}
           STAGING_CLOUD_SQL_INSTANCE: ${{ secrets.STAGING_CLOUD_SQL_INSTANCE }}
+          STAGING_GCP_API_KEY: ${{ secrets.STAGING_GCP_API_KEY }}
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
 
       - name: Deploy backend to App Engine staging service
         run: gcloud app deploy app.generated.yaml --quiet --promote --stop-previous-version --version=v1

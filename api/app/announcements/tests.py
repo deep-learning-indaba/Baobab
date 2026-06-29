@@ -231,6 +231,78 @@ class AnnouncementApiTest(ApiTestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(json.loads(resp.data)['title'], 'English Only')
 
+    @patch('app.announcements.api.push_to_user', return_value=0)
+    def test_guest_list_audience_includes_non_checked_in_guests(self, mock_push):
+        # Add a guest who is on the list but has not checked in
+        not_checked_in = self.add_user('notcheckedin@test.com')
+        _invited_guest(self.event_id, not_checked_in.id)
+
+        payload = {
+            'event_id': self.event_id,
+            'target_audience': 'guest_list',
+            'translations': [
+                {'language': 'en', 'title': 'All Guests', 'body_markdown': 'Hello everyone'},
+            ],
+        }
+        resp = self.app.post(
+            '/api/v1/announcement',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=self.comms_header,
+        )
+        self.assertEqual(resp.status_code, 201)
+        data = json.loads(resp.data)
+        # 2 checked-in guests + 1 not-checked-in guest = 3
+        self.assertEqual(data['audience_count'], 3)
+
+        receipts = db.session.query(AnnouncementReceipt).filter_by(announcement_id=data['id']).all()
+        recipient_ids = {r.user_id for r in receipts}
+        self.assertIn(self.attendee1_id, recipient_ids)
+        self.assertIn(self.attendee2_id, recipient_ids)
+        self.assertIn(not_checked_in.id, recipient_ids)
+
+    @patch('app.announcements.api.push_to_user', return_value=0)
+    def test_checked_in_audience_excludes_non_checked_in_guests(self, mock_push):
+        # Guest on the list but not checked in
+        not_checked_in = self.add_user('notcheckedin2@test.com')
+        _invited_guest(self.event_id, not_checked_in.id)
+
+        payload = {
+            'event_id': self.event_id,
+            'target_audience': 'checked_in',
+            'translations': [
+                {'language': 'en', 'title': 'Checked In Only', 'body_markdown': 'Hello'},
+            ],
+        }
+        resp = self.app.post(
+            '/api/v1/announcement',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=self.comms_header,
+        )
+        self.assertEqual(resp.status_code, 201)
+        data = json.loads(resp.data)
+        self.assertEqual(data['audience_count'], 2)
+
+        receipts = db.session.query(AnnouncementReceipt).filter_by(announcement_id=data['id']).all()
+        recipient_ids = {r.user_id for r in receipts}
+        self.assertNotIn(not_checked_in.id, recipient_ids)
+
+    @patch('app.announcements.api.push_to_user', return_value=0)
+    def test_invalid_target_audience_returns_error(self, mock_push):
+        payload = {
+            'event_id': self.event_id,
+            'target_audience': 'everyone_on_earth',
+            'translations': [{'language': 'en', 'title': 'Hi', 'body_markdown': 'body'}],
+        }
+        resp = self.app.post(
+            '/api/v1/announcement',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=self.comms_header,
+        )
+        self.assertIn(resp.status_code, (400, 422))
+
     def test_inbox_forbidden_for_non_guest(self):
         resp = self.app.get(
             '/api/v1/announcement?event_id={}'.format(self.event_id),

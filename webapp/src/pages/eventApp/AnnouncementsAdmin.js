@@ -21,6 +21,7 @@ class AnnouncementsAdmin extends Component {
       expiryDate: '',
       expiryTime: '',
       critical: false,
+      targetAudience: 'checked_in',
       isTranslating: false,
       isSending: false,
       showConfirm: false,
@@ -106,6 +107,7 @@ class AnnouncementsAdmin extends Component {
       translations: translations,
       expiry_at: expiryAt,
       critical: this.state.critical,
+      target_audience: this.state.targetAudience,
     };
 
     self.setState({ isSending: true, showConfirm: false });
@@ -118,7 +120,7 @@ class AnnouncementsAdmin extends Component {
           sendSuccess: true,
           audienceCount: result.data && result.data.audience_count,
           titleEn: '', bodyEn: '', titleFr: '', bodyFr: '',
-          expiryDate: '', expiryTime: '', critical: false,
+          expiryDate: '', expiryTime: '', critical: false, targetAudience: 'checked_in',
         });
       }
     });
@@ -278,6 +280,33 @@ class AnnouncementsAdmin extends Component {
                   </span>
                 </label>
               </div>
+              <div className="flex items-center gap-3">
+                <button
+                  id="audience-toggle"
+                  role="switch"
+                  aria-checked={s.targetAudience === 'guest_list'}
+                  onClick={function() {
+                    this.setState(function(prev) {
+                      return { targetAudience: prev.targetAudience === 'checked_in' ? 'guest_list' : 'checked_in' };
+                    });
+                  }.bind(this)}
+                  className={'relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 ' + (s.targetAudience === 'guest_list' ? 'bg-primary' : 'bg-muted')}
+                >
+                  <span className={'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ' + (s.targetAudience === 'guest_list' ? 'translate-x-4' : 'translate-x-0')} />
+                </button>
+                <label htmlFor="audience-toggle" className="text-sm text-foreground cursor-pointer" onClick={function() {
+                  this.setState(function(prev) {
+                    return { targetAudience: prev.targetAudience === 'checked_in' ? 'guest_list' : 'checked_in' };
+                  });
+                }.bind(this)}>
+                  {t('Send to all guests')}
+                  <span className="block text-xs text-muted-foreground mt-0.5">
+                    {s.targetAudience === 'guest_list'
+                      ? t('Sending to everyone on the guest list, including those not yet checked in')
+                      : t('Sending to checked-in guests only (default)')}
+                  </span>
+                </label>
+              </div>
             </div>
 
             <button
@@ -350,7 +379,9 @@ class AnnouncementsAdmin extends Component {
             <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4 space-y-4">
               <h2 className="text-lg font-bold text-foreground">{t('Confirm send')}</h2>
               <p className="text-sm text-foreground/80">
-                {t('This will notify all currently checked-in attendees via push notification and inbox.')}
+                {s.targetAudience === 'guest_list'
+                  ? t('This will notify all guests on the guest list (including those not yet checked in) via push notification and inbox.')
+                  : t('This will notify all currently checked-in attendees via push notification and inbox.')}
                 {s.critical && (
                   <span className="block mt-1 text-amber-700">{t('Critical: email will also be sent.')}</span>
                 )}

@@ -5,7 +5,7 @@ from flask import g, request
 import flask_restful as restful
 from flask_restful import reqparse
 
-from app import db
+from app import db, LOGGER
 from app.utils.auth import auth_required
 from app.utils import errors
 from app.utils.push import push_to_user
@@ -46,10 +46,21 @@ def _serialize_announcement(ann, receipt=None, language='en'):
     }
 
 
-def _dispatch(ann, event, critical):
-    """Create receipts and send push (+ email if critical) to all checked-in attendees."""
-    checked_in_rows = CheckinRepository.list_for_event(event.id)
-    user_ids = list({row.user_id for row in checked_in_rows})
+VALID_AUDIENCES = ('checked_in', 'guest_list')
+
+
+def _dispatch(ann, event, critical, target_audience='checked_in'):
+    """Create receipts and send push (+ email if critical) to the target audience.
+
+    target_audience:
+      'checked_in' — only users who have physically checked in (default)
+      'guest_list' — all confirmed guests (accepted offer or invited guest)
+    """
+    if target_audience == 'guest_list':
+        rows = AttendanceRepository.get_all_guests_for_event(event.id)
+        user_ids = list({user.id for user, _ in rows})
+    else:
+        user_ids = list({row.user_id for row in CheckinRepository.list_for_event(event.id)})
     now = datetime.utcnow()
 
     for uid in user_ids:
@@ -77,8 +88,8 @@ def _dispatch(ann, event, critical):
                 'url': push_url,
                 'tag': 'ann-{}'.format(ann.id),
             })
-        except Exception:
-            pass
+        except Exception as e:
+            LOGGER.warning('Web push failed for user %s (announcement %s): %s', uid, ann.id, e, exc_info=True)
 
         # Email backstop — critical only
         if critical and user.email:
@@ -90,10 +101,11 @@ def _dispatch(ann, event, critical):
                     body_html='<h2>{}</h2>{}'.format(title, body_html),
                     body_text='{}\n\n{}'.format(title, body),
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                LOGGER.error('Email failed for user %s (announcement %s): %s', uid, ann.id, e, exc_info=True)
 
     db.session.commit()
+    return len(user_ids)
 
 
 class AnnouncementListAPI(restful.Resource):
@@ -152,6 +164,10 @@ class AnnouncementListAPI(restful.Resource):
             if t.get('language') and t.get('title')
         ]
 
+        target_audience = body.get('target_audience', 'checked_in')
+        if target_audience not in VALID_AUDIENCES:
+            return errors.MISSING_FIELDS
+
         event = event_repository.get_by_id(event_id)
         if not event:
             return errors.EVENT_NOT_FOUND
@@ -159,10 +175,8 @@ class AnnouncementListAPI(restful.Resource):
         ann = AnnouncementRepository.create(event_id, g.current_user['id'], expiry_at, translations)
 
         critical = bool(body.get('critical', False))
-        _dispatch(ann, event, critical)
+        audience = _dispatch(ann, event, critical, target_audience)
 
-        # Count audience for response
-        audience = len({r.user_id for r in CheckinRepository.list_for_event(event_id)})
         return {'id': ann.id, 'audience_count': audience}, 201
 
 
