@@ -1,4 +1,5 @@
 import traceback
+import ssl
 from app import LOGGER
 from config import SMTP_USERNAME, SMTP_PASSWORD, SMTP_SENDER_NAME, SMTP_SENDER_EMAIL, SMTP_HOST, SMTP_PORT, DEBUG
 import smtplib
@@ -70,6 +71,15 @@ def send_mail(recipient, subject, body_text='', body_html='', charset='UTF-8', m
     sender_name = sender_name or g.organisation.name
     sender_email = sender_email or g.organisation.email_from
 
+    missing_config = [name for name, val in [
+        ('SMTP_HOST', SMTP_HOST),
+        ('SMTP_PORT', SMTP_PORT),
+        ('SMTP_USERNAME', SMTP_USERNAME),
+        ('SMTP_PASSWORD', SMTP_PASSWORD),
+    ] if not val]
+    if missing_config:
+        LOGGER.error('SMTP configuration missing for: %s', ', '.join(missing_config))
+
     if (not DEBUG):
         if mail_type == 'AMZ':
             try:
@@ -95,13 +105,19 @@ def send_mail(recipient, subject, body_text='', body_html='', charset='UTF-8', m
                 msg.attach(body_part1)
                 msg.attach(body_part2)
 
-                server = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
+                LOGGER.info('Connecting to SMTP server %s:%s', SMTP_HOST, SMTP_PORT)
+                context = ssl.create_default_context()
+                server = smtplib.SMTP(SMTP_HOST, int(SMTP_PORT), timeout=30)
+                LOGGER.info('Connected to SMTP server, starting TLS')
                 server.ehlo()
-                server.starttls()
+                server.starttls(context=context)
                 server.ehlo()
+                LOGGER.info('TLS established, logging in as %s', SMTP_USERNAME)
                 server.login(SMTP_USERNAME, SMTP_PASSWORD)
+                LOGGER.info('Sending email to %s', recipient)
                 server.sendmail(sender_email, recipient, msg.as_string())
-                server.close()
+                server.quit()
+                LOGGER.info('Email sent successfully to %s', recipient)
             except Exception as e:
                 LOGGER.error("Exception {} while trying to send email: {}".format(e, traceback.format_exc()))
                 raise e

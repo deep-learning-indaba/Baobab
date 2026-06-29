@@ -206,7 +206,7 @@ jobs:
           STAGING_SECRET_KEY: ${{ secrets.STAGING_SECRET_KEY }}
           SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-          SMTP_SENDER_EMAIL: ${{ secrets.SMTP_SENDER_EMAIL }}
+          SMTP_SENDER_EMAIL: baobab@deeplearningindaba.com
           SMTP_HOST: ${{ secrets.SMTP_HOST }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
           STAGING_GCP_CLIENT_ID: ${{ secrets.STAGING_GCP_CLIENT_ID }}
