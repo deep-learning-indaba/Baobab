@@ -235,7 +235,8 @@ class AnnouncementApiTest(ApiTestCase):
     def test_guest_list_audience_includes_non_checked_in_guests(self, mock_push):
         # Add a guest who is on the list but has not checked in
         not_checked_in = self.add_user('notcheckedin@test.com')
-        _invited_guest(self.event_id, not_checked_in.id)
+        not_checked_in_id = not_checked_in.id
+        _invited_guest(self.event_id, not_checked_in_id)
 
         payload = {
             'event_id': self.event_id,
@@ -259,13 +260,14 @@ class AnnouncementApiTest(ApiTestCase):
         recipient_ids = {r.user_id for r in receipts}
         self.assertIn(self.attendee1_id, recipient_ids)
         self.assertIn(self.attendee2_id, recipient_ids)
-        self.assertIn(not_checked_in.id, recipient_ids)
+        self.assertIn(not_checked_in_id, recipient_ids)
 
     @patch('app.announcements.api.push_to_user', return_value=0)
     def test_checked_in_audience_excludes_non_checked_in_guests(self, mock_push):
         # Guest on the list but not checked in
         not_checked_in = self.add_user('notcheckedin2@test.com')
-        _invited_guest(self.event_id, not_checked_in.id)
+        not_checked_in_id = not_checked_in.id
+        _invited_guest(self.event_id, not_checked_in_id)
 
         payload = {
             'event_id': self.event_id,
@@ -286,7 +288,7 @@ class AnnouncementApiTest(ApiTestCase):
 
         receipts = db.session.query(AnnouncementReceipt).filter_by(announcement_id=data['id']).all()
         recipient_ids = {r.user_id for r in receipts}
-        self.assertNotIn(not_checked_in.id, recipient_ids)
+        self.assertNotIn(not_checked_in_id, recipient_ids)
 
     @patch('app.announcements.api.push_to_user', return_value=0)
     def test_invalid_target_audience_returns_error(self, mock_push):
