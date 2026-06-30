@@ -57,8 +57,7 @@ def _dispatch(ann, event, critical, target_audience='checked_in'):
       'guest_list' — all confirmed guests (accepted offer or invited guest)
     """
     if target_audience == 'guest_list':
-        rows = AttendanceRepository.get_all_guests_for_event(event.id)
-        user_ids = list({user.id for user, _ in rows})
+        user_ids = AttendanceRepository.get_all_guest_user_ids_for_event(event.id)
     else:
         user_ids = list({row.user_id for row in CheckinRepository.list_for_event(event.id)})
     now = datetime.utcnow()

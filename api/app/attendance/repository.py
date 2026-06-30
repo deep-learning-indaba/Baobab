@@ -136,7 +136,79 @@ class AttendanceRepository():
         query = offers.union(invited)
         return query.all()
 
+    @staticmethod
+    def get_all_guest_user_ids_for_event(event_id):
+        """Return a list of user IDs for all confirmed guests.
+        """
+        latest_payment_status_subquery = (
+            db.session.query(
+                InvoicePaymentStatus.invoice_id,
+                func.max(InvoicePaymentStatus.created_at_unix).label('max_created_at')
+            )
+            .group_by(InvoicePaymentStatus.invoice_id)
+            .subquery()
+        )
 
+        current_payment_status_subquery = (
+            db.session.query(
+                InvoicePaymentStatus.invoice_id,
+                InvoicePaymentStatus.payment_status
+            )
+            .join(
+                latest_payment_status_subquery,
+                and_(
+                    InvoicePaymentStatus.invoice_id == latest_payment_status_subquery.c.invoice_id,
+                    InvoicePaymentStatus.created_at_unix == latest_payment_status_subquery.c.max_created_at
+                )
+            )
+            .subquery()
+        )
+
+        offer_paid_status_subquery = (
+            db.session.query(
+                OfferInvoice.offer_id,
+                case([
+                    (func.count(OfferInvoice.invoice_id) == 0, True),
+                    (
+                        func.sum(case([
+                            (current_payment_status_subquery.c.payment_status == PaymentStatus.PAID.value, 1)
+                        ], else_=0)) == func.count(OfferInvoice.invoice_id),
+                        True
+                    )
+                ], else_=False).label('is_payment_confirmed')
+            )
+            .join(current_payment_status_subquery, current_payment_status_subquery.c.invoice_id == OfferInvoice.invoice_id)
+            .filter(current_payment_status_subquery.c.payment_status.in_([
+                PaymentStatus.UNPAID.value,
+                PaymentStatus.PAID.value,
+                PaymentStatus.FAILED.value
+            ]))
+            .group_by(OfferInvoice.offer_id)
+            .subquery()
+        )
+
+        offer_ids = (
+            db.session.query(Offer.user_id)
+            .outerjoin(offer_paid_status_subquery, offer_paid_status_subquery.c.offer_id == Offer.id)
+            .filter(
+                Offer.event_id == event_id,
+                Offer.candidate_response == True,
+                case(
+                    [
+                        (Offer.payment_required == False, True),
+                        (Offer.payment_required == True, offer_paid_status_subquery.c.is_payment_confirmed == True)
+                    ],
+                    else_=False
+                )
+            )
+        )
+
+        invited_ids = (
+            db.session.query(InvitedGuest.user_id)
+            .filter(InvitedGuest.event_id == event_id)
+        )
+
+        return list({row[0] for row in offer_ids.union(invited_ids).all()})
 
     @staticmethod
     def is_confirmed_guest(event_id, user_id):
