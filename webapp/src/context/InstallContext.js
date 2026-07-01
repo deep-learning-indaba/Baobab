@@ -22,7 +22,13 @@ export function InstallProvider({ children }) {
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
       window.navigator.standalone === true;
-    if (isStandalone) { setInstalled(true); return; }
+    if (isStandalone) {
+      setInstalled(true);
+      subscribeToPush().then(result => {
+        if (result.ok) announcementService.subscribePush(result.subscription);
+      });
+      return;
+    }
 
     const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     const safari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);

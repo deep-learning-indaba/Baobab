@@ -2,6 +2,9 @@ import json
 
 from app import db
 from app.utils.logger import Logger
+from pywebpush import webpush, WebPushException
+from app.announcements.models import PushSubscription
+
 
 LOGGER = Logger().get_logger()
 
@@ -11,9 +14,6 @@ def push_to_user(user_id, payload):
     from config import VAPID_PRIVATE_KEY, VAPID_CLAIM_EMAIL
     if not VAPID_PRIVATE_KEY:
         return 0
-
-    from pywebpush import webpush, WebPushException
-    from app.announcements.models import PushSubscription
 
     subs = db.session.query(PushSubscription).filter_by(user_id=user_id).all()
     sent = 0
