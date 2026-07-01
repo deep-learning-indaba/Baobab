@@ -213,8 +213,8 @@ jobs:
           SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           SMTP_SENDER_EMAIL: baobab@deeplearningindaba.com
-          SMTP_HOST: ${{ secrets.SMTP_HOST }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_HOST: email-smtp.us-east-1.amazonaws.com
+          SMTP_PORT: 587
           STAGING_GCP_CLIENT_ID: ${{ secrets.STAGING_GCP_CLIENT_ID }}
           STAGING_GCP_CLIENT_EMAIL: ${{ secrets.STAGING_GCP_CLIENT_EMAIL }}
           STAGING_GCP_PRIVATE_KEY_ID: ${{ secrets.STAGING_GCP_PRIVATE_KEY_ID }}
