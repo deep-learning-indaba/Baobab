@@ -5,13 +5,17 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
   // Load REACT_APP_* vars from .env.[mode] so legacy process.env usage keeps working
   const env = loadEnv(mode, process.cwd(), ['REACT_APP_', 'VITE_'])
 
+  // NODE_ENV tracks build-vs-dev-server, NOT the env-file mode. Any `vite build`
+  // (including --mode test for staging) must produce a production runtime, so the
+  // service worker registers and React runs optimised. Only the dev server is
+  // 'development'. The --mode flag still only selects which .env.<mode> to load.
   const defines = {
     'process.env.NODE_ENV': JSON.stringify(
-      mode === 'production' ? 'production' : 'development'
+      command === 'build' ? 'production' : 'development'
     ),
   }
   for (const [key, value] of Object.entries(env)) {

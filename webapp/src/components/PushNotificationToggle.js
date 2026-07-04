@@ -34,7 +34,8 @@ export default function PushNotificationToggle() {
       } else if (result.reason === 'denied') {
         setFeedback({ type: 'error', text: t('Notifications are blocked. Allow notifications for this site in your browser settings, then try again.') });
       } else {
-        setFeedback({ type: 'error', text: t('Could not enable notifications. Please try again.') });
+        // Include the reason code so it can be reported if something's off.
+        setFeedback({ type: 'error', text: t('Could not enable notifications. Please try again.') + ' (' + (result.reason || 'unknown') + ')' });
       }
     });
   }, [t]);
