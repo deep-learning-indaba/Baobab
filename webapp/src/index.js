@@ -120,3 +120,10 @@ if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
     });
   });
 }
+
+// Capture beforeinstallprompt as early as possible — it can fire before React mounts.
+window.__pwaInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', function (e) {
+  e.preventDefault();
+  window.__pwaInstallPrompt = e;
+});

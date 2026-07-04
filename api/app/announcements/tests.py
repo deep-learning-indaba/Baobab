@@ -363,6 +363,20 @@ class AnnouncementApiTest(ApiTestCase):
         )
         self.assertIn(resp.status_code, (400, 422))
 
+    def test_push_to_user_without_vapid_key_is_safe_noop(self):
+        # A subscription exists, but with no server key configured push_to_user
+        # must not raise or attempt delivery — it just reports zero sent.
+        from app.utils.push import push_to_user
+        db.session.add(PushSubscription(
+            user_id=self.attendee1_id,
+            endpoint='https://push.example.com/xyz',
+            p256dh='p256dh', auth='auth', user_agent='TestBrowser',
+        ))
+        db.session.commit()
+        with patch('config.VAPID_PRIVATE_KEY', ''):
+            sent = push_to_user(self.attendee1_id, {'title': 't', 'body': 'b', 'url': '/', 'tag': 'x'})
+        self.assertEqual(sent, 0)
+
     @patch('app.announcements.api.push_to_user', return_value=0)
     def test_admin_list_shows_delivery_stats(self, mock_push):
         payload = {

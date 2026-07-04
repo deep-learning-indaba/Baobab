@@ -1025,5 +1025,14 @@
   "Please read and sign the indemnity form below to access your ticket.": "Veuillez lire et signer le formulaire d'indemnité ci-dessous pour accéder à votre billet.",
   "I agree with the terms outlined in the indemnity form above.": "J'accepte les termes décrits dans le formulaire d'indemnité ci-dessus.",
   "Signing...": "Signature en cours...",
-  "Sign and view my ticket": "Signer et voir mon billet"
+  "Sign and view my ticket": "Signer et voir mon billet",
+  "Notifications": "Notifications",
+  "Get announcements from organisers even when the app is closed.": "Recevez les annonces des organisateurs même lorsque l'application est fermée.",
+  "Enable notifications": "Activer les notifications",
+  "Enabling...": "Activation...",
+  "On": "Activées",
+  "Notifications are on.": "Les notifications sont activées.",
+  "Notifications are blocked. Allow notifications for this site in your browser settings, then try again.": "Les notifications sont bloquées. Autorisez les notifications pour ce site dans les paramètres de votre navigateur, puis réessayez.",
+  "Could not enable notifications. Please try again.": "Impossible d'activer les notifications. Veuillez réessayer.",
+  "On iPhone, add the app to your home screen first to receive notifications. On other devices, notifications are not supported by this browser.": "Sur iPhone, ajoutez d'abord l'application à votre écran d'accueil pour recevoir des notifications. Sur les autres appareils, les notifications ne sont pas prises en charge par ce navigateur."
 }

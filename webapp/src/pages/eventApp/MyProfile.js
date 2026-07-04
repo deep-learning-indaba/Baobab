@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import CreatableSelect from 'react-select/lib/Creatable';
 import { profileService } from '../../services/eventApp/profile.service';
+import PushNotificationToggle from '../../components/PushNotificationToggle';
 
 function extractHandle(url, pattern) {
   if (!url) return '';
@@ -148,6 +149,8 @@ function MyProfile(props) {
   return (
     <div className="w-full max-w-5xl mx-auto pt-6 space-y-6">
       <h1 className="text-2xl font-bold text-foreground">{t('My Profile')}</h1>
+
+      <PushNotificationToggle />
 
       {profile && (
         <div className="bg-white rounded-2xl border border-border p-4 text-sm text-foreground/70">

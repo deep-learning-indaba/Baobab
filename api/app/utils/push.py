@@ -13,6 +13,10 @@ def push_to_user(user_id, payload):
     """Send a Web Push to all subscriptions for user_id. Best-effort; prunes dead subscriptions."""
     from config import VAPID_PRIVATE_KEY, VAPID_CLAIM_EMAIL
     if not VAPID_PRIVATE_KEY:
+        LOGGER.warning(
+            'push_to_user(%s) skipped: VAPID_PRIVATE_KEY is not configured; no web push will be sent',
+            user_id,
+        )
         return 0
 
     subs = db.session.query(PushSubscription).filter_by(user_id=user_id).all()

@@ -28,8 +28,7 @@ import history from "./History";
 import { isEventAdmin, isRegistrationAdmin, isRegistrationVolunteer, isEventReviewer } from "./utils/user";
 import { withTranslation } from 'react-i18next';
 import { userService } from "./services/user";
-import { subscribeToPush } from "./utils/push";
-import { announcementService } from "./services/eventApp/announcement.service";
+import { registerPushSubscription } from "./utils/push";
 
 
 ReactGA.initialize("UA-136093201-1", {
@@ -144,9 +143,9 @@ class AppComponent extends Component {
       if (!user.error) {
         localStorage.setItem("user", JSON.stringify(user));
         this.setState({ user: user });
-        subscribeToPush().then(result => {
-          if (result.ok) announcementService.subscribePush(result.subscription);
-        });
+        // Silently re-sync the push subscription if the user already granted
+        // permission — self-heals the record across reinstalls / new devices.
+        registerPushSubscription({ requestPermission: false });
       }
       else {
         localStorage.removeItem("user");
@@ -176,9 +175,7 @@ class AppComponent extends Component {
         });
       });
 
-      subscribeToPush().then(result => {
-        if (result.ok) announcementService.subscribePush(result.subscription);
-      });
+      registerPushSubscription({ requestPermission: false });
     }
 
   }

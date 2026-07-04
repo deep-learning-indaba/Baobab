@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { subscribeToPush } from '../utils/push';
-import { announcementService } from '../services/eventApp/announcement.service';
+import { registerPushSubscription } from '../utils/push';
 
 const DISMISSED_KEY = 'pwa-install-dismissed';
 const DISMISS_DURATION_DAYS = 10;
@@ -37,12 +36,17 @@ export function InstallProvider({ children }) {
     const safari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     if (ios && safari) { setIsIOS(true); return; }
 
-    const onPrompt = e => { e.preventDefault(); setDeferredPrompt(e); };
+    const onPrompt = e => { e.preventDefault(); window.__pwaInstallPrompt = e; setDeferredPrompt(e); };
+
+    // Pick up any prompt that fired before this component mounted
+    if (window.__pwaInstallPrompt) setDeferredPrompt(window.__pwaInstallPrompt);
+
     const onInstalled = () => {
       setInstalled(true);
-      subscribeToPush().then(result => {
-        if (result.ok) announcementService.subscribePush(result.subscription);
-      });
+      // Just installed — a good moment to opt into notifications. If the OS
+      // permission prompt is suppressed here it's harmless; the profile toggle
+      // and the granted-on-load re-sync will still register the subscription.
+      registerPushSubscription({ requestPermission: true });
     };
     window.addEventListener('beforeinstallprompt', onPrompt);
     window.addEventListener('appinstalled', onInstalled);
