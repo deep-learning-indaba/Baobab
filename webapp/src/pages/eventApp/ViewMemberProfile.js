@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { profileService } from '../../services/eventApp/profile.service';
 
+function withProtocol(url) {
+  if (!url) return url;
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
 function ViewMemberProfile(props) {
   const event = props.event;
   const userId = props.match && props.match.params && props.match.params.userId;
@@ -107,22 +112,22 @@ function ViewMemberProfile(props) {
       {profile.links && Object.keys(profile.links).length > 0 && (
         <div className="bg-white rounded-2xl border border-border shadow-sm p-4 space-y-1 text-sm">
           {profile.links.linkedin && (
-            <a href={profile.links.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline">
+            <a href={withProtocol(profile.links.linkedin)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline">
               LinkedIn
             </a>
           )}
           {profile.links.twitter && (
-            <a href={profile.links.twitter} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline">
+            <a href={withProtocol(profile.links.twitter)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline">
               Twitter/X
             </a>
           )}
           {profile.links.scholar && (
-            <a href={profile.links.scholar} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline">
+            <a href={withProtocol(profile.links.scholar)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline">
               {t('Google Scholar')}
             </a>
           )}
           {profile.links.website && (
-            <a href={profile.links.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline">
+            <a href={withProtocol(profile.links.website)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline">
               {t('Website')}
             </a>
           )}

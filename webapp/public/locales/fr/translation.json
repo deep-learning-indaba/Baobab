@@ -1010,5 +1010,20 @@
   "Add to Home Screen": "Sur l'écran d'accueil",
   "Install": "Installer",
   "Dismiss": "Fermer",
-  "Add app to home screen": "Ajouter l'application à l'écran d'accueil"
+  "Add app to home screen": "Ajouter l'application à l'écran d'accueil",
+  "Starting camera...": "Démarrage de la caméra...",
+  "Camera access needed": "Accès à la caméra requis",
+  "Allow camera access to scan QR codes.": "Autorisez l'accès à la caméra pour scanner les codes QR.",
+  "Allow Camera Access": "Autoriser l'accès à la caméra",
+  "If blocked, enable camera in your browser settings.": "Si bloqué, activez la caméra dans les paramètres de votre navigateur.",
+  "Could not start camera.": "Impossible de démarrer la caméra.",
+  "Try again": "Réessayer",
+  "Switch camera": "Changer de caméra",
+  "Indemnity form not signed — check-in cannot proceed until the attendee signs.": "Formulaire d'indemnité non signé — l'enregistrement ne peut pas se faire tant que le participant n'a pas signé.",
+  "Scan next attendee": "Scanner le prochain participant",
+  "Indemnity form required": "Formulaire d'indemnité requis",
+  "Please read and sign the indemnity form below to access your ticket.": "Veuillez lire et signer le formulaire d'indemnité ci-dessous pour accéder à votre billet.",
+  "I agree with the terms outlined in the indemnity form above.": "J'accepte les termes décrits dans le formulaire d'indemnité ci-dessus.",
+  "Signing...": "Signature en cours...",
+  "Sign and view my ticket": "Signer et voir mon billet"
 }

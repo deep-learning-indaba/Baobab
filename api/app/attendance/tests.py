@@ -2,7 +2,7 @@ from datetime import datetime
 import json
 
 from app import db
-from app.attendance.models import Attendance, EventQRToken, Checkin
+from app.attendance.models import Attendance, EventQRToken, Checkin, EventIndemnity
 from app.attendance.repository import AttendanceRepository as attendance_repository
 from app.attendance.repository import QRTokenRepository as qr_token_repository
 from app.attendance.repository import CheckinRepository as checkin_repository
@@ -366,6 +366,23 @@ class MyTicketAPITest(ApiTestCase):
         self.assertEqual(data['fullname'], self.guest_fullname)
         self.assertEqual(data['role'], 'General Attendee')
         self.assertFalse(data['checked_in'])
+        self.assertFalse(data['has_indemnity_form'])
+        self.assertFalse(data['indemnity_signed'])
+
+    def test_my_ticket_has_indemnity_form_true_when_form_exists(self):
+        self.seed_static_data()
+        indemnity = EventIndemnity(event_id=self.event_id, indemnity_form='Please agree to this.')
+        db.session.add(indemnity)
+        db.session.commit()
+        header = self.get_auth_header_for('guest@test.com')
+        response = self.app.get(
+            '/api/v1/my-ticket', headers=header,
+            query_string={'event_id': self.event_id}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertTrue(data['has_indemnity_form'])
+        self.assertFalse(data['indemnity_signed'])
 
     def test_my_ticket_returns_not_a_guest_for_non_guest(self):
         self.seed_static_data()
@@ -501,6 +518,22 @@ class CheckinAPITest(ApiTestCase):
         data = json.loads(response.data)
         self.assertEqual(data['fullname'], self.guest_fullname)
         self.assertFalse(data['already_checked_in'])
+        self.assertFalse(data['has_indemnity_form'])
+
+    def test_resolve_has_indemnity_form_true_when_form_exists(self):
+        self.seed_static_data()
+        indemnity = EventIndemnity(event_id=self.event_id, indemnity_form='Please sign this.')
+        db.session.add(indemnity)
+        db.session.commit()
+        header = self.get_auth_header_for('volunteer@test.com')
+        response = self.app.get(
+            '/api/v1/checkin/resolve', headers=header,
+            query_string={'event_id': self.event_id, 't': self.token_str}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertTrue(data['has_indemnity_form'])
+        self.assertFalse(data['indemnity_signed'])
 
     def test_resolve_forbidden_for_non_volunteer(self):
         self.seed_static_data()

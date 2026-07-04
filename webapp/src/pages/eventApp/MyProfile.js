@@ -1,7 +1,32 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import Select from 'react-select';
+import CreatableSelect from 'react-select/lib/Creatable';
 import { profileService } from '../../services/eventApp/profile.service';
+
+function extractHandle(url, pattern) {
+  if (!url) return '';
+  const match = url.match(pattern);
+  return match ? match[1] : '';
+}
+
+function linksToHandles(l) {
+  return {
+    linkedin: extractHandle(l.linkedin, /linkedin\.com\/in\/([^/?#]+)/),
+    twitter: extractHandle(l.twitter, /(?:twitter\.com|x\.com)\/@?([^/?#]+)/),
+    scholar: extractHandle(l.scholar, /scholar\.google\.com\/citations\?(?:.*&)?user=([^&]+)/),
+    website: l.website || '',
+  };
+}
+
+function handlesToLinks(h) {
+  const out = {};
+  if (h.linkedin) out.linkedin = `https://linkedin.com/in/${h.linkedin}`;
+  const tw = h.twitter ? h.twitter.replace(/^@/, '') : '';
+  if (tw) out.twitter = `https://x.com/${tw}`;
+  if (h.scholar) out.scholar = `https://scholar.google.com/citations?user=${h.scholar}`;
+  if (h.website) out.website = h.website;
+  return out;
+}
 
 function MyProfile(props) {
   const event = props.event;
@@ -54,7 +79,7 @@ function MyProfile(props) {
         setSelectedInterests((p.interests || []).map(function(i) {
           return { value: i.id, label: i.name };
         }));
-        setLinks(Object.assign({ linkedin: '', twitter: '', scholar: '', website: '' }, p.links || {}));
+        setLinks(linksToHandles(p.links || {}));
       }
       if (!interestsResult.error) {
         setAvailableInterests((interestsResult.data || []).map(function(i) {
@@ -85,12 +110,6 @@ function MyProfile(props) {
     setIsSaving(true);
     setSaveSuccess(false);
     setError(null);
-    const linksClean = {};
-    Object.keys(links).forEach(function(k) {
-      if (links[k]) {
-        linksClean[k] = links[k];
-      }
-    });
     const payload = {
       event_id: eventId,
       headline: headline,
@@ -102,7 +121,7 @@ function MyProfile(props) {
       affiliation: affiliation,
       visibility: visibility,
       interest_ids: selectedInterests.map(function(o) { return o.value; }),
-      links: linksClean,
+      links: handlesToLinks(links),
     };
     profileService.updateMyProfile(payload).then(function(result) {
       setIsSaving(false);
@@ -212,7 +231,7 @@ function MyProfile(props) {
 
         <div>
           <label className="block text-sm font-medium text-foreground mb-1">{t('Interests')}</label>
-          <Select
+          <CreatableSelect
             isMulti
             options={availableInterests}
             value={selectedInterests}
@@ -223,35 +242,58 @@ function MyProfile(props) {
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-foreground">{t('LinkedIn')}</label>
-          <input
-            className="w-full border border-border rounded-lg px-3 py-2 text-sm"
-            placeholder="https://linkedin.com/in/..."
-            value={links.linkedin}
-            onChange={function(e) { handleLinkChange('linkedin', e.target.value); }}
-          />
-          <label className="block text-sm font-medium text-foreground">{t('Twitter/X')}</label>
-          <input
-            className="w-full border border-border rounded-lg px-3 py-2 text-sm"
-            placeholder="https://x.com/..."
-            value={links.twitter}
-            onChange={function(e) { handleLinkChange('twitter', e.target.value); }}
-          />
-          <label className="block text-sm font-medium text-foreground">{t('Google Scholar')}</label>
-          <input
-            className="w-full border border-border rounded-lg px-3 py-2 text-sm"
-            placeholder="https://scholar.google.com/..."
-            value={links.scholar}
-            onChange={function(e) { handleLinkChange('scholar', e.target.value); }}
-          />
-          <label className="block text-sm font-medium text-foreground">{t('Website')}</label>
-          <input
-            className="w-full border border-border rounded-lg px-3 py-2 text-sm"
-            placeholder="https://..."
-            value={links.website}
-            onChange={function(e) { handleLinkChange('website', e.target.value); }}
-          />
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">{t('LinkedIn')}</label>
+            <div className="flex items-center border border-border rounded-lg overflow-hidden text-sm">
+              <span className="bg-gray-50 px-3 py-2 text-foreground/50 border-r border-border whitespace-nowrap select-none">
+                linkedin.com/in/
+              </span>
+              <input
+                className="flex-1 px-3 py-2 outline-none"
+                placeholder="your-handle"
+                value={links.linkedin}
+                onChange={function(e) { handleLinkChange('linkedin', e.target.value); }}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">{t('Twitter/X')}</label>
+            <div className="flex items-center border border-border rounded-lg overflow-hidden text-sm">
+              <span className="bg-gray-50 px-3 py-2 text-foreground/50 border-r border-border whitespace-nowrap select-none">
+                x.com/
+              </span>
+              <input
+                className="flex-1 px-3 py-2 outline-none"
+                placeholder="yourhandle"
+                value={links.twitter}
+                onChange={function(e) { handleLinkChange('twitter', e.target.value); }}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">{t('Google Scholar')}</label>
+            <div className="flex items-center border border-border rounded-lg overflow-hidden text-sm">
+              <span className="bg-gray-50 px-3 py-2 text-foreground/50 border-r border-border whitespace-nowrap select-none">
+                scholar.google.com/citations?user=
+              </span>
+              <input
+                className="flex-1 px-3 py-2 outline-none"
+                placeholder="user-id"
+                value={links.scholar}
+                onChange={function(e) { handleLinkChange('scholar', e.target.value); }}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">{t('Website')}</label>
+            <input
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm"
+              placeholder="https://..."
+              value={links.website}
+              onChange={function(e) { handleLinkChange('website', e.target.value); }}
+            />
+          </div>
         </div>
 
         <div className="flex items-center gap-3">

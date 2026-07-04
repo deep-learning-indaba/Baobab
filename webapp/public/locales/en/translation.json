@@ -1011,5 +1011,20 @@
   "Add to Home Screen": "Add to Home Screen",
   "Install": "Install",
   "Dismiss": "Dismiss",
-  "Add app to home screen": "Add app to home screen"
+  "Add app to home screen": "Add app to home screen",
+  "Starting camera...": "Starting camera...",
+  "Camera access needed": "Camera access needed",
+  "Allow camera access to scan QR codes.": "Allow camera access to scan QR codes.",
+  "Allow Camera Access": "Allow Camera Access",
+  "If blocked, enable camera in your browser settings.": "If blocked, enable camera in your browser settings.",
+  "Could not start camera.": "Could not start camera.",
+  "Try again": "Try again",
+  "Switch camera": "Switch camera",
+  "Indemnity form not signed — check-in cannot proceed until the attendee signs.": "Indemnity form not signed — check-in cannot proceed until the attendee signs.",
+  "Scan next attendee": "Scan next attendee",
+  "Indemnity form required": "Indemnity form required",
+  "Please read and sign the indemnity form below to access your ticket.": "Please read and sign the indemnity form below to access your ticket.",
+  "I agree with the terms outlined in the indemnity form above.": "I agree with the terms outlined in the indemnity form above.",
+  "Signing...": "Signing...",
+  "Sign and view my ticket": "Sign and view my ticket"
 }

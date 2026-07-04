@@ -20,7 +20,7 @@ class Connection(db.Model):
     from_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
     to_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
     method = db.Column(db.String(16), nullable=False, default='scan')
-    status = db.Column(db.Enum(ConnectionStatus, name='connection_status'), nullable=False, default=ConnectionStatus.PENDING)
+    status = db.Column(db.Enum(ConnectionStatus, name='connection_status', values_callable=lambda x: [e.value for e in x]), nullable=False, default=ConnectionStatus.PENDING)
     created_at = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 

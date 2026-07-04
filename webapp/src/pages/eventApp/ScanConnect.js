@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import QrScanner from '../../components/QrScanner';
 import { connectionService } from '../../services/eventApp/connection.service';
 
 const SCAN_DEBOUNCE_MS = 3000;
@@ -192,8 +192,6 @@ function ScanConnect(props) {
   var [resolveError, setResolveError] = useState(null);
   var [scannerReady, setScannerReady] = useState(false);
 
-  var scannerRef = useRef(null);
-  var scannerInstanceRef = useRef(null);
   var lastScannedRef = useRef(null);
   var lastScannedAtRef = useRef(0);
 
@@ -223,36 +221,27 @@ function ScanConnect(props) {
     } else {
       setScannerReady(true);
     }
-  }, [eventId]);
+  }, [eventId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(function() {
-    if (!scannerReady || !scannerRef.current) return;
-    var scanner = new Html5QrcodeScanner(
-      'qr-scan-connect-region',
-      { fps: 10, qrbox: { width: 250, height: 250 } },
-      false
-    );
-    scannerInstanceRef.current = scanner;
-    scanner.render(function(decodedText) {
-      var token = extractToken(decodedText);
-      var now = Date.now();
-      if (token === lastScannedRef.current && now - lastScannedAtRef.current < SCAN_DEBOUNCE_MS) return;
-      lastScannedRef.current = token;
-      lastScannedAtRef.current = now;
-      resolveToken(token);
-    }, function() {});
-    return function() { scanner.clear().catch(function() {}); };
-  }, [scannerReady]);
+  var handleScan = useCallback(function(decodedText) {
+    var token = extractToken(decodedText);
+    var now = Date.now();
+    if (token === lastScannedRef.current && now - lastScannedAtRef.current < SCAN_DEBOUNCE_MS) return;
+    lastScannedRef.current = token;
+    lastScannedAtRef.current = now;
+    resolveToken(token);
+  }, [eventId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="w-full max-w-lg mx-auto pt-6 space-y-4">
       <h1 className="font-heading text-2xl font-bold text-foreground text-left">{t('Scan Badge')}</h1>
 
-      {/* Camera scanner */}
       {scannerReady && !resolved && (
         <div className="bg-white rounded-2xl border border-border shadow-sm p-4">
-          <p className="text-sm text-muted-foreground mb-3 text-left">{t('Point your camera at another attendee\'s badge QR code.')}</p>
-          <div id="qr-scan-connect-region" ref={scannerRef} />
+          <p className="text-sm text-muted-foreground mb-3 text-left">
+            {t("Point your camera at another attendee's badge QR code.")}
+          </p>
+          <QrScanner onScan={handleScan} />
         </div>
       )}
 

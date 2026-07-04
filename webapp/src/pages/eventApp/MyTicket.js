@@ -1,20 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { QRCodeCanvas } from 'qrcode.react';
 import { checkinService } from '../../services/eventApp/checkin.service';
+import { attendanceService } from '../../services/attendance/attendance.service';
+
+const POLL_INTERVAL_MS = 5000;
 
 function MyTicket(props) {
   const event = props.event;
+  const eventId = event && event.id;
   const { t } = useTranslation();
 
   const [ticket, setTicket] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Indemnity form state
+  const [indemnityFormText, setIndemnityFormText] = useState(null);
+  const [indemnityLoading, setIndemnityLoading] = useState(false);
+  const [indemnityError, setIndemnityError] = useState(null);
+  const [agreed, setAgreed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Load ticket on mount
   useEffect(function() {
-    const eventId = event && event.id;
     if (!eventId) {
       setIsLoading(false);
-      setError('No event found.');
+      setError(t('No event found.'));
       return;
     }
     checkinService.getMyTicket(eventId).then(function(result) {
@@ -25,11 +37,54 @@ function MyTicket(props) {
       }
       setIsLoading(false);
     });
-  }, [event && event.id]);
+  }, [eventId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load indemnity form text when the gate is active
+  const needsIndemnity = ticket && ticket.has_indemnity_form && !ticket.indemnity_signed;
+  useEffect(function() {
+    if (!needsIndemnity || !eventId) return;
+    setIndemnityLoading(true);
+    attendanceService.getIndemnityForm(eventId).then(function(result) {
+      setIndemnityLoading(false);
+      if (result.error) {
+        setIndemnityError(result.error);
+      } else {
+        setIndemnityFormText(result.data.indemnity_form);
+      }
+    });
+  }, [needsIndemnity, eventId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Poll for check-in status every 5 s, but only when the tab is visible
+  const checkedIn = ticket ? ticket.checked_in : false;
+  useEffect(function() {
+    if (!eventId || checkedIn) return;
+    var interval = setInterval(function() {
+      if (document.hidden) return;
+      checkinService.getMyTicket(eventId).then(function(result) {
+        if (result.data && result.data.checked_in) {
+          setTicket(result.data);
+        }
+      });
+    }, POLL_INTERVAL_MS);
+    return function() { clearInterval(interval); };
+  }, [eventId, checkedIn]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleSignIndemnity = useCallback(function(e) {
+    e.preventDefault();
+    setSubmitting(true);
+    attendanceService.postIndemnity(eventId).then(function(result) {
+      setSubmitting(false);
+      if (result.error) {
+        setIndemnityError(result.error);
+      } else {
+        setTicket(function(prev) { return Object.assign({}, prev, { indemnity_signed: true }); });
+      }
+    });
+  }, [eventId]);
 
   if (isLoading) {
     return (
-      <div className="d-flex justify-content-center py-8">
+      <div className="flex justify-center py-12">
         <div className="spinner-border" role="status">
           <span className="sr-only">{t('Loading...')}</span>
         </div>
@@ -45,6 +100,68 @@ function MyTicket(props) {
     return <div className="alert alert-warning mt-4">{t('Ticket not found.')}</div>;
   }
 
+  // Indemnity gate
+  if (needsIndemnity) {
+    return (
+      <div className="max-w-lg mx-auto py-8 px-4 space-y-5">
+        <div className="text-center space-y-2">
+          <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center mx-auto">
+            <i className="fas fa-file-signature text-xl text-amber-600" />
+          </div>
+          <h2 className="text-xl font-bold text-foreground">{t('Indemnity form required')}</h2>
+          <p className="text-sm text-muted-foreground">
+            {t('Please read and sign the indemnity form below to access your ticket.')}
+          </p>
+        </div>
+
+        {indemnityLoading && (
+          <div className="flex justify-center py-6">
+            <div className="spinner-border" role="status">
+              <span className="sr-only">{t('Loading...')}</span>
+            </div>
+          </div>
+        )}
+
+        {indemnityError && (
+          <div className="alert alert-danger">{indemnityError}</div>
+        )}
+
+        {indemnityFormText && (
+          <form onSubmit={handleSignIndemnity} className="space-y-4">
+            <div className="bg-white rounded-2xl border border-border shadow-sm p-5 max-h-72 overflow-y-auto text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+              {indemnityFormText}
+            </div>
+
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                checked={agreed}
+                onChange={function(e) { setAgreed(e.target.checked); }}
+                required
+              />
+              <span className="text-sm text-foreground">
+                {t('I agree with the terms outlined in the indemnity form above.')}
+              </span>
+            </label>
+
+            <button
+              type="submit"
+              disabled={!agreed || submitting}
+              className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary-container transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {submitting && (
+                <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+              )}
+              {submitting ? t('Signing...') : t('Sign and view my ticket')}
+            </button>
+          </form>
+        )}
+      </div>
+    );
+  }
+
+  // Ticket view
   return (
     <div className="max-w-sm mx-auto py-8 px-4">
       <div className="bg-white rounded-2xl shadow-md border border-border p-6 flex flex-col items-center gap-4 print-badge">
@@ -59,8 +176,9 @@ function MyTicket(props) {
           <p className="text-sm text-foreground/60 mt-1">{ticket.role}</p>
         </div>
 
-        {ticket.checked_in ? (
+        {checkedIn ? (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+            <i className="fas fa-check text-xs" />
             {t('Checked In')}
             {ticket.checked_in_at && (
               <span className="text-xs font-normal opacity-75">

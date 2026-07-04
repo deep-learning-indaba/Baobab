@@ -366,6 +366,8 @@ class MyTicketAPI(restful.Resource):
         role = invited_guest.role if invited_guest else 'General Attendee'
 
         latest_checkin = checkin_repository.get_latest(event_id, current_user_id)
+        attendance = attendance_repository.get(event_id, current_user_id)
+        indemnity = indemnity_repository.get(event_id)
 
         return {
             'token': token.token,
@@ -375,6 +377,8 @@ class MyTicketAPI(restful.Resource):
             'event_name': event.get_name('en'),
             'checked_in': latest_checkin is not None,
             'checked_in_at': latest_checkin.checked_in_at.isoformat() + 'Z' if latest_checkin else None,
+            'has_indemnity_form': indemnity is not None,
+            'indemnity_signed': attendance.indemnity_signed if attendance else False,
         }, 200
 
 
@@ -405,6 +409,7 @@ class CheckinResolveAPI(restful.Resource):
         role = invited_guest.role if invited_guest else 'General Attendee'
         attendance = attendance_repository.get(event_id, qr.user_id)
         indemnity_signed = attendance.indemnity_signed if attendance else False
+        indemnity = indemnity_repository.get(event_id)
 
         event = event_repository.get_by_id(event_id)
         if event.is_daily_checkin:
@@ -419,6 +424,7 @@ class CheckinResolveAPI(restful.Resource):
             'fullname': user.full_name,
             'role': role,
             'indemnity_signed': indemnity_signed,
+            'has_indemnity_form': indemnity is not None,
             'already_checked_in': already_checked_in,
         }, 200
 

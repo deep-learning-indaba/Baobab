@@ -3,10 +3,19 @@ import { subscribeToPush } from '../utils/push';
 import { announcementService } from '../services/eventApp/announcement.service';
 
 const DISMISSED_KEY = 'pwa-install-dismissed';
+const DISMISS_DURATION_DAYS = 10;
 const CONSENT_COOKIE = 'baobab-cookie-consent';
 
 function hasCookieConsent() {
   return document.cookie.split(';').some(c => c.trim().startsWith(CONSENT_COOKIE + '='));
+}
+
+function isDismissed() {
+  const val = localStorage.getItem(DISMISSED_KEY);
+  if (!val) return false;
+  const dismissedAt = parseInt(val, 10);
+  if (isNaN(dismissedAt)) return false;
+  return Date.now() - dismissedAt < DISMISS_DURATION_DAYS * 24 * 60 * 60 * 1000;
 }
 
 const InstallContext = createContext(null);
@@ -15,20 +24,14 @@ export function InstallProvider({ children }) {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isIOS, setIsIOS] = useState(false);
   const [installed, setInstalled] = useState(false);
-  const [dismissed, setDismissed] = useState(() => !!localStorage.getItem(DISMISSED_KEY));
+  const [dismissed, setDismissed] = useState(isDismissed);
   const [consentGiven, setConsentGiven] = useState(hasCookieConsent);
 
   useEffect(() => {
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
       window.navigator.standalone === true;
-    if (isStandalone) {
-      setInstalled(true);
-      subscribeToPush().then(result => {
-        if (result.ok) announcementService.subscribePush(result.subscription);
-      });
-      return;
-    }
+    if (isStandalone) { setInstalled(true); return; }
 
     const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     const safari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
@@ -65,7 +68,7 @@ export function InstallProvider({ children }) {
   };
 
   const dismiss = () => {
-    localStorage.setItem(DISMISSED_KEY, '1');
+    localStorage.setItem(DISMISSED_KEY, String(Date.now()));
     setDismissed(true);
   };
 

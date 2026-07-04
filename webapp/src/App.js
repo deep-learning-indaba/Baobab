@@ -28,6 +28,8 @@ import history from "./History";
 import { isEventAdmin, isRegistrationAdmin, isRegistrationVolunteer, isEventReviewer } from "./utils/user";
 import { withTranslation } from 'react-i18next';
 import { userService } from "./services/user";
+import { subscribeToPush } from "./utils/push";
+import { announcementService } from "./services/eventApp/announcement.service";
 
 
 ReactGA.initialize("UA-136093201-1", {
@@ -141,8 +143,9 @@ class AppComponent extends Component {
     userService.authRefresh().then(user => {
       if (!user.error) {
         localStorage.setItem("user", JSON.stringify(user));
-        this.setState({
-          user: user
+        this.setState({ user: user });
+        subscribeToPush().then(result => {
+          if (result.ok) announcementService.subscribePush(result.subscription);
         });
       }
       else {
@@ -171,6 +174,10 @@ class AppComponent extends Component {
           lastName: result.lastname,
           title: result.user_title
         });
+      });
+
+      subscribeToPush().then(result => {
+        if (result.ok) announcementService.subscribePush(result.subscription);
       });
     }
 
