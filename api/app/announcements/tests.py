@@ -374,8 +374,41 @@ class AnnouncementApiTest(ApiTestCase):
         ))
         db.session.commit()
         with patch('config.VAPID_PRIVATE_KEY', ''):
-            sent = push_to_user(self.attendee1_id, {'title': 't', 'body': 'b', 'url': '/', 'tag': 'x'})
-        self.assertEqual(sent, 0)
+            result = push_to_user(self.attendee1_id, {'title': 't', 'body': 'b', 'url': '/', 'tag': 'x'})
+        self.assertEqual(result['sent'], 0)
+        self.assertEqual(result['subscriptions'], 0)
+        self.assertTrue(result['errors'])
+
+    @patch('app.utils.push.webpush')
+    def test_test_push_endpoint_delivers_to_own_subscription(self, mock_webpush):
+        db.session.add(PushSubscription(
+            user_id=self.attendee1_id,
+            endpoint='https://push.example.com/self',
+            p256dh='p256dh', auth='auth', user_agent='TestBrowser',
+        ))
+        db.session.commit()
+        with patch('config.VAPID_PRIVATE_KEY', 'a-private-key'), \
+                patch('config.VAPID_PUBLIC_KEY', 'a-public-key'):
+            resp = self.app.post('/api/v1/push-subscription/test', headers=self.a1_header)
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.data)
+        self.assertEqual(data['subscriptions'], 1)
+        self.assertEqual(data['sent'], 1)
+        self.assertTrue(data['vapid_private_key_configured'])
+        self.assertEqual(data['vapid_public_key'], 'a-public-key')
+        mock_webpush.assert_called_once()
+
+    def test_test_push_endpoint_reports_no_subscription(self):
+        with patch('config.VAPID_PRIVATE_KEY', 'a-private-key'):
+            resp = self.app.post('/api/v1/push-subscription/test', headers=self.a2_header)
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.data)
+        self.assertEqual(data['subscriptions'], 0)
+        self.assertEqual(data['sent'], 0)
+
+    def test_test_push_endpoint_requires_auth(self):
+        resp = self.app.post('/api/v1/push-subscription/test')
+        self.assertIn(resp.status_code, (401, 403))
 
     @patch('app.announcements.api.push_to_user', return_value=0)
     def test_admin_list_shows_delivery_stats(self, mock_push):

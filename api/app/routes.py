@@ -199,6 +199,7 @@ rest_api.add_resource(announcements_api.AnnouncementAdminAPI, '/api/v1/announcem
 rest_api.add_resource(announcements_api.AnnouncementListAPI, '/api/v1/announcement')
 rest_api.add_resource(announcements_api.AnnouncementDetailAPI, '/api/v1/announcement/<int:announcement_id>')
 rest_api.add_resource(announcements_api.PushSubscriptionAPI, '/api/v1/push-subscription')
+rest_api.add_resource(announcements_api.PushSubscriptionTestAPI, '/api/v1/push-subscription/test')
 # Connection routes — static paths before dynamic
 rest_api.add_resource(connections_api.ConnectionResolveAPI, '/api/v1/connection/resolve')
 rest_api.add_resource(connections_api.ConnectionRespondAPI, '/api/v1/connection/respond')

@@ -72,8 +72,8 @@ class AnnouncementsAdmin extends Component {
     if (bodyEn) promises.push(translationService.translateText(bodyEn, 'en', ['fr']));
     else promises.push(Promise.resolve(null));
     Promise.all(promises).then(function(results) {
-      var titleFr = (results[0] && results[0].translated && results[0].translated['fr']) || self.state.titleFr;
-      var bodyFr = (results[1] && results[1].translated && results[1].translated['fr']) || self.state.bodyFr;
+      var titleFr = (results[0] && results[0].translations && results[0].translations['fr']) || self.state.titleFr;
+      var bodyFr = (results[1] && results[1].translations && results[1].translations['fr']) || self.state.bodyFr;
       self.setState({ titleFr: titleFr, bodyFr: bodyFr, isTranslating: false });
     }).catch(function() {
       self.setState({ isTranslating: false });

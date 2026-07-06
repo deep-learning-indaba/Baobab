@@ -316,3 +316,24 @@ class PushSubscriptionAPI(restful.Resource):
             db.session.delete(sub)
             db.session.commit()
         return {}, 204
+
+
+class PushSubscriptionTestAPI(restful.Resource):
+    """POST /api/v1/push-subscription/test — send a test push to the current
+    user's own devices and return diagnostics. Isolates the delivery path from
+    the announcement audience/receipt logic, for debugging."""
+
+    @auth_required
+    def post(self):
+        from config import VAPID_PRIVATE_KEY, VAPID_PUBLIC_KEY
+        user_id = g.current_user['id']
+        result = push_to_user(user_id, {
+            'title': 'Test notification',
+            'body': 'If you can see this, push notifications are working.',
+            'url': '/',
+            'tag': 'push-test',
+        })
+        # Surface config so the client can spot a public/private key mismatch.
+        result['vapid_private_key_configured'] = bool(VAPID_PRIVATE_KEY)
+        result['vapid_public_key'] = VAPID_PUBLIC_KEY
+        return result, 200

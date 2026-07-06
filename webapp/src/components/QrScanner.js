@@ -56,7 +56,7 @@ export default function QrScanner({ onScan }) {
 
     try {
       await instance.start(
-        { facingMode: { ideal: facing } },
+        { facingMode: facing },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         (text) => onScanRef.current(text),
         () => {}

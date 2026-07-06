@@ -1034,5 +1034,13 @@
   "Notifications are on.": "Les notifications sont activées.",
   "Notifications are blocked. Allow notifications for this site in your browser settings, then try again.": "Les notifications sont bloquées. Autorisez les notifications pour ce site dans les paramètres de votre navigateur, puis réessayez.",
   "Could not enable notifications. Please try again.": "Impossible d'activer les notifications. Veuillez réessayer.",
-  "On iPhone, add the app to your home screen first to receive notifications. On other devices, notifications are not supported by this browser.": "Sur iPhone, ajoutez d'abord l'application à votre écran d'accueil pour recevoir des notifications. Sur les autres appareils, les notifications ne sont pas prises en charge par ce navigateur."
+  "On iPhone, add the app to your home screen first to receive notifications. On other devices, notifications are not supported by this browser.": "Sur iPhone, ajoutez d'abord l'application à votre écran d'accueil pour recevoir des notifications. Sur les autres appareils, les notifications ne sont pas prises en charge par ce navigateur.",
+  "Send a test notification": "Envoyer une notification de test",
+  "Sending...": "Envoi...",
+  "Could not reach the server. Please try again.": "Impossible de joindre le serveur. Veuillez réessayer.",
+  "The server is missing its notification key (VAPID_PRIVATE_KEY). Ask an administrator to configure it.": "La clé de notification du serveur (VAPID_PRIVATE_KEY) est manquante. Demandez à un administrateur de la configurer.",
+  "The app and server notification keys do not match. Notifications cannot be delivered until they are aligned.": "Les clés de notification de l'application et du serveur ne correspondent pas. Les notifications ne peuvent pas être envoyées tant qu'elles ne sont pas alignées.",
+  "No subscription is registered for your account on the server. Try turning notifications off and on again.": "Aucun abonnement n'est enregistré pour votre compte sur le serveur. Essayez de désactiver puis réactiver les notifications.",
+  "Test notification sent. It should appear on your device shortly.": "Notification de test envoyée. Elle devrait apparaître sur votre appareil sous peu.",
+  "The server could not deliver the notification.": "Le serveur n'a pas pu envoyer la notification."
 }

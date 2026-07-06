@@ -5,6 +5,9 @@ import {
   getNotificationPermission,
   registerPushSubscription,
 } from '../utils/push';
+import { announcementService } from '../services/eventApp/announcement.service';
+
+var VAPID_PUBLIC_KEY = process.env.REACT_APP_VAPID_PUBLIC_KEY;
 
 // A self-contained control to opt into (or check the status of) push
 // notifications. Safe to drop anywhere the user is authenticated — it always
@@ -15,6 +18,7 @@ export default function PushNotificationToggle() {
   const [permission, setPermission] = useState(getNotificationPermission());
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState(null);
+  const [testing, setTesting] = useState(false);
 
   // If already granted, silently make sure the server has our subscription.
   useEffect(() => {
@@ -37,6 +41,42 @@ export default function PushNotificationToggle() {
         // Include the reason code so it can be reported if something's off.
         setFeedback({ type: 'error', text: t('Could not enable notifications. Please try again.') + ' (' + (result.reason || 'unknown') + ')' });
       }
+    });
+  }, [t]);
+
+  // Send a test push to this user's own devices and report what happened.
+  const sendTest = useCallback(() => {
+    setTesting(true);
+    setFeedback(null);
+    // Make sure the server has a current subscription before testing.
+    registerPushSubscription({ requestPermission: false }).then(() => {
+      return announcementService.testPush();
+    }).then((res) => {
+      setTesting(false);
+      const d = res && res.data;
+      if (!d) {
+        setFeedback({ type: 'error', text: t('Could not reach the server. Please try again.') });
+        return;
+      }
+      if (!d.vapid_private_key_configured) {
+        setFeedback({ type: 'error', text: t('The server is missing its notification key (VAPID_PRIVATE_KEY). Ask an administrator to configure it.') });
+        return;
+      }
+      if (d.vapid_public_key && VAPID_PUBLIC_KEY && d.vapid_public_key !== VAPID_PUBLIC_KEY) {
+        setFeedback({ type: 'error', text: t('The app and server notification keys do not match. Notifications cannot be delivered until they are aligned.') });
+        return;
+      }
+      if (d.subscriptions === 0) {
+        setFeedback({ type: 'error', text: t('No subscription is registered for your account on the server. Try turning notifications off and on again.') });
+        return;
+      }
+      if (d.sent > 0) {
+        setFeedback({ type: 'success', text: t('Test notification sent. It should appear on your device shortly.') });
+        return;
+      }
+      // Delivery attempted but every send failed — surface the server's reason.
+      var detail = (d.errors && d.errors.length) ? ' (' + d.errors[0] + ')' : '';
+      setFeedback({ type: 'error', text: t('The server could not deliver the notification.') + detail });
     });
   }, [t]);
 
@@ -75,6 +115,15 @@ export default function PushNotificationToggle() {
           </button>
         )}
       </div>
+      {permission === 'granted' && (
+        <button
+          onClick={sendTest}
+          disabled={testing}
+          className="mt-3 text-sm font-medium text-blue-600 hover:underline disabled:opacity-60"
+        >
+          {testing ? t('Sending...') : t('Send a test notification')}
+        </button>
+      )}
       {feedback && (
         <p className={'mt-3 text-sm ' + (feedback.type === 'success' ? 'text-primary' : 'text-red-600')}>
           {feedback.text}

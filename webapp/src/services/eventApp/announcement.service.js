@@ -12,6 +12,7 @@ export var announcementService = {
   remove: remove,
   subscribePush: subscribePush,
   unsubscribePush: unsubscribePush,
+  testPush: testPush,
 };
 
 function listInbox(eventId, language) {
@@ -82,6 +83,13 @@ function unsubscribePush(endpoint) {
       headers: authHeader(),
       data: { endpoint: endpoint },
     })
+    .then(function(r) { return { data: r.data, error: '' }; })
+    .catch(function(e) { return { data: null, error: extractErrorMessage(e) }; });
+}
+
+function testPush() {
+  return axios
+    .post(baseUrl + '/api/v1/push-subscription/test', {}, { headers: authHeader() })
     .then(function(r) { return { data: r.data, error: '' }; })
     .catch(function(e) { return { data: null, error: extractErrorMessage(e) }; });
 }

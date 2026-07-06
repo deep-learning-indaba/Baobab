@@ -1035,5 +1035,13 @@
   "Notifications are on.": "Notifications are on.",
   "Notifications are blocked. Allow notifications for this site in your browser settings, then try again.": "Notifications are blocked. Allow notifications for this site in your browser settings, then try again.",
   "Could not enable notifications. Please try again.": "Could not enable notifications. Please try again.",
-  "On iPhone, add the app to your home screen first to receive notifications. On other devices, notifications are not supported by this browser.": "On iPhone, add the app to your home screen first to receive notifications. On other devices, notifications are not supported by this browser."
+  "On iPhone, add the app to your home screen first to receive notifications. On other devices, notifications are not supported by this browser.": "On iPhone, add the app to your home screen first to receive notifications. On other devices, notifications are not supported by this browser.",
+  "Send a test notification": "Send a test notification",
+  "Sending...": "Sending...",
+  "Could not reach the server. Please try again.": "Could not reach the server. Please try again.",
+  "The server is missing its notification key (VAPID_PRIVATE_KEY). Ask an administrator to configure it.": "The server is missing its notification key (VAPID_PRIVATE_KEY). Ask an administrator to configure it.",
+  "The app and server notification keys do not match. Notifications cannot be delivered until they are aligned.": "The app and server notification keys do not match. Notifications cannot be delivered until they are aligned.",
+  "No subscription is registered for your account on the server. Try turning notifications off and on again.": "No subscription is registered for your account on the server. Try turning notifications off and on again.",
+  "Test notification sent. It should appear on your device shortly.": "Test notification sent. It should appear on your device shortly.",
+  "The server could not deliver the notification.": "The server could not deliver the notification."
 }
