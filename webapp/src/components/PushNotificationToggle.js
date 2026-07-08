@@ -58,25 +58,28 @@ export default function PushNotificationToggle() {
         setFeedback({ type: 'error', text: t('Could not reach the server. Please try again.') });
         return;
       }
-      if (!d.vapid_private_key_configured) {
-        setFeedback({ type: 'error', text: t('The server is missing its notification key (VAPID_PRIVATE_KEY). Ask an administrator to configure it.') });
+      // A successful send is the ground truth: it proves the server's private
+      // key is correctly paired with this device's subscription. Check it first.
+      if (d.sent > 0) {
+        setFeedback({ type: 'success', text: t('Test notification sent. It should appear on your device shortly.') });
         return;
       }
-      if (d.vapid_public_key && VAPID_PUBLIC_KEY && d.vapid_public_key !== VAPID_PUBLIC_KEY) {
-        setFeedback({ type: 'error', text: t('The app and server notification keys do not match. Notifications cannot be delivered until they are aligned.') });
+      if (!d.vapid_private_key_configured) {
+        setFeedback({ type: 'error', text: t('The server is missing its notification key (VAPID_PRIVATE_KEY). Ask an administrator to configure it.') });
         return;
       }
       if (d.subscriptions === 0) {
         setFeedback({ type: 'error', text: t('No subscription is registered for your account on the server. Try turning notifications off and on again.') });
         return;
       }
-      if (d.sent > 0) {
-        setFeedback({ type: 'success', text: t('Test notification sent. It should appear on your device shortly.') });
-        return;
-      }
-      // Delivery attempted but every send failed — surface the server's reason.
+      // Delivery was attempted but every send failed — surface the server's
+      // reason, and add a key-mismatch hint only as a possible cause.
+      var norm = function (k) { return (k || '').trim().replace(/=+$/, ''); };
       var detail = (d.errors && d.errors.length) ? ' (' + d.errors[0] + ')' : '';
-      setFeedback({ type: 'error', text: t('The server could not deliver the notification.') + detail });
+      var hint = (d.vapid_public_key && VAPID_PUBLIC_KEY && norm(d.vapid_public_key) !== norm(VAPID_PUBLIC_KEY))
+        ? ' ' + t('The app and server notification keys may not match.')
+        : '';
+      setFeedback({ type: 'error', text: t('The server could not deliver the notification.') + detail + hint });
     });
   }, [t]);
 

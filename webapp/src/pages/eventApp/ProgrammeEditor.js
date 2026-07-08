@@ -4,12 +4,12 @@ import { programmeService } from '../../services/eventApp/programme.service';
 import {
   eventLocalDateKey,
   eventLocalToUtcIso,
-  formatTimeInEventTz,
+  formatTimezoneLabel,
   utcToEventLocalDate,
   utcToEventLocalTime,
 } from '../../utils/datetime';
 import { translationService } from '../../services/translation/translation.service';
-import ScheduleGrid from '../../components/ScheduleGrid';
+import ProgrammeSchedule from '../../components/ProgrammeSchedule';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -574,69 +574,27 @@ class SessionFormModal extends Component {
   }
 }
 
-// ── Session card in the editor list ──────────────────────────────────────────
+// ── Edit / delete action buttons for a session card ───────────────────────────
 
-function EditorSessionCard(props) {
-  var session = props.session;
-  var timezone = props.timezone;
-  var t = props.t;
-
-  var startTime = session.start_time
-    ? new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(session.start_time))
-    : '';
-  var endTime = session.end_time
-    ? new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(session.end_time))
-    : '';
-
-  return React.createElement('div', {
-    className: 'bg-white rounded-xl border border-border shadow-sm overflow-hidden h-full flex flex-col'
-  },
-    React.createElement('div', { className: 'w-full h-1 flex-shrink-0 bg-primary' }),
-    React.createElement('div', { className: 'p-2.5 flex-1 min-w-0 overflow-hidden flex flex-col gap-1' },
-      React.createElement('div', { className: 'flex items-start justify-between gap-1' },
-        React.createElement('div', { className: 'flex-1 min-w-0 overflow-hidden' },
-          React.createElement('div', { className: 'flex items-center gap-1.5 flex-wrap mb-0.5' },
-            React.createElement('span', { className: 'text-xs font-semibold text-primary whitespace-nowrap' },
-              startTime + ' – ' + endTime
-            ),
-            session.session_type && React.createElement('span', {
-              className: 'bg-primary/10 text-primary text-xs px-1.5 py-0.5 rounded-full font-medium'
-            }, session.session_type.name),
-            session.venue && React.createElement('span', {
-              className: 'text-xs text-muted-foreground flex items-center gap-0.5'
-            },
-              React.createElement('i', { className: 'fas fa-map-marker-alt', style: { fontSize: 11 } }),
-              session.venue
-            )
-          ),
-          React.createElement('h3', { className: 'font-medium text-sm text-foreground leading-snug' },
-            session.title || t('Untitled Session')
-          ),
-          (session.speakers || []).length > 0 && React.createElement('p', {
-            className: 'text-xs text-muted-foreground truncate'
-          },
-            session.speakers.map(function(s) { return s.name; }).join(', ')
-          )
-        ),
-        React.createElement('div', { className: 'flex gap-1 flex-shrink-0' },
-            React.createElement('button', {
-              onClick: function() { props.onEdit(session); },
-              className: 'p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-lg transition-colors',
-              title: t('Edit')
-            },
-              React.createElement('i', { className: 'fas fa-pen', style: { fontSize: 14 } })
-            ),
-            React.createElement('button', {
-              onClick: function() { props.onDelete(session); },
-              className: 'p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-lg transition-colors',
-              title: t('Delete')
-            },
-              React.createElement('i', { className: 'fas fa-trash-alt', style: { fontSize: 14 } })
-            )
-          )
-        )
-      )
-  );
+function renderSessionActions(session, handlers, t) {
+  return [
+    React.createElement('button', {
+      key: 'edit',
+      onClick: function() { handlers.onEdit(session); },
+      className: 'p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-lg transition-colors',
+      title: t('Edit')
+    },
+      React.createElement('i', { className: 'fas fa-pen', style: { fontSize: 13 } })
+    ),
+    React.createElement('button', {
+      key: 'delete',
+      onClick: function() { handlers.onDelete(session); },
+      className: 'p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-lg transition-colors',
+      title: t('Delete')
+    },
+      React.createElement('i', { className: 'fas fa-trash-alt', style: { fontSize: 13 } })
+    )
+  ];
 }
 
 // ── Main ProgrammeEditor component ───────────────────────────────────────────
@@ -784,7 +742,7 @@ class ProgrammeEditor extends Component {
             t('Programme Editor')
           ),
           React.createElement('p', { className: 'text-sm text-muted-foreground mt-0.5' },
-            t('All times in') + ' ' + timezone
+            t('All times in') + ' ' + formatTimezoneLabel(timezone, event && event.start_date)
           )
         ),
         React.createElement('button', {
@@ -830,17 +788,12 @@ class ProgrammeEditor extends Component {
               className: 'bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors'
             }, t('Add First Session'))
           )
-        : React.createElement(ScheduleGrid, {
+        : React.createElement(ProgrammeSchedule, {
             sessions: sessionsForDay,
             timezone: timezone,
-            renderCard: function(session) {
-              return React.createElement(EditorSessionCard, {
-                session: session,
-                timezone: timezone,
-                t: t,
-                onEdit: self.handleEdit,
-                onDelete: self.handleDelete,
-              });
+            t: t,
+            renderActions: function(session) {
+              return renderSessionActions(session, { onEdit: self.handleEdit, onDelete: self.handleDelete }, t);
             }
           }),
 

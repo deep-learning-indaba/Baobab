@@ -12,6 +12,7 @@ from app.tags.models import Tag, TagTranslation, TagType
 from app.tags.repository import TagRepository
 from app.users.repository import UserRepository as user_repository
 from app.events.repository import EventRepository as event_repository
+from app.utils.datetime_utils import event_local_datetime
 
 
 def _is_programme_editor(user_id, event_id):
@@ -28,6 +29,15 @@ def _serialize_speaker(speaker):
         'photo_url': speaker.photo_url,
         'bio': speaker.bio,
         'linked_user_id': speaker.linked_user_id
+    }
+
+
+def _serialize_speaker_public(speaker):
+    return {
+        'id': speaker.id,
+        'name': speaker.name,
+        'photo_url': speaker.photo_url,
+        'bio': speaker.bio
     }
 
 
@@ -80,6 +90,50 @@ def _serialize_session(session, language):
         'venue': session.venue or '',
         'start_time': session.start_time.isoformat() + 'Z' if session.start_time else None,
         'end_time': session.end_time.isoformat() + 'Z' if session.end_time else None,
+        'speakers': speakers,
+        'tracks': tracks
+    }
+
+
+def _serialize_session_public(session, language, event_timezone):
+    t = next((x for x in session.translations if x.language == language), None)
+    if t is None:
+        t = next((x for x in session.translations if x.language == 'en'), None)
+    title = t.title if t else ''
+    description = t.description if t else ''
+
+    translations = [
+        {'language': x.language, 'title': x.title, 'description': x.description or ''}
+        for x in session.translations
+    ]
+
+    session_type = None
+    if session.session_type_id:
+        type_tag = TagRepository.get_by_id(session.session_type_id)
+        if type_tag:
+            session_type = _serialize_tag_brief(type_tag, language)
+
+    speakers = []
+    for ss in session.session_speakers:
+        spk = ProgrammeRepository.get_speaker(ss.speaker_id)
+        if spk:
+            speakers.append(_serialize_speaker_public(spk))
+
+    tracks = []
+    for st in session.session_tags:
+        tag = TagRepository.get_by_id(st.tag_id)
+        if tag:
+            tracks.append(_serialize_tag_brief(tag, language))
+
+    return {
+        'id': session.id,
+        'title': title,
+        'description': description,
+        'translations': translations,
+        'session_type': session_type,
+        'session_type_id': session.session_type_id,
+        'start_time': event_local_datetime(session.start_time, event_timezone).isoformat() if session.start_time else None,
+        'end_time': event_local_datetime(session.end_time, event_timezone).isoformat() if session.end_time else None,
         'speakers': speakers,
         'tracks': tracks
     }
@@ -363,6 +417,22 @@ class SessionTypeListAPI(restful.Resource):
 
         language = body.get('language', 'en')
         return _serialize_tag_brief(tag, language), 201
+
+
+class PublicProgrammeAPI(restful.Resource):
+    # Intentionally unauthenticated - venue and speaker contact details are omitted below.
+
+    def get(self, event_key):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('language', type=str, default='en')
+        args = req_parser.parse_args()
+
+        event = event_repository.get_by_key(event_key)
+        if not event:
+            return errors.EVENT_WITH_KEY_NOT_FOUND
+
+        sessions = ProgrammeRepository.list_sessions(event.id)
+        return [_serialize_session_public(s, args['language'], event.timezone) for s in sessions]
 
 
 class TrackListAPI(restful.Resource):

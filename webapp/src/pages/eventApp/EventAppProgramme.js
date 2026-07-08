@@ -1,60 +1,8 @@
 import React, { Component } from 'react';
 import { withTranslation } from 'react-i18next';
 import { programmeService } from '../../services/eventApp/programme.service';
-import { eventLocalDateKey, formatTimeInEventTz } from '../../utils/datetime';
-import ScheduleGrid from '../../components/ScheduleGrid';
-
-function SessionCard(props) {
-  var session = props.session;
-  var timezone = props.timezone;
-  var t = props.t;
-
-  var startFmt = formatTimeInEventTz(session.start_time, timezone);
-  var endFmt = formatTimeInEventTz(session.end_time, timezone);
-
-  return (
-    React.createElement('div', { className: 'bg-white rounded-xl border border-border shadow-sm overflow-hidden h-full flex flex-col' },
-      React.createElement('div', { className: 'w-full h-1 flex-shrink-0 bg-primary' }),
-      React.createElement('div', { className: 'p-2.5 flex-1 min-w-0 overflow-hidden flex flex-col gap-1' },
-        React.createElement('div', { className: 'flex items-center gap-1.5 flex-wrap' },
-          React.createElement('span', { className: 'text-xs font-semibold text-primary whitespace-nowrap' },
-            startFmt + ' – ' + endFmt
-          ),
-          session.session_type && React.createElement('span', {
-            className: 'bg-primary/10 text-primary text-xs px-1.5 py-0.5 rounded-full font-medium'
-          }, session.session_type.name),
-          (session.tracks || []).map(function(track) {
-            return React.createElement('span', {
-              key: track.id,
-              className: 'bg-muted text-muted-foreground text-xs px-1.5 py-0.5 rounded-full'
-            }, track.name);
-          })
-        ),
-        React.createElement('h3', { className: 'font-heading text-sm font-semibold text-foreground leading-snug' },
-          session.title
-        ),
-        session.venue && React.createElement('div', { className: 'flex items-center gap-1 text-xs text-muted-foreground' },
-          React.createElement('i', { className: 'fas fa-map-marker-alt', style: { fontSize: 11 } }),
-          session.venue
-        ),
-        session.description && React.createElement('p', { className: 'text-xs text-muted-foreground line-clamp-2' },
-          session.description
-        ),
-        (session.speakers || []).length > 0 && React.createElement('div', { className: 'flex flex-wrap gap-1.5 mt-auto' },
-          session.speakers.map(function(spk) {
-            return spk.linked_user_id
-              ? React.createElement('a', {
-                  key: spk.id,
-                  href: '/' + props.eventKey + '/app/profile/' + spk.linked_user_id,
-                  className: 'text-xs text-primary font-medium hover:underline'
-                }, spk.name)
-              : React.createElement('span', { key: spk.id, className: 'text-xs text-foreground/70' }, spk.name);
-          })
-        )
-      )
-    )
-  );
-}
+import { eventLocalDateKey, formatTimezoneLabel } from '../../utils/datetime';
+import ProgrammeSchedule from '../../components/ProgrammeSchedule';
 
 function DayButton(props) {
   return React.createElement('button', {
@@ -188,8 +136,12 @@ class EventAppProgramme extends Component {
 
     return React.createElement('div', { className: 'w-full' },
 
-      // Header + Search
-      React.createElement('div', { className: 'sticky top-0 z-20 bg-background/95 backdrop-blur pt-4 pb-3 space-y-3' },
+      // Header + Search — opaque so the scrolling schedule never shows through
+      React.createElement('div', { className: 'sticky top-0 z-20 bg-background pt-4 pb-3 border-b border-border/60 shadow-sm' },
+        // Opaque band covering the scroll container's top padding (py-8), so the
+        // schedule cannot peek through the gap above the sticky header.
+        React.createElement('div', { 'aria-hidden': true, className: 'absolute inset-x-0 -top-8 h-8 bg-background pointer-events-none' }),
+        React.createElement('div', { className: 'space-y-3' },
         React.createElement('div', { className: 'flex items-center justify-between gap-4' },
           React.createElement('h1', { className: 'font-heading text-2xl font-bold text-foreground' },
             t('Programme')
@@ -198,7 +150,7 @@ class EventAppProgramme extends Component {
 
         // Timezone notice
         React.createElement('p', { className: 'text-xs text-muted-foreground' },
-          t('Times shown in') + ' ' + timezone
+          t('Times shown in') + ' ' + formatTimezoneLabel(timezone, event && event.start_date)
         ),
 
         // Search
@@ -266,25 +218,21 @@ class EventAppProgramme extends Component {
             });
           })
         )
+        )
       ),
 
-      // Schedule grid — sessions positioned by actual time, overlaps side-by-side
-      React.createElement('div', { className: 'pt-2' },
+      // Schedule — grouped by start time, parallel sessions scroll horizontally
+      React.createElement('div', { className: 'pt-4' },
         filteredSessions.length === 0
           ? React.createElement('p', { className: 'text-center text-muted-foreground py-12' },
               t('No sessions found.')
             )
-          : React.createElement(ScheduleGrid, {
+          : React.createElement(ProgrammeSchedule, {
               sessions: filteredSessions,
               timezone: timezone,
-              renderCard: function(session) {
-                return React.createElement(SessionCard, {
-                  session: session,
-                  timezone: timezone,
-                  eventKey: event && event.key,
-                  t: t
-                });
-              }
+              t: t,
+              eventKey: event && event.key,
+              linkSpeakers: true
             })
       )
     );

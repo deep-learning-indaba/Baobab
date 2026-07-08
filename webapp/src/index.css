@@ -124,3 +124,13 @@ input:focus + .form-toggle {
 .animate-slide-in-panel {
   animation: slide-in-panel 0.3s ease-out;
 }
+
+/* Hide native scrollbars on horizontal chip / card scrollers while keeping
+   the content scrollable (touch + wheel + programmatic). */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}

@@ -64,6 +64,33 @@ export function utcToEventLocalDate(utcIso, timezone) {
   return eventLocalDateKey(utcIso, timezone);
 }
 
+// Turn a raw IANA timezone id into a friendly label for display, e.g.
+//   'Africa/Lagos'         -> 'Lagos (GMT+1)'
+//   'America/New_York'     -> 'New York (GMT-4)'
+//   'UTC' / 'Etc/UTC' / '' -> 'UTC'
+// The GMT offset is resolved at `refDate` (default now) so it reflects the
+// correct standard/DST offset for the event's dates.
+export function formatTimezoneLabel(timezone, refDate) {
+  var tz = timezone || 'UTC';
+  if (tz === 'UTC' || tz === 'Etc/UTC' || tz === 'GMT') return 'UTC';
+
+  var city = tz.split('/').pop().replace(/_/g, ' ');
+
+  var date = refDate ? (refDate instanceof Date ? refDate : new Date(refDate)) : new Date();
+  if (isNaN(date.getTime())) date = new Date();
+
+  var offset = '';
+  try {
+    var parts = new Intl.DateTimeFormat('en-GB', { timeZone: tz, timeZoneName: 'shortOffset' }).formatToParts(date);
+    var tzn = parts.find(function(p) { return p.type === 'timeZoneName'; });
+    if (tzn && tzn.value) offset = tzn.value; // e.g. 'GMT+1'
+  } catch (e) {
+    // shortOffset unsupported — fall back to just the city name
+  }
+
+  return offset ? city + ' (' + offset + ')' : city;
+}
+
 // Return HH:mm in event timezone from a UTC ISO string
 export function utcToEventLocalTime(utcIso, timezone) {
   if (!utcIso) return '';

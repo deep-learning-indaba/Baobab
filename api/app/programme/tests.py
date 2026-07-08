@@ -2,7 +2,7 @@ import json
 from datetime import datetime, timedelta
 
 from app import db
-from app.events.models import EventRole
+from app.events.models import Event, EventRole
 from app.invitedGuest.models import InvitedGuest
 from app.offer.models import Offer
 from app.programme.models import Session, SessionTranslation, Speaker, SessionSpeaker, SessionTag
@@ -381,3 +381,57 @@ class ProgrammeApiTest(ApiTestCase):
         self.seed_static_data()
         response = self.app.get('/api/v1/programme/sessions?event_id={}'.format(self.event_id))
         self.assertEqual(response.status_code, 401)
+
+    def test_public_programme_returns_sessions_without_venue_or_speaker_pii(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+        payload = self._create_session_payload()
+        self.app.post(
+            '/api/v1/programme/sessions',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+
+        response = self.app.get('/api/v1/public/programme/INDABA2026')
+        self.assertEqual(response.status_code, 200)
+        sessions = json.loads(response.data)
+        self.assertEqual(len(sessions), 1)
+
+        session = sessions[0]
+        self.assertNotIn('venue', session)
+        self.assertNotIn('event_id', session)
+        self.assertEqual(session['title'], 'Opening Keynote')
+        self.assertEqual(len(session['speakers']), 1)
+
+        speaker = session['speakers'][0]
+        self.assertEqual(speaker['name'], 'Guest User')
+        self.assertNotIn('email', speaker)
+        self.assertNotIn('linked_user_id', speaker)
+        self.assertNotIn('event_id', speaker)
+
+    def test_public_programme_unknown_event_key_returns_404(self):
+        self.seed_static_data()
+        response = self.app.get('/api/v1/public/programme/NOT-A-REAL-KEY')
+        self.assertEqual(response.status_code, 404)
+
+    def test_public_programme_times_converted_to_event_local(self):
+        self.seed_static_data()
+        event = db.session.query(Event).get(self.event_id)
+        event.timezone = 'Africa/Johannesburg'
+        db.session.commit()
+
+        header = self.get_auth_header_for('editor@test.com')
+        payload = self._create_session_payload(start='2026-08-02T09:00:00', end='2026-08-02T10:30:00')
+        self.app.post(
+            '/api/v1/programme/sessions',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+
+        response = self.app.get('/api/v1/public/programme/INDABA2026')
+        session = json.loads(response.data)[0]
+        # Stored start_time is UTC 09:00; Africa/Johannesburg is UTC+2 with no DST.
+        self.assertEqual(session['start_time'], '2026-08-02T11:00:00+02:00')
+        self.assertEqual(session['end_time'], '2026-08-02T12:30:00+02:00')

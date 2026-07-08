@@ -187,6 +187,7 @@ rest_api.add_resource(programme_api.SpeakerListAPI, '/api/v1/programme/speakers'
 rest_api.add_resource(programme_api.SpeakerAPI, '/api/v1/programme/speakers/<int:speaker_id>')
 rest_api.add_resource(programme_api.SessionTypeListAPI, '/api/v1/programme/session-types')
 rest_api.add_resource(programme_api.TrackListAPI, '/api/v1/programme/tracks')
+rest_api.add_resource(programme_api.PublicProgrammeAPI, '/api/v1/public/programme/<string:event_key>')
 rest_api.add_resource(forms_api.EventFormConfigAPI, '/api/v1/form-config')
 rest_api.add_resource(forms_api.FormReviewAssignmentAPI, '/api/v1/forms/<int:form_id>/review-assignments')
 rest_api.add_resource(forms_api.FormResponseTagAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/tags')
