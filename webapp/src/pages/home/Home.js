@@ -114,6 +114,8 @@ class Home extends Component {
         if (this.state.organisation && this.state.organisation.name === "AI4D Africa" && this.props.i18n.language === "fr") {
             logo = "ai4d_logo_fr.png";
         }
+        console.log(this.state);
+        
 
         return (
             <div>

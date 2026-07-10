@@ -222,3 +222,136 @@ ol.progtrckr li.progtrckr-done:hover:before {
     display: inline;
   }
 }
+
+
+.shift_button {
+  margin-left: 50px;
+}
+
+.response-chains-container {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.response-chains-title {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 28px;
+  color: #333;
+  font-weight: bold;
+}
+
+.response-chains-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.response-chains-header {
+  padding: 15px;
+  font-size: 20px;
+  background-color: #007bff;
+  color: #fff;
+  text-align: left;
+}
+
+.chain-header {
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.chain-header-title {
+  padding: 15px 10px;
+  font-weight: bold;
+  font-size: 20px;
+  border-bottom: 2px solid #007bff;
+}
+
+.chain-toggle-icon {
+  float: right;
+  font-size: 18px;
+}
+
+.response-row {
+  background-color: #ffffff;
+  border-bottom: 1px solid #dcdcdc;
+  transition: background-color 0.3s ease;
+}
+
+.resubmit-button-container {
+  text-align: center;
+  padding: 15px;
+  background-color: #f9f9f9;
+}
+
+.btn.btn-primary {
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+}  
+
+.custom-button {
+  width: 100px;
+  height: 40px;
+  font-size: 14px;
+}
+
+
+.resubmit-container {
+  display: flex;
+  align-items: center; 
+  gap: 40px; 
+}
+
+.resubmit-container i {
+  font-size: 16px; 
+}
+
+.resubmit-container button {
+  padding: 8px 16px; 
+  font-size: 14px; 
+  border: none;
+  border-radius: 4px;
+  background-color: #007bff; 
+  color: #fff; 
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.resubmit-container button:hover {
+  background-color: #0056b3; 
+}
+
+table {
+  width: 100%; 
+  table-layout: auto;
+  border-collapse: collapse; 
+}
+
+td, th {
+  padding: 8px 12px; 
+  text-align: left;
+  vertical-align: middle;
+}
+
+.response-row td:nth-child(1) { 
+  width: 35%;
+}
+
+.response-row td:nth-child(2) { 
+  width: 20%;
+  text-align: center;
+}
+
+.response-row td:nth-child(3) {
+  width: 30%;
+  text-align: center;
+}
+
+.response-row td:nth-child(4) { 
+  width: 15%;
+  text-align: center; 
+}

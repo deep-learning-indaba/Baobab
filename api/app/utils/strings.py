@@ -83,6 +83,7 @@ def build_response_email_body(answers, language, application_form):
     return stringified_summary
 
 
+
 def build_response_html_app_info(response, language):
     """
     Stringifying the application information, for output in a html file, with the response_id and applicant name contact info as
@@ -124,4 +125,43 @@ def build_response_html_answers(answers, language, application_form):
 
 
     return stringified_answers
+
+
+def build_review_email_body(review_responses, language, review_form):
+    """ Builds a summary of review responses for an email body.
+    Each reviewer's responses are grouped by section and question."""
+    summary_str = ""
+    for idx, review_response in enumerate(review_responses, start=1):
+        summary_str += f"Reviewer {idx}\n\n"
+
+        for section in review_form.review_sections:
+            if not section.review_questions:
+                continue
+
+            section_translation = section.get_translation(language)
+            if not section_translation:
+                section_translation = section.get_translation('en')
+            section_title = section_translation.headline
+            summary_str += section_title + "\n" + ("-" * 20) + "\n\n"
+
+            for question in section.review_questions:
+                question_translation = question.get_translation(language)
+                if not question_translation:
+                    question_translation = question.get_translation('en')
+
+                found_score = next(
+                    (score for score in review_response["scores"]
+                     if score["review_question_id"] == question.id),
+                    None
+                )
+                if found_score:
+                    answer_value = found_score.get("value", "")
+                    summary_str += (
+                        f"{question_translation.headline}\n"
+                        f"{answer_value}\n\n"
+                    )
+
+        summary_str += "\n"
+
+    return summary_str
 

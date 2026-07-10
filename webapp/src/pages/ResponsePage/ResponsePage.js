@@ -11,9 +11,24 @@ import { tagsService } from '../../services/tags/tags.service';
 import { responsesService } from '../../services/responses/responses.service';
 import AnswerValue from "../../components/answerValue";
 import { ConfirmModal } from "react-bootstrap4-modal";
+import Modal from 'react-bootstrap4-modal';
+import _ from "lodash";
+
 import moment from 'moment'
 import { getDownloadURL } from '../../utils/files';
 import TagSelectorDialog from '../../components/TagSelectorDialog';
+import Loading from "../../components/Loading";
+
+const answerByQuestionKey = (key, allQuestions, answers) => {
+    let question = allQuestions.find(q => q.key === key);
+    if (question) {
+      let answer = answers.find(a => a.question_id === question.id);
+      if (answer) {
+        return answer.value;
+      }
+    }
+    return null;
+  }
 
 class ResponsePage extends Component {
     constructor(props) {
@@ -34,7 +49,12 @@ class ResponsePage extends Component {
             tagList: [],
             assignableTagTypes: ["RESPONSE"],
             reviewResponses: [],
-            outcome: {'status':null,'timestamp':null},
+            outcome: {'status':null,'timestamp':null, 'review_summary':null},
+            confirmModalVisible: false,
+            pendingOutcome: "",
+            confirmationMessage: "",
+            review_summary: "",
+            isCommentEmpty: false,
             isOutcomeDropdownOpen: false,
             isStatusDropdownOpen: false,
         }
@@ -143,6 +163,7 @@ class ResponsePage extends Component {
     
 
     renderCompleteReviews() {
+
         if (this.state.reviewResponses.length) {
             const reviews = this.state.reviewResponses.map(val => {
     
@@ -166,13 +187,39 @@ class ResponsePage extends Component {
     
         return <p>No reviews available</p>;
     }
+
+    renderJournalReviews() {
+        const { reviewResponses, reviewForm } = this.state;
+        const { t } = this.props;
+    
+        if (!reviewResponses.length) {
+            return <p>{t("No reviews available")}</p>;
+        }
+    
+        return reviewResponses.map((val, index) => (
+            <div key={val.id} className="review-container">
+                <h4 className="reviewer-section">
+                    {t("Reviewer ") + (index + 1)}
+                </h4>
+                {reviewForm.review_sections.map(section => (
+                    <div key={section.id} className="section">
+                        <h5>{section.headline}</h5>
+                        {this.renderReviewResponse(val, section)}
+                    </div>
+                ))}
+            </div>
+        ));
+    }
+    
     
     getOutcome() {
-        outcomeService.getOutcome(this.props.event.id, this.state.applicationData.user_id).then(response => {
+        outcomeService.getOutcome(this.props.event.id, this.state.applicationData.user_id,this.props.match.params.id).then(response => {
             if (response.status === 200) {
+                
                 const newOutcome = {
                     timestamp: response.outcome.timestamp,
                     status: response.outcome.status,
+                    review_summary: response.outcome.review_summary
                 };
                 this.setState(
                     {
@@ -213,6 +260,60 @@ class ResponsePage extends Component {
         });
     }
 
+    handleConfirmation = (outcome, message) => {
+    this.setState({
+      confirmModalVisible: true,
+      pendingOutcome: outcome,
+      confirmationMessage: message,
+        });
+    };
+
+    handleConfirmationOK = (event) => {
+        this.setState({
+        confirmModalVisible: false,
+        });
+        this.submitOutcome(this.state.pendingOutcome,this.state.review_summary);
+        
+    };
+
+    handleConfirmationCancel = (event) => {
+        this.setState({
+        confirmModalVisible: false,
+        });
+    };
+
+
+    handleConfirmationClick = (outcome, message) => {
+        const { review_summary } = this.state;
+        if (this.state.event_type==='JOURNAL') {
+            
+            if (!review_summary || !review_summary.trim()) {
+                this.setState({ isCommentEmpty: true });
+                alert(this.props.t("The review summary field is required."));
+                return;
+            }
+            
+            this.setState({ isCommentEmpty: false });
+        }
+        this.handleConfirmation(outcome, message);
+      };
+
+    renderConfirmationButton(outcome, label, className, message) {
+        return (
+          <button
+            type="button"
+            className={`btn ${className}`}
+            id={outcome.toLowerCase()}
+            onClick={() => this.handleConfirmationClick(outcome, message)}
+          >
+            {this.props.t(label)}
+          </button>
+        );
+      }
+      
+      
+
+      
     outcomeStatus() {
         const data = this.state.applicationData;
 
@@ -222,15 +323,7 @@ class ResponsePage extends Component {
         
         if (data) {
 
-            if (this.state.outcome.status && this.state.outcome.status !== 'REVIEW') {
-                if (this.state.outcome.status === 'ACCEPTED') {
-                    return <span><span class="badge badge-pill badge-success">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
-                } else if (this.state.outcome.status === 'REJECTED') {
-                    return <span><span class="badge badge-pill badge-danger">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
-                } else {
-                    return <span><span class="badge badge-pill badge-warning">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
-                }
-            };
+        const name = data.user_title + " " + data.firstname + " " + data.lastname;
 
             if (this.state.event_type === 'JOURNAL') {
                 return (
@@ -285,8 +378,13 @@ class ResponsePage extends Component {
                     </div>
                 )
             }
-        };
-    };
+
+
+            </div>
+        );
+        }
+    }
+    
 
     updateResponseStatus = (is_submitted, is_withdrawn) => {
         this.setState({ isStatusDropdownOpen: false }, () => {
@@ -493,7 +591,7 @@ class ResponsePage extends Component {
     
         responsesService.removeTag(applicationData.id, tagToRemove, this.props.event.id)
         .then(resp => {
-            console.log(resp);
+
           if (resp.status === 200) {
             this.setState({
                 removeTagModalVisible: false,
@@ -645,7 +743,7 @@ class ResponsePage extends Component {
         if (!this.state.reviewResponses || !this.state.applicationData) {
             return <div></div>
         }
-        return < ReviewModal
+        return <ReviewModal
             handlePost={(data) => this.postReviewerService(data)}
             response={this.state.applicationData}
             reviewers={this.state.availableReviewers.filter(r => !this.state.applicationData.reviewers.some(rr => rr.reviewer_user_id === r.reviewer_user_id))}
@@ -670,7 +768,6 @@ class ResponsePage extends Component {
     };
 
     addTag = (response) => {
-        console.log(response);
         const tagIds = response.tags.map(t=>t.id);
         this.setState({
           tagSelectorVisible: true,
@@ -683,6 +780,31 @@ class ResponsePage extends Component {
             tagSelectorVisible: true
         })
     }
+
+    handleCommentChange = (event) => {
+        this.setState({ review_summary: event.target.value ,isCommentEmpty: false});
+        
+      };
+    
+    
+
+    renderComment = () => {
+        return (
+          <textarea
+            className={`comment-box small-text ${
+              this.state.isCommentEmpty ? "empty-comment" : ""
+            }`}
+            placeholder="Review summary ..."
+            value={this.state.outcome.review_summary}
+            onChange={this.handleCommentChange}
+            readOnly={this.state.outcome.status !== null}
+            
+          />
+          
+        );
+      };
+      
+      
 
     render() {
         const { applicationData, error, isLoading } = this.state;
@@ -738,8 +860,13 @@ class ResponsePage extends Component {
                         </div>
                     </div>
                 }
+                {this.state.event_type ==='JOURNAL' && 
+                <div className="response-details">
+                            <h3>{t('Review Summaries')}</h3>
+                                {this.renderComment()}
+                </div>}
 
-
+     
                 {/*Response Data*/}
                 {applicationData &&
                     <div className="response-details">
@@ -776,6 +903,7 @@ class ResponsePage extends Component {
                         )}
                     </div>
                 }
+               
 
                 <TagSelectorDialog
                     tags={this.state.filteredTagList}
