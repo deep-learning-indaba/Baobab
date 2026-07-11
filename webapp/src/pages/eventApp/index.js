@@ -12,3 +12,7 @@ export { default as ProfileBrowser } from './ProfileBrowser';
 export { default as ScanConnect } from './ScanConnect';
 export { default as Connections } from './Connections';
 export { default as ConnectLanding } from './ConnectLanding';
+export { default as DiscussionBoard } from './DiscussionBoard';
+export { default as DiscussionThread } from './DiscussionThread';
+export { default as NewDiscussionThread } from './NewDiscussionThread';
+export { default as DiscussionReportsAdmin } from './DiscussionReportsAdmin';

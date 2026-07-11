@@ -26,6 +26,7 @@ from .profiles import api as profiles_api
 from .programme import api as programme_api
 from .announcements import api as announcements_api
 from .connections import api as connections_api
+from .discussion import api as discussion_api
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
 rest_api.add_resource(users_api.UserCommentAPI, '/api/v1/user-comment')
@@ -207,4 +208,15 @@ rest_api.add_resource(connections_api.ConnectionRespondAPI, '/api/v1/connection/
 rest_api.add_resource(connections_api.ConnectionWithdrawAPI, '/api/v1/connection/withdraw')
 rest_api.add_resource(connections_api.ConnectionListAPI, '/api/v1/connection/list')
 rest_api.add_resource(connections_api.ConnectionReportAPI, '/api/v1/connection/report')
+# Discussion board routes — register static paths before <int:id> routes
+rest_api.add_resource(discussion_api.DiscussionSubscriptionListAPI, '/api/v1/discussion/subscription')
+rest_api.add_resource(discussion_api.DiscussionReportQueueAPI,      '/api/v1/discussion/report')
+rest_api.add_resource(discussion_api.DiscussionReportActionAPI,     '/api/v1/discussion/report/<int:report_id>/dismiss')
+rest_api.add_resource(discussion_api.DiscussionThreadListAPI,       '/api/v1/discussion/thread')
+rest_api.add_resource(discussion_api.DiscussionThreadDetailAPI,     '/api/v1/discussion/thread/<int:thread_id>')
+rest_api.add_resource(discussion_api.DiscussionReplyAPI,            '/api/v1/discussion/thread/<int:thread_id>/reply')
+rest_api.add_resource(discussion_api.DiscussionSubscriptionAPI,     '/api/v1/discussion/thread/<int:thread_id>/subscription')
+rest_api.add_resource(discussion_api.DiscussionPinAPI,             '/api/v1/discussion/thread/<int:thread_id>/pin')
+rest_api.add_resource(discussion_api.DiscussionMessageAPI,          '/api/v1/discussion/message/<int:message_id>')
+rest_api.add_resource(discussion_api.DiscussionReportAPI,           '/api/v1/discussion/message/<int:message_id>/report')
 rest_api.add_resource(connections_api.ConnectionAPI, '/api/v1/connection')

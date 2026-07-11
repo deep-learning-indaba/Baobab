@@ -410,6 +410,67 @@ class AnnouncementApiTest(ApiTestCase):
         resp = self.app.post('/api/v1/push-subscription/test')
         self.assertIn(resp.status_code, (401, 403))
 
+    # ── Non-English-primary organisation ──────────────────────────────────────
+
+    def _seed_fr_primary_event(self):
+        from app.events.models import EventRole
+        org = self.add_organisation(
+            'Indaba Francophone', 'blah.png', 'blah_big.png', 'indaba-fr',
+            languages=[{'code': 'fr', 'description': 'French'}]
+        )
+        event = self.add_event(key='FRTEST2025', organisation_id=org.id)
+        comms = self.add_user('fr-comms@test.com')
+        self.add_event_role('comms-officer', comms.id, event.id)
+        return event.id, self.get_auth_header_for('fr-comms@test.com')
+
+    @patch('app.announcements.api.push_to_user', return_value=0)
+    def test_create_announcement_succeeds_with_only_primary_language(self, mock_push):
+        event_id, header = self._seed_fr_primary_event()
+        payload = {
+            'event_id': event_id,
+            'translations': [{'language': 'fr', 'title': 'Bonjour', 'body_markdown': 'Corps'}],
+        }
+        resp = self.app.post(
+            '/api/v1/announcement',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header,
+        )
+        self.assertEqual(resp.status_code, 201)
+
+    @patch('app.announcements.api.push_to_user', return_value=0)
+    def test_create_announcement_without_primary_language_rejected(self, mock_push):
+        event_id, header = self._seed_fr_primary_event()
+        payload = {
+            'event_id': event_id,
+            'translations': [{'language': 'en', 'title': 'Hello', 'body_markdown': 'Body'}],
+        }
+        resp = self.app.post(
+            '/api/v1/announcement',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header,
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    @patch('app.announcements.api.push_to_user', return_value=0)
+    def test_translation_falls_back_to_whatever_exists_not_just_en(self, mock_push):
+        # Organisation has no 'en' translation at all for this announcement — the
+        # fallback must not assume English exists, it should use whatever is there.
+        ann = AnnouncementRepository.create(
+            self.event_id, self.comms_id, None,
+            translations=[('de', 'Nur Deutsch', 'body')],
+        )
+        AnnouncementRepository.create_receipt(ann.id, self.attendee1_id)
+        db.session.commit()
+
+        resp = self.app.get(
+            '/api/v1/announcement/{}?event_id={}&language=fr'.format(ann.id, self.event_id),
+            headers=self.a1_header,
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(json.loads(resp.data)['title'], 'Nur Deutsch')
+
     @patch('app.announcements.api.push_to_user', return_value=0)
     def test_admin_list_shows_delivery_stats(self, mock_push):
         payload = {

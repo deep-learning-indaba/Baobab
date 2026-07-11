@@ -166,10 +166,11 @@ class ProgrammeApiTest(ApiTestCase):
         self.seed_static_data()
         header = self.get_auth_header_for('editor@test.com')
 
-        # Create speaker via API so find_linked_user runs
+        # Create speaker via API so find_linked_user runs. Uses a distinct name from the
+        # 'Guest User' speaker seeded in seed_static_data, since duplicate names are rejected.
         speaker_resp = self.app.post(
             '/api/v1/programme/speakers',
-            data=json.dumps({'event_id': self.event_id, 'name': 'Guest User', 'email': 'guest@test.com'}),
+            data=json.dumps({'event_id': self.event_id, 'name': 'Second Speaker', 'email': 'guest@test.com'}),
             content_type='application/json',
             headers=header
         )
@@ -308,7 +309,49 @@ class ProgrammeApiTest(ApiTestCase):
         data = json.loads(response.data)
         self.assertEqual(data['name'], 'New Speaker')
 
+    def test_editor_updates_speaker(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+        payload = {'name': 'Guest Userson', 'email': 'guest@test.com'}
+        response = self.app.put(
+            '/api/v1/programme/speakers/{}'.format(self.linked_speaker_id),
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['name'], 'Guest Userson')
+
     # ── Negative tests ──────────────────────────────────────────────────────────
+
+    def test_duplicate_speaker_name_rejected_on_create(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+        payload = {'event_id': self.event_id, 'name': 'guest user'}
+        response = self.app.post(
+            '/api/v1/programme/speakers',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(response.status_code, 409)
+
+    def test_duplicate_speaker_name_rejected_on_update(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+        other_speaker = Speaker(event_id=self.event_id, name='Another Speaker')
+        db.session.add(other_speaker)
+        db.session.commit()
+
+        payload = {'name': 'Guest User'}
+        response = self.app.put(
+            '/api/v1/programme/speakers/{}'.format(other_speaker.id),
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(response.status_code, 409)
 
     def test_non_editor_cannot_create_session(self):
         self.seed_static_data()
@@ -435,3 +478,97 @@ class ProgrammeApiTest(ApiTestCase):
         # Stored start_time is UTC 09:00; Africa/Johannesburg is UTC+2 with no DST.
         self.assertEqual(session['start_time'], '2026-08-02T11:00:00+02:00')
         self.assertEqual(session['end_time'], '2026-08-02T12:30:00+02:00')
+
+    # ── Non-English-primary organisation ──────────────────────────────────────
+    # Translations must not assume English is one of the organisation's languages.
+
+    def seed_fr_primary_org(self):
+        org = self.add_organisation(
+            'Indaba Francophone', 'blah.png', 'blah_big.png', 'indaba-fr',
+            languages=[{'code': 'fr', 'description': 'French'}]
+        )
+        event = self.add_event(
+            name={'fr': 'Indaba 2026'},
+            description={'fr': 'La Deep Learning Indaba 2026'},
+            start_date=datetime(2026, 8, 2),
+            end_date=datetime(2026, 8, 7),
+            key='INDABAFR2026',
+            organisation_id=org.id
+        )
+        self.fr_event_id = event.id
+
+        editor = self.add_user('fr-editor@test.com', 'Ed', 'Itor')
+        self.add_event_role('programme-editor', editor.id, self.fr_event_id)
+
+    def test_editor_adds_session_type_with_only_primary_language(self):
+        self.seed_fr_primary_org()
+        header = self.get_auth_header_for('fr-editor@test.com')
+        payload = {
+            'event_id': self.fr_event_id,
+            'name': {'fr': 'Atelier'}
+        }
+        response = self.app.post(
+            '/api/v1/programme/session-types',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(json.loads(response.data)['name'], 'Atelier')
+
+    def test_adding_session_type_without_primary_language_rejected(self):
+        self.seed_fr_primary_org()
+        header = self.get_auth_header_for('fr-editor@test.com')
+        payload = {
+            'event_id': self.fr_event_id,
+            'name': {'en': 'Workshop'}
+        }
+        response = self.app.post(
+            '/api/v1/programme/session-types',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_editor_adds_track_with_only_primary_language(self):
+        self.seed_fr_primary_org()
+        header = self.get_auth_header_for('fr-editor@test.com')
+        payload = {
+            'event_id': self.fr_event_id,
+            'name': {'fr': 'Recherche'}
+        }
+        response = self.app.post(
+            '/api/v1/programme/tracks',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(json.loads(response.data)['name'], 'Recherche')
+
+    def test_session_with_only_fr_translation_falls_back_for_unknown_language(self):
+        self.seed_fr_primary_org()
+        header = self.get_auth_header_for('fr-editor@test.com')
+        payload = {
+            'event_id': self.fr_event_id,
+            'translations': [{'language': 'fr', 'title': "Discours d'ouverture", 'description': 'Une super session.'}],
+            'start_time': '2026-08-02T09:00:00',
+            'end_time': '2026-08-02T10:30:00',
+        }
+        create_resp = self.app.post(
+            '/api/v1/programme/sessions',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(create_resp.status_code, 201)
+        session_id = json.loads(create_resp.data)['id']
+
+        # No 'en' or 'de' translation exists — must fall back to the only
+        # translation present rather than returning a blank title.
+        response = self.app.get(
+            '/api/v1/programme/sessions/{}?language=de'.format(session_id),
+            headers=header
+        )
+        self.assertEqual(json.loads(response.data)['title'], "Discours d'ouverture")

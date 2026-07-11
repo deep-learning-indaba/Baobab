@@ -20,6 +20,13 @@ def _is_programme_editor(user_id, event_id):
     return user and user.is_programme_editor(event_id)
 
 
+def _primary_language(event):
+    """The organisation's first configured language, used as the mandatory
+    translation when none is specified — organisations aren't all English-first."""
+    languages = event.organisation.languages if event and event.organisation else None
+    return languages[0]['code'] if languages else 'en'
+
+
 def _serialize_speaker(speaker):
     return {
         'id': speaker.id,
@@ -42,7 +49,9 @@ def _serialize_speaker_public(speaker):
 
 
 def _serialize_tag_brief(tag, language):
-    t = tag.get_translation(language) or tag.get_translation('en')
+    t = tag.get_translation(language)
+    if t is None:
+        t = next(iter(tag.translations), None)
     return {
         'id': tag.id,
         'name': t.name if t else ''
@@ -52,7 +61,7 @@ def _serialize_tag_brief(tag, language):
 def _serialize_session(session, language):
     t = next((x for x in session.translations if x.language == language), None)
     if t is None:
-        t = next((x for x in session.translations if x.language == 'en'), None)
+        t = session.translations[0] if session.translations else None
     title = t.title if t else ''
     description = t.description if t else ''
 
@@ -98,7 +107,7 @@ def _serialize_session(session, language):
 def _serialize_session_public(session, language, event_timezone):
     t = next((x for x in session.translations if x.language == language), None)
     if t is None:
-        t = next((x for x in session.translations if x.language == 'en'), None)
+        t = session.translations[0] if session.translations else None
     title = t.title if t else ''
     description = t.description if t else ''
 
@@ -334,6 +343,9 @@ class SpeakerListAPI(restful.Resource):
         if not name:
             return errors.MISSING_FIELDS
 
+        if ProgrammeRepository.find_speaker_by_name(event_id, name):
+            return errors.SPEAKER_NAME_TAKEN
+
         email = body.get('email')
         linked_user_id = ProgrammeRepository.find_linked_user(event_id, name, email)
 
@@ -367,6 +379,9 @@ class SpeakerAPI(restful.Resource):
         name = body.get('name', '').strip()
         if not name:
             return errors.MISSING_FIELDS
+
+        if ProgrammeRepository.find_speaker_by_name(speaker.event_id, name, exclude_speaker_id=speaker.id):
+            return errors.SPEAKER_NAME_TAKEN
 
         speaker.name = name
         speaker.email = body.get('email', speaker.email)
@@ -405,8 +420,12 @@ class SessionTypeListAPI(restful.Resource):
         if not _is_programme_editor(g.current_user['id'], event_id):
             return errors.FORBIDDEN
 
+        event = event_repository.get_by_id(event_id)
+        if not event:
+            return errors.EVENT_NOT_FOUND
+
         names = body.get('name', {})
-        if not names or not names.get('en'):
+        if not names or not names.get(_primary_language(event)):
             return errors.MISSING_FIELDS
 
         tag = Tag(event_id, TagType.SESSION_TYPE, True)
@@ -460,8 +479,12 @@ class TrackListAPI(restful.Resource):
         if not _is_programme_editor(g.current_user['id'], event_id):
             return errors.FORBIDDEN
 
+        event = event_repository.get_by_id(event_id)
+        if not event:
+            return errors.EVENT_NOT_FOUND
+
         names = body.get('name', {})
-        if not names or not names.get('en'):
+        if not names or not names.get(_primary_language(event)):
             return errors.MISSING_FIELDS
 
         tag = Tag(event_id, TagType.TRACK, True)

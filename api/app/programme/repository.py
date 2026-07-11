@@ -49,6 +49,15 @@ class ProgrammeRepository:
         return speaker
 
     @staticmethod
+    def find_speaker_by_name(event_id, name, exclude_speaker_id=None):
+        query = (db.session.query(Speaker)
+                 .filter(Speaker.event_id == event_id)
+                 .filter(func.lower(Speaker.name) == name.lower()))
+        if exclude_speaker_id is not None:
+            query = query.filter(Speaker.id != exclude_speaker_id)
+        return query.first()
+
+    @staticmethod
     def find_linked_user(event_id, name, email):
         if email:
             u = db.session.query(AppUser).filter(func.lower(AppUser.email) == email.lower()).first()

@@ -8,8 +8,10 @@ import {
   utcToEventLocalDate,
   utcToEventLocalTime,
 } from '../../utils/datetime';
-import { translationService } from '../../services/translation/translation.service';
 import ProgrammeSchedule from '../../components/ProgrammeSchedule';
+import TranslatableFieldGroup from '../formEditor/components/TranslatableFieldGroup';
+
+var DEFAULT_LANGUAGES = [{ code: 'en', description: 'English' }];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -40,10 +42,8 @@ function blankSessionForm(eventId, date) {
     session_type_id: '',
     speaker_ids: [],
     track_tag_ids: [],
-    title_en: '',
-    title_fr: '',
-    desc_en: '',
-    desc_fr: '',
+    title: {},
+    desc: {},
   };
 }
 
@@ -53,6 +53,297 @@ function formatDayLabel(dateStr, t) {
   return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
+// ── Speaker Picker (searchable multi-select dropdown with inline add/edit) ────
+
+class SpeakerPicker extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      isOpen: false,
+      searchQuery: '',
+      editingId: null, // speaker id being edited, or 'new' for the add-speaker form
+      editName: '',
+      editEmail: '',
+      error: null,
+      isSaving: false,
+    };
+    this.containerRef = React.createRef();
+    this.handleClickOutside = this.handleClickOutside.bind(this);
+    this.toggleOpen = this.toggleOpen.bind(this);
+    this.startAdd = this.startAdd.bind(this);
+    this.cancelEdit = this.cancelEdit.bind(this);
+    this.saveEdit = this.saveEdit.bind(this);
+  }
+
+  componentDidMount() {
+    document.addEventListener('mousedown', this.handleClickOutside);
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('mousedown', this.handleClickOutside);
+  }
+
+  handleClickOutside(e) {
+    if (this.containerRef.current && !this.containerRef.current.contains(e.target)) {
+      this.setState({ isOpen: false, editingId: null, error: null });
+    }
+  }
+
+  toggleOpen() {
+    this.setState(function(prev) {
+      return { isOpen: !prev.isOpen, editingId: null, error: null };
+    });
+  }
+
+  startEdit(spk) {
+    this.setState({ editingId: spk.id, editName: spk.name, editEmail: spk.email || '', error: null });
+  }
+
+  startAdd() {
+    this.setState({ editingId: 'new', editName: '', editEmail: '', error: null });
+  }
+
+  cancelEdit() {
+    this.setState({ editingId: null, error: null });
+  }
+
+  isDuplicateName(name, excludeId) {
+    var norm = name.trim().toLowerCase();
+    return (this.props.speakers || []).some(function(spk) {
+      return spk.id !== excludeId && spk.name.trim().toLowerCase() === norm;
+    });
+  }
+
+  saveEdit() {
+    var self = this;
+    var t = self.props.t;
+    var name = self.state.editName.trim();
+    var email = self.state.editEmail.trim();
+    if (!name) {
+      self.setState({ error: t('Name is required.') });
+      return;
+    }
+    var excludeId = self.state.editingId === 'new' ? null : self.state.editingId;
+    if (self.isDuplicateName(name, excludeId)) {
+      self.setState({ error: t('A speaker with that name already exists.') });
+      return;
+    }
+
+    self.setState({ isSaving: true, error: null });
+
+    if (self.state.editingId === 'new') {
+      programmeService.createSpeaker({
+        event_id: self.props.eventId,
+        name: name,
+        email: email || undefined,
+      }).then(function(result) {
+        if (result.error) {
+          self.setState({ isSaving: false, error: result.error });
+        } else {
+          self.props.onSpeakerCreated(result.data);
+          self.props.onToggle(result.data.id);
+          self.setState({ isSaving: false, editingId: null, editName: '', editEmail: '' });
+        }
+      });
+    } else {
+      programmeService.updateSpeaker(self.state.editingId, {
+        name: name,
+        email: email,
+      }).then(function(result) {
+        if (result.error) {
+          self.setState({ isSaving: false, error: result.error });
+        } else {
+          self.props.onSpeakerUpdated(result.data);
+          self.setState({ isSaving: false, editingId: null, editName: '', editEmail: '' });
+        }
+      });
+    }
+  }
+
+  render() {
+    var t = this.props.t;
+    var self = this;
+    var speakers = this.props.speakers || [];
+    var selectedIds = this.props.selectedIds || [];
+    var state = this.state;
+
+    var query = state.searchQuery.trim().toLowerCase();
+    var filtered = query
+      ? speakers.filter(function(spk) { return spk.name.toLowerCase().indexOf(query) !== -1; })
+      : speakers;
+
+    var selectedSpeakers = selectedIds.map(function(id) {
+      return speakers.find(function(spk) { return spk.id === id; });
+    }).filter(Boolean);
+
+    return React.createElement('div', { className: 'relative', ref: this.containerRef },
+      // Control
+      React.createElement('div', {
+        onClick: self.toggleOpen,
+        className: 'flex items-center justify-between gap-2 border border-border rounded-lg px-3 py-2 min-h-[42px] cursor-pointer bg-white focus:outline-none focus:ring-2 focus:ring-primary/30'
+      },
+        React.createElement('div', { className: 'flex flex-wrap gap-1.5 flex-1' },
+          selectedSpeakers.length === 0
+            ? React.createElement('span', { className: 'text-sm text-muted-foreground' }, t('Select speakers...'))
+            : selectedSpeakers.map(function(spk) {
+                return React.createElement('span', {
+                  key: spk.id,
+                  className: 'flex items-center gap-1 bg-primary/10 text-primary text-xs font-medium rounded-full pl-2.5 pr-1.5 py-1'
+                },
+                  spk.name,
+                  React.createElement('button', {
+                    type: 'button',
+                    onClick: function(e) { e.stopPropagation(); self.props.onToggle(spk.id); },
+                    className: 'w-4 h-4 rounded-full flex items-center justify-center hover:bg-primary/20'
+                  },
+                    React.createElement('i', { className: 'fas fa-times', style: { fontSize: 9 } })
+                  )
+                );
+              })
+        ),
+        React.createElement('i', {
+          className: 'fas ' + (state.isOpen ? 'fa-chevron-up' : 'fa-chevron-down') + ' text-muted-foreground flex-shrink-0',
+          style: { fontSize: 11 }
+        })
+      ),
+
+      // Dropdown panel
+      state.isOpen && React.createElement('div', {
+        className: 'absolute z-20 mt-1 w-full bg-white border border-border rounded-lg shadow-lg flex flex-col max-h-80'
+      },
+        // Search
+        React.createElement('div', { className: 'relative p-2 border-b border-border flex-shrink-0' },
+          React.createElement('i', { className: 'fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground', style: { fontSize: 12 } }),
+          React.createElement('input', {
+            type: 'text',
+            autoFocus: true,
+            placeholder: t('Search speakers...'),
+            value: state.searchQuery,
+            onChange: function(e) { self.setState({ searchQuery: e.target.value }); },
+            className: 'w-full pl-7 pr-2 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary/30'
+          })
+        ),
+
+        // List
+        React.createElement('div', { className: 'overflow-y-auto flex-1 p-1' },
+          filtered.length === 0 && React.createElement('p', { className: 'text-xs text-muted-foreground text-center py-3' }, t('No speakers found.')),
+          filtered.map(function(spk) {
+            if (state.editingId === spk.id) {
+              return React.createElement('div', { key: spk.id, className: 'p-2 space-y-1.5 bg-muted/40 rounded-lg' },
+                React.createElement('input', {
+                  type: 'text',
+                  value: state.editName,
+                  placeholder: t('Name'),
+                  onChange: function(e) { self.setState({ editName: e.target.value }); },
+                  className: 'w-full border border-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary/30'
+                }),
+                React.createElement('input', {
+                  type: 'email',
+                  value: state.editEmail,
+                  placeholder: t('Email (optional)'),
+                  onChange: function(e) { self.setState({ editEmail: e.target.value }); },
+                  className: 'w-full border border-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary/30'
+                }),
+                React.createElement('div', { className: 'flex gap-2 pt-0.5' },
+                  React.createElement('button', {
+                    type: 'button',
+                    onClick: self.saveEdit,
+                    disabled: state.isSaving,
+                    className: 'flex-1 bg-primary text-white rounded py-1 text-xs font-semibold hover:bg-primary/90 disabled:opacity-60'
+                  }, state.isSaving ? t('Saving...') : t('Save')),
+                  React.createElement('button', {
+                    type: 'button',
+                    onClick: self.cancelEdit,
+                    className: 'flex-1 border border-border rounded py-1 text-xs font-medium text-muted-foreground hover:bg-muted/50'
+                  }, t('Cancel'))
+                )
+              );
+            }
+
+            var selected = selectedIds.indexOf(spk.id) !== -1;
+            return React.createElement('div', {
+              key: spk.id,
+              onClick: function() { self.props.onToggle(spk.id); },
+              className: 'flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ' +
+                (selected ? 'bg-primary/10' : 'hover:bg-muted/50')
+            },
+              React.createElement('div', {
+                className: 'w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 ' +
+                  (selected ? 'bg-primary border-primary' : 'border-border')
+              },
+                selected && React.createElement('i', { className: 'fas fa-check', style: { fontSize: 9, color: 'white' } })
+              ),
+              spk.photo_url && React.createElement('img', {
+                src: spk.photo_url,
+                alt: spk.name,
+                className: 'w-6 h-6 rounded-full object-cover flex-shrink-0'
+              }),
+              React.createElement('span', { className: 'flex-1 min-w-0 text-sm text-foreground truncate' }, spk.name),
+              spk.linked_user_id && React.createElement('span', {
+                className: 'text-[10px] text-primary bg-primary/10 rounded px-1 flex-shrink-0'
+              }, t('Member')),
+              React.createElement('button', {
+                type: 'button',
+                onClick: function(e) { e.stopPropagation(); self.startEdit(spk); },
+                title: t('Edit'),
+                className: 'p-1 text-muted-foreground hover:text-primary flex-shrink-0'
+              },
+                React.createElement('i', { className: 'fas fa-pen', style: { fontSize: 11 } })
+              )
+            );
+          })
+        ),
+
+        // Error
+        state.error && React.createElement('p', { className: 'text-xs text-destructive px-2 pb-1 flex-shrink-0' }, state.error),
+
+        // Footer: add new speaker
+        React.createElement('div', { className: 'border-t border-border p-2 flex-shrink-0' },
+          state.editingId === 'new'
+            ? React.createElement('div', { className: 'space-y-1.5' },
+                React.createElement('input', {
+                  type: 'text',
+                  value: state.editName,
+                  placeholder: t('Name'),
+                  autoFocus: true,
+                  onChange: function(e) { self.setState({ editName: e.target.value }); },
+                  className: 'w-full border border-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary/30'
+                }),
+                React.createElement('input', {
+                  type: 'email',
+                  value: state.editEmail,
+                  placeholder: t('Email (optional)'),
+                  onChange: function(e) { self.setState({ editEmail: e.target.value }); },
+                  className: 'w-full border border-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary/30'
+                }),
+                React.createElement('div', { className: 'flex gap-2 pt-0.5' },
+                  React.createElement('button', {
+                    type: 'button',
+                    onClick: self.saveEdit,
+                    disabled: state.isSaving,
+                    className: 'flex-1 bg-primary text-white rounded py-1 text-xs font-semibold hover:bg-primary/90 disabled:opacity-60'
+                  }, state.isSaving ? t('Saving...') : t('Add')),
+                  React.createElement('button', {
+                    type: 'button',
+                    onClick: self.cancelEdit,
+                    className: 'flex-1 border border-border rounded py-1 text-xs font-medium text-muted-foreground hover:bg-muted/50'
+                  }, t('Cancel'))
+                )
+              )
+            : React.createElement('button', {
+                type: 'button',
+                onClick: self.startAdd,
+                className: 'w-full flex items-center justify-center gap-1.5 text-xs text-primary font-medium py-1.5 hover:bg-primary/5 rounded-lg transition-colors'
+              },
+                React.createElement('i', { className: 'fas fa-plus', style: { fontSize: 10 } }),
+                t('Add new speaker')
+              )
+        )
+      )
+    );
+  }
+}
+
 // ── Session Form Modal ────────────────────────────────────────────────────────
 
 class SessionFormModal extends Component {
@@ -60,22 +351,26 @@ class SessionFormModal extends Component {
     super(props);
     this.state = {
       form: props.initialForm || blankSessionForm(props.eventId, props.selectedDay),
-      newSpeakerName: '',
-      newSpeakerEmail: '',
       newTypeName: '',
       newTrackName: '',
-      isTranslating: false,
       isSaving: false,
       error: null,
     };
     this.handleChange = this.handleChange.bind(this);
+    this.handleFieldChange = this.handleFieldChange.bind(this);
     this.handleSpeakerToggle = this.handleSpeakerToggle.bind(this);
     this.handleTrackToggle = this.handleTrackToggle.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
-    this.handleAutoTranslate = this.handleAutoTranslate.bind(this);
-    this.handleAddSpeaker = this.handleAddSpeaker.bind(this);
     this.handleAddType = this.handleAddType.bind(this);
     this.handleAddTrack = this.handleAddTrack.bind(this);
+  }
+
+  getLanguages() {
+    return this.props.languages || DEFAULT_LANGUAGES;
+  }
+
+  getPrimaryLanguage() {
+    return this.getLanguages()[0].code;
   }
 
   handleChange(e) {
@@ -83,6 +378,14 @@ class SessionFormModal extends Component {
     var value = e.target.value;
     this.setState(function(prev) {
       return { form: Object.assign({}, prev.form, { [name]: value }) };
+    });
+  }
+
+  handleFieldChange(fieldName, lang, value) {
+    this.setState(function(prev) {
+      var next = Object.assign({}, prev.form[fieldName]);
+      next[lang] = value;
+      return { form: Object.assign({}, prev.form, { [fieldName]: next }) };
     });
   }
 
@@ -112,69 +415,13 @@ class SessionFormModal extends Component {
     });
   }
 
-  handleAutoTranslate() {
-    var self = this;
-    var titleEn = self.state.form.title_en;
-    var descEn = self.state.form.desc_en;
-    if (!titleEn && !descEn) return;
-    self.setState({ isTranslating: true });
-    var promises = [];
-    if (titleEn) {
-      promises.push(translationService.translateText(titleEn, 'en', ['fr']));
-    } else {
-      promises.push(Promise.resolve({ translations: null }));
-    }
-    if (descEn) {
-      promises.push(translationService.translateText(descEn, 'en', ['fr']));
-    } else {
-      promises.push(Promise.resolve({ translations: null }));
-    }
-    Promise.all(promises).then(function(results) {
-      var titleFr = (results[0].translations && results[0].translations.fr) || self.state.form.title_fr;
-      var descFr = (results[1].translations && results[1].translations.fr) || self.state.form.desc_fr;
-      self.setState(function(prev) {
-        return {
-          isTranslating: false,
-          form: Object.assign({}, prev.form, { title_fr: titleFr, desc_fr: descFr })
-        };
-      });
-    }).catch(function() {
-      self.setState({ isTranslating: false });
-    });
-  }
-
-  handleAddSpeaker() {
-    var self = this;
-    var name = self.state.newSpeakerName.trim();
-    var email = self.state.newSpeakerEmail.trim();
-    if (!name) return;
-    programmeService.createSpeaker({
-      event_id: self.props.eventId,
-      name: name,
-      email: email || undefined,
-    }).then(function(result) {
-      if (result.data) {
-        self.props.onSpeakerCreated(result.data);
-        self.setState(function(prev) {
-          return {
-            newSpeakerName: '',
-            newSpeakerEmail: '',
-            form: Object.assign({}, prev.form, {
-              speaker_ids: prev.form.speaker_ids.concat([result.data.id])
-            })
-          };
-        });
-      }
-    });
-  }
-
   handleAddType() {
     var self = this;
     var name = self.state.newTypeName.trim();
     if (!name) return;
     programmeService.addSessionType({
       event_id: self.props.eventId,
-      name: { en: name },
+      name: { [self.getPrimaryLanguage()]: name },
     }).then(function(result) {
       if (result.data) {
         self.props.onSessionTypeCreated(result.data);
@@ -194,7 +441,7 @@ class SessionFormModal extends Component {
     if (!name) return;
     programmeService.addTrack({
       event_id: self.props.eventId,
-      name: { en: name },
+      name: { [self.getPrimaryLanguage()]: name },
     }).then(function(result) {
       if (result.data) {
         self.props.onTrackCreated(result.data);
@@ -215,9 +462,10 @@ class SessionFormModal extends Component {
     var self = this;
     var form = self.state.form;
     var timezone = self.props.timezone;
+    var primaryLang = self.getPrimaryLanguage();
 
-    if (!form.title_en.trim()) {
-      self.setState({ error: self.props.t('Session title (EN) is required.') });
+    if (!(form.title[primaryLang] || '').trim()) {
+      self.setState({ error: self.props.t('Session title is required.') });
       return;
     }
     if (!form.date || !form.start_time || !form.end_time) {
@@ -228,10 +476,15 @@ class SessionFormModal extends Component {
     var startUtc = eventLocalToUtcIso(form.date, form.start_time, timezone);
     var endUtc = eventLocalToUtcIso(form.date, form.end_time, timezone);
 
-    var translations = [{ language: 'en', title: form.title_en.trim(), description: form.desc_en }];
-    if (form.title_fr.trim()) {
-      translations.push({ language: 'fr', title: form.title_fr.trim(), description: form.desc_fr });
-    }
+    var translations = self.getLanguages()
+      .map(function(lang) {
+        return {
+          language: lang.code,
+          title: (form.title[lang.code] || '').trim(),
+          description: form.desc[lang.code] || '',
+        };
+      })
+      .filter(function(t) { return t.title; });
 
     var payload = {
       event_id: form.event_id,
@@ -266,6 +519,8 @@ class SessionFormModal extends Component {
     var speakers = this.props.speakers || [];
     var sessionTypes = this.props.sessionTypes || [];
     var tracks = this.props.tracks || [];
+    var languages = this.getLanguages();
+    var isMultiLingual = languages.length > 1;
     var self = this;
 
     return React.createElement('div', {
@@ -297,76 +552,30 @@ class SessionFormModal extends Component {
             self.state.error
           ),
 
-          // Title EN
-          React.createElement('div', null,
-            React.createElement('label', { className: 'block text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider' },
-              t('Title (English)') + ' *'
-            ),
-            React.createElement('input', {
-              type: 'text',
-              name: 'title_en',
-              value: form.title_en,
-              onChange: self.handleChange,
-              className: 'w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30',
-              placeholder: t('Session title in English')
-            })
-          ),
+          // Title
+          React.createElement(TranslatableFieldGroup, {
+            key: 'title-group',
+            label: isMultiLingual ? t('Title') + ' *' : t('Title'),
+            fieldName: 'title',
+            values: form.title,
+            languages: languages,
+            onChange: function(lang, value) { self.handleFieldChange('title', lang, value); },
+            autoTranslateEnabled: isMultiLingual,
+            placeholder: t('Session title')
+          }),
 
-          // Desc EN
-          React.createElement('div', null,
-            React.createElement('label', { className: 'block text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider' },
-              t('Description (English)')
-            ),
-            React.createElement('textarea', {
-              name: 'desc_en',
-              value: form.desc_en,
-              onChange: self.handleChange,
-              rows: 3,
-              className: 'w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none',
-              placeholder: t('Optional description or abstract')
-            })
-          ),
-
-          // Auto-translate button
-          React.createElement('button', {
-            type: 'button',
-            onClick: self.handleAutoTranslate,
-            disabled: self.state.isTranslating,
-            className: 'flex items-center gap-1 text-xs text-primary border border-primary/30 rounded-lg px-3 py-1.5 hover:bg-primary/5 transition-colors'
-          },
-            React.createElement('i', { className: 'fas fa-language', style: { fontSize: 13 } }),
-            self.state.isTranslating ? t('Translating...') : t('Auto-translate to French')
-          ),
-
-          // Title FR
-          React.createElement('div', null,
-            React.createElement('label', { className: 'block text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider' },
-              t('Title (French)')
-            ),
-            React.createElement('input', {
-              type: 'text',
-              name: 'title_fr',
-              value: form.title_fr,
-              onChange: self.handleChange,
-              className: 'w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30',
-              placeholder: t('Session title in French (optional)')
-            })
-          ),
-
-          // Desc FR
-          React.createElement('div', null,
-            React.createElement('label', { className: 'block text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider' },
-              t('Description (French)')
-            ),
-            React.createElement('textarea', {
-              name: 'desc_fr',
-              value: form.desc_fr,
-              onChange: self.handleChange,
-              rows: 2,
-              className: 'w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none',
-              placeholder: t('Optional')
-            })
-          ),
+          // Description
+          React.createElement(TranslatableFieldGroup, {
+            key: 'desc-group',
+            label: t('Description'),
+            fieldName: 'desc',
+            values: form.desc,
+            languages: languages,
+            onChange: function(lang, value) { self.handleFieldChange('desc', lang, value); },
+            autoTranslateEnabled: isMultiLingual,
+            multiline: true,
+            placeholder: t('Optional description or abstract')
+          }),
 
           // Date + Times
           React.createElement('div', { className: 'grid grid-cols-3 gap-3' },
@@ -499,60 +708,15 @@ class SessionFormModal extends Component {
             React.createElement('label', { className: 'block text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider' },
               t('Speakers')
             ),
-            React.createElement('div', { className: 'space-y-1 mb-2' },
-              speakers.map(function(spk) {
-                var selected = form.speaker_ids.indexOf(spk.id) !== -1;
-                return React.createElement('div', {
-                  key: spk.id,
-                  onClick: function() { self.handleSpeakerToggle(spk.id); },
-                  className: 'flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ' +
-                    (selected ? 'bg-primary/10 border border-primary/20' : 'hover:bg-muted/50 border border-transparent')
-                },
-                  React.createElement('div', {
-                    className: 'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ' +
-                      (selected ? 'bg-primary border-primary' : 'border-border')
-                  },
-                    selected && React.createElement('i', { className: 'fas fa-check', style: { fontSize: 10, color: 'white' } })
-                  ),
-                  spk.photo_url && React.createElement('img', {
-                    src: spk.photo_url,
-                    alt: spk.name,
-                    className: 'w-7 h-7 rounded-full object-cover'
-                  }),
-                  React.createElement('div', { className: 'flex-1 min-w-0' },
-                    React.createElement('span', { className: 'text-sm font-medium text-foreground' }, spk.name),
-                    spk.linked_user_id && React.createElement('span', {
-                      className: 'ml-2 text-xs text-primary bg-primary/10 rounded px-1'
-                    }, t('Member'))
-                  )
-                );
-              })
-            ),
-            // Add new speaker inline
-            React.createElement('div', { className: 'border border-dashed border-border rounded-lg p-3 space-y-2' },
-              React.createElement('p', { className: 'text-xs text-muted-foreground font-medium' }, t('Add new speaker')),
-              React.createElement('div', { className: 'flex gap-2' },
-                React.createElement('input', {
-                  type: 'text',
-                  placeholder: t('Name'),
-                  value: self.state.newSpeakerName,
-                  onChange: function(e) { self.setState({ newSpeakerName: e.target.value }); },
-                  className: 'flex-1 border border-border rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/30'
-                }),
-                React.createElement('input', {
-                  type: 'email',
-                  placeholder: t('Email (optional)'),
-                  value: self.state.newSpeakerEmail,
-                  onChange: function(e) { self.setState({ newSpeakerEmail: e.target.value }); },
-                  className: 'flex-1 border border-border rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/30'
-                }),
-                React.createElement('button', {
-                  type: 'button',
-                  onClick: self.handleAddSpeaker,
-                  className: 'px-3 py-1.5 bg-muted rounded text-sm hover:bg-muted/80 transition-colors'
-                }, t('Add'))
-              )
-            )
+            React.createElement(SpeakerPicker, {
+              t: t,
+              speakers: speakers,
+              selectedIds: form.speaker_ids,
+              onToggle: self.handleSpeakerToggle,
+              eventId: self.props.eventId,
+              onSpeakerCreated: self.props.onSpeakerCreated,
+              onSpeakerUpdated: self.props.onSpeakerUpdated,
+            })
           ),
 
           // Submit row
@@ -620,6 +784,10 @@ class ProgrammeEditor extends Component {
     this.handleCloseModal = this.handleCloseModal.bind(this);
   }
 
+  getLanguages() {
+    return (this.props.organisation && this.props.organisation.languages) || DEFAULT_LANGUAGES;
+  }
+
   componentDidMount() {
     var event = this.props.event;
     if (!event) return;
@@ -652,8 +820,12 @@ class ProgrammeEditor extends Component {
   handleEdit(session) {
     var event = this.props.event;
     var timezone = (event && event.timezone) || 'UTC';
-    var enTrans = (session.translations || []).find(function(t) { return t.language === 'en'; }) || {};
-    var frTrans = (session.translations || []).find(function(t) { return t.language === 'fr'; }) || {};
+    var title = {};
+    var desc = {};
+    (session.translations || []).forEach(function(trans) {
+      title[trans.language] = trans.title || '';
+      desc[trans.language] = trans.description || '';
+    });
 
     var initialForm = {
       event_id: session.event_id,
@@ -664,10 +836,8 @@ class ProgrammeEditor extends Component {
       session_type_id: session.session_type_id ? String(session.session_type_id) : '',
       speaker_ids: (session.speakers || []).map(function(s) { return s.id; }),
       track_tag_ids: (session.tracks || []).map(function(tr) { return tr.id; }),
-      title_en: enTrans.title || '',
-      title_fr: frTrans.title || '',
-      desc_en: enTrans.description || '',
-      desc_fr: frTrans.description || '',
+      title: title,
+      desc: desc,
     };
     this.setState({ showModal: true, editingSession: session, initialForm: initialForm });
   }
@@ -807,12 +977,28 @@ class ProgrammeEditor extends Component {
         sessionTypes: state.sessionTypes,
         tracks: state.tracks,
         selectedDay: state.selectedDay,
+        languages: self.getLanguages(),
         t: t,
         onClose: self.handleCloseModal,
         onSaved: self.handleSaved,
         onSpeakerCreated: function(spk) {
           self.setState(function(prev) {
             return { speakers: prev.speakers.concat([spk]) };
+          });
+        },
+        onSpeakerUpdated: function(spk) {
+          self.setState(function(prev) {
+            return {
+              speakers: prev.speakers.map(function(s) { return s.id === spk.id ? spk : s; }),
+              sessions: prev.sessions.map(function(sess) {
+                if (!sess.speakers || !sess.speakers.some(function(s) { return s.id === spk.id; })) return sess;
+                return Object.assign({}, sess, {
+                  speakers: sess.speakers.map(function(s) {
+                    return s.id === spk.id ? Object.assign({}, s, { name: spk.name, photo_url: spk.photo_url }) : s;
+                  })
+                });
+              })
+            };
           });
         },
         onSessionTypeCreated: function(st) {

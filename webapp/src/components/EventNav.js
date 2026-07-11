@@ -108,6 +108,7 @@ class EventNav extends Component {
         {isCommsOfficer(this.props.user, this.props.event) && this.props.event && (
           <SidebarSection title={t('Communications')}>
             <SidebarLink to={`/${this.props.eventKey}/announcementsAdmin`} label={t('Announcements Admin')} />
+            <SidebarLink to={`/${this.props.eventKey}/discussionReportsAdmin`} label={t('Reported messages')} />
           </SidebarSection>
         )}
 
@@ -127,6 +128,7 @@ class EventNav extends Component {
             <SidebarLink to={`/${this.props.eventKey}/app/connections`} label={t('Connections')} />
             <SidebarLink to={`/${this.props.eventKey}/event-app/programme`} label={t('Programme')} />
             <SidebarLink to={`/${this.props.eventKey}/event-app/announcements`} label={t('Announcements')} />
+            <SidebarLink to={`/${this.props.eventKey}/event-app/discussion`} label={t('Discussion')} />
           </SidebarSection>
         )}
 

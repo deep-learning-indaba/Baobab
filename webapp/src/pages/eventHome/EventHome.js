@@ -40,7 +40,7 @@ import ApplicationFormResponsePage from "../applicationFormResponse";
 import FormConfigPage from "../formConfig";
 import { withTranslation, useTranslation } from 'react-i18next';
 import { useInstall } from '../../context/InstallContext';
-import { EventAppProgramme, ProgrammeEditor, EventAppAnnouncements, AnnouncementDetail, AnnouncementsAdmin, MyTicket, CheckinConsole, BadgeExport, MyProfile, ViewMemberProfile, ProfileBrowser, ScanConnect, Connections, ConnectLanding } from '../eventApp';
+import { EventAppProgramme, ProgrammeEditor, EventAppAnnouncements, AnnouncementDetail, AnnouncementsAdmin, MyTicket, CheckinConsole, BadgeExport, MyProfile, ViewMemberProfile, ProfileBrowser, ScanConnect, Connections, ConnectLanding, DiscussionBoard, DiscussionThread, NewDiscussionThread, DiscussionReportsAdmin } from '../eventApp';
 import EventDashboard from '../eventDashboard';
 import ResourceLinksAdmin from '../resourceLinks';
 import ConsentGate from '../../components/ConsentGate';
@@ -244,36 +244,28 @@ class EventInfo extends Component {
             <QuickTile to={`/${eventKey}/app/profile`}         icon="fas fa-user"         label={t('My Profile')} />
             <QuickTile to={`/${eventKey}/app/scan`}            icon="fas fa-qrcode"       label={t('Scan Badge')} />
             <QuickTile to={`/${eventKey}/event-app/programme`} icon="fas fa-calendar-alt" label={t('Programme')} />
-          </div>
-        )}
-
-        {/* Resource links */}
-        {isConfirmedGuest && appContentLoaded && links.length > 0 && (
-          <div className="space-y-3">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-0.5">{t('Resources')}</p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {links.map(link => {
-                const cls = iconCls(link.icon);
-                const isEmoji = link.icon && !cls;
-                return (
-                  <a
-                    key={link.id}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={TILE_CLS}
-                  >
-                    {cls
-                      ? <i className={`${cls} text-primary text-2xl`} />
-                      : isEmoji
-                        ? <span className="text-2xl leading-none">{link.icon}</span>
-                        : <i className="fas fa-link text-primary text-2xl" />
-                    }
-                    <span className="text-xs font-semibold text-foreground text-center leading-tight line-clamp-2">{link.title}</span>
-                  </a>
-                );
-              })}
-            </div>
+            <QuickTile to={`/${eventKey}/event-app/discussion`} icon="fas fa-comments"      label={t('Discussion')} />
+            {appContentLoaded && links.map(link => {
+              const cls = iconCls(link.icon);
+              const isEmoji = link.icon && !cls;
+              return (
+                <a
+                  key={link.id}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={TILE_CLS}
+                >
+                  {cls
+                    ? <i className={`${cls} text-primary text-2xl`} />
+                    : isEmoji
+                      ? <span className="text-2xl leading-none">{link.icon}</span>
+                      : <i className="fas fa-link text-primary text-2xl" />
+                  }
+                  <span className="text-xs font-semibold text-foreground text-center leading-tight line-clamp-2">{link.title}</span>
+                </a>
+              );
+            })}
           </div>
         )}
 
@@ -758,6 +750,7 @@ class EventHome extends Component {
               {...props}
               event={event}
               user={this.props.user}
+              organisation={this.props.organisation}
             />
           )}
         />
@@ -788,6 +781,51 @@ class EventHome extends Component {
           path={`${match.path}/announcementsAdmin`}
           render={(props) => (
             <AnnouncementsAdmin
+              {...props}
+              event={event}
+              user={this.props.user}
+              organisation={this.props.organisation}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/event-app/discussion`}
+          render={(props) => (
+            <DiscussionBoard
+              {...props}
+              event={event}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/event-app/discussion/new`}
+          render={(props) => (
+            <NewDiscussionThread
+              {...props}
+              event={event}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/event-app/discussion/:threadId(\\d+)`}
+          render={(props) => (
+            <DiscussionThread
+              {...props}
+              event={event}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/discussionReportsAdmin`}
+          render={(props) => (
+            <DiscussionReportsAdmin
               {...props}
               event={event}
               user={this.props.user}

@@ -22,11 +22,19 @@ def _is_comms_officer(user_id, event_id):
     return user and user.is_comms_officer(event_id)
 
 
+def _primary_language(event):
+    """The organisation's first configured language, used as the mandatory
+    translation when none is specified — organisations aren't all English-first."""
+    languages = event.organisation.languages if event and event.organisation else None
+    return languages[0]['code'] if languages else 'en'
+
+
 def _resolve_translation(ann, language):
-    """Return (title, body_markdown) for the given language, falling back to EN."""
+    """Return (title, body_markdown) for the given language, falling back to
+    whichever translation exists rather than assuming English was provided."""
     translations = db.session.query(AnnouncementTranslation).filter_by(announcement_id=ann.id).all()
     by_lang = {t.language: t for t in translations}
-    t = by_lang.get(language) or by_lang.get('en')
+    t = by_lang.get(language) or (translations[0] if translations else None)
     if t:
         return t.title, t.body_markdown
     return '', ''
@@ -74,7 +82,7 @@ def _dispatch(ann, event, critical, target_audience='checked_in'):
         if not user:
             continue
 
-        language = (user.user_primaryLanguage or 'en')[:2]
+        language = (user.user_primaryLanguage or _primary_language(event))[:2]
         title, body = _resolve_translation(ann, language)
 
         # Web Push — best-effort
@@ -145,9 +153,14 @@ class AnnouncementListAPI(restful.Resource):
         if not _is_comms_officer(g.current_user['id'], event_id):
             return errors.FORBIDDEN
 
+        event = event_repository.get_by_id(event_id)
+        if not event:
+            return errors.EVENT_NOT_FOUND
+
         translations_in = body.get('translations') or []
-        en_trans = next((t for t in translations_in if t.get('language') == 'en'), None)
-        if not en_trans or not en_trans.get('title'):
+        primary_language = _primary_language(event)
+        primary_trans = next((t for t in translations_in if t.get('language') == primary_language), None)
+        if not primary_trans or not primary_trans.get('title'):
             return errors.MISSING_FIELDS
 
         expiry_at = None
@@ -166,10 +179,6 @@ class AnnouncementListAPI(restful.Resource):
         target_audience = body.get('target_audience', 'checked_in')
         if target_audience not in VALID_AUDIENCES:
             return errors.MISSING_FIELDS
-
-        event = event_repository.get_by_id(event_id)
-        if not event:
-            return errors.EVENT_NOT_FOUND
 
         ann = AnnouncementRepository.create(event_id, g.current_user['id'], expiry_at, translations)
 

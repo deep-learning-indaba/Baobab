@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
 import { withTranslation } from 'react-i18next';
 import { announcementService } from '../../services/eventApp/announcement.service';
-import { translationService } from '../../services/translation/translation.service';
 import { formatInEventTz } from '../../utils/datetime';
 import MarkdownRenderer from '../../components/MarkdownRenderer';
+import TranslatableFieldGroup from '../formEditor/components/TranslatableFieldGroup';
 
 var TABS = { COMPOSE: 'compose', DASHBOARD: 'dashboard' };
+var DEFAULT_LANGUAGES = [{ code: 'en', description: 'English' }];
 
 class AnnouncementsAdmin extends Component {
   constructor(props) {
@@ -13,16 +14,13 @@ class AnnouncementsAdmin extends Component {
     this.state = {
       tab: TABS.COMPOSE,
 
-      // Compose form
-      titleEn: '',
-      bodyEn: '',
-      titleFr: '',
-      bodyFr: '',
+      // Compose form — keyed by language code, e.g. { en: '...', fr: '...' }
+      title: {},
+      body: {},
       expiryDate: '',
       expiryTime: '',
       critical: false,
       targetAudience: 'checked_in',
-      isTranslating: false,
       isSending: false,
       showConfirm: false,
       sendError: null,
@@ -36,9 +34,17 @@ class AnnouncementsAdmin extends Component {
     };
     this.handleSend = this.handleSend.bind(this);
     this.handleConfirmSend = this.handleConfirmSend.bind(this);
-    this.handleAutoTranslate = this.handleAutoTranslate.bind(this);
+    this.handleFieldChange = this.handleFieldChange.bind(this);
     this.handleTabChange = this.handleTabChange.bind(this);
     this.handleDelete = this.handleDelete.bind(this);
+  }
+
+  getLanguages() {
+    return (this.props.organisation && this.props.organisation.languages) || DEFAULT_LANGUAGES;
+  }
+
+  getPrimaryLanguage() {
+    return this.getLanguages()[0].code;
   }
 
   handleTabChange(tab) {
@@ -61,27 +67,19 @@ class AnnouncementsAdmin extends Component {
     });
   }
 
-  handleAutoTranslate() {
-    var self = this;
-    var { titleEn, bodyEn } = this.state;
-    if (!titleEn && !bodyEn) return;
-    self.setState({ isTranslating: true });
-    var promises = [];
-    if (titleEn) promises.push(translationService.translateText(titleEn, 'en', ['fr']));
-    else promises.push(Promise.resolve(null));
-    if (bodyEn) promises.push(translationService.translateText(bodyEn, 'en', ['fr']));
-    else promises.push(Promise.resolve(null));
-    Promise.all(promises).then(function(results) {
-      var titleFr = (results[0] && results[0].translations && results[0].translations['fr']) || self.state.titleFr;
-      var bodyFr = (results[1] && results[1].translations && results[1].translations['fr']) || self.state.bodyFr;
-      self.setState({ titleFr: titleFr, bodyFr: bodyFr, isTranslating: false });
-    }).catch(function() {
-      self.setState({ isTranslating: false });
+  handleFieldChange(fieldName, lang, value) {
+    this.setState(function(prev) {
+      var next = Object.assign({}, prev[fieldName]);
+      next[lang] = value;
+      var update = { sendSuccess: null };
+      update[fieldName] = next;
+      return update;
     });
   }
 
   handleSend() {
-    if (!this.state.titleEn.trim()) return;
+    var primaryLang = this.getPrimaryLanguage();
+    if (!(this.state.title[primaryLang] || '').trim()) return;
     this.setState({ showConfirm: true, sendError: null, sendSuccess: null });
   }
 
@@ -97,10 +95,15 @@ class AnnouncementsAdmin extends Component {
       if (!isNaN(local.getTime())) expiryAt = local.toISOString();
     }
 
-    var translations = [{ language: 'en', title: this.state.titleEn, body_markdown: this.state.bodyEn }];
-    if (this.state.titleFr.trim()) {
-      translations.push({ language: 'fr', title: this.state.titleFr, body_markdown: this.state.bodyFr });
-    }
+    var translations = this.getLanguages()
+      .map(function(lang) {
+        return {
+          language: lang.code,
+          title: (self.state.title[lang.code] || '').trim(),
+          body_markdown: self.state.body[lang.code] || '',
+        };
+      })
+      .filter(function(t) { return t.title; });
 
     var payload = {
       event_id: event.id,
@@ -119,7 +122,7 @@ class AnnouncementsAdmin extends Component {
           isSending: false,
           sendSuccess: true,
           audienceCount: result.data && result.data.audience_count,
-          titleEn: '', bodyEn: '', titleFr: '', bodyFr: '',
+          title: {}, body: {},
           expiryDate: '', expiryTime: '', critical: false, targetAudience: 'checked_in',
         });
       }
@@ -142,6 +145,11 @@ class AnnouncementsAdmin extends Component {
     var event = this.props.event;
     var timezone = (event && event.timezone) || 'UTC';
     var s = this.state;
+    var languages = this.getLanguages();
+    var primaryLang = this.getPrimaryLanguage();
+    var isMultiLingual = languages.length > 1;
+    var primaryTitle = s.title[primaryLang] || '';
+    var primaryBody = s.body[primaryLang] || '';
 
     return (
       <div className="w-full max-w-5xl mx-auto pt-6 space-y-6">
@@ -176,71 +184,33 @@ class AnnouncementsAdmin extends Component {
             )}
 
             <div className="bg-white rounded-2xl border border-border p-5 space-y-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('English (required)')}</p>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">{t('Title')}</label>
-                <input
-                  className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  value={s.titleEn}
-                  onChange={function(e) { this.setState({ titleEn: e.target.value, sendSuccess: null }); }.bind(this)}
-                  placeholder={t('Announcement title')}
-                  maxLength={200}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">{t('Body')}</label>
-                <textarea
-                  className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono"
-                  rows={6}
-                  value={s.bodyEn}
-                  onChange={function(e) { this.setState({ bodyEn: e.target.value, sendSuccess: null }); }.bind(this)}
-                  placeholder={t('Supports Markdown formatting...')}
-                />
-                {s.bodyEn && (
-                  <div className="mt-2 p-3 bg-muted/30 rounded-lg border border-border">
-                    <p className="text-xs text-muted-foreground mb-1">{t('Preview')}</p>
-                    <div className="text-sm">
-                      <MarkdownRenderer source={s.bodyEn} />
-                    </div>
+              <TranslatableFieldGroup
+                label={isMultiLingual ? t('Title') + ' *' : t('Title')}
+                fieldName="title"
+                values={s.title}
+                languages={languages}
+                onChange={function(lang, value) { this.handleFieldChange('title', lang, value); }.bind(this)}
+                autoTranslateEnabled={isMultiLingual}
+                placeholder={t('Announcement title')}
+              />
+              <TranslatableFieldGroup
+                label={t('Body')}
+                fieldName="body"
+                values={s.body}
+                languages={languages}
+                onChange={function(lang, value) { this.handleFieldChange('body', lang, value); }.bind(this)}
+                autoTranslateEnabled={isMultiLingual}
+                multiline={true}
+                placeholder={t('Supports Markdown formatting...')}
+              />
+              {primaryBody && (
+                <div className="mt-2 p-3 bg-muted/30 rounded-lg border border-border">
+                  <p className="text-xs text-muted-foreground mb-1">{t('Preview')}</p>
+                  <div className="text-sm">
+                    <MarkdownRenderer source={primaryBody} />
                   </div>
-                )}
-              </div>
-            </div>
-
-            {/* Auto-translate */}
-            <div className="flex justify-center">
-              <button
-                onClick={this.handleAutoTranslate}
-                disabled={s.isTranslating || (!s.titleEn && !s.bodyEn)}
-                className="flex items-center gap-2 px-4 py-2 rounded-full border border-primary text-primary text-sm font-medium hover:bg-primary/5 disabled:opacity-40 transition-colors"
-              >
-                <i className="fas fa-language" style={{ fontSize: 14 }} />
-                {s.isTranslating ? t('Translating...') : t('Auto-translate to French')}
-              </button>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-border p-5 space-y-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('French (optional)')}</p>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">{t('Title')}</label>
-                <input
-                  className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  value={s.titleFr}
-                  onChange={function(e) { this.setState({ titleFr: e.target.value }); }.bind(this)}
-                  placeholder={t('Titre de l\'annonce')}
-                  maxLength={200}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">{t('Body')}</label>
-                <textarea
-                  className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono"
-                  rows={6}
-                  value={s.bodyFr}
-                  onChange={function(e) { this.setState({ bodyFr: e.target.value }); }.bind(this)}
-                  placeholder={t('Supports le formatage Markdown...')}
-                />
-              </div>
+                </div>
+              )}
             </div>
 
             <div className="bg-white rounded-2xl border border-border p-5 space-y-4">
@@ -311,7 +281,7 @@ class AnnouncementsAdmin extends Component {
 
             <button
               onClick={this.handleSend}
-              disabled={s.isSending || !s.titleEn.trim()}
+              disabled={s.isSending || !primaryTitle.trim()}
               className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary-container disabled:opacity-50 transition-all"
             >
               {s.isSending ? t('Sending...') : t('Send announcement')}
