@@ -511,6 +511,7 @@ button.link-button:hover {
   font-size: 0.875rem;
   padding: 0.875rem 1.25rem;
   line-height: 1.5;
+  margin-bottom: 1rem;
 }
 
 .alert-danger {
@@ -596,6 +597,40 @@ select.form-control {
   background-repeat: no-repeat;
   background-position: right 0.875rem center;
   padding-right: 2.25rem;
+}
+
+/* ── 13b. Form Check (radio / checkbox groups) ──────────────── */
+.form-check {
+  position: relative;
+  display: block;
+  padding-left: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.form-check-input {
+  position: absolute;
+  margin-top: 0.3rem;
+  margin-left: -1.25rem;
+  accent-color: var(--clr-primary);
+}
+
+.form-check-label {
+  margin-bottom: 0;
+}
+
+.form-check-inline {
+  display: inline-flex;
+  align-items: center;
+  padding-left: 0;
+  margin-right: 1rem;
+  margin-bottom: 0;
+}
+
+.form-check-inline .form-check-input {
+  position: static;
+  margin-top: 0;
+  margin-right: 0.375rem;
+  margin-left: 0;
 }
 
 /* ── 14. Footer ────────────────────────────────────────────── */
