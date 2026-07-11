@@ -201,6 +201,159 @@ class ProgrammeApiTest(ApiTestCase):
         sessions = json.loads(response.data)
         self.assertEqual(len(sessions), 2)
 
+    def test_new_parallel_session_appended_to_end_of_group(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+
+        ids = []
+        for title in ('Track A', 'Track B', 'Track C'):
+            payload = self._create_session_payload(title_en=title)
+            resp = self.app.post(
+                '/api/v1/programme/sessions',
+                data=json.dumps(payload),
+                content_type='application/json',
+                headers=header
+            )
+            ids.append(json.loads(resp.data)['id'])
+
+        response = self.app.get(
+            '/api/v1/programme/sessions?event_id={}'.format(self.event_id),
+            headers=header
+        )
+        sessions = {s['id']: s for s in json.loads(response.data)}
+        self.assertEqual([sessions[i]['sort_order'] for i in ids], [0, 1, 2])
+
+    def test_editor_moves_session_right_and_left(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+
+        ids = []
+        for title in ('Track A', 'Track B', 'Track C'):
+            payload = self._create_session_payload(title_en=title)
+            resp = self.app.post(
+                '/api/v1/programme/sessions',
+                data=json.dumps(payload),
+                content_type='application/json',
+                headers=header
+            )
+            ids.append(json.loads(resp.data)['id'])
+
+        # Move the first session ('Track A') right — it should swap with 'Track B'.
+        move_resp = self.app.put(
+            '/api/v1/programme/sessions/{}/move'.format(ids[0]),
+            data=json.dumps({'direction': 'right'}),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(move_resp.status_code, 200)
+        group = json.loads(move_resp.data)
+        ordered_titles = [g['title'] for g in sorted(group, key=lambda g: g['sort_order'])]
+        self.assertEqual(ordered_titles, ['Track B', 'Track A', 'Track C'])
+
+        # Move it back left — should restore the original order.
+        move_back_resp = self.app.put(
+            '/api/v1/programme/sessions/{}/move'.format(ids[0]),
+            data=json.dumps({'direction': 'left'}),
+            content_type='application/json',
+            headers=header
+        )
+        group2 = json.loads(move_back_resp.data)
+        ordered_titles2 = [g['title'] for g in sorted(group2, key=lambda g: g['sort_order'])]
+        self.assertEqual(ordered_titles2, ['Track A', 'Track B', 'Track C'])
+
+    def test_move_uses_client_provided_order_when_sort_order_ties(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+
+        # Simulate sessions seeded directly into the DB (bypassing the API), which all share
+        # the server default sort_order=0. Created in id order C, A, B, but with end times that
+        # put them in a different display order (A, B, C) once the client resolves the tie —
+        # exactly the mismatch that caused moves to jump instead of doing an adjacent swap.
+        start = datetime(2026, 8, 2, 9, 0)
+        session_c = Session()
+        session_c.event_id = self.event_id
+        session_c.start_time = start
+        session_c.end_time = start + timedelta(minutes=90)
+        session_c.translations.append(SessionTranslation(None, 'en', 'Track C', ''))
+        db.session.add(session_c)
+
+        session_a = Session()
+        session_a.event_id = self.event_id
+        session_a.start_time = start
+        session_a.end_time = start + timedelta(minutes=30)
+        session_a.translations.append(SessionTranslation(None, 'en', 'Track A', ''))
+        db.session.add(session_a)
+
+        session_b = Session()
+        session_b.event_id = self.event_id
+        session_b.start_time = start
+        session_b.end_time = start + timedelta(minutes=60)
+        session_b.translations.append(SessionTranslation(None, 'en', 'Track B', ''))
+        db.session.add(session_b)
+        db.session.commit()
+
+        # Client-resolved display order (by end_time): A, B, C.
+        ordered_ids = [session_a.id, session_b.id, session_c.id]
+
+        move_resp = self.app.put(
+            '/api/v1/programme/sessions/{}/move'.format(session_a.id),
+            data=json.dumps({'direction': 'right', 'ordered_ids': ordered_ids}),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(move_resp.status_code, 200)
+        group = json.loads(move_resp.data)
+        ordered_titles = [g['title'] for g in sorted(group, key=lambda g: g['sort_order'])]
+        self.assertEqual(ordered_titles, ['Track B', 'Track A', 'Track C'])
+
+    def test_move_beyond_group_edge_is_a_no_op(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+
+        ids = []
+        for title in ('Track A', 'Track B'):
+            payload = self._create_session_payload(title_en=title)
+            resp = self.app.post(
+                '/api/v1/programme/sessions',
+                data=json.dumps(payload),
+                content_type='application/json',
+                headers=header
+            )
+            ids.append(json.loads(resp.data)['id'])
+
+        # First session can't move further left.
+        response = self.app.put(
+            '/api/v1/programme/sessions/{}/move'.format(ids[0]),
+            data=json.dumps({'direction': 'left'}),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(response.status_code, 200)
+        group = json.loads(response.data)
+        ordered_titles = [g['title'] for g in sorted(group, key=lambda g: g['sort_order'])]
+        self.assertEqual(ordered_titles, ['Track A', 'Track B'])
+
+    def test_non_editor_cannot_move_session(self):
+        self.seed_static_data()
+        editor_header = self.get_auth_header_for('editor@test.com')
+        other_header = self.get_auth_header_for('other@test.com')
+
+        create_resp = self.app.post(
+            '/api/v1/programme/sessions',
+            data=json.dumps(self._create_session_payload()),
+            content_type='application/json',
+            headers=editor_header
+        )
+        session_id = json.loads(create_resp.data)['id']
+
+        response = self.app.put(
+            '/api/v1/programme/sessions/{}/move'.format(session_id),
+            data=json.dumps({'direction': 'right'}),
+            content_type='application/json',
+            headers=other_header
+        )
+        self.assertEqual(response.status_code, 403)
+
     def test_editor_updates_session(self):
         self.seed_static_data()
         header = self.get_auth_header_for('editor@test.com')

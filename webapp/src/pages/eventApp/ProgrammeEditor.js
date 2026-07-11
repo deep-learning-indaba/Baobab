@@ -47,10 +47,59 @@ function blankSessionForm(eventId, date) {
   };
 }
 
+function buildFormFromSession(session, timezone) {
+  var title = {};
+  var desc = {};
+  (session.translations || []).forEach(function(trans) {
+    title[trans.language] = trans.title || '';
+    desc[trans.language] = trans.description || '';
+  });
+
+  return {
+    event_id: session.event_id,
+    date: utcToEventLocalDate(session.start_time, timezone),
+    start_time: utcToEventLocalTime(session.start_time, timezone),
+    end_time: utcToEventLocalTime(session.end_time, timezone),
+    venue: session.venue || '',
+    session_type_id: session.session_type_id ? String(session.session_type_id) : '',
+    speaker_ids: (session.speakers || []).map(function(s) { return s.id; }),
+    track_tag_ids: (session.tracks || []).map(function(tr) { return tr.id; }),
+    title: title,
+    desc: desc,
+  };
+}
+
 function formatDayLabel(dateStr, t) {
   if (!dateStr) return '';
   var d = new Date(dateStr + 'T12:00:00Z');
   return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+var HOURS = (function() {
+  var arr = [];
+  for (var h = 0; h < 24; h++) arr.push(String(h).padStart(2, '0'));
+  return arr;
+})();
+
+var MINUTES = (function() {
+  var arr = [];
+  for (var m = 0; m < 60; m += 5) arr.push(String(m).padStart(2, '0'));
+  return arr;
+})();
+
+function splitTime(value) {
+  var parts = (value || '').split(':');
+  return { hour: parts[0] || '00', minute: parts[1] || '00' };
+}
+
+// Includes the current minute even if it falls outside the 5-minute grid, so editing an
+// existing session with an off-grid time (e.g. created before this constraint existed)
+// doesn't silently snap it to a different time.
+function minuteSelectOptions(currentMinute) {
+  if (currentMinute && MINUTES.indexOf(currentMinute) === -1) {
+    return MINUTES.concat([currentMinute]).sort();
+  }
+  return MINUTES;
 }
 
 // ── Speaker Picker (searchable multi-select dropdown with inline add/edit) ────
@@ -381,6 +430,19 @@ class SessionFormModal extends Component {
     });
   }
 
+  handleTimePartChange(fieldName, part) {
+    return function(e) {
+      var newValue = e.target.value;
+      this.setState(function(prev) {
+        var current = splitTime(prev.form[fieldName]);
+        var combined = part === 'hour'
+          ? (newValue + ':' + current.minute)
+          : (current.hour + ':' + newValue);
+        return { form: Object.assign({}, prev.form, { [fieldName]: combined }) };
+      });
+    }.bind(this);
+  }
+
   handleFieldChange(fieldName, lang, value) {
     this.setState(function(prev) {
       var next = Object.assign({}, prev.form[fieldName]);
@@ -595,27 +657,53 @@ class SessionFormModal extends Component {
               React.createElement('label', { className: 'block text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider' },
                 t('Start')
               ),
-              React.createElement('input', {
-                type: 'time',
-                step: 300,
-                name: 'start_time',
-                value: form.start_time,
-                onChange: self.handleChange,
-                className: 'w-full border border-border rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30'
-              })
+              React.createElement('div', { className: 'flex items-center gap-1' },
+                React.createElement('select', {
+                  value: splitTime(form.start_time).hour,
+                  onChange: self.handleTimePartChange('start_time', 'hour'),
+                  className: 'w-1/2 border border-border rounded-lg px-1 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white'
+                },
+                  HOURS.map(function(h) {
+                    return React.createElement('option', { key: h, value: h }, h);
+                  })
+                ),
+                React.createElement('span', { className: 'text-muted-foreground' }, ':'),
+                React.createElement('select', {
+                  value: splitTime(form.start_time).minute,
+                  onChange: self.handleTimePartChange('start_time', 'minute'),
+                  className: 'w-1/2 border border-border rounded-lg px-1 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white'
+                },
+                  minuteSelectOptions(splitTime(form.start_time).minute).map(function(m) {
+                    return React.createElement('option', { key: m, value: m }, m);
+                  })
+                )
+              )
             ),
             React.createElement('div', null,
               React.createElement('label', { className: 'block text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider' },
                 t('End')
               ),
-              React.createElement('input', {
-                type: 'time',
-                step: 300,
-                name: 'end_time',
-                value: form.end_time,
-                onChange: self.handleChange,
-                className: 'w-full border border-border rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30'
-              })
+              React.createElement('div', { className: 'flex items-center gap-1' },
+                React.createElement('select', {
+                  value: splitTime(form.end_time).hour,
+                  onChange: self.handleTimePartChange('end_time', 'hour'),
+                  className: 'w-1/2 border border-border rounded-lg px-1 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white'
+                },
+                  HOURS.map(function(h) {
+                    return React.createElement('option', { key: h, value: h }, h);
+                  })
+                ),
+                React.createElement('span', { className: 'text-muted-foreground' }, ':'),
+                React.createElement('select', {
+                  value: splitTime(form.end_time).minute,
+                  onChange: self.handleTimePartChange('end_time', 'minute'),
+                  className: 'w-1/2 border border-border rounded-lg px-1 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white'
+                },
+                  minuteSelectOptions(splitTime(form.end_time).minute).map(function(m) {
+                    return React.createElement('option', { key: m, value: m }, m);
+                  })
+                )
+              )
             )
           ),
 
@@ -740,8 +828,35 @@ class SessionFormModal extends Component {
 
 // ── Edit / delete action buttons for a session card ───────────────────────────
 
-function renderSessionActions(session, handlers, t) {
-  return [
+function renderSessionActions(session, handlers, t, position) {
+  var pos = position || { index: 0, total: 1 };
+  var actions = [];
+
+  // Reorder arrows — only meaningful when this card has parallel siblings.
+  if (pos.total > 1) {
+    actions.push(
+      React.createElement('button', {
+        key: 'move-left',
+        onClick: function() { handlers.onMove(session, 'left', pos.orderedIds); },
+        disabled: pos.index === 0,
+        className: 'p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-lg transition-colors disabled:opacity-30 disabled:pointer-events-none',
+        title: t('Move left')
+      },
+        React.createElement('i', { className: 'fas fa-arrow-left', style: { fontSize: 13 } })
+      ),
+      React.createElement('button', {
+        key: 'move-right',
+        onClick: function() { handlers.onMove(session, 'right', pos.orderedIds); },
+        disabled: pos.index === pos.total - 1,
+        className: 'p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-lg transition-colors disabled:opacity-30 disabled:pointer-events-none',
+        title: t('Move right')
+      },
+        React.createElement('i', { className: 'fas fa-arrow-right', style: { fontSize: 13 } })
+      )
+    );
+  }
+
+  actions.push(
     React.createElement('button', {
       key: 'edit',
       onClick: function() { handlers.onEdit(session); },
@@ -751,6 +866,14 @@ function renderSessionActions(session, handlers, t) {
       React.createElement('i', { className: 'fas fa-pen', style: { fontSize: 13 } })
     ),
     React.createElement('button', {
+      key: 'duplicate',
+      onClick: function() { handlers.onDuplicate(session); },
+      className: 'p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-lg transition-colors',
+      title: t('Duplicate')
+    },
+      React.createElement('i', { className: 'fas fa-clone', style: { fontSize: 13 } })
+    ),
+    React.createElement('button', {
       key: 'delete',
       onClick: function() { handlers.onDelete(session); },
       className: 'p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-lg transition-colors',
@@ -758,7 +881,9 @@ function renderSessionActions(session, handlers, t) {
     },
       React.createElement('i', { className: 'fas fa-trash-alt', style: { fontSize: 13 } })
     )
-  ];
+  );
+
+  return actions;
 }
 
 // ── Main ProgrammeEditor component ───────────────────────────────────────────
@@ -779,6 +904,8 @@ class ProgrammeEditor extends Component {
     };
     this.handleNewSession = this.handleNewSession.bind(this);
     this.handleEdit = this.handleEdit.bind(this);
+    this.handleDuplicate = this.handleDuplicate.bind(this);
+    this.handleMoveSession = this.handleMoveSession.bind(this);
     this.handleDelete = this.handleDelete.bind(this);
     this.handleSaved = this.handleSaved.bind(this);
     this.handleCloseModal = this.handleCloseModal.bind(this);
@@ -820,26 +947,16 @@ class ProgrammeEditor extends Component {
   handleEdit(session) {
     var event = this.props.event;
     var timezone = (event && event.timezone) || 'UTC';
-    var title = {};
-    var desc = {};
-    (session.translations || []).forEach(function(trans) {
-      title[trans.language] = trans.title || '';
-      desc[trans.language] = trans.description || '';
-    });
-
-    var initialForm = {
-      event_id: session.event_id,
-      date: utcToEventLocalDate(session.start_time, timezone),
-      start_time: utcToEventLocalTime(session.start_time, timezone),
-      end_time: utcToEventLocalTime(session.end_time, timezone),
-      venue: session.venue || '',
-      session_type_id: session.session_type_id ? String(session.session_type_id) : '',
-      speaker_ids: (session.speakers || []).map(function(s) { return s.id; }),
-      track_tag_ids: (session.tracks || []).map(function(tr) { return tr.id; }),
-      title: title,
-      desc: desc,
-    };
+    var initialForm = buildFormFromSession(session, timezone);
     this.setState({ showModal: true, editingSession: session, initialForm: initialForm });
+  }
+
+  handleDuplicate(session) {
+    var event = this.props.event;
+    var timezone = (event && event.timezone) || 'UTC';
+    var initialForm = buildFormFromSession(session, timezone);
+    // No editingSession — submitting creates a new session instead of updating the original.
+    this.setState({ showModal: true, editingSession: null, initialForm: initialForm });
   }
 
   handleDelete(session) {
@@ -856,6 +973,24 @@ class ProgrammeEditor extends Component {
           };
         });
       }
+    });
+  }
+
+  handleMoveSession(session, direction, orderedIds) {
+    var self = this;
+    programmeService.moveSession(session.id, direction, orderedIds).then(function(result) {
+      if (result.error) {
+        self.setState({ error: result.error });
+        return;
+      }
+      var updatedGroup = result.data || [];
+      var updatedById = {};
+      updatedGroup.forEach(function(s) { updatedById[s.id] = s; });
+      self.setState(function(prev) {
+        return {
+          sessions: prev.sessions.map(function(s) { return updatedById[s.id] || s; })
+        };
+      });
     });
   }
 
@@ -905,67 +1040,76 @@ class ProgrammeEditor extends Component {
 
     return React.createElement('div', { className: 'w-full' },
 
-      // Header
-      React.createElement('div', { className: 'flex items-center justify-between mb-6' },
-        React.createElement('div', null,
-          React.createElement('h1', { className: 'font-heading text-2xl font-bold text-foreground' },
-            t('Programme Editor')
+      // Header + day tabs — sticky so they stay visible while the schedule scrolls
+      React.createElement('div', { className: 'sticky top-0 z-20 bg-background pt-3 pb-2 border-b border-border/60 shadow-sm' },
+        // Opaque band covering the scroll container's top padding (py-8), so the
+        // schedule cannot peek through the gap above the sticky header.
+        React.createElement('div', { 'aria-hidden': true, className: 'absolute inset-x-0 -top-8 h-8 bg-background pointer-events-none' }),
+        React.createElement('div', { className: 'space-y-2' },
+          React.createElement('div', { className: 'flex items-center justify-between gap-4' },
+            React.createElement('div', null,
+              React.createElement('h1', { className: 'font-heading text-xl font-bold text-foreground' },
+                t('Programme Editor')
+              ),
+              React.createElement('p', { className: 'text-xs text-muted-foreground mt-0.5' },
+                t('All times in') + ' ' + formatTimezoneLabel(timezone, event && event.start_date)
+              )
+            ),
+            React.createElement('button', {
+              onClick: self.handleNewSession,
+              className: 'flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm'
+            },
+              React.createElement('i', { className: 'fas fa-plus', style: { fontSize: 14 } }),
+              t('New Session')
+            )
           ),
-          React.createElement('p', { className: 'text-sm text-muted-foreground mt-0.5' },
-            t('All times in') + ' ' + formatTimezoneLabel(timezone, event && event.start_date)
+
+          // Day tabs
+          state.days && state.days.length > 0 && React.createElement('div', {
+            className: 'flex gap-1 overflow-x-auto pb-1 hide-scrollbar'
+          },
+            state.days.map(function(day, i) {
+              var active = state.selectedDay === day;
+              return React.createElement('button', {
+                key: day,
+                onClick: function() { self.setState({ selectedDay: day }); },
+                className: 'px-4 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors ' +
+                  (active ? 'bg-primary text-white shadow-sm' : 'bg-muted text-muted-foreground hover:bg-muted/80')
+              },
+                React.createElement('span', { className: 'block' }, t('Day') + ' ' + (i + 1)),
+                React.createElement('span', { className: 'block text-xs opacity-75' }, formatDayLabel(day, t))
+              );
+            })
           )
-        ),
-        React.createElement('button', {
-          onClick: self.handleNewSession,
-          className: 'flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm'
-        },
-          React.createElement('i', { className: 'fas fa-plus', style: { fontSize: 14 } }),
-          t('New Session')
         )
       ),
 
-      state.error && React.createElement('div', { className: 'mb-4 p-3 bg-destructive/10 text-destructive text-sm rounded-lg' },
-        state.error
-      ),
-
-      // Day tabs
-      state.days && state.days.length > 0 && React.createElement('div', {
-        className: 'flex gap-1 overflow-x-auto pb-2 mb-6 hide-scrollbar'
-      },
-        state.days.map(function(day, i) {
-          var active = state.selectedDay === day;
-          return React.createElement('button', {
-            key: day,
-            onClick: function() { self.setState({ selectedDay: day }); },
-            className: 'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors ' +
-              (active ? 'bg-primary text-white shadow-sm' : 'bg-muted text-muted-foreground hover:bg-muted/80')
-          },
-            React.createElement('span', { className: 'block' }, t('Day') + ' ' + (i + 1)),
-            React.createElement('span', { className: 'block text-xs opacity-75' }, formatDayLabel(day, t))
-          );
-        })
-      ),
-
       // Sessions for selected day
-      sessionsForDay.length === 0
-        ? React.createElement('div', {
-            className: 'text-center py-16 border-2 border-dashed border-border rounded-2xl'
-          },
-            React.createElement('i', { className: 'fas fa-calendar-alt text-muted-foreground/50 mb-3 mx-auto block', style: { fontSize: 40 } }),
-            React.createElement('p', { className: 'text-muted-foreground text-sm mb-4' }, t('No sessions for this day yet.')),
-            React.createElement('button', {
-              onClick: self.handleNewSession,
-              className: 'bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors'
-            }, t('Add First Session'))
-          )
-        : React.createElement(ProgrammeSchedule, {
-            sessions: sessionsForDay,
-            timezone: timezone,
-            t: t,
-            renderActions: function(session) {
-              return renderSessionActions(session, { onEdit: self.handleEdit, onDelete: self.handleDelete }, t);
-            }
-          }),
+      React.createElement('div', { className: 'pt-3' },
+        state.error && React.createElement('div', { className: 'mb-4 p-3 bg-destructive/10 text-destructive text-sm rounded-lg' },
+          state.error
+        ),
+
+        sessionsForDay.length === 0
+          ? React.createElement('div', {
+              className: 'text-center py-16 border-2 border-dashed border-border rounded-2xl'
+            },
+              React.createElement('i', { className: 'fas fa-calendar-alt text-muted-foreground/50 mb-3 mx-auto block', style: { fontSize: 40 } }),
+              React.createElement('p', { className: 'text-muted-foreground text-sm mb-4' }, t('No sessions for this day yet.')),
+              React.createElement('button', {
+                onClick: self.handleNewSession,
+                className: 'bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors'
+              }, t('Add First Session'))
+            )
+          : React.createElement(ProgrammeSchedule, {
+              sessions: sessionsForDay,
+              timezone: timezone,
+              t: t,
+              renderActions: function(session, position) {
+                return renderSessionActions(session, { onEdit: self.handleEdit, onDuplicate: self.handleDuplicate, onMove: self.handleMoveSession, onDelete: self.handleDelete }, t, position);
+              }
+            })
+      ),
 
       // Modal
       state.showModal && React.createElement(SessionFormModal, {

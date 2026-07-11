@@ -8,6 +8,7 @@ export var programmeService = {
   getSession: getSession,
   createSession: createSession,
   updateSession: updateSession,
+  moveSession: moveSession,
   deleteSession: deleteSession,
   listSpeakers: listSpeakers,
   createSpeaker: createSpeaker,
@@ -60,6 +61,22 @@ function createSession(payload) {
 function updateSession(sessionId, payload) {
   return axios
     .put(baseUrl + '/api/v1/programme/sessions/' + sessionId, payload, {
+      headers: authHeader(),
+    })
+    .then(function(response) {
+      return { data: response.data, error: '' };
+    })
+    .catch(function(error) {
+      return { data: null, error: extractErrorMessage(error) };
+    });
+}
+
+function moveSession(sessionId, direction, orderedIds) {
+  return axios
+    .put(baseUrl + '/api/v1/programme/sessions/' + sessionId + '/move', {
+      direction: direction,
+      ordered_ids: orderedIds,
+    }, {
       headers: authHeader(),
     })
     .then(function(response) {

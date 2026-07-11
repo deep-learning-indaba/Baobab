@@ -184,6 +184,7 @@ rest_api.add_resource(forms_api.FormResponseDetailAdminAPI, '/api/v1/forms/<int:
 # Programme routes
 rest_api.add_resource(programme_api.SessionListAPI, '/api/v1/programme/sessions')
 rest_api.add_resource(programme_api.SessionAPI, '/api/v1/programme/sessions/<int:session_id>')
+rest_api.add_resource(programme_api.SessionMoveAPI, '/api/v1/programme/sessions/<int:session_id>/move')
 rest_api.add_resource(programme_api.SpeakerListAPI, '/api/v1/programme/speakers')
 rest_api.add_resource(programme_api.SpeakerAPI, '/api/v1/programme/speakers/<int:speaker_id>')
 rest_api.add_resource(programme_api.SessionTypeListAPI, '/api/v1/programme/session-types')

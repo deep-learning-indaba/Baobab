@@ -20,6 +20,13 @@ class ProgrammeRepository:
         return db.session.query(Session).filter_by(id=session_id).first()
 
     @staticmethod
+    def list_parallel_sessions(event_id, start_time):
+        return (db.session.query(Session)
+                .filter_by(event_id=event_id, start_time=start_time)
+                .order_by(Session.sort_order, Session.id)
+                .all())
+
+    @staticmethod
     def create_session(session):
         db.session.add(session)
         db.session.commit()

@@ -11,6 +11,7 @@ class Session(db.Model):
     venue = db.Column(db.String(160), nullable=True)
     start_time = db.Column(db.DateTime(), nullable=False)
     end_time = db.Column(db.DateTime(), nullable=False)
+    sort_order = db.Column(db.Integer(), nullable=False, default=0)
     created_at = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 

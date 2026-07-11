@@ -25,8 +25,13 @@ function groupByStartTime(sessions, timezone) {
   });
   order.sort(function(a, b) { return a - b; });
   return order.map(function(k) {
-    // Keep a stable, readable order inside a row (by end time, then title).
+    // Ordered by the user-controlled sort_order first (see the reorder arrows in the
+    // editor); sessions that share a sort_order (e.g. never explicitly reordered) fall
+    // back to a stable, readable order by end time, then title.
     var rowSessions = groups[k].slice().sort(function(a, b) {
+      var orderA = a.sort_order || 0;
+      var orderB = b.sort_order || 0;
+      if (orderA !== orderB) return orderA - orderB;
       if ((a.end_time || '') !== (b.end_time || '')) {
         return (a.end_time || '') < (b.end_time || '') ? -1 : 1;
       }
@@ -97,25 +102,29 @@ function SessionCard(props) {
     React.createElement('div', { className: 'h-1 bg-primary flex-none' }),
     React.createElement('div', { className: 'p-3 flex flex-col gap-1.5 flex-1 min-w-0' },
 
-      // Top row: badges + optional actions
-      React.createElement('div', { className: 'flex items-start justify-between gap-2' },
+      // Badges row — time + session type only, so its height (and the actions row right
+      // after it) stays consistent whether or not this card has tracks (see below).
+      React.createElement('div', {
+        className: 'flex items-start ' + (compact ? '' : 'justify-between') + ' gap-2'
+      },
         React.createElement('div', { className: 'flex flex-wrap items-center gap-1.5 min-w-0' },
           React.createElement('span', { className: 'text-xs font-semibold text-primary whitespace-nowrap tabular-nums' },
             startFmt + ' – ' + endFmt
           ),
           session.session_type && React.createElement('span', {
             className: 'bg-primary/10 text-primary text-xs px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap'
-          }, session.session_type.name),
-          (session.tracks || []).map(function(track) {
-            return React.createElement('span', {
-              key: track.id,
-              className: 'bg-muted text-muted-foreground text-xs px-1.5 py-0.5 rounded-full whitespace-nowrap'
-            }, track.name);
-          })
+          }, session.session_type.name)
         ),
-        props.actions && React.createElement('div', { className: 'flex-none flex gap-1 -mr-1 -mt-1' },
+        // Compact cards are too narrow for badges + actions on one line — actions get
+        // their own row below instead (see after this block) to avoid overlapping the time.
+        !compact && props.actions && React.createElement('div', { className: 'flex-none flex gap-1 -mr-1 -mt-1' },
           props.actions
         )
+      ),
+
+      // Actions row — compact cards only (narrow parallel-session cards)
+      compact && props.actions && React.createElement('div', { className: 'flex items-center justify-end gap-1 -mr-1' },
+        props.actions
       ),
 
       // Title — clamped when collapsed, full title available on hover + on expand.
@@ -149,17 +158,33 @@ function SessionCard(props) {
         className: 'text-xs text-muted-foreground whitespace-pre-line leading-relaxed'
       }, session.description),
 
-      // Details toggle
-      hasExtra && React.createElement('button', {
-        type: 'button',
-        onClick: function() { setExpanded(!expanded); },
-        className: 'mt-auto pt-1 self-start flex items-center gap-1 text-xs font-medium text-primary hover:underline'
+      // Footer — Details toggle (left) and track tags (right), on the same row so a
+      // card's title/venue/speakers position doesn't shift depending on whether it has
+      // tracks or not.
+      (hasExtra || (session.tracks || []).length > 0) && React.createElement('div', {
+        className: 'mt-auto pt-1 flex items-center gap-2'
       },
-        expanded ? t('Hide details') : t('Details'),
-        React.createElement('i', {
-          className: 'fas ' + (expanded ? 'fa-chevron-up' : 'fa-chevron-down'),
-          style: { fontSize: 10 }
-        })
+        hasExtra && React.createElement('button', {
+          type: 'button',
+          onClick: function() { setExpanded(!expanded); },
+          className: 'flex-none flex items-center gap-1 text-xs font-medium text-primary hover:underline'
+        },
+          expanded ? t('Hide details') : t('Details'),
+          React.createElement('i', {
+            className: 'fas ' + (expanded ? 'fa-chevron-up' : 'fa-chevron-down'),
+            style: { fontSize: 10 }
+          })
+        ),
+        (session.tracks || []).length > 0 && React.createElement('div', {
+          className: 'ml-auto flex flex-wrap items-center justify-end gap-1.5 min-w-0'
+        },
+          (session.tracks || []).map(function(track) {
+            return React.createElement('span', {
+              key: track.id,
+              className: 'bg-muted text-muted-foreground text-xs px-1.5 py-0.5 rounded-full whitespace-nowrap'
+            }, track.name);
+          })
+        )
       )
     )
   );
@@ -208,7 +233,7 @@ function ParallelSessions(props) {
         ref: scrollerRef,
         className: 'flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scroll-smooth hide-scrollbar'
       },
-        props.sessions.map(function(session) {
+        props.sessions.map(function(session, i) {
           return React.createElement('div', {
             key: session.id,
             // 2 visible on mobile, 5 on desktop — with a peek of the next card
@@ -220,7 +245,13 @@ function ParallelSessions(props) {
               t: t,
               eventKey: props.eventKey,
               linkSpeakers: props.linkSpeakers,
-              actions: props.renderActions ? props.renderActions(session) : null,
+              actions: props.renderActions
+                ? props.renderActions(session, {
+                    index: i,
+                    total: props.sessions.length,
+                    orderedIds: props.sessions.map(function(s) { return s.id; })
+                  })
+                : null,
               compact: true
             })
           );
@@ -268,7 +299,7 @@ function ScheduleRow(props) {
             t: t,
             eventKey: props.eventKey,
             linkSpeakers: props.linkSpeakers,
-            actions: props.renderActions ? props.renderActions(row.sessions[0]) : null,
+            actions: props.renderActions ? props.renderActions(row.sessions[0], { index: 0, total: 1 }) : null,
             compact: false
           })
     )

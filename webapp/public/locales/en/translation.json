@@ -935,6 +935,8 @@
   "Session title (EN) is required.": "Session title (EN) is required.",
   "Date, start time and end time are required.": "Date, start time and end time are required.",
   "Delete this session? This cannot be undone.": "Delete this session? This cannot be undone.",
+  "Move left": "Move left",
+  "Move right": "Move right",
   "Optional": "Optional",
   "Announcements Admin": "Announcements Admin",
   "Communications": "Communications",

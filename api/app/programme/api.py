@@ -99,6 +99,7 @@ def _serialize_session(session, language):
         'venue': session.venue or '',
         'start_time': session.start_time.isoformat() + 'Z' if session.start_time else None,
         'end_time': session.end_time.isoformat() + 'Z' if session.end_time else None,
+        'sort_order': session.sort_order,
         'speakers': speakers,
         'tracks': tracks
     }
@@ -143,6 +144,7 @@ def _serialize_session_public(session, language, event_timezone):
         'session_type_id': session.session_type_id,
         'start_time': event_local_datetime(session.start_time, event_timezone).isoformat() if session.start_time else None,
         'end_time': event_local_datetime(session.end_time, event_timezone).isoformat() if session.end_time else None,
+        'sort_order': session.sort_order,
         'speakers': speakers,
         'tracks': tracks
     }
@@ -198,6 +200,8 @@ class SessionListAPI(restful.Resource):
         session.venue = body.get('venue', '')
         session.start_time = start_time
         session.end_time = end_time
+        # New sessions land at the end of any existing parallel (same start time) group.
+        session.sort_order = len(ProgrammeRepository.list_parallel_sessions(event_id, start_time))
 
         for t in (body.get('translations') or []):
             lang = t.get('language')
@@ -260,6 +264,10 @@ class SessionAPI(restful.Resource):
 
         session.session_type_id = body.get('session_type_id')
         session.venue = body.get('venue', '')
+        if start_time != session.start_time:
+            # Moved to a different time slot — join the end of that slot's parallel group
+            # rather than keeping a sort_order that was only meaningful in the old slot.
+            session.sort_order = len(ProgrammeRepository.list_parallel_sessions(session.event_id, start_time))
         session.start_time = start_time
         session.end_time = end_time
 
@@ -313,6 +321,51 @@ class SessionAPI(restful.Resource):
 
         ProgrammeRepository.delete_session(session)
         return {'message': 'Session deleted'}, 200
+
+
+class SessionMoveAPI(restful.Resource):
+
+    @auth_required
+    def put(self, session_id):
+        body = request.get_json()
+        direction = body.get('direction') if body else None
+        if direction not in ('left', 'right'):
+            return errors.MISSING_FIELDS
+
+        session = ProgrammeRepository.get_session(session_id)
+        if not session:
+            return errors.SESSION_NOT_FOUND
+
+        if not _is_programme_editor(g.current_user['id'], session.event_id):
+            return errors.FORBIDDEN
+
+        group = ProgrammeRepository.list_parallel_sessions(session.event_id, session.start_time)
+
+        # The client knows the order it's actually displaying (it resolves sort_order ties by
+        # end time and title, which isn't cheaply reproducible here). Use that order for the
+        # swap when it's provided and matches the real group, so a move always looks like a
+        # single adjacent swap of what the user sees rather than jumping around ties.
+        ordered_ids = body.get('ordered_ids')
+        if ordered_ids and set(ordered_ids) == {s.id for s in group}:
+            by_id = {s.id: s for s in group}
+            group = [by_id[i] for i in ordered_ids]
+
+        index = next((i for i, s in enumerate(group) if s.id == session.id), None)
+        target_index = index - 1 if direction == 'left' else index + 1
+
+        language = request.args.get('language', 'en')
+
+        if target_index < 0 or target_index >= len(group):
+            return [_serialize_session(s, language) for s in group]
+
+        # Reassign sequential sort_order across the whole group — sessions created before this
+        # feature existed may all share sort_order=0, so a plain two-way swap isn't reliable.
+        group[index], group[target_index] = group[target_index], group[index]
+        for i, s in enumerate(group):
+            s.sort_order = i
+        ProgrammeRepository.commit()
+
+        return [_serialize_session(s, language) for s in group]
 
 
 class SpeakerListAPI(restful.Resource):

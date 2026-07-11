@@ -7,7 +7,7 @@ import ProgrammeSchedule from '../../components/ProgrammeSchedule';
 function DayButton(props) {
   return React.createElement('button', {
     onClick: props.onClick,
-    className: 'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors ' +
+    className: 'px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors ' +
       (props.active
         ? 'bg-primary text-white'
         : 'bg-muted text-muted-foreground hover:bg-muted/80')
@@ -137,13 +137,13 @@ class EventAppProgramme extends Component {
     return React.createElement('div', { className: 'w-full' },
 
       // Header + Search — opaque so the scrolling schedule never shows through
-      React.createElement('div', { className: 'sticky top-0 z-20 bg-background pt-4 pb-3 border-b border-border/60 shadow-sm' },
+      React.createElement('div', { className: 'sticky top-0 z-20 bg-background pt-3 pb-2 border-b border-border/60 shadow-sm' },
         // Opaque band covering the scroll container's top padding (py-8), so the
         // schedule cannot peek through the gap above the sticky header.
         React.createElement('div', { 'aria-hidden': true, className: 'absolute inset-x-0 -top-8 h-8 bg-background pointer-events-none' }),
-        React.createElement('div', { className: 'space-y-3' },
+        React.createElement('div', { className: 'space-y-2' },
         React.createElement('div', { className: 'flex items-center justify-between gap-4' },
-          React.createElement('h1', { className: 'font-heading text-2xl font-bold text-foreground' },
+          React.createElement('h1', { className: 'font-heading text-xl font-bold text-foreground' },
             t('Programme')
           )
         ),
@@ -161,7 +161,7 @@ class EventAppProgramme extends Component {
             placeholder: t('Search sessions or speakers...'),
             value: state.searchQuery,
             onChange: self.handleSearch,
-            className: 'w-full pl-9 pr-4 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30'
+            className: 'w-full pl-9 pr-4 py-1.5 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30'
           })
         ),
 
@@ -222,7 +222,7 @@ class EventAppProgramme extends Component {
       ),
 
       // Schedule — grouped by start time, parallel sessions scroll horizontally
-      React.createElement('div', { className: 'pt-4' },
+      React.createElement('div', { className: 'pt-3' },
         filteredSessions.length === 0
           ? React.createElement('p', { className: 'text-center text-muted-foreground py-12' },
               t('No sessions found.')
