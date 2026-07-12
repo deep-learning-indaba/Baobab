@@ -1,7 +1,7 @@
 import React, {
   useState, useEffect, useLayoutEffect, useRef 
 } from "react";
-import { ConfirmModal } from "react-bootstrap4-modal";
+import { ConfirmModal } from "../../../components/Modal";
 import { default as ReactSelect } from "react-select";
 
 export const option = ({

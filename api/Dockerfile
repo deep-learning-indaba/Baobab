@@ -1,22 +1,11 @@
-FROM gcr.io/google-appengine/python
+FROM python:3.11-slim
 
-RUN virtualenv /env -p python3.7
+RUN apt-get update -qq && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
 
-# Setting these environment variables are the same as running
-# source /env/bin/activate.
-ENV VIRTUAL_ENV /env
-ENV PATH /env/bin:$PATH
+RUN pip install --upgrade pip
 
-RUN apt-get update -qq
-    # && apt-get install -y software-properties-common \
-    # && apt-get install -y libreoffice
-
-# Upgrade pip
-RUN python -m pip install --upgrade pip
-
-# Add the application source code.
 ADD requirements.txt /code/requirements.txt
-RUN pip3 install -r /code/requirements.txt
+RUN pip install -r /code/requirements.txt
 
 ADD . /code/
 WORKDIR /code

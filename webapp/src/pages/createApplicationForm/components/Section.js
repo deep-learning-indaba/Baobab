@@ -1,6 +1,6 @@
 import React,
 {
-  useState, forwardRef, createRef, useEffect
+  useState, forwardRef, createRef, useEffect, useRef
 } from 'react';
 import { Trans } from 'react-i18next';
 import Question from './Question';
@@ -25,6 +25,18 @@ export const Section = forwardRef(({
   const [style, setStyle] = useState({});
   const [hideOrShowDetails, setHideOrShowDetails] = useState(false);
   const [isKeyOn, setIsKeyOn] = useState(false);
+  const [sectionMenuOpen, setSectionMenuOpen] = useState(false);
+  const sectionMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (sectionMenuRef.current && !sectionMenuRef.current.contains(e.target)) {
+        setSectionMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   const key = inputs.key;
   let maxSurrogateId = 1;
   sections.forEach(s => {
@@ -284,11 +296,13 @@ export const Section = forwardRef(({
       </div>
       <div className="title-description">
         <div className="section-header">
+          <label className="form-label section-name-label">{t('Section name')}</label>
           <span className="key-wrapper">
             <input
               type="text"
               value={inputs.name[lang]}
               onChange={handleChange('name')}
+              placeholder={t('Section name')}
               className="section-inputs section-title"
               draggable={true}
               onDragStart={handleStopPropagation}
@@ -296,19 +310,25 @@ export const Section = forwardRef(({
             <span className="tooltiptext">{t('Title')}</span>
           </span>
           {!inputs.name[lang] && (
-            <span className='tooltiptext-error'>{t('Name is Required')}</span>
+            <span className='tooltiptext-error section-name-error'>{t('Name is Required')}</span>
           )}
+        </div>
+        <div className="section-controls">
+          <div
+            ref={sectionMenuRef}
+            className="section-menu-wrapper"
+          >
           <div
             id="toggleTitle"
             className="title-desc-toggle"
             role="button"
-            data-toggle="dropdown"
+            onClick={() => setSectionMenuOpen(o => !o)}
             aria-haspopup="true"
-            aria-expanded="false"
+            aria-expanded={sectionMenuOpen}
           >
             <i className='fa fa-ellipsis-v fa-lg fa-dropdown'></i>
           </div>
-          <div className="dropdown-menu" aria-labelledby="toggleTitle">
+          {sectionMenuOpen && <div className="dropdown-menu show" aria-labelledby="toggleTitle">
             <button
               className="dropdown-item delete-section"
               disabled={isDeleteDisabled}
@@ -350,6 +370,7 @@ export const Section = forwardRef(({
                 {t("Add Key")}
               </button>
             )}
+          </div>}
           </div>
           <div
             className='toogle-section-details-wrapper'
@@ -362,14 +383,13 @@ export const Section = forwardRef(({
                 <i className="fas fa-chevron-down fa-move fa-hide-show-details"></i>
                 <i className="fas fa-chevron-up fa-move fa-hide-show-details"></i>
               </div>
-            ): 
+            ):
               <div className='toogle-section-details' style={style}>
                 <i className="fas fa-chevron-up fa-move fa-hide-show-details"></i>
                 <i className="fas fa-chevron-down fa-move fa-hide-show-details"></i>
               </div>
             }
           </div>
-          
         </div>
         <div
           className='desc-dependency-div'

@@ -1,10 +1,10 @@
 from app import db
-from app.attendance.models import Attendance, EventIndemnity
+from app.attendance.models import Attendance, EventIndemnity, EventQRToken, Checkin
 from app.invitedGuest.models import InvitedGuest
 from app.invoice.models import InvoicePaymentStatus, OfferInvoice, PaymentStatus
 from app.offer.models import Offer
 from app.users.models import AppUser
-from sqlalchemy import and_, case
+from sqlalchemy import and_, case, or_, exists
 from sqlalchemy.sql import func
 from sqlalchemy.dialects import postgresql
 
@@ -136,7 +136,113 @@ class AttendanceRepository():
         query = offers.union(invited)
         return query.all()
 
+    @staticmethod
+    def get_all_guest_user_ids_for_event(event_id):
+        """Return a list of user IDs for all confirmed guests.
+        """
+        latest_payment_status_subquery = (
+            db.session.query(
+                InvoicePaymentStatus.invoice_id,
+                func.max(InvoicePaymentStatus.created_at_unix).label('max_created_at')
+            )
+            .group_by(InvoicePaymentStatus.invoice_id)
+            .subquery()
+        )
 
+        current_payment_status_subquery = (
+            db.session.query(
+                InvoicePaymentStatus.invoice_id,
+                InvoicePaymentStatus.payment_status
+            )
+            .join(
+                latest_payment_status_subquery,
+                and_(
+                    InvoicePaymentStatus.invoice_id == latest_payment_status_subquery.c.invoice_id,
+                    InvoicePaymentStatus.created_at_unix == latest_payment_status_subquery.c.max_created_at
+                )
+            )
+            .subquery()
+        )
+
+        offer_paid_status_subquery = (
+            db.session.query(
+                OfferInvoice.offer_id,
+                case([
+                    (func.count(OfferInvoice.invoice_id) == 0, True),
+                    (
+                        func.sum(case([
+                            (current_payment_status_subquery.c.payment_status == PaymentStatus.PAID.value, 1)
+                        ], else_=0)) == func.count(OfferInvoice.invoice_id),
+                        True
+                    )
+                ], else_=False).label('is_payment_confirmed')
+            )
+            .join(current_payment_status_subquery, current_payment_status_subquery.c.invoice_id == OfferInvoice.invoice_id)
+            .filter(current_payment_status_subquery.c.payment_status.in_([
+                PaymentStatus.UNPAID.value,
+                PaymentStatus.PAID.value,
+                PaymentStatus.FAILED.value
+            ]))
+            .group_by(OfferInvoice.offer_id)
+            .subquery()
+        )
+
+        offer_ids = (
+            db.session.query(Offer.user_id)
+            .outerjoin(offer_paid_status_subquery, offer_paid_status_subquery.c.offer_id == Offer.id)
+            .filter(
+                Offer.event_id == event_id,
+                Offer.candidate_response == True,
+                case(
+                    [
+                        (Offer.payment_required == False, True),
+                        (Offer.payment_required == True, offer_paid_status_subquery.c.is_payment_confirmed == True)
+                    ],
+                    else_=False
+                )
+            )
+        )
+
+        invited_ids = (
+            db.session.query(InvitedGuest.user_id)
+            .filter(InvitedGuest.event_id == event_id)
+        )
+
+        return list({row[0] for row in offer_ids.union(invited_ids).all()})
+
+    @staticmethod
+    def is_confirmed_guest(event_id, user_id):
+        is_invited = db.session.query(
+            exists().where(
+                and_(
+                    InvitedGuest.event_id == event_id,
+                    InvitedGuest.user_id == user_id,
+                )
+            )
+        ).scalar()
+
+        if is_invited:
+            return True
+
+        return db.session.query(
+            exists().where(
+                and_(
+                    Offer.event_id == event_id,
+                    Offer.user_id == user_id,
+                    Offer.candidate_response == True,
+                    or_(
+                        Offer.payment_required == False,
+                        exists().where(
+                            and_(
+                                OfferInvoice.offer_id == Offer.id,
+                                OfferInvoice.invoice_id == InvoicePaymentStatus.invoice_id,
+                                InvoicePaymentStatus.payment_status == PaymentStatus.PAID.value,
+                            )
+                        )
+                    )
+                )
+            )
+        ).scalar()
 
     @staticmethod
     def get_confirmed_attendees(event_id):
@@ -168,3 +274,58 @@ class IndemnityRepository():
         return (db.session.query(EventIndemnity)
                 .filter_by(event_id=event_id)
                 .first())
+
+
+class QRTokenRepository():
+    @staticmethod
+    def get_or_create(event_id, user_id):
+        token = db.session.query(EventQRToken).filter_by(event_id=event_id, user_id=user_id).first()
+        if token is None:
+            token = EventQRToken(event_id, user_id)
+            db.session.add(token)
+            db.session.commit()
+        return token
+
+    @staticmethod
+    def resolve(token_str):
+        return db.session.query(EventQRToken).filter_by(token=token_str).first()
+
+
+class CheckinRepository():
+    @staticmethod
+    def is_checked_in(event_id, user_id, day=None):
+        q = db.session.query(Checkin).filter_by(event_id=event_id, user_id=user_id)
+        if day is not None:
+            q = q.filter_by(day=day)
+        return q.first() is not None
+
+    @staticmethod
+    def checked_in_user_ids(event_id, day=None):
+        q = db.session.query(Checkin.user_id).filter_by(event_id=event_id)
+        if day is not None:
+            q = q.filter_by(day=day)
+        return set(row[0] for row in q.distinct().all())
+
+    @staticmethod
+    def get_latest(event_id, user_id):
+        return (db.session.query(Checkin)
+                .filter_by(event_id=event_id, user_id=user_id)
+                .order_by(Checkin.checked_in_at.desc())
+                .first())
+
+    @staticmethod
+    def create(event_id, user_id, by_user_id, method, day):
+        c = Checkin(event_id=event_id, user_id=user_id,
+                    checked_in_by_user_id=by_user_id, method=method, day=day)
+        db.session.add(c)
+        db.session.commit()
+        return c
+
+    @staticmethod
+    def list_for_event(event_id):
+        return db.session.query(Checkin).filter_by(event_id=event_id).all()
+
+    @staticmethod
+    def delete_for_event_user(event_id, user_id):
+        db.session.query(Checkin).filter_by(event_id=event_id, user_id=user_id).delete()
+        db.session.commit()

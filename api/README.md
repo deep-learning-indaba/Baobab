@@ -40,40 +40,43 @@ There are just a couple of configurations managed as environment variables. In t
 
 ## Running Tests
 
+Tests use [pytest](https://docs.pytest.org/) and run inside the `docker-compose` web container with the working directory set to `/code/api`.
 
-Tests are run with [nose](https://nose.readthedocs.org/en/latest/) from inside the `docker-compose` web container.
-
-### Run All
-
-```
-docker-compose run web nosetests
-```
-
-### Run Specific Tests
-As the project has grown, so has the number of tests and the amount of time needed to run them all. Luckily, you can progressively get more and more specific about which tests you can run making your feedback loop shorter and thus speeding up the development process.
-
-#### Run all tests in a file
-We will use `invitedGuest` as the example.
-```
-docker-compose run web bash -c 'cd api; nosetests -v app.invitedGuest.tests'
-```
-On Windows, you may need to break the command above up to get into the container, open the correct directory, and then finally to run the tests
-```
-docker-compose run web bash
-cd api
-nosetests -v app.invitedGuest.tests
-```
-
-#### Run all tests in a class
+### Run all tests
 
 ```
-nosetests -v app.invitedGuest.tests:InvitedGuestTest
+docker-compose run --rm -w /code/api web pytest
 ```
 
-#### Run a specific test
+Add `-n auto` to parallelise across all available cores (requires `pytest-xdist`):
+
 ```
-nosetests -v app.invitedGuest.tests:InvitedGuestTest.test_create_invitedGuest
+docker-compose run --rm -w /code/api web pytest -n auto
 ```
+
+### Run all tests in a file
+
+```
+docker-compose run --rm -w /code/api web pytest app/invitedGuest/tests.py -v
+```
+
+### Run all tests in a class
+
+```
+docker-compose run --rm -w /code/api web pytest app/invitedGuest/tests.py::InvitedGuestTest -v
+```
+
+### Run a specific test
+
+```
+docker-compose run --rm -w /code/api web pytest app/invitedGuest/tests.py::InvitedGuestTest::test_create_invitedGuest -v
+```
+
+### Tips
+
+- `-v` prints each test name as it runs.
+- `--tb=short` gives compact tracebacks; `--tb=long` gives the full context.
+- Use `--no-header -q` for minimal output when running the full suite.
 
 
 

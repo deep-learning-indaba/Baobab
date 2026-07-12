@@ -1,5 +1,5 @@
 import * as ErrorMessages from "./errorMessage.js";
-import * as validate from 'validate.js';
+import validate from 'validate.js';
 
 validate.validators.regex = (value, options, key, attributes) => {
   let regExp = new RegExp(options.pattern);  

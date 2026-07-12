@@ -38,3 +38,7 @@ GCP_API_KEY = os.getenv('GCP_API_KEY', None)
 FILE_SIZE_LIMIT = int(os.getenv('FILE_SIZE_LIMIT', None))
 
 BOABAB_HOST = os.getenv('BOABAB_HOST', None)
+
+VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
+VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
+VAPID_CLAIM_EMAIL = os.environ.get('VAPID_CLAIM_EMAIL', 'mailto:baobab@deeplearningindaba.com')

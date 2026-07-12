@@ -11,7 +11,11 @@ export const eventService = {
   getByKey,
   getEventRoles,
   deleteEventRole,
-  addEventRole
+  addEventRole,
+  getResourceLinks,
+  createResourceLink,
+  updateResourceLink,
+  deleteResourceLink
 };
 
 export function getEvent(event_id) {
@@ -61,7 +65,11 @@ export function create(event) {
         registration_close: event.registration_close,
         event_type: event.event_type,
         travel_grant: event.travel_grant,
-        miniconf_url: event.miniconf_url
+        miniconf_url: event.miniconf_url,
+        contact_email: event.contact_email,
+        image: event.image,
+        timezone: event.timezone,
+        checkin_mode: event.checkin_mode
       },
       { headers: authHeader() }
     )
@@ -110,7 +118,11 @@ export function update(event) {
         registration_close: event.registration_close,
         event_type: event.event_type,
         travel_grant: event.travel_grant,
-        miniconf_url: event.miniconf_url
+        miniconf_url: event.miniconf_url,
+        contact_email: event.contact_email,
+        image: event.image,
+        timezone: event.timezone,
+        checkin_mode: event.checkin_mode
       },
       { headers: authHeader() }
     )
@@ -246,4 +258,44 @@ function addEventRole(event_id, email, role) {
         statusCode: error.response && error.response.status
       };
     });
+}
+
+function getResourceLinks(event_id, language) {
+  const lang = language || 'en';
+  return axios
+    .get(baseUrl + `/api/v1/event-resource-links?event_id=${event_id}&language=${lang}`, { headers: authHeader() })
+    .then(response => ({ links: response.data, error: '' }))
+    .catch(error => ({
+      links: [],
+      error: error.response && error.response.data ? error.response.data.message : error.message
+    }));
+}
+
+function createResourceLink(link) {
+  return axios
+    .post(baseUrl + '/api/v1/event-resource-links', link, { headers: authHeader() })
+    .then(response => ({ link: response.data, error: '' }))
+    .catch(error => ({
+      link: null,
+      error: error.response && error.response.data ? error.response.data.message : error.message
+    }));
+}
+
+function updateResourceLink(link) {
+  return axios
+    .put(baseUrl + '/api/v1/event-resource-links', link, { headers: authHeader() })
+    .then(response => ({ link: response.data, error: '' }))
+    .catch(error => ({
+      link: null,
+      error: error.response && error.response.data ? error.response.data.message : error.message
+    }));
+}
+
+function deleteResourceLink(event_id, id) {
+  return axios
+    .delete(baseUrl + `/api/v1/event-resource-links?event_id=${event_id}&id=${id}`, { headers: authHeader() })
+    .then(response => ({ error: '' }))
+    .catch(error => ({
+      error: error.response && error.response.data ? error.response.data.message : error.message
+    }));
 }

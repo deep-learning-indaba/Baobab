@@ -20,6 +20,13 @@ from .outcome import api as outcome_api
 from .tags import api as tag_api
 from .invoice import api as invoice_api
 from .reporting import api as reporting_api
+from .forms import api as forms_api
+from .utils import translation_api
+from .profiles import api as profiles_api
+from .programme import api as programme_api
+from .announcements import api as announcements_api
+from .connections import api as connections_api
+from .discussion import api as discussion_api
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
 rest_api.add_resource(users_api.UserCommentAPI, '/api/v1/user-comment')
@@ -142,6 +149,11 @@ rest_api.add_resource(invoice_api.InvoicePaymentStatusApi, '/api/v1/invoice-paym
 rest_api.add_resource(invoice_api.PaymentsAPI, '/api/v1/payment')
 rest_api.add_resource(invoice_api.PaymentsWebhookAPI, '/api/v1/stripe-webhook')
 rest_api.add_resource(attendance_api.GuestListApi, '/api/v1/guestlist')
+rest_api.add_resource(attendance_api.ConfirmedGuestAPI, '/api/v1/confirmed-guest')
+rest_api.add_resource(attendance_api.MyTicketAPI, '/api/v1/my-ticket')
+rest_api.add_resource(attendance_api.CheckinResolveAPI, '/api/v1/checkin/resolve')
+rest_api.add_resource(attendance_api.CheckinAPI, '/api/v1/checkin')
+rest_api.add_resource(attendance_api.BadgeExportAPI, '/api/v1/checkin/badge-export')
 rest_api.add_resource(attendance_api.IndemnityAPI, '/api/v1/indemnity')
 rest_api.add_resource(offer_api.OfferListAPI, '/api/v1/offerlist')
 rest_api.add_resource(reporting_api.ApplicationResponseReportAPI, '/api/v1/reporting/applications')
@@ -150,5 +162,62 @@ rest_api.add_resource(reporting_api.RegistrationsReportAPI, '/api/v1/reporting/r
 rest_api.add_resource(reviews_api.ReviewerTagAPI, '/api/v1/reviewertag')
 rest_api.add_resource(offer_api.OfferAdminAPI, '/api/v1/offerAdmin')
 rest_api.add_resource(events_api.EventRoleAPI, '/api/v1/event-roles')
+rest_api.add_resource(events_api.EventResourceLinkAPI, '/api/v1/event-resource-links')
 rest_api.add_resource(invitation_letter_api.InvitationLetterAvailableAPI, '/api/v1/invitation-letter/available')
-
+# Generic Form System Routes
+rest_api.add_resource(forms_api.FormListAPI, '/api/v1/forms')
+rest_api.add_resource(forms_api.FormAPI, '/api/v1/forms/<int:form_id>')
+rest_api.add_resource(forms_api.FormStructureAPI, '/api/v1/forms/<int:form_id>/structure')
+rest_api.add_resource(forms_api.FormResponseAPI,
+    '/api/v1/forms/<int:form_id>/responses',
+    '/api/v1/forms/<int:form_id>/response')
+rest_api.add_resource(translation_api.TranslationAPI, '/api/v1/translate')
+rest_api.add_resource(profiles_api.ProfileAPI, '/api/v1/profile')
+rest_api.add_resource(profiles_api.ProfileViewAPI, '/api/v1/profile/view')
+rest_api.add_resource(profiles_api.ProfileListAPI, '/api/v1/profile/list')
+rest_api.add_resource(profiles_api.ProfileInterestsAPI, '/api/v1/profile/interests')
+rest_api.add_resource(profiles_api.ConsentAPI, '/api/v1/consent')
+rest_api.add_resource(forms_api.FormResponseSubmitAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/submit')
+rest_api.add_resource(forms_api.FormResponseWithdrawAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/withdraw')
+rest_api.add_resource(forms_api.FormResponseListAdminAPI, '/api/v1/forms/<int:form_id>/responses/admin')
+rest_api.add_resource(forms_api.FormResponseDetailAdminAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/admin')
+# Programme routes
+rest_api.add_resource(programme_api.SessionListAPI, '/api/v1/programme/sessions')
+rest_api.add_resource(programme_api.SessionAPI, '/api/v1/programme/sessions/<int:session_id>')
+rest_api.add_resource(programme_api.SessionMoveAPI, '/api/v1/programme/sessions/<int:session_id>/move')
+rest_api.add_resource(programme_api.SpeakerListAPI, '/api/v1/programme/speakers')
+rest_api.add_resource(programme_api.SpeakerAPI, '/api/v1/programme/speakers/<int:speaker_id>')
+rest_api.add_resource(programme_api.SessionTypeListAPI, '/api/v1/programme/session-types')
+rest_api.add_resource(programme_api.TrackListAPI, '/api/v1/programme/tracks')
+rest_api.add_resource(programme_api.PublicProgrammeAPI, '/api/v1/public/programme/<string:event_key>')
+rest_api.add_resource(forms_api.EventFormConfigAPI, '/api/v1/form-config')
+rest_api.add_resource(forms_api.FormReviewAssignmentAPI, '/api/v1/forms/<int:form_id>/review-assignments')
+rest_api.add_resource(forms_api.FormResponseTagAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/tags')
+rest_api.add_resource(forms_api.FormReviewSummaryAPI, '/api/v1/forms/<int:form_id>/review-summary')
+rest_api.add_resource(forms_api.FormResponseAdminUpdateAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/admin-status')
+rest_api.add_resource(forms_api.FormResponseReviewsAdminAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/reviews')
+# Announcement routes — register static paths before the <int:id> route
+rest_api.add_resource(announcements_api.AnnouncementActiveAPI, '/api/v1/announcement/active')
+rest_api.add_resource(announcements_api.AnnouncementAdminAPI, '/api/v1/announcement/admin')
+rest_api.add_resource(announcements_api.AnnouncementListAPI, '/api/v1/announcement')
+rest_api.add_resource(announcements_api.AnnouncementDetailAPI, '/api/v1/announcement/<int:announcement_id>')
+rest_api.add_resource(announcements_api.PushSubscriptionAPI, '/api/v1/push-subscription')
+rest_api.add_resource(announcements_api.PushSubscriptionTestAPI, '/api/v1/push-subscription/test')
+# Connection routes — static paths before dynamic
+rest_api.add_resource(connections_api.ConnectionResolveAPI, '/api/v1/connection/resolve')
+rest_api.add_resource(connections_api.ConnectionRespondAPI, '/api/v1/connection/respond')
+rest_api.add_resource(connections_api.ConnectionWithdrawAPI, '/api/v1/connection/withdraw')
+rest_api.add_resource(connections_api.ConnectionListAPI, '/api/v1/connection/list')
+rest_api.add_resource(connections_api.ConnectionReportAPI, '/api/v1/connection/report')
+# Discussion board routes — register static paths before <int:id> routes
+rest_api.add_resource(discussion_api.DiscussionSubscriptionListAPI, '/api/v1/discussion/subscription')
+rest_api.add_resource(discussion_api.DiscussionReportQueueAPI,      '/api/v1/discussion/report')
+rest_api.add_resource(discussion_api.DiscussionReportActionAPI,     '/api/v1/discussion/report/<int:report_id>/dismiss')
+rest_api.add_resource(discussion_api.DiscussionThreadListAPI,       '/api/v1/discussion/thread')
+rest_api.add_resource(discussion_api.DiscussionThreadDetailAPI,     '/api/v1/discussion/thread/<int:thread_id>')
+rest_api.add_resource(discussion_api.DiscussionReplyAPI,            '/api/v1/discussion/thread/<int:thread_id>/reply')
+rest_api.add_resource(discussion_api.DiscussionSubscriptionAPI,     '/api/v1/discussion/thread/<int:thread_id>/subscription')
+rest_api.add_resource(discussion_api.DiscussionPinAPI,             '/api/v1/discussion/thread/<int:thread_id>/pin')
+rest_api.add_resource(discussion_api.DiscussionMessageAPI,          '/api/v1/discussion/message/<int:message_id>')
+rest_api.add_resource(discussion_api.DiscussionReportAPI,           '/api/v1/discussion/message/<int:message_id>/report')
+rest_api.add_resource(connections_api.ConnectionAPI, '/api/v1/connection')

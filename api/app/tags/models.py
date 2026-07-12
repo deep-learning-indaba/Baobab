@@ -9,6 +9,9 @@ class TagType(Enum):
     QUESTION = 'question'
     CHECKIN = 'checkin'
     OFFER_NOTE = 'offer_note'
+    INTEREST = 'INTEREST'
+    TRACK = 'TRACK'
+    SESSION_TYPE = 'SESSION_TYPE'
 
 class Tag(db.Model):
     __tablename__ = 'tag'

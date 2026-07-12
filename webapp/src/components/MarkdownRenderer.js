@@ -1,29 +1,28 @@
 import React from "react";
 import ReactMarkdown from 'react-markdown';
-
 import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 import 'katex/dist/katex.min.css';
-import { InlineMath, BlockMath } from 'react-katex';
+import remarkGfm from "remark-gfm";
 
-import gfm from "remark-gfm";
-
-function MarkdownRenderer(props) {
-    const newProps = {
-        ...props,
-        plugins: [remarkMath],
-        remarkPlugins: [gfm],
-        renderers: {
-            ...props.renderers,
-            math: (props) => <span><BlockMath math={props.value}/></span>,
-            inlineMath: (props) => <span><InlineMath math={props.value}/></span>,
-            link: (props) => <a href={props.href} target="_blank" rel="noopener noreferrer">{props.children}</a>
-        }
-      };
-
-      return (
-        <div className="markdown-container"><ReactMarkdown {...newProps} /></div>
-      );
-
+function MarkdownRenderer({ source, children, components, ...props }) {
+    return (
+        <div className="markdown-container">
+            <ReactMarkdown
+                {...props}
+                remarkPlugins={[remarkMath, remarkGfm]}
+                rehypePlugins={[rehypeKatex]}
+                components={{
+                    a: ({ href, children: linkChildren }) => (
+                        <a href={href} target="_blank" rel="noopener noreferrer">{linkChildren}</a>
+                    ),
+                    ...components
+                }}
+            >
+                {source || children}
+            </ReactMarkdown>
+        </div>
+    );
 }
 
-export default MarkdownRenderer
+export default MarkdownRenderer;

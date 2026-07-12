@@ -1,0 +1,727 @@
+import json
+from datetime import datetime, timedelta
+
+from app import db
+from app.events.models import Event, EventRole
+from app.invitedGuest.models import InvitedGuest
+from app.offer.models import Offer
+from app.programme.models import Session, SessionTranslation, Speaker, SessionSpeaker, SessionTag
+from app.tags.models import Tag, TagTranslation, TagType
+from app.utils.testing import ApiTestCase
+
+
+class ProgrammeApiTest(ApiTestCase):
+
+    def seed_static_data(self):
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
+
+        event = self.add_event(
+            name={'en': 'Indaba 2026'},
+            description={'en': 'The Deep Learning Indaba 2026'},
+            start_date=datetime(2026, 8, 2),
+            end_date=datetime(2026, 8, 7),
+            key='INDABA2026'
+        )
+        self.event_id = event.id
+
+        editor = self.add_user('editor@test.com', 'Ed', 'Itor')
+        self.editor_id = editor.id
+        other = self.add_user('other@test.com', 'Other', 'User')
+        self.other_id = other.id
+        guest = self.add_user('guest@test.com', 'Guest', 'User')
+        self.guest_id = guest.id
+
+        self.add_event_role('programme-editor', self.editor_id, self.event_id)
+
+        invited = InvitedGuest(self.event_id, self.guest_id, 'guest')
+        db.session.add(invited)
+        db.session.commit()
+
+        session_type_tag = Tag(self.event_id, TagType.SESSION_TYPE, True)
+        db.session.add(session_type_tag)
+        db.session.commit()
+        self.session_type_tag_id = session_type_tag.id
+        db.session.add(TagTranslation(self.session_type_tag_id, 'en', 'Keynote', None))
+        db.session.add(TagTranslation(self.session_type_tag_id, 'fr', 'Pleniere', None))
+
+        track_tag = Tag(self.event_id, TagType.TRACK, True)
+        db.session.add(track_tag)
+        db.session.commit()
+        self.track_tag_id = track_tag.id
+        db.session.add(TagTranslation(self.track_tag_id, 'en', 'Research', None))
+        db.session.add(TagTranslation(self.track_tag_id, 'fr', 'Recherche', None))
+
+        linked_speaker = Speaker(
+            event_id=self.event_id,
+            name='Guest User',
+            email='guest@test.com'
+        )
+        db.session.add(linked_speaker)
+        db.session.commit()
+        self.linked_speaker_id = linked_speaker.id
+
+    def _create_session_payload(self, start='2026-08-02T09:00:00', end='2026-08-02T10:30:00',
+                                 title_en='Opening Keynote', include_fr=True):
+        translations = [{'language': 'en', 'title': title_en, 'description': 'A great session.'}]
+        if include_fr:
+            translations.append({'language': 'fr', 'title': "Discours d'ouverture", 'description': 'Une super session.'})
+        return {
+            'event_id': self.event_id,
+            'translations': translations,
+            'session_type_id': self.session_type_tag_id,
+            'venue': 'Main Hall',
+            'start_time': start,
+            'end_time': end,
+            'speaker_ids': [self.linked_speaker_id],
+            'track_tag_ids': [self.track_tag_id]
+        }
+
+    # ── Positive tests ──────────────────────────────────────────────────────────
+
+    def test_editor_creates_session(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+        payload = self._create_session_payload()
+
+        response = self.app.post(
+            '/api/v1/programme/sessions',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(response.status_code, 201)
+        data = json.loads(response.data)
+        self.assertEqual(data['title'], 'Opening Keynote')
+        self.assertEqual(data['venue'], 'Main Hall')
+        self.assertEqual(len(data['speakers']), 1)
+        self.assertEqual(len(data['tracks']), 1)
+        self.assertIsNotNone(data['session_type'])
+
+    def test_list_sessions_sorted_by_start_time(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+
+        for (start, end) in [
+            ('2026-08-02T14:00:00', '2026-08-02T15:00:00'),
+            ('2026-08-02T09:00:00', '2026-08-02T10:00:00'),
+        ]:
+            payload = self._create_session_payload(start=start, end=end)
+            self.app.post(
+                '/api/v1/programme/sessions',
+                data=json.dumps(payload),
+                content_type='application/json',
+                headers=header
+            )
+
+        response = self.app.get(
+            '/api/v1/programme/sessions?event_id={}'.format(self.event_id),
+            headers=header
+        )
+        self.assertEqual(response.status_code, 200)
+        sessions = json.loads(response.data)
+        self.assertEqual(len(sessions), 2)
+        self.assertLessEqual(sessions[0]['start_time'], sessions[1]['start_time'])
+
+    def test_fr_language_returns_fr_translation(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+        payload = self._create_session_payload()
+
+        create_resp = self.app.post(
+            '/api/v1/programme/sessions',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+        session_id = json.loads(create_resp.data)['id']
+
+        response = self.app.get(
+            '/api/v1/programme/sessions/{}?language=fr'.format(session_id),
+            headers=header
+        )
+        data = json.loads(response.data)
+        self.assertEqual(data['title'], "Discours d'ouverture")
+
+    def test_missing_fr_falls_back_to_en(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+        payload = self._create_session_payload(include_fr=False)
+
+        create_resp = self.app.post(
+            '/api/v1/programme/sessions',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+        session_id = json.loads(create_resp.data)['id']
+
+        response = self.app.get(
+            '/api/v1/programme/sessions/{}?language=fr'.format(session_id),
+            headers=header
+        )
+        data = json.loads(response.data)
+        self.assertEqual(data['title'], 'Opening Keynote')
+
+    def test_speaker_email_auto_links_to_user(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+
+        # Create speaker via API so find_linked_user runs. Uses a distinct name from the
+        # 'Guest User' speaker seeded in seed_static_data, since duplicate names are rejected.
+        speaker_resp = self.app.post(
+            '/api/v1/programme/speakers',
+            data=json.dumps({'event_id': self.event_id, 'name': 'Second Speaker', 'email': 'guest@test.com'}),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(speaker_resp.status_code, 201)
+        api_speaker = json.loads(speaker_resp.data)
+        self.assertEqual(api_speaker['linked_user_id'], self.guest_id)
+
+    def test_overlapping_sessions_both_returned(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+
+        for (start, end) in [
+            ('2026-08-02T09:00:00', '2026-08-02T10:30:00'),
+            ('2026-08-02T09:30:00', '2026-08-02T11:00:00'),
+        ]:
+            payload = self._create_session_payload(start=start, end=end)
+            self.app.post(
+                '/api/v1/programme/sessions',
+                data=json.dumps(payload),
+                content_type='application/json',
+                headers=header
+            )
+
+        response = self.app.get(
+            '/api/v1/programme/sessions?event_id={}'.format(self.event_id),
+            headers=header
+        )
+        sessions = json.loads(response.data)
+        self.assertEqual(len(sessions), 2)
+
+    def test_new_parallel_session_appended_to_end_of_group(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+
+        ids = []
+        for title in ('Track A', 'Track B', 'Track C'):
+            payload = self._create_session_payload(title_en=title)
+            resp = self.app.post(
+                '/api/v1/programme/sessions',
+                data=json.dumps(payload),
+                content_type='application/json',
+                headers=header
+            )
+            ids.append(json.loads(resp.data)['id'])
+
+        response = self.app.get(
+            '/api/v1/programme/sessions?event_id={}'.format(self.event_id),
+            headers=header
+        )
+        sessions = {s['id']: s for s in json.loads(response.data)}
+        self.assertEqual([sessions[i]['sort_order'] for i in ids], [0, 1, 2])
+
+    def test_editor_moves_session_right_and_left(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+
+        ids = []
+        for title in ('Track A', 'Track B', 'Track C'):
+            payload = self._create_session_payload(title_en=title)
+            resp = self.app.post(
+                '/api/v1/programme/sessions',
+                data=json.dumps(payload),
+                content_type='application/json',
+                headers=header
+            )
+            ids.append(json.loads(resp.data)['id'])
+
+        # Move the first session ('Track A') right — it should swap with 'Track B'.
+        move_resp = self.app.put(
+            '/api/v1/programme/sessions/{}/move'.format(ids[0]),
+            data=json.dumps({'direction': 'right'}),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(move_resp.status_code, 200)
+        group = json.loads(move_resp.data)
+        ordered_titles = [g['title'] for g in sorted(group, key=lambda g: g['sort_order'])]
+        self.assertEqual(ordered_titles, ['Track B', 'Track A', 'Track C'])
+
+        # Move it back left — should restore the original order.
+        move_back_resp = self.app.put(
+            '/api/v1/programme/sessions/{}/move'.format(ids[0]),
+            data=json.dumps({'direction': 'left'}),
+            content_type='application/json',
+            headers=header
+        )
+        group2 = json.loads(move_back_resp.data)
+        ordered_titles2 = [g['title'] for g in sorted(group2, key=lambda g: g['sort_order'])]
+        self.assertEqual(ordered_titles2, ['Track A', 'Track B', 'Track C'])
+
+    def test_move_uses_client_provided_order_when_sort_order_ties(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+
+        # Simulate sessions seeded directly into the DB (bypassing the API), which all share
+        # the server default sort_order=0. Created in id order C, A, B, but with end times that
+        # put them in a different display order (A, B, C) once the client resolves the tie —
+        # exactly the mismatch that caused moves to jump instead of doing an adjacent swap.
+        start = datetime(2026, 8, 2, 9, 0)
+        session_c = Session()
+        session_c.event_id = self.event_id
+        session_c.start_time = start
+        session_c.end_time = start + timedelta(minutes=90)
+        session_c.translations.append(SessionTranslation(None, 'en', 'Track C', ''))
+        db.session.add(session_c)
+
+        session_a = Session()
+        session_a.event_id = self.event_id
+        session_a.start_time = start
+        session_a.end_time = start + timedelta(minutes=30)
+        session_a.translations.append(SessionTranslation(None, 'en', 'Track A', ''))
+        db.session.add(session_a)
+
+        session_b = Session()
+        session_b.event_id = self.event_id
+        session_b.start_time = start
+        session_b.end_time = start + timedelta(minutes=60)
+        session_b.translations.append(SessionTranslation(None, 'en', 'Track B', ''))
+        db.session.add(session_b)
+        db.session.commit()
+
+        # Client-resolved display order (by end_time): A, B, C.
+        ordered_ids = [session_a.id, session_b.id, session_c.id]
+
+        move_resp = self.app.put(
+            '/api/v1/programme/sessions/{}/move'.format(session_a.id),
+            data=json.dumps({'direction': 'right', 'ordered_ids': ordered_ids}),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(move_resp.status_code, 200)
+        group = json.loads(move_resp.data)
+        ordered_titles = [g['title'] for g in sorted(group, key=lambda g: g['sort_order'])]
+        self.assertEqual(ordered_titles, ['Track B', 'Track A', 'Track C'])
+
+    def test_move_beyond_group_edge_is_a_no_op(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+
+        ids = []
+        for title in ('Track A', 'Track B'):
+            payload = self._create_session_payload(title_en=title)
+            resp = self.app.post(
+                '/api/v1/programme/sessions',
+                data=json.dumps(payload),
+                content_type='application/json',
+                headers=header
+            )
+            ids.append(json.loads(resp.data)['id'])
+
+        # First session can't move further left.
+        response = self.app.put(
+            '/api/v1/programme/sessions/{}/move'.format(ids[0]),
+            data=json.dumps({'direction': 'left'}),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(response.status_code, 200)
+        group = json.loads(response.data)
+        ordered_titles = [g['title'] for g in sorted(group, key=lambda g: g['sort_order'])]
+        self.assertEqual(ordered_titles, ['Track A', 'Track B'])
+
+    def test_non_editor_cannot_move_session(self):
+        self.seed_static_data()
+        editor_header = self.get_auth_header_for('editor@test.com')
+        other_header = self.get_auth_header_for('other@test.com')
+
+        create_resp = self.app.post(
+            '/api/v1/programme/sessions',
+            data=json.dumps(self._create_session_payload()),
+            content_type='application/json',
+            headers=editor_header
+        )
+        session_id = json.loads(create_resp.data)['id']
+
+        response = self.app.put(
+            '/api/v1/programme/sessions/{}/move'.format(session_id),
+            data=json.dumps({'direction': 'right'}),
+            content_type='application/json',
+            headers=other_header
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_editor_updates_session(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+
+        create_resp = self.app.post(
+            '/api/v1/programme/sessions',
+            data=json.dumps(self._create_session_payload()),
+            content_type='application/json',
+            headers=header
+        )
+        session_id = json.loads(create_resp.data)['id']
+
+        update_payload = self._create_session_payload(title_en='Updated Title')
+        response = self.app.put(
+            '/api/v1/programme/sessions/{}'.format(session_id),
+            data=json.dumps(update_payload),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['title'], 'Updated Title')
+
+    def test_editor_deletes_session(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+
+        create_resp = self.app.post(
+            '/api/v1/programme/sessions',
+            data=json.dumps(self._create_session_payload()),
+            content_type='application/json',
+            headers=header
+        )
+        session_id = json.loads(create_resp.data)['id']
+
+        delete_resp = self.app.delete(
+            '/api/v1/programme/sessions/{}'.format(session_id),
+            headers=header
+        )
+        self.assertEqual(delete_resp.status_code, 200)
+
+        list_resp = self.app.get(
+            '/api/v1/programme/sessions?event_id={}'.format(self.event_id),
+            headers=header
+        )
+        sessions = json.loads(list_resp.data)
+        self.assertEqual(len(sessions), 0)
+
+    def test_list_session_types(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+        response = self.app.get(
+            '/api/v1/programme/session-types?event_id={}'.format(self.event_id),
+            headers=header
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]['name'], 'Keynote')
+
+    def test_list_tracks(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+        response = self.app.get(
+            '/api/v1/programme/tracks?event_id={}'.format(self.event_id),
+            headers=header
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]['name'], 'Research')
+
+    def test_editor_adds_session_type(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+        payload = {
+            'event_id': self.event_id,
+            'name': {'en': 'Workshop', 'fr': 'Atelier'}
+        }
+        response = self.app.post(
+            '/api/v1/programme/session-types',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(response.status_code, 201)
+        data = json.loads(response.data)
+        self.assertEqual(data['name'], 'Workshop')
+
+    def test_editor_creates_speaker(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+        payload = {
+            'event_id': self.event_id,
+            'name': 'New Speaker',
+            'email': 'newspeaker@test.com',
+            'bio': 'A great speaker.'
+        }
+        response = self.app.post(
+            '/api/v1/programme/speakers',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(response.status_code, 201)
+        data = json.loads(response.data)
+        self.assertEqual(data['name'], 'New Speaker')
+
+    def test_editor_updates_speaker(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+        payload = {'name': 'Guest Userson', 'email': 'guest@test.com'}
+        response = self.app.put(
+            '/api/v1/programme/speakers/{}'.format(self.linked_speaker_id),
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['name'], 'Guest Userson')
+
+    # ── Negative tests ──────────────────────────────────────────────────────────
+
+    def test_duplicate_speaker_name_rejected_on_create(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+        payload = {'event_id': self.event_id, 'name': 'guest user'}
+        response = self.app.post(
+            '/api/v1/programme/speakers',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(response.status_code, 409)
+
+    def test_duplicate_speaker_name_rejected_on_update(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+        other_speaker = Speaker(event_id=self.event_id, name='Another Speaker')
+        db.session.add(other_speaker)
+        db.session.commit()
+
+        payload = {'name': 'Guest User'}
+        response = self.app.put(
+            '/api/v1/programme/speakers/{}'.format(other_speaker.id),
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(response.status_code, 409)
+
+    def test_non_editor_cannot_create_session(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('other@test.com')
+
+        response = self.app.post(
+            '/api/v1/programme/sessions',
+            data=json.dumps(self._create_session_payload()),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_non_editor_cannot_update_session(self):
+        self.seed_static_data()
+        editor_header = self.get_auth_header_for('editor@test.com')
+
+        create_resp = self.app.post(
+            '/api/v1/programme/sessions',
+            data=json.dumps(self._create_session_payload()),
+            content_type='application/json',
+            headers=editor_header
+        )
+        session_id = json.loads(create_resp.data)['id']
+
+        other_header = self.get_auth_header_for('other@test.com')
+        response = self.app.put(
+            '/api/v1/programme/sessions/{}'.format(session_id),
+            data=json.dumps(self._create_session_payload(title_en='Hacked')),
+            content_type='application/json',
+            headers=other_header
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_non_editor_cannot_delete_session(self):
+        self.seed_static_data()
+        editor_header = self.get_auth_header_for('editor@test.com')
+
+        create_resp = self.app.post(
+            '/api/v1/programme/sessions',
+            data=json.dumps(self._create_session_payload()),
+            content_type='application/json',
+            headers=editor_header
+        )
+        session_id = json.loads(create_resp.data)['id']
+
+        other_header = self.get_auth_header_for('other@test.com')
+        response = self.app.delete(
+            '/api/v1/programme/sessions/{}'.format(session_id),
+            headers=other_header
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_end_before_start_rejected(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+        payload = self._create_session_payload(
+            start='2026-08-02T11:00:00',
+            end='2026-08-02T09:00:00'
+        )
+        response = self.app.post(
+            '/api/v1/programme/sessions',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_unauthenticated_cannot_list_sessions(self):
+        self.seed_static_data()
+        response = self.app.get('/api/v1/programme/sessions?event_id={}'.format(self.event_id))
+        self.assertEqual(response.status_code, 401)
+
+    def test_public_programme_returns_sessions_without_venue_or_speaker_pii(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('editor@test.com')
+        payload = self._create_session_payload()
+        self.app.post(
+            '/api/v1/programme/sessions',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+
+        response = self.app.get('/api/v1/public/programme/INDABA2026')
+        self.assertEqual(response.status_code, 200)
+        sessions = json.loads(response.data)
+        self.assertEqual(len(sessions), 1)
+
+        session = sessions[0]
+        self.assertNotIn('venue', session)
+        self.assertNotIn('event_id', session)
+        self.assertEqual(session['title'], 'Opening Keynote')
+        self.assertEqual(len(session['speakers']), 1)
+
+        speaker = session['speakers'][0]
+        self.assertEqual(speaker['name'], 'Guest User')
+        self.assertNotIn('email', speaker)
+        self.assertNotIn('linked_user_id', speaker)
+        self.assertNotIn('event_id', speaker)
+
+    def test_public_programme_unknown_event_key_returns_404(self):
+        self.seed_static_data()
+        response = self.app.get('/api/v1/public/programme/NOT-A-REAL-KEY')
+        self.assertEqual(response.status_code, 404)
+
+    def test_public_programme_times_converted_to_event_local(self):
+        self.seed_static_data()
+        event = db.session.query(Event).get(self.event_id)
+        event.timezone = 'Africa/Johannesburg'
+        db.session.commit()
+
+        header = self.get_auth_header_for('editor@test.com')
+        payload = self._create_session_payload(start='2026-08-02T09:00:00', end='2026-08-02T10:30:00')
+        self.app.post(
+            '/api/v1/programme/sessions',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+
+        response = self.app.get('/api/v1/public/programme/INDABA2026')
+        session = json.loads(response.data)[0]
+        # Stored start_time is UTC 09:00; Africa/Johannesburg is UTC+2 with no DST.
+        self.assertEqual(session['start_time'], '2026-08-02T11:00:00+02:00')
+        self.assertEqual(session['end_time'], '2026-08-02T12:30:00+02:00')
+
+    # ── Non-English-primary organisation ──────────────────────────────────────
+    # Translations must not assume English is one of the organisation's languages.
+
+    def seed_fr_primary_org(self):
+        org = self.add_organisation(
+            'Indaba Francophone', 'blah.png', 'blah_big.png', 'indaba-fr',
+            languages=[{'code': 'fr', 'description': 'French'}]
+        )
+        event = self.add_event(
+            name={'fr': 'Indaba 2026'},
+            description={'fr': 'La Deep Learning Indaba 2026'},
+            start_date=datetime(2026, 8, 2),
+            end_date=datetime(2026, 8, 7),
+            key='INDABAFR2026',
+            organisation_id=org.id
+        )
+        self.fr_event_id = event.id
+
+        editor = self.add_user('fr-editor@test.com', 'Ed', 'Itor')
+        self.add_event_role('programme-editor', editor.id, self.fr_event_id)
+
+    def test_editor_adds_session_type_with_only_primary_language(self):
+        self.seed_fr_primary_org()
+        header = self.get_auth_header_for('fr-editor@test.com')
+        payload = {
+            'event_id': self.fr_event_id,
+            'name': {'fr': 'Atelier'}
+        }
+        response = self.app.post(
+            '/api/v1/programme/session-types',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(json.loads(response.data)['name'], 'Atelier')
+
+    def test_adding_session_type_without_primary_language_rejected(self):
+        self.seed_fr_primary_org()
+        header = self.get_auth_header_for('fr-editor@test.com')
+        payload = {
+            'event_id': self.fr_event_id,
+            'name': {'en': 'Workshop'}
+        }
+        response = self.app.post(
+            '/api/v1/programme/session-types',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_editor_adds_track_with_only_primary_language(self):
+        self.seed_fr_primary_org()
+        header = self.get_auth_header_for('fr-editor@test.com')
+        payload = {
+            'event_id': self.fr_event_id,
+            'name': {'fr': 'Recherche'}
+        }
+        response = self.app.post(
+            '/api/v1/programme/tracks',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(json.loads(response.data)['name'], 'Recherche')
+
+    def test_session_with_only_fr_translation_falls_back_for_unknown_language(self):
+        self.seed_fr_primary_org()
+        header = self.get_auth_header_for('fr-editor@test.com')
+        payload = {
+            'event_id': self.fr_event_id,
+            'translations': [{'language': 'fr', 'title': "Discours d'ouverture", 'description': 'Une super session.'}],
+            'start_time': '2026-08-02T09:00:00',
+            'end_time': '2026-08-02T10:30:00',
+        }
+        create_resp = self.app.post(
+            '/api/v1/programme/sessions',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=header
+        )
+        self.assertEqual(create_resp.status_code, 201)
+        session_id = json.loads(create_resp.data)['id']
+
+        # No 'en' or 'de' translation exists — must fall back to the only
+        # translation present rather than returning a blank title.
+        response = self.app.get(
+            '/api/v1/programme/sessions/{}?language=de'.format(session_id),
+            headers=header
+        )
+        self.assertEqual(json.loads(response.data)['title'], "Discours d'ouverture")

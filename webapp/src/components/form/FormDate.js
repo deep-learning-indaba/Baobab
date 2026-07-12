@@ -1,34 +1,28 @@
 import React from "react";
-import DateTimePicker from 'react-datetime-picker'
 import FormGroup from "./FormGroup";
 import FormToolTip from "./FormToolTip";
 import "./Style.css";
-import * as moment from 'moment';
 import MarkdownRenderer from "../MarkdownRenderer";
 
 class FormDate extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
   shouldDisplayError = () => {
     return this.props.showError && this.props.errorText !== "";
-
   };
 
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.showFocus) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    if (nextProps.showFocus && this.dateInput) {
       this.dateInput.focus();
     }
   }
 
-  onChange = value => {
-    if (value && this.props.onChange) {
-      this.props.onChange(moment(value).format("YYYY-MM-DD"));
+  onChange = e => {
+    if (this.props.onChange) {
+      this.props.onChange(e.target.value);
     }
   }
 
   render() {
+    const hasError = this.props.id && this.props.errorText && this.props.errorText.length > 0;
     return (
       <div>
         <FormGroup
@@ -40,20 +34,17 @@ class FormDate extends React.Component {
             {this.props.description ? (
               <FormToolTip description={this.props.description} />
             ) : (
-                <div />
-              )}
-
+              <div />
+            )}
           </div>
 
-          <DateTimePicker
+          <input
+            type="date"
             id={this.props.id}
-            ref={input => {
-              this.dateInput = input;
-            }}
-            className={this.props.id && this.props.errorText && this.props.errorText.length > 0  ? "react-datetime-picker error" : "react-datetime-picker"}
+            ref={input => { this.dateInput = input; }}
+            className={`form-control${hasError ? ' is-invalid' : ''}`}
             onChange={this.onChange}
-            value={this.props.value ? new Date(this.props.value) : null}
-            format="y-MM-dd"
+            value={this.props.value || ''}
             disabled={this.props.disabled}
           />
 

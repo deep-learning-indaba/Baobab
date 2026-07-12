@@ -9,7 +9,7 @@ import FormDate from "../../../components/form/FormDate";
 import MarkdownRenderer from "../../../components/MarkdownRenderer";
 import FormMultiFile from '../../../components/form/FormMultiFile'
 import ReactToolTip from "react-tooltip";
-import { ConfirmModal } from "react-bootstrap4-modal";
+import { ConfirmModal } from "../../../components/Modal";
 import StepZilla from "react-stepzilla";
 import FormFileUpload from "../../../components/form/FormFileUpload";
 import { fileService } from "../../../services/file/file.service";
@@ -554,10 +554,10 @@ class ConfirmationComponent extends React.Component {
           </div>
         </div>
 
-        {this.props.sectionModels && 
+        {this.props.sectionModels &&
           this.props.sectionModels.filter(sm => sm.questionModels.length > 0).map(sm => {
-            return <div key={"section_" + sm.section.id}>
-              <h2>{sm.section.name}</h2>
+            return <div className="confirmation-section" key={"section_" + sm.section.id}>
+              <h2 className="confirmation-section-title">{sm.section.name}</h2>
               {sm.questionModels &&
                 sm.questionModels.filter(qm => this.dependentQuestionFilter(qm.question, allAnswers)).map(qm => {
                   return (
@@ -865,6 +865,10 @@ class ApplicationFormInstanceComponent extends Component {
 
   handleStepChange = () => {
     window.scrollTo(0, 0);
+    const scrollContainer = this.formContainerRef && this.formContainerRef.closest(".overflow-y-auto");
+    if (scrollContainer) {
+      scrollContainer.scrollTop = 0;
+    }
   };
 
   getSubmitValidationError = (q) => {
@@ -1004,7 +1008,7 @@ class ApplicationFormInstanceComponent extends Component {
     });
 
     return (
-      <div class="application-form-container">
+      <div class="application-form-container" ref={(el) => { this.formContainerRef = el; }}>
         <div className="step-progress">
           <StepZilla
             steps={steps}

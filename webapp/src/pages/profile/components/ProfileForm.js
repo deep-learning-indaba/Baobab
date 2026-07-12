@@ -3,7 +3,7 @@ import { userService } from "../../../services/user";
 import { withRouter } from "react-router";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
-import { ConfirmModal } from "react-bootstrap4-modal";
+import { ConfirmModal } from "../../../components/Modal";
 import validationFields from "../../../utils/validation/validationFields";
 import { getTitleOptions } from "../../../utils/validation/contentHelpers";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
@@ -163,7 +163,7 @@ class ProfileForm extends Component {
     let arr = errors.$set;
     for (let i = 0; i < arr.length; i++) {
       errorMessages.push(
-        <div className={"alert alert-danger alert-container"}>
+        <div key={i} className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-4">
           {Object.values(arr[i])}
         </div>
       );
@@ -189,15 +189,13 @@ class ProfileForm extends Component {
     } = this.state;
 
     return (
-      <div className="Profile">
-        <form onSubmit={this.handleSubmit}>
-
-          <div class="Profile-Header">
-            <h3>{t("Your Profile")}</h3>
+      <div className="w-full max-w-5xl mx-auto pt-6 text-left space-y-6">
+        <form onSubmit={this.handleSubmit} className="bg-white rounded-2xl shadow-sm border border-border p-8 space-y-6">
+          <div className="border-b border-border/50 pb-4">
+            <h1 className="font-heading text-2xl font-bold text-foreground">{t("Your Profile")}</h1>
           </div>
 
-          <div class="card">
-
+          <div className="space-y-4">
             <FormSelect
               options={this.state.titleOptions}
               id={validationFields.title.name}
@@ -225,29 +223,26 @@ class ProfileForm extends Component {
               label={t(validationFields.email.display)}
               description={t("Read-only")} />
 
-            <br /><br />
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border-border/50">
+              <button
+                type="button"
+                className="text-primary hover:underline font-semibold cursor-pointer text-sm"
+                disabled={loading}
+                onClick={() => this.setState({ confirmResetVisible: true })}>
+                {t("Reset Your Password")}
+              </button>
 
-            <button
-              type="submit"
-              class="btn btn-primary Button"
-              disabled={loading}>
-              {loading && (
-                <span
-                  class="spinner-grow spinner-grow-sm"
-                  role="status"
-                  aria-hidden="true" />
-              )}
+              <button
+                type="submit"
+                className="inline-flex items-center justify-center px-5 py-3 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm disabled:opacity-50 cursor-pointer"
+                disabled={loading}>
+                {loading && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-1.5"></div>
+                )}
                 {t("Save profile")}
               </button>
+            </div>
           </div>
-          <br/>
-          <button
-            type="button"
-            class="link-style App-link"
-            disabled={loading}
-            onClick={() => this.setState({ confirmResetVisible: true })}>
-            {t("Reset Your Password")}
-          </button>
 
           {errors && errors.$set && showErrors && this.getErrorMessages(errors)}
         </form>

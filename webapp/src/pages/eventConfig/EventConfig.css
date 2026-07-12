@@ -1,3 +1,8 @@
+.react-datetime-picker {
+  display: block;
+  width: 100%;
+}
+
 .react-datetime-picker__wrapper {
   width: 100%;
   height: calc(2.25rem + 2px);
@@ -10,14 +15,4 @@
   background-clip: padding-box;
   border: 1px solid #ced4da;
   border-radius: 0.25rem;
-}
-.body {
-  padding-top: 0em;
-}
-.required-indicator {
-  display: inline-block;
-  margin-left: -20px;
-  margin-right: 10px;
-  font-size: 0.8em;
-  color: #A84A43;
 }

@@ -209,7 +209,7 @@ const ReviewForm = (props) => {
         }
       })
     }
-  }, [currentStage])
+  }, [currentStage, event.loading])
 
   const addSection = () => {
     setTimeout(() => setSections([...sections, {

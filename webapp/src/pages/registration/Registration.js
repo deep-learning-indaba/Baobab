@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import { Redirect } from "react-router-dom";
 import "./Registration.css";
 import RegistrationComponent from "./components/RegistrationComponent"
 import GuestRegistrationComponent from "./components/GuestRegistrationComponent"
@@ -30,6 +31,10 @@ export default class Registration extends Component {
         })
   }
   render() {
+    if (this.props.event && this.props.event.registration_form_id) {
+      return <Redirect to={"/" + this.props.event.key + "/forms/" + this.props.event.registration_form_id} />;
+    }
+
     if (this.props.event && !this.props.event.is_registration_open) {
       return <div class="alert alert-danger">Registration is now closed</div>
     }

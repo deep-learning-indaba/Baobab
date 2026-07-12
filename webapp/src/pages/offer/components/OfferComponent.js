@@ -83,9 +83,9 @@ class Offer extends Component {
   }
 
   row = (col1, col2) => {
-    return <div className="row mb-2">
-      <div class="col-6 font-weight-bold pr-4" align="right">{col1}:</div>
-      <div class="col-6 pl-4" align="left">{col2}</div>
+    return <div className="flex w-full py-3 border-b border-border/50 last:border-0">
+      <div className="w-1/3 font-semibold text-muted-foreground pr-4 text-right">{col1}:</div>
+      <div className="w-2/3 pl-4 text-foreground text-left">{col2}</div>
     </div>
   }
 
@@ -113,15 +113,15 @@ class Offer extends Component {
     const acceptedGrants = grant_tags.filter(a => a.accepted);
 
     return (
-      <div className="container">
-        <p className="h5">
+      <div className="w-full max-w-5xl mx-auto space-y-6">
+        <p className="text-base text-muted-foreground mb-4">
           {offer.candidate_response && offer.is_confirmed && <span><Trans i18nKey="spotAccepted">You accepted the following offer on {{respondedDate}}</Trans>.</span>}
           {!offer.candidate_response && <span><Trans i18nKey="spotRejected">You rejected your offer for a spot at {{eventName}} on {{respondedDate}} for the following reason:</Trans><br/><br/>{offer.rejected_reason}</span>}
           {offer.candidate_response && !offer.is_confirmed && !offer.is_expired && <span>{t("Your offer is pending receipt of payment")}</span>}
-          {offer.candidate_response && !offer.is_confirmed && offer.is_expired && <span className="alert alert-danger">{t("Your offer has expired due to non payment")}</span>}
+          {offer.candidate_response && !offer.is_confirmed && offer.is_expired && <span className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center block mt-4">{t("Your offer has expired due to non payment")}</span>}
         </p>
 
-        {offer.candidate_response && (offer.is_confirmed || (!offer.is_confirmed && !offer.is_expired)) && <div className="white-background card form mt-5 offer-container">
+        {offer.candidate_response && (offer.is_confirmed || (!offer.is_confirmed && !offer.is_expired)) && <div className="bg-white rounded-2xl shadow-sm border border-border p-6 space-y-2 mt-8">
           {this.row("Offer date", offer.offer_date ? offer.offer_date.substring(0, 10) : "-date-")}
           {this.row("Offer expiry date", offer.expiry_date ? offer.expiry_date.substring(0, 10) : "-date-")}
           {this.row("Registration fee", 
@@ -135,11 +135,11 @@ class Offer extends Component {
         </div>}
 
         {offer.candidate_response && offer.is_confirmed &&
-          <div className="row mt-4">
-            <div className="col">
+          <div className="flex flex-wrap gap-4 mt-6">
+            <div className="flex-1 text-center">
               <button
                 type="button"
-                class="btn btn-danger"
+                className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors bg-error text-error-foreground hover:bg-error/90 shadow-sm w-full"
                 id="reject"
                 disabled={saving}
                 onClick={() => {
@@ -152,8 +152,8 @@ class Offer extends Component {
                 </button>
             </div>
 
-            <div className="col">
-              <NavLink className="btn btn-primary" to={`/${this.props.event.key}/registration`}>
+            <div className="flex-1 text-center">
+              <NavLink className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm w-full text-center" to={`/${this.props.event.key}/registration`}>
                 {t("Proceed to Registration")}
               </NavLink>
             </div>
@@ -163,11 +163,11 @@ class Offer extends Component {
         {
           // If the user has accepted the offer but has not paid the registration fee, and the offer is not expired, show the invoice & payment button
           offer.candidate_response && !offer.is_confirmed && !offer.is_expired &&
-          <div className="row mt-4">
-            <div className="col">
+          <div className="flex flex-wrap gap-4 mt-6">
+            <div className="flex-1 text-center">
               <button
                 type="button"
-                class="btn btn-danger"
+                className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors bg-error text-error-foreground hover:bg-error/90 shadow-sm w-full"
                 id="reject"
                 disabled={saving}
                 onClick={() => {
@@ -180,13 +180,13 @@ class Offer extends Component {
               </button>
             </div>
 
-            <div className="col">
-              <a href={getDownloadURL(`invoice_${offer.invoice_number}.pdf`, "indaba-invoices")}>
+            <div className="flex-1 text-center">
+              <a href={getDownloadURL(`invoice_${offer.invoice_number}.pdf`, "indaba-invoices")} className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors bg-surface-high text-foreground hover:bg-surface-high/80 border border-border w-full">
                 {t("View Invoice")}
               </a>
             </div>
-            <div className="col">
-              <NavLink className="btn btn-primary" to={`/payment/${offer.invoice_id}`}>
+            <div className="flex-1 text-center">
+              <NavLink className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm w-full text-center" to={`/payment/${offer.invoice_id}`}>
                 {t("Pay Online")}
               </NavLink>
             </div>
@@ -194,15 +194,14 @@ class Offer extends Component {
         }
 
         {this.state.showReasonBox &&
-          <div className="row">
+          <div className="flex flex-col gap-4 mt-6">
             <textarea
-              class="form-control reason-box pr-5 pl-10 pb-5"
+              className="w-full border border-border rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all min-h-[120px] resize-y"
               onChange={this.handleChange(this.state.rejected_reason)}
               placeholder={t("Please let us know why you are rejecting this offer")} />
             <button
               type="button"
-              class="btn btn-outline-danger mt-2"
-              align="center"
+              className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors bg-error/10 text-error hover:bg-error/20 border border-error/20"
               disabled={saving}
               onClick={() => {
                 this.setState({
@@ -226,21 +225,21 @@ class Offer extends Component {
       return null;
     }
 
-    return <div className="row mb-3">
-      <div className="col-md-3 font-weight-bold pr-2 h4" align="left">{t("Notes")}</div>
-      <div className="col-md-12">
+    return <div className="flex flex-col gap-4 mb-4">
+      <div className="w-full font-semibold text-lg text-foreground pr-2 text-left">{t("Notes")}</div>
+      <div className="w-full">
         {note_tags.map((note_tag) => {
-          return <div className="row mb-2 offer-note" key={"note_tag_" + note_tag.id}>
-            <div className="col-md-2">
-              <span className="font-weight-bold">{note_tag.name}</span>
+          return <div className="flex flex-wrap gap-4 mb-2 offer-note" key={"note_tag_" + note_tag.id}>
+            <div className="w-full md:w-1/6 px-3">
+              <span className="font-bold">{note_tag.name}</span>
             </div>
-            <div className="col-md-10">
+            <div className="w-full md:w-5/6 px-3 text-foreground/80">
               {note_tag.description}
             </div>
           </div>;
         })}
       </div>
-      <hr/>
+      <div className="w-full border-t border-border/50 my-2"></div>
     </div>;
   }
 
@@ -248,38 +247,38 @@ class Offer extends Component {
     const { grant_tags } = this.state;
     const t = this.props.t;
 
-    return <div class="row mb-3">
-      <div class="col-md-3 font-weight-bold pr-2 h4" align="left">{t("Grants")}</div>
+    return <div className="flex flex-col gap-4 mb-4">
+      <div className="w-full font-semibold text-lg text-foreground pr-2 text-left">{t("Grants")}</div>
       {grant_tags.length > 0 ?
-        <div>
-          <div class="col-md-12 pr-2" align="left">
-            <div className="mb-5">{t("We are pleased to offer you the following grants") + ":"}</div>
+        <div className="space-y-4">
+          <div className="w-full pr-2 text-left">
+            <div className="mb-4 text-foreground">{t("We are pleased to offer you the following grants") + ":"}</div>
           </div>
           {grant_tags.map((grant_tag) => {
-            return <div class="row mb-3" align="left" key={"grant_tag_"+grant_tag.id}>
-                      <div class="col-md-2">
-                        <span class="font-weight-bold">{grant_tag.name}</span>
+            return <div className="flex flex-wrap gap-4 mb-4 items-center text-left bg-surface-low rounded-xl p-4 border border-border" key={"grant_tag_"+grant_tag.id}>
+                      <div className="w-full md:w-1/6 px-2">
+                        <span className="font-bold text-primary">{grant_tag.name}</span>
                         
                       </div>
-                      <div class="col-md-8">
+                      <div className="w-full md:w-1/2 px-2 text-sm text-foreground/80">
                         {grant_tag.description}
                       </div>
-                      <div class="col-md-2">
-                        <div class="form-check grant-container">
-                          <input type="checkbox" class="form-check-input"
+                      <div className="w-full md:w-1/4 px-2">
+                        <div className="flex items-center gap-2">
+                          <input type="checkbox" className="rounded border-border text-primary focus:ring-primary w-4 h-4 cursor-pointer"
                             checked={grant_tag.accepted}
                             onChange={() => this.onChangeGrant(grant_tag.id)}
                             id={"check_" + grant_tag.id} />
-                          <label class="form-check-label" htmlFor={"check_"+grant_tag.id}>{t("I accept this grant")}.</label>
+                          <label className="text-sm font-medium text-foreground cursor-pointer select-none" htmlFor={"check_"+grant_tag.id}>{t("I accept this grant")}</label>
                         </div>
                       </div>
                     </div>
           })}
         </div>
         :
-        <div class="row-mb-2 pr-2" align="center">{t("Please note that this offer does not include any grants. We appreciate your understanding.")}</div>
+        <div className="w-full text-center text-muted-foreground bg-surface-low p-4 rounded-xl text-sm">{t("Please note that this offer does not include any grants. We appreciate your understanding.")}</div>
       } 
-      <hr/>
+      <div className="w-full border-t border-border/50 my-2"></div>
     </div>
   }
 
@@ -295,50 +294,47 @@ class Offer extends Component {
     const paymentCurrency = offer.payment_currency;
 
     return (
-      <div>
+      <div className="w-full max-w-5xl mx-auto space-y-6">
         {offer.candidate_response !== null ?
           this.displayOfferResponse()
           :
-          <div className="container">
-            <p className="h5">
+          <div>
+            <p className="text-base text-muted-foreground mb-4">
                 {t("We are pleased to offer you a place at") + " " + (this.props.event ? this.props.event.name : "") + ". "}
                 {t("Please see the details of this offer below") + "."}
             </p>
 
-            <form class="form offer-container">
-
-              <div className="white-background card form">
-                <p class="font-weight-bold h3">{t("Offer Details")}</p>
+            <form className="bg-white rounded-2xl shadow-sm border border-border p-6 space-y-6 mt-6">
+                <p className="text-xl font-bold font-heading text-foreground mb-4">{t("Offer Details")}</p>
 
                 {this.props.event && grant_tags && this.renderGrants()}
                 {this.renderNotes()}
 
-                <div class="row">
-                  <div class="col-md-12 font-weight-bold pr-2 h4" align="left">{t("Registration Fee")}</div>
+                <div className="flex flex-wrap gap-4 mb-2">
+                  <div className="w-full font-semibold text-lg text-foreground pr-2 text-left">{t("Registration Fee")}</div>
                 </div>
-                <div class="row mb-5">
-                  <div class="col-md-12" align="left">
+                <div className="flex flex-wrap gap-4 mb-6">
+                  <div className="w-full text-left">
                     {offer && offer.payment_required && <Trans i18nKey="registrationFee">In order to confirm your place, you will be liable for a {{paymentAmount}} {{paymentCurrency}} registration fee.</Trans>}
                     {offer && !offer.payment_required && (t("Your registration fee has been waived") + ".")}
                   </div>
                 </div>
 
-                <p class="font-weight-bold">
+                <p className="font-bold text-foreground">
                   {t("Please accept or reject this offer by")}{" "}
                   {offer !== null ? offer.expiry_date !== undefined ? offer.expiry_date.substring(0, 10) : "-date-" : "unable to load expiry date"}{" "}
                 </p>
 
-                <div class="form-group">
+                <div className="mt-4">
                   {this.state.showReasonBox ? (
-                    <div class="form-group mr-5  ml-5 pt-5">
+                    <div className="flex flex-col gap-4 mt-4">
                       <textarea
-                        class="form-control reason-box pr-5 pl-10 pb-5"
+                        className="w-full border border-border rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all min-h-[120px] resize-y"
                         onChange={this.handleChange(rejected_reason)}
                         placeholder={t("Enter rejection message")} />
                       <button
                         type="button"
-                        class="btn btn-outline-danger mt-2"
-                        align="center"
+                        className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors bg-error/10 text-error hover:bg-error/20 border border-error/20 w-fit"
                         disabled={saving}
                         onClick={() => {
                           this.setState(
@@ -352,11 +348,11 @@ class Offer extends Component {
                   </button>
                     </div>
                   ) : (
-                      <div class="row">
-                        <div class="col" align="center">
+                      <div className="flex flex-wrap gap-4 mt-6">
+                        <div className="flex-1 text-center">
                           <button
                             type="button"
-                            class="btn btn-danger"
+                            className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors bg-error text-error-foreground hover:bg-error/90 shadow-sm w-full"
                             id="reject"
                             disabled={saving}
                             onClick={() => {
@@ -368,10 +364,10 @@ class Offer extends Component {
                     </button>
                         </div>
 
-                        <div class="col" align="center">
+                        <div className="flex-1 text-center">
                           <button
                             type="button"
-                            class="btn btn-success"
+                            className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors bg-green-600 text-white hover:bg-green-700 shadow-sm w-full"
                             id="accept"
                             disabled={saving}
                             onClick={() => {
@@ -388,7 +384,6 @@ class Offer extends Component {
                     )}
 
                 </div>
-              </div>
             </form>
           </div>
         }
@@ -462,27 +457,19 @@ class Offer extends Component {
   render() {
 
     const { loading, offer, error, applicationExist, noOffer } = this.state;
-    const loadingStyle = {
-      width: "3rem",
-      height: "3rem"
-    };
     const t = this.props.t;
 
     if (loading) {
       return (
-        <div class="d-flex justify-content-center pt-5">
-          <div className="spinner-border"
-            style={loadingStyle}
-            role="status">
-            <span className="sr-only">Loading...</span>
-          </div>
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       );
     }
 
     if (error) {
       return (
-        <div class="alert alert-danger" align="center">
+        <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center">
           {error}
         </div>
       );
@@ -492,7 +479,7 @@ class Offer extends Component {
     }
     else if ((noOffer || offer === null) && !applicationExist) {
       return (
-        <div className="h5 pt-5" align="center">
+        <div className="text-base text-muted-foreground mt-8 text-center">
           {" "}
           {t("You did not apply to attend")}.
         </div>
@@ -500,7 +487,7 @@ class Offer extends Component {
     }
     else {
       return (
-        <div className="h5 pt-5" align="center">
+        <div className="text-base text-muted-foreground mt-8 text-center">
           {" "}
           {t("Please await further communication")}
         </div>

@@ -1,11 +1,30 @@
 /* Application form */
-.application-form-wrap .top-bar {
+/* Header bar wrapping TopBar + language selector + save button */
+.application-form-wrap .form-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   background: white;
+  border-bottom: 1px solid #e6e6e6;
+  padding: 0 15px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.application-form-wrap .form-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.application-form-wrap .top-bar {
+  background: transparent;
   border: none;
-  border-bottom: thin #e6e6e6 solid;
+  border-bottom: none;
   margin: 0;
-  padding: 15px;
-  height: 4em;
+  padding: 12px 0;
+  height: auto;
 }
 
 .application-form-wrap .top-bar .icon-title .title {
@@ -50,8 +69,12 @@
 }
 
 .application-form-wrap .application-form-wrapper {
-  width: 60%;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
   margin-top: 1em;
+  padding: 0 1em;
+  box-sizing: border-box;
 }
 
 .application-form-wrap .nominations-desc {
@@ -94,20 +117,23 @@
 }
 
 .application-form-wrap .add-section-btn {
-  padding: 5px;
-  margin-right: 2em;
-  margin-top: 12em;
-  border: solid thin #333;
-  width: 3em;
-  height: 3em;
-  border-radius: 50%;
-  background-color: #fff; 
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  margin-top: 1em;
+  margin-bottom: 2em;
+  border: solid 1px #333;
+  width: auto;
+  height: auto;
+  border-radius: 8px;
+  background-color: #fff;
+  font-size: 0.9rem;
   transition-property: color, background-color;
-  transition-duration: 1s;
+  transition-duration: 0.2s;
   transition-timing-function: ease-out;
   outline: none;
-  position: fixed;
-  z-index: 1;
+  cursor: pointer;
 }
 
 .application-form-wrap .answer-section-btn {
@@ -115,20 +141,17 @@
 }
 
 .application-form-wrap .save-form-btn {
-  padding: 5px;
-  margin-right: 2em;
-  margin-top: 16em;
-  border: solid thin #333;
-  width: 3em;
-  height: 3em;
-  border-radius: 50%;
-  background-color: #fff; 
-  transition-property: color, background-color;
-  transition-duration: 1s;
-  transition-timing-function: ease-out;
+  padding: 8px 20px;
+  border: solid 1px #333;
+  border-radius: 6px;
+  background-color: #1f2d3e;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
   outline: none;
-  position: fixed;
-  z-index: 1;
+  transition-property: background-color;
+  transition-duration: 0.2s;
+  transition-timing-function: ease-out;
 }
 
 .application-form-wrap .save-form-btn:hover {
@@ -157,6 +180,11 @@
   transition-timing-function: ease-out;
   background-color: #333;
   color: #fff;
+}
+
+.application-form-wrap .add-section-btn-wrapper {
+  text-align: left;
+  padding: 0.5em 0;
 }
 
 /* Section */
@@ -197,28 +225,58 @@
 }
 
 .application-form-wrap .section-title {
-  font-size: 1.8em;
-  width: 85%;
+  font-size: 1.4em;
+  width: 100%;
+}
+
+.application-form-wrap .section-name-label {
+  display: block;
+  margin-bottom: 0.25em;
+}
+
+.application-form-wrap .section-name-error.tooltiptext-error {
+  display: block;
+  margin-top: 0.25em;
+  position: static;
+  left: auto;
+  top: auto;
+  color: rgb(139, 15, 15);
+  font-size: 0.8em;
+}
+
+.application-form-wrap .section-header .key-wrapper {
+  display: block;
+  width: 100%;
+}
+
+.application-form-wrap .section-controls {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5em;
+  padding-top: 0.75em;
+  margin-top: 0.5em;
+  border-top: solid thin #ecebeb;
 }
 
 .application-form-wrap .select-language {
-  width: 20%;
-  float: right;
-  margin: 0 2em;
+  width: 160px;
+  float: none;
+  margin: 0;
   box-shadow: none;
 }
 
 .application-form-wrap .title-desc-toggle {
-  float: right;
+  float: none;
   border: none;
   padding: 5px;
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 3em;
-  height: 3em;
+  width: 2.2em;
+  height: 2.2em;
   border-radius: 50%;
-  background-color: #fff;
+  background-color: #f0f0f0;
   transition-property: color, background-color;
   transition-duration: 1s;
   transition-timing-function: ease-out;
@@ -368,21 +426,26 @@
 
 .application-form-wrap .toogle-section-details-wrapper {
   display: flex;
-  float: right;
-  width: 3em;
-  height: 3em;
+  float: none;
+  width: 2.2em;
+  height: 2.2em;
   border-radius: 50%;
   padding: 5px;
-  margin-bottom: 1em;
-  background-color: #fff;
+  margin-bottom: 0;
+  background-color: #f0f0f0;
   transition-property: color, background-color;
   transition-duration: 1s;
   transition-timing-function: ease-out;
   outline: none;
+  cursor: pointer;
+  justify-content: center;
+  align-items: center;
 }
 
 .application-form-wrap .section-header {
+  display: block;
   position: relative;
+  margin-bottom: 0;
 }
 
 .application-form-wrap .fa-hide-show-details {
@@ -410,6 +473,22 @@
 
 .application-form-wrap .question-header {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.application-form-wrap .question-type-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.application-form-wrap .question-headline-row {
+  display: block;
+  position: relative;
+  width: 100%;
 }
 
 .application-form-wrap .tooltiptext-error {
@@ -487,18 +566,18 @@
 .application-form-wrap .question-title {
   font-size: 1em;
   font-weight: bolder;
-  width: 57%;
+  width: 100%;
+  box-sizing: border-box;
   background: #ecebeb;
   padding: 0.5em;
   border-radius: 5px;
 }
 
 .application-form-wrap .move-btns-wrapper {
-  display: inline-table;
+  display: flex;
   margin: 0;
-  margin-top: 0.2em;
   padding: 0;
-  float: right;
+  flex-shrink: 0;
 }
 
 .move-btns-wrapper .move-btn {
@@ -536,13 +615,12 @@
 }
 
 .application-form-wrap .action-btns {
-  padding: 0.5em;
-  padding-bottom: 0;
-  display: inline-block;
-  align-items: flex-end;
+  padding: 0.5em 0;
+  display: flex;
+  align-items: center;
   border-top: solid thin #ecebeb;
   margin-top: 1em;
-  width: 92%;
+  width: 100%;
 }
 
 .application-form-wrap .fa-question-toogle {
@@ -556,13 +634,14 @@
 
 .toggle-questions {
   display: inline-block;
-  margin-top: 1.5em;
+  margin-top: 0;
 }
 
 .application-form-wrap .select-form {
-  width: 28%;
-  display: inline-table;
-  margin: 0 1em;
+  flex: 1;
+  min-width: 0;
+  display: block;
+  margin: 0;
   box-shadow: none;
 }
 
@@ -642,7 +721,8 @@
 .application-form-wrap .question-footer {
   margin-left: auto;
   display: flex;
-  float: right;
+  align-items: center;
+  float: none;
 }
 
 .application-form-wrap .options {
@@ -815,14 +895,19 @@
   margin-bottom: 1em;
 }
 .application-form-wrap .add-stage-btn {
-  float: right;
+  float: none;
   border-radius: 50%;
   border: none;
   background: #333;
   color: white;
-  padding: 5px 10px;
-  display: inline;
-  position: absolute;
+  width: 2em;
+  height: 2em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: static;
+  flex-shrink: 0;
+  cursor: pointer;
 }
 
 .application-form-wrap .add-stage-btn:hover:after { 
@@ -843,6 +928,15 @@
 }
 
 .application-form-wrap .review-stages {
-  width: 780px;
-  display: inline-table;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+  align-items: center;
+}
+
+.application-form-wrap .review-stage-btns {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  flex-wrap: wrap;
 }

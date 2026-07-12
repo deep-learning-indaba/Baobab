@@ -1,0 +1,283 @@
+name: Staging CI and Deploy
+
+on:
+  push:
+    branches:
+      - staging
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: staging-deploy
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Run backend tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: api/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt pytest-xdist
+
+      - name: Run tests
+        run: pytest -n auto -v
+        env:
+          DEBUG: 'True'
+          SECRET_KEY: 'test-secret-key'
+          FILE_SIZE_LIMIT: '10485760'
+          GCP_CLIENT_ID: dummy
+          GCP_CLIENT_EMAIL: dummy
+          GCP_PRIVATE_KEY_ID: dummy
+          GCP_PRIVATE_KEY: dummy
+          GCP_PROJECT_NAME: dummy
+          GCP_BUCKET_NAME: dummy
+          SMTP_USERNAME: dummy
+          SMTP_PASSWORD: dummy
+          SMTP_SENDER_NAME: dummy
+          SMTP_SENDER_EMAIL: dummy
+          SMTP_HOST: dummy
+          SMTP_PORT: '587'
+          BOABAB_HOST: 'http://localhost:5000'
+
+  migrate:
+    name: Run staging database migrations
+    runs-on: ubuntu-latest
+    needs: test
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: api/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Install Cloud SQL Auth Proxy
+        run: |
+          curl -fsSL -o cloud-sql-proxy \
+            https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.14.1/cloud-sql-proxy.linux.amd64
+          chmod +x cloud-sql-proxy
+          sudo mkdir -p /cloudsql
+          sudo chmod 777 /cloudsql
+
+      - name: Start Cloud SQL Auth Proxy
+        run: ./cloud-sql-proxy --unix-socket /cloudsql ${{ secrets.STAGING_CLOUD_SQL_INSTANCE }} &
+
+      - name: Wait for proxy to be ready
+        run: sleep 3
+
+      - name: Run migrations
+        run: python run.py db upgrade --directory migrations
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+          SECRET_KEY: ${{ secrets.STAGING_SECRET_KEY }}
+          FILE_SIZE_LIMIT: '10485760'
+          GCP_CLIENT_ID: dummy
+          GCP_CLIENT_EMAIL: dummy
+          GCP_PRIVATE_KEY_ID: dummy
+          GCP_PRIVATE_KEY: dummy
+          GCP_PROJECT_NAME: dummy
+          GCP_BUCKET_NAME: dummy
+          SMTP_USERNAME: dummy
+          SMTP_PASSWORD: dummy
+          SMTP_SENDER_NAME: dummy
+          SMTP_SENDER_EMAIL: dummy
+          SMTP_HOST: dummy
+          SMTP_PORT: '587'
+          BOABAB_HOST: 'http://localhost:5000'
+
+  backend:
+    name: Deploy staging backend
+    runs-on: ubuntu-latest
+    needs: migrate
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Generate staging App Engine config
+        run: |
+          python - <<'PY'
+          import os
+          import sys
+
+          required = [
+              "STAGING_DATABASE_URL",
+              "STAGING_SECRET_KEY",
+              "SMTP_USERNAME",
+              "SMTP_PASSWORD",
+              "STAGING_GCP_CLIENT_ID",
+              "STAGING_GCP_CLIENT_EMAIL",
+              "STAGING_GCP_PRIVATE_KEY_ID",
+              "STAGING_GCP_PRIVATE_KEY",
+              "GCP_PROJECT_ID",
+              "STAGING_BACKEND_BUCKET",
+              "STAGING_CLOUD_SQL_INSTANCE",
+              "STAGING_GCP_API_KEY",
+              "VAPID_PUBLIC_KEY",
+              "VAPID_PRIVATE_KEY",
+          ]
+          missing = [name for name in required if not os.environ.get(name)]
+          if missing:
+              print("Missing required secrets: " + ", ".join(missing), file=sys.stderr)
+              sys.exit(1)
+
+          env_variables = {
+              "DATABASE_URL": os.environ["STAGING_DATABASE_URL"],
+              "SECRET_KEY": os.environ["STAGING_SECRET_KEY"],
+              "SMTP_USERNAME": os.environ["SMTP_USERNAME"],
+              "SMTP_PASSWORD": os.environ["SMTP_PASSWORD"],
+              "SMTP_SENDER_NAME": "Deep Learning Indaba",
+              "SMTP_SENDER_EMAIL": os.environ.get("SMTP_SENDER_EMAIL", "baobab@deeplearningindaba.com"),
+              "SMTP_HOST": os.environ.get("SMTP_HOST", "email-smtp.us-east-1.amazonaws.com"),
+              "SMTP_PORT": os.environ.get("SMTP_PORT", "587"),
+              "GCP_CLIENT_ID": os.environ["STAGING_GCP_CLIENT_ID"],
+              "GCP_CLIENT_EMAIL": os.environ["STAGING_GCP_CLIENT_EMAIL"],
+              "GCP_PRIVATE_KEY_ID": os.environ["STAGING_GCP_PRIVATE_KEY_ID"],
+              "GCP_PRIVATE_KEY": os.environ["STAGING_GCP_PRIVATE_KEY"],
+              "GCP_PROJECT_NAME": os.environ["GCP_PROJECT_ID"],
+              "GCP_BUCKET_NAME": os.environ["STAGING_BACKEND_BUCKET"],
+              "FILE_SIZE_LIMIT": "10485760",
+              "BOABAB_HOST": os.environ.get("STAGING_BAOBAB_HOST", "https://test-baobab.deeplearningindaba.com/"),
+              "GCP_API_KEY": os.environ["STAGING_GCP_API_KEY"],
+              "VAPID_PUBLIC_KEY": os.environ["VAPID_PUBLIC_KEY"],
+              "VAPID_PRIVATE_KEY": os.environ["VAPID_PRIVATE_KEY"],
+          }
+
+          def scalar(value):
+              return "'" + str(value).replace("\\n", "\\\\n").replace("'", "''") + "'"
+
+          with open("app.generated.yaml", "w") as f:
+              f.write("service: staging-api\n")
+              f.write("runtime: python311\n")
+              f.write("instance_class: B4\n")
+              f.write("entrypoint: " + scalar("gunicorn -c gunicorn.config.py -b :$PORT main:app") + "\n")
+              f.write("\n")
+              f.write("manual_scaling:\n")
+              f.write("  instances: 1\n")
+              f.write("\n")
+              f.write("env_variables:\n")
+              for key, value in env_variables.items():
+                  f.write("  " + key + ": " + scalar(value) + "\n")
+              f.write("\n")
+              f.write("beta_settings:\n")
+              f.write("  cloud_sql_instances: " + scalar(os.environ["STAGING_CLOUD_SQL_INSTANCE"]) + "\n")
+          PY
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+          STAGING_SECRET_KEY: ${{ secrets.STAGING_SECRET_KEY }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_SENDER_EMAIL: baobab@deeplearningindaba.com
+          SMTP_HOST: email-smtp.us-east-1.amazonaws.com
+          SMTP_PORT: 587
+          STAGING_GCP_CLIENT_ID: ${{ secrets.STAGING_GCP_CLIENT_ID }}
+          STAGING_GCP_CLIENT_EMAIL: ${{ secrets.STAGING_GCP_CLIENT_EMAIL }}
+          STAGING_GCP_PRIVATE_KEY_ID: ${{ secrets.STAGING_GCP_PRIVATE_KEY_ID }}
+          STAGING_GCP_PRIVATE_KEY: ${{ secrets.STAGING_GCP_PRIVATE_KEY }}
+          STAGING_BACKEND_BUCKET: ${{ secrets.STAGING_BACKEND_BUCKET }}
+          STAGING_BAOBAB_HOST: ${{ secrets.STAGING_BAOBAB_HOST }}
+          STAGING_CLOUD_SQL_INSTANCE: ${{ secrets.STAGING_CLOUD_SQL_INSTANCE }}
+          STAGING_GCP_API_KEY: ${{ secrets.STAGING_GCP_API_KEY }}
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+
+      - name: Deploy backend to App Engine staging service
+        run: gcloud app deploy app.generated.yaml --quiet --promote --stop-previous-version --version=v1
+
+  frontend:
+    name: Build and deploy staging frontend
+    runs-on: ubuntu-latest
+    needs: backend
+    defaults:
+      run:
+        working-directory: webapp
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: webapp/.nvmrc
+          cache: pnpm
+          cache-dependency-path: webapp/pnpm-lock.yaml
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate staging frontend env file
+        run: |
+          cat > .env.test <<EOF
+          REACT_APP_API_URL=https://staging-api-dot-baobab.appspot.com
+          REACT_APP_DEFAULT_EVENT_ID=1
+          REACT_APP_VAPID_PUBLIC_KEY=$VAPID_PUBLIC_KEY
+          EOF
+        env:
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+
+      - name: Build staging frontend
+        run: pnpm build-test
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Deploy frontend to App Engine
+        run: gcloud app deploy staging-app.yaml dispatch.yaml --quiet --promote --stop-previous-version --version=v1

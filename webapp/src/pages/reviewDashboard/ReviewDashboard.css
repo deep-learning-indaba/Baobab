@@ -1,17 +1,131 @@
-.btn-group-toggle>.btn-primary {
-    background: none;
-    color: #007bff;
+/* ── Review Dashboard (admin high-density) ───────────────── */
+
+.review-list-container {
+  padding-top: 0;
+}
+
+/* Page title row */
+.review-list-container .title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--clr-on-surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Stage pill */
+.review-list-container .stage-info {
+  font-family: var(--font-body) !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  color: var(--clr-primary) !important;
+  background: rgba(15, 82, 56, 0.08) !important;
+  border: 1px solid rgba(15, 82, 56, 0.2) !important;
+  border-radius: var(--r-full) !important;
+  padding: 0.25rem 0.875rem !important;
+  display: inline-block !important;
+  text-align: center !important;
+}
+
+/* Cards */
+.review-list-container .card {
+  margin-bottom: 1.25rem;
+}
+
+/* Section headings inside cards */
+.review-list-container .card .card-body .card-title {
+  font-family: var(--font-body) !important;
+  font-size: 0.71875rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  color: var(--clr-outline) !important;
+  margin-bottom: 1rem !important;
+}
+
+/* ── Mode toggle (Details / Summary) ────── */
+.btn-group.btn-group-toggle {
+  display: inline-flex;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  border: 1.5px solid var(--clr-primary);
+  margin-bottom: 1rem;
+}
+
+.btn-group-toggle > .btn-primary {
+  background: transparent !important;
+  color: var(--clr-primary) !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0.3125rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition: background var(--transition), color var(--transition);
+}
+
+.btn-group-toggle > .btn-primary + .btn-primary {
+  border-left: 1px solid var(--clr-primary) !important;
 }
 
 .btn-primary:not(:disabled):not(.disabled).active {
-    background-color: #007bff;
-    border-color: #007bff;
+  background: var(--clr-primary) !important;
+  color: var(--clr-on-primary) !important;
+  border-color: var(--clr-primary) !important;
+  box-shadow: none !important;
 }
 
-.review-list-container .stage-info {
-
+/* Table spacing */
+.review-padding {
+  margin-top: 0.875rem;
+  overflow-x: auto;
 }
 
-.review-list-container .card .card-body .card-title {
-    color: hsl(213deg 16% 49%);
+/* React Table overrides */
+.ReactTable {
+  font-family: var(--font-body) !important;
+  font-size: 0.8125rem !important;
+  border: 1px solid var(--clr-outline-variant) !important;
+  border-radius: var(--r-md) !important;
+  overflow: hidden !important;
+}
+
+.ReactTable .rt-thead .rt-th,
+.ReactTable .rt-thead .rt-td {
+  font-weight: 600 !important;
+  font-size: 0.71875rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: var(--clr-on-surface-muted) !important;
+  background: var(--clr-surface-low) !important;
+  border-right: 1px solid var(--clr-outline-variant) !important;
+  padding: 0.625rem 0.75rem !important;
+}
+
+.ReactTable .rt-tbody .rt-td {
+  padding: 0.5rem 0.75rem !important;
+  border-right: 1px solid var(--clr-surface-mid) !important;
+  color: var(--clr-on-surface) !important;
+}
+
+.ReactTable .rt-tbody .rt-tr:hover .rt-td {
+  background: var(--clr-surface-low) !important;
+}
+
+.ReactTable .rt-tbody .rt-tr.-odd {
+  background: var(--clr-white) !important;
+}
+
+.ReactTable .rt-tbody .rt-tr.-even {
+  background: var(--clr-surface-low) !important;
+}
+
+/* CSV download button */
+.review-list-container .pull-right {
+  float: right;
+  margin-top: 0.75rem;
 }

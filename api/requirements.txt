@@ -5,8 +5,6 @@ Flask-Bcrypt==0.7.1
 Flask-Failsafe
 Flask-Migrate==2.7.0
 Flask-RESTful==0.3.8
-Flask-Redis
-flask-restplus
 Flask-SQLAlchemy==2.5.1
 Flask-Script==2.0.6
 Flask-Login
@@ -22,18 +20,17 @@ alembic
 aniso8601
 blinker
 itsdangerous==1.1.0
-nose
+pytest
 passlib
 pytz
-redis
 six
 flask-cors
 python-dateutil
 gunicorn
 google-cloud-storage
+google-cloud-translate==2.0.1
 oauth2client
 oauthlib
-enum34
 psycopg2-binary
 docx-mailmerge
 requests==2.29.0
@@ -47,3 +44,5 @@ rsa
 WTForms==2.3.3
 stripe==3.2.0
 google-api-python-client==2.23.0
+pywebpush>=1.14,<2
+markdown==3.3.7

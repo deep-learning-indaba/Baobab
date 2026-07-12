@@ -131,6 +131,12 @@ class AppUser(db.Model, UserMixin):
             or self._has_admin_role(event_id, 'admin')
             or self._has_admin_role(event_id,'registration-volunteer')
         )
+
+    def is_programme_editor(self, event_id):
+        return self._has_admin_role(event_id, 'programme-editor') or self.is_event_admin(event_id)
+
+    def is_comms_officer(self, event_id):
+        return self._has_admin_role(event_id, 'comms-officer') or self.is_event_admin(event_id)
          
 class PasswordReset(db.Model):
 
@@ -188,3 +194,14 @@ class UserComment(db.Model):
         self.comment_by_user_id = comment_by_user_id
         self.timestamp = timestamp
         self.comment = comment
+
+
+class UserConsent(db.Model):
+    __tablename__ = 'user_consent'
+    id = db.Column(db.Integer(), primary_key=True)
+    user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
+    event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=True)
+    consent_type = db.Column(db.String(40), nullable=False)
+    consent_version = db.Column(db.String(20), nullable=False)
+    granted = db.Column(db.Boolean(), nullable=False)
+    timestamp = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow)

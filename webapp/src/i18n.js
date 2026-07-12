@@ -26,7 +26,7 @@ function i18nInit(organisation) {
         }
       }
   
-      if (found.length == 0) {
+      if (found.length === 0) {
         return undefined;
       }
   
@@ -34,7 +34,7 @@ function i18nInit(organisation) {
       const orgLanguageCodes = organisation.languages.map(l => l.code);
       let selectedLanguage = null;
       found.forEach(f => {
-        if (selectedLanguage == null && orgLanguageCodes.includes(f)) {
+        if (selectedLanguage === null && orgLanguageCodes.includes(f)) {
           selectedLanguage = f; 
         }
       })

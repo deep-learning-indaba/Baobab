@@ -9,7 +9,7 @@ class FormTextBox extends React.Component {
     return this.props.showError && this.props.errorText !== "";
   };
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     if (nextProps.showFocus) {
       this.nameInput.focus();
     }
@@ -43,7 +43,7 @@ class FormTextBox extends React.Component {
             }
             type={this.props.type || "text"}
             placeholder={this.props.placeholder}
-            value={this.props.value}
+            value={this.props.value ?? ''}
             onChange={this.props.onChange}
             min={this.props.min || null}
             ref={input => {

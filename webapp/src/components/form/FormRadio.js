@@ -31,12 +31,12 @@ class FormRadio extends React.Component {
                             }
                             type="radio"
                             value={o.value}
-                            checked={this.props.value === o.value}
+                            checked={String(this.props.value) === String(o.value)}
                             onChange={this.props.onChange}
                             tabIndex={this.props.tabIndex}
                             autoFocus={this.props.autoFocus}
                         />
-                        <label class="form-check-label" htmlFor={this.props.id + "_" + o.value}>{o.label}</label>
+                        <label className="form-check-label" htmlFor={this.props.id + "_" + o.value}>{o.label}</label>
                     </div>
                 );
             })}
