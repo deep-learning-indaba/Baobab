@@ -14,11 +14,14 @@ from app.invitedGuest.repository import InvitedGuestRepository as invited_guest_
 from app.offer.repository import OfferRepository as offer_repository
 from app.users.repository import UserRepository as user_repository
 from app.registration.repository import RegistrationRepository as registration_repository
+from app.invitedGuest.repository import InvitedGuestRepository as invited_guest_repository
 from app.utils.auth import auth_required
 from app.utils.emailer import email_user
 from app.utils.misc import get_baobab_host
 from app.utils.datetime_utils import event_local_date
 from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, ATTENDANCE_NOT_FOUND, EVENT_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, INDEMNITY_NOT_FOUND, INDEMNITY_NOT_SIGNED, NOT_A_GUEST, INVALID_QR, NOT_ON_GUEST_LIST, MISSING_FIELDS
+from app import LOGGER
+
 
 attendance_fields = {
     'id': fields.Integer,
