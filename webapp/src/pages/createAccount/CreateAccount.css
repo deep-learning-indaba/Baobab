@@ -1,14 +1,47 @@
-@media all and (min-width: 480px) {
+/* ── Create Account Page ─────────────────────────────────── */
+
+.CreateAccount {
+  padding: 2.5rem 1rem 4rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.CreateAccount form {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+/* ── Form card ─── */
+.CreateAccount .card {
+  border-radius: var(--r-xl) !important;
+  padding: 2rem !important;
+  box-shadow: var(--shadow-elevated) !important;
+  border: 1px solid rgba(191, 201, 193, 0.4) !important;
+}
+
+/* ── Submit button ─── */
+#btn-signup-confirm {
+  width: 100%;
+  margin-top: 1.5rem;
+  padding: 0.625rem;
+  font-size: 0.9375rem;
+  justify-content: center;
+}
+
+/* ── Responsive ─── */
+@media (max-width: 480px) {
   .CreateAccount {
-    padding: 1em 0;
+    padding: 1.5rem 0 3rem;
   }
 
   .CreateAccount form {
-    margin: 0 auto;
-    max-width: 430px;
+    max-width: 100%;
   }
-}
 
-#btn-signup-confirm {
-  margin-top: 2em;
+  .CreateAccount .card {
+    padding: 1.5rem !important;
+    border-radius: var(--r-lg) !important;
+  }
 }

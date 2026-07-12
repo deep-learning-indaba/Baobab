@@ -37,13 +37,11 @@ axios.interceptors.response.use(
       localStorage.removeItem("user");
       if (
         history && history.location &&
-        (
-          history.location.pathname !== "/" &&
-          history.location.pathname !== "/createAccount" &&
-          history.location.pathname !== "/resetPassword"
-        )
+        history.location.pathname !== "/createAccount" &&
+        history.location.pathname !== "/resetPassword" &&
+        history.location.pathname !== "/login"
       ) {
-        history.push("/login");
+        history.push({ pathname: "/login", state: { from: history.location } });
       }
     } else throw error;
   }

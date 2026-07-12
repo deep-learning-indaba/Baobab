@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import { getImage } from "./utils/images";
 import { Router, Route, NavLink, Switch } from "react-router-dom";
 import Home from "./pages/home";
 import EventHome from "./pages/eventHome";
@@ -11,6 +12,8 @@ import VerifyEmail from "./pages/verifyEmail";
 import Profile from "./pages/profile";
 import { PrivateRoute } from "./components";
 import UserDropdown from "./components/User";
+import InstallBanner from "./components/InstallBanner";
+import { InstallProvider } from "./context/InstallContext";
 import ViewFile from "./components/ViewFile";
 import Reference from "./pages/references";
 import CookieConsent from "react-cookie-consent";
@@ -25,6 +28,7 @@ import history from "./History";
 import { isEventAdmin, isRegistrationAdmin, isRegistrationVolunteer, isEventReviewer } from "./utils/user";
 import { withTranslation } from 'react-i18next';
 import { userService } from "./services/user";
+import { registerPushSubscription } from "./utils/push";
 
 
 ReactGA.initialize("UA-136093201-1", {
@@ -38,280 +42,33 @@ history.listen(location => {
 });
 
 
-class EventNav extends Component {
+class LanguageSelectorComponent extends Component {
   constructor(props) {
     super(props);
-
-    this.state = {
-      collapsed: true
-    };
+    this.state = { isOpen: false };
+    this.dropdownRef = React.createRef();
   }
 
-  render() {
-    const t = this.props.t;
-
-    return (
-      <nav className="navbar navbar-expand-sm bg-white navbar-light">
-
-        <a href={`/${this.props.eventKey}`} className="navbar-brand">{this.props.event.name}</a>
-        <div className={
-          "collapse navbar-collapse" +
-          (this.state.collapsed ? " collapsed" : "")
-        } id="eventNavbar">
-
-          <ul className="navbar-nav">
-            {this.props.user &&
-              this.props.event &&
-              this.props.event.is_application_open && (
-                <li className="nav-item">
-                  <NavLink
-                    to={`/${this.props.eventKey}/apply`}
-                    activeClassName="nav-link active"
-                    className="nav-link"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {this.props.event.event_type === 'JOURNAL' ? t('Submit') : t('Apply')}
-                  </NavLink>
-                </li>
-              )}
-            {this.props.user && this.props.event && this.props.event.is_offer_open && (
-              <li className="nav-item">
-                <NavLink
-                  to={`/${this.props.eventKey}/offer`}
-                  activeClassName="nav-link active"
-                  className="nav-link"
-                  onClick={this.props.toggleMenu}
-                >
-                  {t('Offer')}
-                </NavLink>
-              </li>
-            )}
-            {this.props.user &&
-              (
-                <li className="nav-item dropdown ">
-                  <div
-                    className="nav-link dropdown-toggle"
-                    id="navbarDropdown"
-                    role="button"
-                    data-toggle="dropdown"
-                    aria-haspopup="true"
-                    aria-expanded="false"
-                  >
-                    {t('Registration')}
-                  </div>
-                  <div className="dropdown-menu" aria-labelledby="navbarDropdown">
-                    {this.props.event && this.props.event.is_registration_open && (
-                      <NavLink
-                        to={`/${this.props.eventKey}/registration`}
-                        className="dropdown-item"
-                        onClick={this.props.toggleMenu}
-                      >
-                        {t('Registration Form')}
-                      </NavLink>)}
-                    <NavLink
-                      to={`/${this.props.eventKey}/invitationLetter`}
-                      className="dropdown-item"
-                      onClick={this.props.toggleMenu}
-                    >
-                      {t('Invitation Letter')}
-                    </NavLink>
-                    <NavLink
-                      to={`/${this.props.eventKey}/indemnity`}
-                      className="dropdown-item"
-                      onClick={this.props.toggleMenu}
-                    >
-                      {t('Indemnity Form')}
-                    </NavLink>
-                    {/* <NavLink
-                      to={`/${this.props.eventKey}/invoices`}
-                      className="dropdown-item"
-                      onClick={this.props.toggleMenu}
-                    >
-                      {t('Invoices')}
-                    </NavLink> */}
-                  </div>
-                </li>
-              )}
-            {isEventAdmin(this.props.user, this.props.event) && (
-              <AdminMenu t={t} label="Event Admin">
-                <NavLink
-                  to={`/${this.props.eventKey}/eventConfig`}
-                  className="dropdown-item"
-                  onClick={this.props.toggleMenu}
-                >
-                  {t('Edit Event Details')}
-                </NavLink>
-                <NavLink
-                  to={`/${this.props.eventKey}/reviewAssignment`}
-                  className="dropdown-item"
-                  onClick={this.props.toggleMenu}
-                >
-                  {t('Review Assignment')}
-                </NavLink>
-                <NavLink
-                  to={`/${this.props.eventKey}/invitedGuests`}
-                  className="dropdown-item"
-                  onClick={this.props.toggleMenu}
-                >
-                  {t('Invited Guests')}
-                </NavLink>
-                <NavLink
-                  to={`/${this.props.eventKey}/responseList`}
-                  className="dropdown-item"
-                  onClick={this.props.toggleMenu}
-                >
-                  {t('Response List')}
-                </NavLink>
-                <NavLink
-                  to={`/${this.props.eventKey}/reviewDashboard`}
-                  className="dropdown-item"
-                  onClick={this.props.toggleMenu}
-                >
-                  {t('Review Dashboard')}
-                </NavLink>
-                <NavLink
-                  to={`/${this.props.eventKey}/tagConfig`}
-                  className="dropdown-item"
-                  onClick={this.props.toggleMenu}
-                >
-                  {t('Configure Tags')}
-                </NavLink>
-                <NavLink
-                  to={`/${this.props.eventKey}/offerAdmin`}
-                  className="dropdown-item"
-                  onClick={this.props.toggleMenu}
-                >
-                  {t('Offers')}
-                </NavLink>
-                <NavLink
-                  to={`/${this.props.eventKey}/invoices-admin`}
-                  className="dropdown-item"
-                  onClick={this.props.toggleMenu}
-                >
-                  {t('Invoices')}
-                </NavLink>
-                <NavLink
-                  to={`/${this.props.eventKey}/eventRoleAdmin`}
-                  className="dropdown-item"
-                  onClick={this.props.toggleMenu}
-                >
-                  {t('Event Roles')}
-                </NavLink>
-                <h6 className='dropdown-submenu-header'>Form Settings</h6>
-                <NavLink
-                  to={`/${this.props.eventKey}/applicationform`}
-                  className="dropdown-item dropdown-submenu-item"
-                  onClick={this.props.toggleMenu}
-                >
-                  {t('Application Form')}
-                </NavLink>
-                <NavLink
-                  to={`/${this.props.eventKey}/reviewForm`}
-                  className="dropdown-item dropdown-submenu-item"
-                  onClick={this.props.toggleMenu}
-                >
-                  {t('Review Form')}
-                </NavLink>
-              </AdminMenu>
-            )}
-            {isEventReviewer(this.props.user, this.props.event) &&
-              this.props.event &&
-              this.props.event.is_review_open && (
-                <li className="nav-item dropdown">
-                  <div
-                    className="nav-link dropdown-toggle"
-                    id="navbarDropdown"
-                    role="button"
-                    data-toggle="dropdown"
-                    aria-haspopup="true"
-                    aria-expanded="false"
-                  >
-                    {t('Reviews')}
-                  </div>
-                  <div className="dropdown-menu" aria-labelledby="navbarDropdown">
-                    <NavLink
-                      to={`/${this.props.eventKey}/reviewlist`}
-                      className="dropdown-item"
-                      onClick={this.props.toggleMenu}
-                    >
-                      {t('Review')}
-                    </NavLink>
-                    <NavLink
-                      to={`/${this.props.eventKey}/reviewHistory`}
-                      className="dropdown-item"
-                      onClick={this.props.toggleMenu}
-                    >
-                      {t('Review History')}
-                    </NavLink>
-                  </div>
-                </li>
-              )}
-            {(isRegistrationAdmin(this.props.user, this.props.event) || isRegistrationVolunteer(this.props.user, this.props.event)) &&
-              this.props.event &&
-              this.props.event.is_registration_open && (
-                <li className="nav-item dropdown">
-                  <div
-                    className="nav-link dropdown-toggle"
-                    id="navbarDropdown"
-                    role="button"
-                    data-toggle="dropdown"
-                    aria-haspopup="true"
-                    aria-expanded="false"
-                  >
-                    {t('Registration Admin')}
-                  </div>
-                  <div className="dropdown-menu" aria-labelledby="navbarDropdown">
-                    {isRegistrationAdmin(this.props.user, this.props.event) && <NavLink
-                      to={`/${this.props.eventKey}/invoices-admin`}
-                      className="dropdown-item"
-                      onClick={this.props.toggleMenu}
-                    >
-                      {t('Invoices')}
-                    </NavLink>}
-                    {isRegistrationVolunteer(this.props.user, this.props.event) && (
-                      <NavLink
-                        to={`/${this.props.eventKey}/eventAttendance`}
-                        className="dropdown-item"
-                        onClick={this.props.toggleMenu}
-                      >
-                        {t('Event Attendance')}
-                      </NavLink>
-                    )}
-                  </div>
-                </li>
-              )}
-          </ul>
-        </div>
-        <button
-          className="navbar-toggler"
-          type="button"
-          data-toggle="collapse"
-          data-target="#eventNavbar"
-          aria-controls="eventNavbar"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span className="navbar-toggler-icon" />
-        </button>
-      </nav>
-
-    );
+  componentDidMount() {
+    document.addEventListener("mousedown", this.handleClickOutside);
   }
-}
 
+  componentWillUnmount() {
+    document.removeEventListener("mousedown", this.handleClickOutside);
+  }
 
-const EventNavTranslation = withTranslation()(EventNav);
+  handleClickOutside = (event) => {
+    if (this.dropdownRef.current && !this.dropdownRef.current.contains(event.target)) {
+      this.setState({ isOpen: false });
+    }
+  };
 
-
-class LanguageSelectorComponent extends Component {
   changeLanguage = (lang) => {
-    // Change the language using i18next
+    this.setState({ isOpen: false });
     if (this.props.i18n) {
       this.props.i18n.changeLanguage(lang).then(() => {
         const currentUser = JSON.parse(localStorage.getItem("user"))
         if (currentUser) {
-          // We send a put request to the user service to update the language on the back-end. 
-          // Note the language is automatically sent with every request through axios
           userService.get().then(result => {
             userService.update({
               email: result.email,
@@ -329,23 +86,24 @@ class LanguageSelectorComponent extends Component {
   render() {
     if (this.props.organisation && this.props.organisation.languages.length > 1) {
       return (
-        <ul className="navbar-nav language-navbar">
+        <ul className="navbar-nav language-navbar" ref={this.dropdownRef}>
           <li className="nav-item dropdown">
             <button
-              className="nav-link dropdown-toggle link-style"
-              id="userDropdown"
-              data-toggle="dropdown"
+              className="nav-link link-style"
+              onClick={() => this.setState(s => ({ isOpen: !s.isOpen }))}
               aria-haspopup="true"
-              aria-expanded="false"
+              aria-expanded={this.state.isOpen}
             >
               <i className="fas fa-globe menu-icon" />{" "}
               {this.props.i18n.language}
             </button>
-            <div className="dropdown-menu" aria-labelledby="userDropdown">
-              {this.props.organisation.languages.map(lang => (
-                <button className="dropdown-item cursor-pointer" onClick={() => this.changeLanguage(lang.code)} key={lang.code}>{lang.description}</button>
-              ))}
-            </div>
+            {this.state.isOpen && (
+              <div className="dropdown-menu show" aria-labelledby="userDropdown">
+                {this.props.organisation.languages.map(lang => (
+                  <button className="dropdown-item cursor-pointer" onClick={() => this.changeLanguage(lang.code)} key={lang.code}>{lang.description}</button>
+                ))}
+              </div>
+            )}
           </li>
         </ul>)
     }
@@ -384,9 +142,10 @@ class AppComponent extends Component {
     userService.authRefresh().then(user => {
       if (!user.error) {
         localStorage.setItem("user", JSON.stringify(user));
-        this.setState({
-          user: user
-        });
+        this.setState({ user: user });
+        // Silently re-sync the push subscription if the user already granted
+        // permission — self-heals the record across reinstalls / new devices.
+        registerPushSubscription({ requestPermission: false });
       }
       else {
         localStorage.removeItem("user");
@@ -415,6 +174,8 @@ class AppComponent extends Component {
           title: result.user_title
         });
       });
+
+      registerPushSubscription({ requestPermission: false });
     }
 
   }
@@ -433,6 +194,7 @@ class AppComponent extends Component {
   render() {
     const t = this.props.t;
     return (
+      <InstallProvider>
       <Router history={history}>
         <div className="notranslate" translate="no">
           <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -446,7 +208,7 @@ class AppComponent extends Component {
               <img
                 src={
                   this.props.organisation &&
-                  require("./images/" + this.props.organisation.icon_logo)
+                  getImage(this.props.organisation.icon_logo)
                 }
                 width="30"
                 height="30"
@@ -476,19 +238,14 @@ class AppComponent extends Component {
             <button
               className="navbar-toggler"
               type="button"
-              data-toggle="collapse"
-              data-target="#navbarNav"
+              onClick={this.toggleMenu}
               aria-controls="navbarNav"
-              aria-expanded="false"
+              aria-expanded={!this.state.collapsed}
               aria-label="Toggle navigation"
             >
               <span className="navbar-toggler-icon" />
             </button>
           </nav>
-          {this.state.currentEvent && <EventNavTranslation
-            eventKey={this.state.eventKey}
-            event={this.state.currentEvent}
-            user={this.state.user} />}
           <div className="Body">
             <div className="container-fluid">
               {this.state.error && <div className="alert alert-danger">{this.state.error}</div>}
@@ -619,6 +376,7 @@ class AppComponent extends Component {
               </div>
             </div>
           </footer>
+          <InstallBanner />
           <CookieConsent
             cookieName="baobab-cookie-consent"
             style={{ background: "#343a40" }}
@@ -645,6 +403,7 @@ class AppComponent extends Component {
           </CookieConsent>
         </div>
       </Router>
+      </InstallProvider>
     );
   }
 }

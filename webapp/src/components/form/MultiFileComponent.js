@@ -33,7 +33,7 @@ import { getDownloadURL } from '../../utils/files';
         let name = this.state.name;
         const rename = value.name;
 
-        if (!this.state.name || this.state.name == "") {
+        if (!this.state.name || this.state.name === "") {
             name = value.name;
         }
 
@@ -94,7 +94,7 @@ import { getDownloadURL } from '../../utils/files';
             </input>)
         }
         else {
-            return (<div className="file-uploaded"><img src={tick} ></img><h6 style={{ marginLeft: "3px" }}>{this.props.value.file.name}</h6></div>)
+            return (<div className="file-uploaded"><img src={tick} alt="" ></img><h6 style={{ marginLeft: "3px" }}>{this.props.value.file.name}</h6></div>)
         }
     }
 
@@ -128,11 +128,11 @@ import { getDownloadURL } from '../../utils/files';
                         ></input>
 
                         <button onClick={this.submit} className={btnSubmit ? "btn-submit show" : "btn-submit"}>{t("Submit")}</button>
-                        <a onClick={this.nameChange} className={isSubmitted || this.props.value.name ? "edit show" : "edit"} data-tip={t("Edit Name")}><i className="fas fa-edit"></i></a>
+                        <button type="button" onClick={this.nameChange} className={isSubmitted || this.props.value.name ? "edit show" : "edit"} data-tip={t("Edit Name")}><i className="fas fa-edit"></i></button>
                         <ReactToolTip type="info" place="top" effect="solid" />
-                        <a onClick={this.del} className={file ? "bin show" : "bin"} data-tip={t("Delete")}><i className="fas fa-trash"></i></a>
+                        <button type="button" onClick={this.del} className={file ? "bin show" : "bin"} data-tip={t("Delete")}><i className="fas fa-trash"></i></button>
                         <ReactToolTip type="info" place="top" effect="solid" />
-                        <a className="view" style={file ? { display: "block" } : { display: "none" }} href={getDownloadURL(JSON.stringify(this.props.value))} target="_blank" data-tip={t("View File")}><i className="far fa-eye"></i></a>
+                        <a className="view" style={file ? { display: "block" } : { display: "none" }} href={getDownloadURL(JSON.stringify(this.props.value))} target="_blank" rel="noopener noreferrer" data-tip={t("View File")}><i className="far fa-eye"></i></a>
                         <ReactToolTip type="info" place="top" effect="solid" />
                     </div>
                     {this.state.error && <p style={{color: "red"}}>{t("Please enter a name")}</p>}

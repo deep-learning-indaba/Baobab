@@ -1,151 +1,458 @@
 import React, { Component } from 'react';
-import './Home.css';
-import { NavLink } from "react-router-dom";
-import { eventService } from "../../services/events/events.service";
-import { organisationService } from "../../services/organisation/organisation.service";
-import EventStatus from "../../components/EventStatus";
+import { NavLink } from 'react-router-dom';
 import { withTranslation } from 'react-i18next';
+import { getImage } from '../../utils/images';
+import { eventService } from '../../services/events/events.service';
+import { organisationService } from '../../services/organisation/organisation.service';
+import { Card, CardTitle } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
+import { buttonVariants } from '../../components/ui/button';
+import { cn } from '../../utils/styling/styling';
 
-class Home extends Component {
+/* ── Guest hero ─────────────────────────────────────────────── */
+function GuestHero({ organisation, t }) {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[58vh] py-16 text-center px-4">
+      {organisation && (
+        <img
+          src={getImage(organisation.large_logo)}
+          className="h-20 w-auto object-contain mb-10"
+          alt={organisation.system_name}
+        />
+      )}
+      <h1 className="font-heading text-4xl font-bold tracking-tight text-foreground mb-3 max-w-lg">
+        {t('Welcome to')} {organisation?.system_name}
+      </h1>
+      <p className="text-muted-foreground text-base max-w-sm mb-10 leading-relaxed">
+        {t('Sign up for an account to apply for events, awards, and programmes.')}
+      </p>
+      <div className="flex flex-wrap gap-3 justify-center">
+        <NavLink to="/createAccount" className={cn(buttonVariants({ size: 'lg' }))}>
+          {t('Create Account')}
+        </NavLink>
+        <NavLink to="/login" className={cn(buttonVariants({ variant: 'secondary', size: 'lg' }))}>
+          {t('Sign In')}
+        </NavLink>
+      </div>
+    </div>
+  );
+}
 
-    constructor(props) {
-        super(props);
-        this.state = {
-            upcomingEvents: null,
-            awards: null,
-            journals: null,
-            organisation: null,
-            errors: []
-        }
-    }
+/* ── Application status stepper ─────────────────────────────── */
+function getApplicationStep(event) {
+  const s = event?.status;
+  if (!s) return 0;
+  if (s.offer_status || s.outcome_status) return 2;
+  if (s.application_status === 'Submitted' && !event.is_application_open) return 1;
+  return 0;
+}
 
-    componentDidMount() {
-        if (this.props.user) {
-            eventService.getEvents().then(response => {
-                if (response.error) {
-                    this.setState(prevState => ({
-                        errors: [
-                            ...prevState.errors,
-                            response.error
-                        ]
-                    }));
-                }
-                if (response.events) {
-                    this.setState({
-                        upcomingEvents: response.events.filter(e => e.event_type === 'EVENT' && (e.is_event_opening || e.is_event_open)),
-                        awards: response.events.filter(e => e.event_type === 'AWARD'  && (e.is_event_opening || e.is_event_open)),
-                        journals: response.events.filter(e => e.event_type === 'JOURNAL'),
-                        calls: response.events.filter(e => e.event_type === "CALL"  && (e.is_event_opening || e.is_event_open)),
-                        programmes: response.events.filter(e => e.event_type === "PROGRAMME"  && (e.is_event_opening || e.is_event_open)),
-                        attended: response.events.filter(e => !e.is_event_opening)
-                    });
-                }
-            });
-        }
+function StatusStepper({ event, t }) {
+  const current = getApplicationStep(event);
 
-        if (this.props.setEvent) {
-            this.props.setEvent(null, null);
-        }
+  const steps = [
+    {
+      label: 'Application Submitted',
+      subtitle: event.application_close_date ? `${t('Closed')} ${event.application_close_date}` : t('Submitted'),
+      icon: 'check',
+    },
+    {
+      label: 'Under Review',
+      subtitle: t('In Progress'),
+      icon: 'eye',
+    },
+    {
+      label: 'Final Decision',
+      subtitle: event.start_date || t('Pending'),
+      icon: 'user',
+    },
+  ];
 
-        organisationService.getOrganisation().then(response => {
-            if (response.error) {
-                this.setState(prevState => ({
-                    errors: [
-                        ...prevState.errors,
-                        response.error
-                    ]
-                }));
-            }
-            this.setState({
-                organisation: response.organisation,
-            });
-        });
-    }
+  return (
+    <div className="flex items-start w-full relative pt-2">
+      <div className="absolute top-6 left-[15%] right-[15%] h-0.5 bg-border z-0" />
 
-    statusDisplay(e) {
-        if (e.event_type === 'JOURNAL') {
-           return <EventStatus longForm={false} submissionLink={true} event={e} />;
-        }
-        else {
-            return <EventStatus longForm={false} event={e} />;
-         }
-    }
+      {steps.map((step, i) => {
+        const done = i < current;
+        const active = i === current;
 
-    dateDisplay = (e) => {
-        if (e.event_type === 'EVENT') {
-            return `${e.start_date} to ${e.end_date}`;
-        }
-        if (e.event_type === 'JOURNAL') {
-            return ``;
-        }
-        else {
-            return this.props.t("Applications Close") + " " + e.application_close_date;
-        }
-    }
-                                      
-    renderEventTable = (events, description) => {
-        if (this.props.user && events && events.length > 0) {
-            return (
-                <div className="event-table-container">
-                    <h3 className="text-center">{this.props.t(description)}</h3>
-                    <div className="custom-card">
-                        {events.map(e => {
-                            return (
-                                <div className="event" key={e.key}>
-                                    <div className="event-info">
-                                        <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
-                                        {this.dateDisplay(e)}
-                                    </div>
-                                    <div className="status-holder">{this.statusDisplay(e)}</div>
-                                </div>
-                            )
-                        })}
-                    </div>
-                </div>
-            );
-        }
-        return <div></div>
-    }
-    
-    render() {
-        const t = this.props.t;
-        let logo = this.state.organisation && this.state.organisation.large_logo;
-        // TODO: Remove this terrible hack once we have OrganisationTranslation on the backend
-        if (this.state.organisation && this.state.organisation.name === "AI4D Africa" && this.props.i18n.language === "fr") {
-            logo = "ai4d_logo_fr.png";
-        }
 
         return (
-            <div>
-                <div>
-                    <img src={this.state.organisation &&
-                        require("../../images/" + logo)}
-                        className="img-fluid large-logo" alt="logo" />
-                </div>
+          <div key={step.label} className="flex-1 flex flex-col items-center gap-2 relative z-10">
+            <div className={cn(
+              'w-8 h-8 rounded-full flex items-center justify-center transition-all bg-surface',
+              (done || active) && step.icon === 'check' ? 'bg-primary text-primary-foreground' :
+              active && step.icon === 'eye' ? 'bg-blue-50 text-blue-600 ring-4 ring-blue-50' :
+              !done && !active ? 'bg-surface-high text-muted-foreground border-2 border-border' :
+              'bg-surface-high text-foreground border-2 border-border'
+            )}>
+              <i className={
+                step.icon === 'check' ? 'fas fa-check' :
+                step.icon === 'eye' ? 'fas fa-eye' :
+                'fas fa-user'
+              } style={{ fontSize: 13 }} />
+            </div>
+            <div className="text-center">
+              <span className={cn(
+                'block text-sm whitespace-nowrap',
+                active ? 'font-bold text-foreground' : 'font-semibold text-foreground'
+              )}>
+                {t(step.label)}
+              </span>
+              <span className="block text-xs text-muted-foreground mt-0.5">
+                {step.subtitle}
+              </span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
-                {!this.props.user &&
-                    <div className="text-center">
-                        {this.state.organisation &&
-                            <h2 className="Blurb text-center">{t("Welcome to") + " "} {this.state.organisation.system_name}</h2>}
-                        <p className="text-center"><NavLink to="/createAccount" id="nav-signup">{t("Sign Up")}</NavLink> {t("for an account in order to apply for an event, award or call for proposals")}. <NavLink id="nav-login" to="/login">{t("Sign In")}</NavLink> {t("if you already have one")}.</p>
-                    </div>
-                }
+/* ── Featured active application card ───────────────────────── */
+function FeaturedEventCard({ event, t }) {
+  const statusPill = event.status?.offer_status || event.status?.outcome_status
+    ? t('Decision Made')
+    : event.is_application_open
+    ? t('Applied')
+    : t('Pending Review');
 
-                {this.props.user && this.props.user.is_admin &&
-                    <a href="../eventConfig" id="new_event_button" name="new_event_button" className="btn btn-primary">{this.props.t("Create New Event")}</a>
-                }
+  const contactEmail = event.contact_email;
 
-                {this.renderEventTable(this.state.upcomingEvents, "Upcoming Events")}
-                {this.renderEventTable(this.state.awards, "Awards")}
-                {this.renderEventTable(this.state.journals, "Journals")}
-                {this.renderEventTable(this.state.calls, "Calls for Proposals")}
-                {this.renderEventTable(this.state.programmes, "Programmes")}
-                {this.renderEventTable(this.state.attended, "Past Events")}
+  return (
+    <Card className="overflow-hidden p-6 rounded-2xl shadow-sm border border-border">
+      <div className="flex flex-col sm:flex-row justify-between items-start mb-2 gap-4">
+        <div>
+          <CardTitle className="text-2xl font-bold text-foreground mb-1">
+            {event.description}
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            {t('Your application for this event is currently ')}{statusPill.toLowerCase()}.
+          </p>
+        </div>
+        <div className="bg-primary/10 text-primary text-xs font-semibold px-3 py-1.5 rounded-md flex items-center gap-1.5 whitespace-nowrap">
+          <i className="fas fa-dollar-sign" style={{ fontSize: 12 }} />
+          {statusPill}
+        </div>
+      </div>
+
+      <div className="mt-8 mb-8">
+        <StatusStepper event={event} t={t} />
+      </div>
+
+      <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-border/40">
+        <a href={`/${event.key}/apply`} className={cn(buttonVariants({ variant: 'secondary' }))}>
+          {t('View Application')}
+        </a>
+        {contactEmail && (
+          <a href={`mailto:${contactEmail}`} className={cn(buttonVariants({ variant: 'default' }))}>
+            {t('Contact Support')}
+          </a>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+/* ── Event type image placeholder ───────────────────────────── */
+function EventImagePlaceholder({ eventType }) {
+  const colors = {
+    EVENT: 'bg-blue-100 text-blue-400',
+    AWARD: 'bg-amber-100 text-amber-400',
+    PROGRAMME: 'bg-purple-100 text-purple-400',
+    CALL: 'bg-green-100 text-green-400',
+    JOURNAL: 'bg-rose-100 text-rose-400',
+  };
+  const cls = colors[eventType] || 'bg-surface-high text-muted-foreground';
+  return (
+    <div className={cn('w-full h-full flex items-center justify-center', cls)}>
+      <i className="fas fa-calendar" style={{ fontSize: 26 }} />
+    </div>
+  );
+}
+
+/* ── Upcoming Event Card ────────────────────────────────── */
+function UpcomingEventCard({ event, t }) {
+  const dateStr = event.start_date || null;
+
+  const typeLabel = {
+    EVENT: t('Event'), AWARD: t('Award'), PROGRAMME: t('Programme'),
+    CALL: t('Call'), JOURNAL: t('Journal'),
+  }[event.event_type] || event.event_type;
+
+  return (
+    <Card className="overflow-hidden flex flex-row rounded-2xl shadow-sm border border-border">
+      <div className="w-36 sm:w-48 shrink-0 overflow-hidden">
+        {event.image
+          ? <img src={event.image} alt={event.description} className="w-full h-full object-cover" />
+          : <EventImagePlaceholder eventType={event.event_type} />
+        }
+      </div>
+      <div className="p-4 flex flex-col flex-1 min-w-0">
+        <span className="inline-flex items-center self-start px-2 py-0.5 rounded-md text-xs font-medium bg-surface-high text-foreground border border-border mb-2">
+          {typeLabel}
+        </span>
+        <h3 className="font-bold text-foreground leading-snug line-clamp-2 text-left">
+          <NavLink to={`/${event.key}`} className="text-foreground hover:text-primary transition-colors">
+            {event.description}
+          </NavLink>
+        </h3>
+        {dateStr && (
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-auto pt-3">
+            <i className="fas fa-calendar-alt shrink-0" style={{ fontSize: 13 }} />
+            <span>{t('Starts')} {dateStr}</span>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
 
 
+/* ── Activity Stats Card ────────────────────────────────────── */
+function ActivityStatsCard({ allEvents, attended, t }) {
+  const submitted = allEvents.filter((e) => e.status?.application_status === 'Submitted').length;
+  const attendedCount = attended ? attended.length : 0;
+  const offersCount = allEvents.filter((e) => e.status?.offer_status).length;
 
-            </div >)
+  return (
+    <Card className="rounded-2xl shadow-sm border border-border">
+      <div className="p-4 border-b border-border bg-surface/50">
+        <h3 className="font-bold text-foreground text-sm">{t('Summary Statistics')}</h3>
+      </div>
+      <div className="p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+              <i className="fas fa-file-alt" style={{ fontSize: 14 }} />
+            </div>
+            <span className="text-sm font-medium text-foreground">{t('Applications in Progress')}</span>
+          </div>
+          <span className="text-lg font-bold text-foreground">{submitted}</span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-green-50 text-green-600 flex items-center justify-center">
+              <i className="fas fa-check-circle" style={{ fontSize: 14 }} />
+            </div>
+            <span className="text-sm font-medium text-foreground">{t('Offers Received')}</span>
+          </div>
+          <span className="text-lg font-bold text-foreground">{offersCount}</span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center">
+              <i className="fas fa-users" style={{ fontSize: 14 }} />
+            </div>
+            <span className="text-sm font-medium text-foreground">{t('Events Attended')}</span>
+          </div>
+          <span className="text-lg font-bold text-foreground">{attendedCount}</span>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+/* ── Main Home component ────────────────────────────────────── */
+class Home extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      allEvents: [],
+      upcomingEvents: null,
+      awards: null,
+      journals: null,
+      calls: null,
+      programmes: null,
+      attended: null,
+      organisation: null,
+      errors: [],
+      loading: true,
+      pastEventsExpanded: false,
+    };
+  }
+
+  componentDidMount() {
+    if (this.props.user) {
+      eventService.getEvents().then((response) => {
+        if (response.error) {
+          this.setState((prev) => ({ errors: [...prev.errors, response.error], loading: false }));
+        }
+        if (response.events) {
+          const ev = response.events;
+          this.setState({
+            allEvents: ev,
+            upcomingEvents: ev.filter((e) => e.event_type === 'EVENT' && (e.is_event_opening || e.is_event_open)),
+            awards:         ev.filter((e) => e.event_type === 'AWARD' && (e.is_event_opening || e.is_event_open)),
+            journals:       ev.filter((e) => e.event_type === 'JOURNAL'),
+            calls:          ev.filter((e) => e.event_type === 'CALL' && (e.is_event_opening || e.is_event_open)),
+            programmes:     ev.filter((e) => e.event_type === 'PROGRAMME' && (e.is_event_opening || e.is_event_open)),
+            attended:       ev.filter((e) => !e.is_event_opening && e.status?.is_event_attendee),
+            loading: false,
+          });
+        }
+      });
+    } else {
+      this.setState({ loading: false });
     }
+
+    if (this.props.setEvent) {
+      this.props.setEvent(null, null);
+    }
+
+    organisationService.getOrganisation().then((response) => {
+      if (response.error) {
+        this.setState((prev) => ({ errors: [...prev.errors, response.error] }));
+      }
+      this.setState({ organisation: response.organisation });
+    });
+  }
+
+  render() {
+    const { t, user, i18n } = this.props;
+    const { organisation, upcomingEvents, awards, journals, calls, programmes, attended, allEvents, errors, loading, pastEventsExpanded } = this.state;
+
+    let logo = organisation?.large_logo;
+    if (organisation?.name === 'AI4D Africa' && i18n?.language === 'fr') {
+      logo = 'ai4d_logo_fr.png';
+    }
+
+    if (!user) {
+      return (
+        <GuestHero
+          organisation={organisation ? { ...organisation, large_logo: logo } : null}
+          t={t}
+        />
+      );
+    }
+
+    const firstName = user.firstname || user.first_name || '';
+
+    const featuredEvent = allEvents.find(
+      (e) => e.status?.application_status === 'Submitted'
+        && !e.status?.offer_status
+        && !e.status?.outcome_status
+    );
+
+    const hasOpenOpportunities = (upcomingEvents?.length || 0) + (awards?.length || 0) +
+      (calls?.length || 0) + (programmes?.length || 0) + (journals?.length || 0) > 0;
+
+    const isEmpty = !loading && !hasOpenOpportunities && (!attended || attended.length === 0);
+
+    return (
+      <div className="py-6">
+        {errors.map((err, i) => (
+          <div key={i} className="mb-4 rounded-lg bg-error-container text-on-error-container px-4 py-3 text-sm">
+            {err}
+          </div>
+        ))}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
+          {/* Main column */}
+          <div className="lg:col-span-2 space-y-8">
+
+            <div className="text-left">
+              <h1 className="font-heading text-3xl font-bold text-foreground">
+                {t('Welcome back')}{firstName ? `, ${firstName}` : ''}
+              </h1>
+              <p className="text-sm text-muted-foreground mt-2">
+                {t('recentActivitySummary', { systemName: organisation?.system_name })}
+              </p>
+            </div>
+
+            {featuredEvent && (
+              <section>
+                <FeaturedEventCard event={featuredEvent} t={t} />
+              </section>
+            )}
+
+            {hasOpenOpportunities && (
+              <section>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-foreground">{t('Upcoming Opportunities')}</h2>
+                </div>
+                <div className="space-y-4">
+                  {[...(upcomingEvents || []), ...(awards || []), ...(calls || []), ...(programmes || []), ...(journals || [])].map((e) => (
+                    <UpcomingEventCard key={e.key} event={e} t={t} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {user.is_admin && (
+              <div>
+                <a href="../eventConfig" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm border border-transparent !text-white !bg-action hover:!bg-action-container">
+                  <i className="fas fa-plus" style={{ fontSize: 14 }} />
+                  {t('Create New Event')}
+                </a>
+              </div>
+            )}
+
+            {/* Past events — collapsible */}
+            {attended && attended.length > 0 && (
+              <section>
+                <button
+                  onClick={() => this.setState((s) => ({ pastEventsExpanded: !s.pastEventsExpanded }))}
+                  className="flex items-center justify-between w-full mb-4 group"
+                >
+                  <h2 className="text-xl font-bold text-foreground">{t('Past Events')}</h2>
+                  <span className="flex items-center gap-1.5 text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                    <span>{pastEventsExpanded ? t('Hide') : t('Show')} ({attended.length})</span>
+                    <i className={cn('fas fa-chevron-down transition-transform', pastEventsExpanded ? 'rotate-180' : '')} style={{ fontSize: 13 }} />
+                  </span>
+                </button>
+
+                {pastEventsExpanded && (
+                  <Card className="p-0 overflow-hidden">
+                    {attended.map((e, i) => (
+                      <div
+                        key={e.key}
+                        className={cn(
+                          'flex items-center justify-between gap-4 px-5 py-4 hover:bg-surface-low transition-colors',
+                          i < attended.length - 1 && 'border-b border-border/50'
+                        )}
+                      >
+                        <div className="flex flex-col min-w-0">
+                          <NavLink
+                            to={`/${e.key}`}
+                            className="text-sm font-medium text-foreground hover:text-primary transition-colors truncate"
+                          >
+                            {e.description}
+                          </NavLink>
+                          {e.end_date && (
+                            <span className="text-xs text-muted-foreground mt-0.5">{e.end_date}</span>
+                          )}
+                        </div>
+                        <Badge variant="secondary" className="shrink-0">{t('Attended')}</Badge>
+                      </div>
+                    ))}
+                  </Card>
+                )}
+              </section>
+            )}
+
+            {isEmpty && (
+              <div className="text-center py-20 border border-dashed border-border rounded-2xl text-muted-foreground">
+                <p className="font-heading font-semibold text-foreground text-lg mb-1">
+                  {t('No open opportunities right now')}
+                </p>
+                <p className="text-sm">{t('Check back soon for events, awards, and programmes.')}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            <ActivityStatsCard allEvents={allEvents} attended={attended} t={t} />
+          </div>
+        </div>
+      </div>
+    );
+  }
 }
 
 export default withTranslation()(Home);

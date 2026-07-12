@@ -52,8 +52,32 @@
   text-align: left;
 }
 
+.confirmation.answer h5 {
+  font-family: var(--font-body);
+  font-weight: 600;
+  margin-bottom: 0.5em;
+}
+
 .confirmation-heading {
+  margin-top: 3em;
   margin-bottom: 3em;
+}
+
+.confirmation-heading h2 {
+  margin-bottom: 1em;
+}
+
+.confirmation-heading p {
+  margin-bottom: 1.5em;
+}
+
+.confirmation-section {
+  margin-bottom: 3em;
+}
+
+.confirmation-section-title {
+  text-align: left;
+  margin-bottom: 1.5em;
 }
 
 .select-control.is-invalid {

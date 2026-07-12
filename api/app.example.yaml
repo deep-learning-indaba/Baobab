@@ -1,0 +1,39 @@
+service: staging-api
+runtime: custom
+env: flex
+entrypoint: gunicorn -c gunicorn.config.py -b :$PORT main:app
+
+runtime_config:
+    python_version: 3
+
+manual_scaling:
+  instances: 1
+resources:
+  cpu: 1
+  memory_gb: 0.6
+  disk_size_gb: 15
+
+env_variables:
+  DATABASE_URL: 'DB_URL'
+  SECRET_KEY: 'SECRET_KEY'
+  SMTP_USERNAME: 'SMTP_USERNAME'
+  SMTP_PASSWORD: 'SMTP_PASSWORD'
+  SMTP_SENDER_NAME: 'Deep Learning Indaba'
+  SMTP_SENDER_EMAIL: 'baobab@deeplearningindaba.com'
+  SMTP_HOST: 'email-smtp.us-east-1.amazonaws.com'
+  SMTP_PORT: 587
+  GCP_CLIENT_ID: 1234
+  GCP_CLIENT_EMAIL: 'circle-ci@baobab.iam.gserviceaccount.com'
+  GCP_PRIVATE_KEY_ID: 'PRIVATE_KEY_ID'
+  GCP_PRIVATE_KEY: 'PRIVATE_KEY'
+  GCP_PROJECT_NAME: 'PROJECT_NAME'
+  GCP_BUCKET_NAME: 'BUCKET_NAME'
+  FILE_SIZE_LIMIT: 10485760
+  BOABAB_HOST: 'https://test-baobab.deeplearningindaba.com/'
+
+
+beta_settings:
+  cloud_sql_instances: baobab:us-central1:baobab
+
+readiness_check:
+  app_start_timeout_sec: 600

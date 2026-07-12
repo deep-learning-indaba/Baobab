@@ -1,4 +1,5 @@
 import React, { Component, Suspense } from "react";
+import { getImage } from "../../../utils/images";
 import { userService } from "../../../services/user";
 import { withRouter } from "react-router";
 import FormTextBox from "../../../components/form/FormTextBox";
@@ -219,26 +220,26 @@ class CreateAccountForm extends Component {
     const titleValue = this.getContentValue(this.state.titleOptions, title);
 
     return (
-      <div className="CreateAccount">
-        <form onSubmit={this.handleSubmit}>
-          <div class="login-header-logo text-center">
-            <img
-              src={
-                this.props.organisation &&
-                require("../../../images/" + this.props.organisation.small_logo)
-              }
-              alt="Logo"
-            />
-            <h3>{t("Sign Up")}</h3>
-            <h6>
-              <Link to="/login" className="sign-up">
+      <div className="flex flex-col items-center justify-center min-h-[75vh] py-12 px-4 sm:px-6 lg:px-8 text-left">
+        <form onSubmit={this.handleSubmit} className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-border p-8 space-y-6">
+          <div className="text-center space-y-2">
+            {this.props.organisation && (
+              <img
+                src={getImage(this.props.organisation.small_logo)}
+                alt="Logo"
+                className="mx-auto h-16 w-16 object-contain mb-4 rounded-xl border border-border/50 p-1"
+              />
+            )}
+            <h3 className="font-heading text-xl font-bold tracking-tight text-foreground">{t("Sign Up")}</h3>
+            <h6 className="text-sm text-muted-foreground">
+              <Link to="/login" className="text-primary hover:underline font-semibold">
                 {t("Sign In")}
               </Link>{" "}
               {t("if you already have an account")}
             </h6>
           </div>
 
-          <div class="card">
+          <div className="space-y-4">
             <FormSelect
               options={this.state.titleOptions}
               id={validationFields.title.name}
@@ -267,7 +268,6 @@ class CreateAccountForm extends Component {
               value={email}
               label={t(validationFields.email.display)}
             />
-            <div className="vertical-space"></div>
             <FormTextBox
               id={validationFields.password.name}
               type="password"
@@ -275,7 +275,7 @@ class CreateAccountForm extends Component {
               value={password}
               label={t(validationFields.password.display)}
             />
-            <Suspense fallback={<div>Loading...</div>}>
+            <Suspense fallback={<div className="text-xs text-muted-foreground">Loading...</div>}>
               <PassStrengthBar password={this.state.user.password} />
             </Suspense>
 
@@ -286,70 +286,73 @@ class CreateAccountForm extends Component {
               value={confirmPassword}
               label={t(validationFields.confirmPassword.display)}
             />
-            <div className="vertical-space"></div>
-            <div className="custom-control custom-checkbox text-left">
-              <input
-                className="custom-control-input"
-                id="over18"
-                name="over18"
-                type="checkbox"
-                checked={over18}
-                onChange={this.toggleAge}
-              />
-              <label class="custom-control-label" for="over18">
-                {t("I am over 18")}
-              </label>
-            </div>
-            <div className="custom-control custom-checkbox text-left">
-              <input
-                className="custom-control-input"
-                name="agreePrivacyPolicy"
-                id="agreePrivacyPolicy"
-                type="checkbox"
-                checked={agreePrivacyPolicy}
-                onChange={this.togglePrivacyPolicy}
-              />
-              <label class="custom-control-label" for="agreePrivacyPolicy">
-                {t("I have read and agree to the ")}
-                <a
-                  href={
-                    "/" +
-                    (this.props.organisation
-                      ? this.props.organisation.privacy_policy
-                      : "")
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {t("Privacy Policy")}
-                </a>
-              </label>
-            </div>
-            <button
-              id="btn-signup-confirm"
-              type="submit"
-              class="btn btn-primary"
-              disabled={
-                !this.validateForm() ||
-                loading ||
-                !agreePrivacyPolicy ||
-                !over18
-              }
-            >
-              {loading && (
-                <span
-                  class="spinner-grow spinner-grow-sm"
-                  role="status"
-                  aria-hidden="true"
+
+            <div className="space-y-3 pt-2">
+              <div className="flex items-start gap-2.5">
+                <input
+                  id="over18"
+                  name="over18"
+                  type="checkbox"
+                  checked={over18}
+                  onChange={this.toggleAge}
+                  className="rounded border-border text-primary focus:ring-primary w-4 h-4 cursor-pointer mt-0.5"
                 />
-              )}
-              {t("Sign Up")}
-            </button>
+                <label htmlFor="over18" className="text-sm text-muted-foreground cursor-pointer select-none">
+                  {t("I am over 18")}
+                </label>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <input
+                  name="agreePrivacyPolicy"
+                  id="agreePrivacyPolicy"
+                  type="checkbox"
+                  checked={agreePrivacyPolicy}
+                  onChange={this.togglePrivacyPolicy}
+                  className="rounded border-border text-primary focus:ring-primary w-4 h-4 cursor-pointer mt-0.5"
+                />
+                <label htmlFor="agreePrivacyPolicy" className="text-sm text-muted-foreground cursor-pointer select-none">
+                  {t("I have read and agree to the ")}
+                  <a
+                    href={
+                      "/" +
+                      (this.props.organisation
+                        ? this.props.organisation.privacy_policy
+                        : "")
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline font-semibold"
+                  >
+                    {t("Privacy Policy")}
+                  </a>
+                </label>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <button
+                id="btn-signup-confirm"
+                type="submit"
+                className="w-full inline-flex items-center justify-center px-5 py-3 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm disabled:opacity-50 cursor-pointer"
+                disabled={
+                  !this.validateForm() ||
+                  loading ||
+                  !agreePrivacyPolicy ||
+                  !over18
+                }
+              >
+                {loading && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-1.5"></div>
+                )}
+                {t("Sign Up")}
+              </button>
+            </div>
           </div>
 
           {errors && errors.$set && showErrors && this.getErrorMessages(errors)}
           {error && (
-            <div class="alert alert-danger alert-container">{error}</div>
+            <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-4">{error}</div>
           )}
         </form>
       </div>

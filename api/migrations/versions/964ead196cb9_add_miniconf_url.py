@@ -12,11 +12,20 @@ down_revision = '1e05a293f402'
 
 from alembic import op
 import sqlalchemy as sa
-from app.events.models import Event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import orm
+from app import db
 
 Base = declarative_base()
+
+
+class Event(Base):
+    __tablename__ = "event"
+    __table_args__ = {'extend_existing': True}
+
+    id = db.Column(db.Integer(), primary_key=True)
+    key = db.Column(db.String(255), nullable=False, unique=True)
+
 
 def upgrade():
     Base.metadata.bind = op.get_bind()

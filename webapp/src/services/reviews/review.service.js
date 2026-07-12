@@ -24,7 +24,13 @@ export const reviewService = {
   updateReviewForm,
   createReviewForm,
   addReviewerTag,
-  deleteReviewerTag
+  deleteReviewerTag,
+  getFormReviewAssignments,
+  assignFormReviews,
+  removeFormReviews,
+  getFormReviewSummary,
+  addFormResponseTag,
+  deleteFormResponseTag
 };
 
 function getReviewForm(eventId, skip) {
@@ -527,6 +533,135 @@ function createReviewForm({
       error: extractErrorMessage(error)
     };
   });
+}
+
+function getFormReviewAssignments(reviewFormId, eventId) {
+  return axios
+    .get(
+      baseUrl + '/api/v1/forms/' + reviewFormId + '/review-assignments?event_id=' + eventId,
+      { headers: authHeader() }
+    )
+    .then(function(response) {
+      return {
+        reviewers: response.data,
+        error: ''
+      };
+    })
+    .catch(function(error) {
+      return {
+        reviewers: null,
+        error: extractErrorMessage(error)
+      };
+    });
+}
+
+function assignFormReviews(reviewFormId, eventId, reviewerUserEmail, numReviews, tagIds) {
+  return axios
+    .post(
+      baseUrl + '/api/v1/forms/' + reviewFormId + '/review-assignments?event_id=' + eventId,
+      {
+        reviewer_user_email: reviewerUserEmail,
+        num_reviews: numReviews,
+        event_id: eventId,
+        tag_ids: tagIds || []
+      },
+      { headers: authHeader() }
+    )
+    .then(function(response) {
+      return {
+        reviews_assigned: response.data.reviews_assigned,
+        error: ''
+      };
+    })
+    .catch(function(error) {
+      return {
+        reviews_assigned: 0,
+        error: extractErrorMessage(error)
+      };
+    });
+}
+
+function removeFormReviews(reviewFormId, eventId, reviewerUserEmail, numReviews, tagIds) {
+  return axios
+    .delete(
+      baseUrl + '/api/v1/forms/' + reviewFormId + '/review-assignments?event_id=' + eventId,
+      {
+        headers: authHeader(),
+        data: {
+          reviewer_user_email: reviewerUserEmail,
+          num_reviews: numReviews,
+          event_id: eventId,
+          tag_ids: tagIds || []
+        }
+      }
+    )
+    .then(function(response) {
+      return {
+        num_deleted: response.data.num_deleted,
+        error: ''
+      };
+    })
+    .catch(function(error) {
+      return {
+        num_deleted: 0,
+        error: extractErrorMessage(error)
+      };
+    });
+}
+
+function getFormReviewSummary(reviewFormId, eventId, tagIds) {
+  var params = 'event_id=' + eventId;
+  if (tagIds && tagIds.length > 0) {
+    tagIds.forEach(function(id) {
+      params += '&tags[]=' + id;
+    });
+  }
+  return axios
+    .get(
+      baseUrl + '/api/v1/forms/' + reviewFormId + '/review-summary?' + params,
+      { headers: authHeader() }
+    )
+    .then(function(response) {
+      return {
+        reviewSummary: response.data,
+        error: ''
+      };
+    })
+    .catch(function(error) {
+      return {
+        reviewSummary: null,
+        error: extractErrorMessage(error)
+      };
+    });
+}
+
+function addFormResponseTag(formId, responseId, eventId, tagId) {
+  return axios
+    .post(
+      baseUrl + '/api/v1/forms/' + formId + '/responses/' + responseId + '/tags?event_id=' + eventId,
+      { tag_id: tagId },
+      { headers: authHeader() }
+    )
+    .then(function(response) {
+      return { data: response.data, error: '', status: response.status };
+    })
+    .catch(function(error) {
+      return { data: null, error: extractErrorMessage(error) };
+    });
+}
+
+function deleteFormResponseTag(formId, responseId, eventId, tagId) {
+  return axios
+    .delete(
+      baseUrl + '/api/v1/forms/' + formId + '/responses/' + responseId + '/tags?event_id=' + eventId,
+      { headers: authHeader(), data: { tag_id: tagId } }
+    )
+    .then(function(response) {
+      return { error: '' };
+    })
+    .catch(function(error) {
+      return { error: extractErrorMessage(error) };
+    });
 }
 
 function addReviewerTag({reviewerUserId, tagId, eventId}) {

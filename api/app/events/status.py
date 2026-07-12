@@ -5,6 +5,8 @@ from app.responses.repository import ResponseRepository as response_repository
 from app.registrationResponse.repository import RegistrationRepository as registration_repository
 from app.offer.repository import OfferRepository as offer_repository
 from app.outcome.repository import OutcomeRepository as outcome_repository
+from app.forms.models import Form as GenericForm, FormResponse
+from app import db
 
 
 class EventStatus():
@@ -49,15 +51,34 @@ def get_event_status(event_id, user_id):
         return EventStatus(invited_guest=invited_guest.role, 
                            registration_status=_get_registration_status(registration))
     
-    response = response_repository.get_by_user_id_for_event(user_id, event_id)
-    if response is None:
-        application_status = None
-    elif response.is_submitted:
-        application_status = 'Submitted'
-    elif response.is_withdrawn:
-        application_status = 'Withdrawn'
+    # Prefer new FormResponse system if the event has a form_type='application' form
+    app_form = db.session.query(GenericForm).filter_by(
+        event_id=event_id, form_type='application'
+    ).first()
+
+    if app_form:
+        form_response = db.session.query(FormResponse).filter_by(
+            form_id=app_form.id, user_id=user_id
+        ).order_by(FormResponse.id.desc()).first()
+
+        if form_response is None:
+            application_status = None
+        elif form_response.is_submitted:
+            application_status = 'Submitted'
+        elif form_response.is_withdrawn:
+            application_status = 'Withdrawn'
+        else:
+            application_status = 'Not Submitted'
     else:
-        application_status = 'Not Submitted'
+        response = response_repository.get_by_user_id_for_event(user_id, event_id)
+        if response is None:
+            application_status = None
+        elif response.is_submitted:
+            application_status = 'Submitted'
+        elif response.is_withdrawn:
+            application_status = 'Withdrawn'
+        else:
+            application_status = 'Not Submitted'
 
     outcome = outcome_repository.get_latest_by_user_for_event(user_id, event_id)
     if outcome is None:

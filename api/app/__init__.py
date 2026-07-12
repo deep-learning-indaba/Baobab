@@ -5,7 +5,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate, MigrateCommand
 from flask_script import Manager
-from flask_redis import FlaskRedis
 from .utils.logger import Logger
 from flask_admin import Admin, AdminIndexView, helpers, expose
 from flask_admin.contrib.sqla import ModelView
@@ -16,12 +15,16 @@ import tldextract
 
 app = Flask(__name__)
 app.config.from_object('config')
-CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
+_allowed_origins = [
+    app.config.get('BOABAB_HOST', 'http://localhost:8080').rstrip('/'),
+    'http://localhost:3000',
+    'http://localhost:8080',
+]
+CORS(app, resources={r"/api/*": {"origins": _allowed_origins}}, supports_credentials=True)
 print((app.config['SQLALCHEMY_DATABASE_URI']))
 rest_api = restful.Api(app)
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
-redis = FlaskRedis(app)
 LOGGER = Logger().get_logger()
 
 from . import routes
@@ -68,8 +71,17 @@ def is_from_stripe():
     stripe_user_agent = 'Stripe/1.0 (+https://stripe.com/docs/webhooks)'
     return request.environ.get('HTTP_USER_AGENT') == stripe_user_agent
 
+@app.route('/_ah/start')
+@app.route('/_ah/stop')
+@app.route('/_ah/warmup')
+def appengine_lifecycle():
+    return 'OK', 200
+
+
 @app.before_request
 def populate_organisation():
+    if request.path.startswith('/_ah/'):
+        return
     if is_from_stripe():
         signed_payload, expected_signature = get_signed_payload_and_signature()
         g.organisation = OrganisationResolver.resolve_from_stripe_signature(
@@ -78,7 +90,6 @@ def populate_organisation():
         )
     else:
         domain = get_domain()
-        LOGGER.info('Origin Domain: {}'.format(domain))  # TODO: Remove this after testing
         g.organisation = OrganisationResolver.resolve_from_domain(domain)
 
 ## Flask Admin Config
@@ -97,6 +108,13 @@ from .reviews.models import ReviewForm, ReviewQuestion
 from .registration.models import RegistrationForm, RegistrationSection, RegistrationQuestion, Registration, RegistrationAnswer
 from .offer.models import Offer
 from .invitationletter.models import InvitationTemplate, InvitationLetterRequest
+from .attendance.models import EventQRToken, Checkin
+from .users.models import UserConsent
+from .profiles.models import MemberProfile, MemberProfileLink, MemberProfileInterest
+from .connections.models import Connection, ConnectionReport
+from .programme.models import Session, SessionTranslation, Speaker, SessionSpeaker, SessionTag
+from .announcements.models import Announcement, AnnouncementTranslation, AnnouncementReceipt, PushSubscription
+from .engagement.models import EngagementEvent
 # Define login and registration forms (for flask-login)
 class LoginForm(form.Form):
     email = fields.TextField(validators=[validators.required()])
@@ -206,4 +224,18 @@ admin.add_view(BaobabModelView(RegistrationAnswer, db.session))
 admin.add_view(BaobabModelView(InvitationTemplate, db.session))
 admin.add_view(BaobabModelView(InvitationLetterRequest, db.session))
 admin.add_view(BaobabModelView(EmailTemplate, db.session))
+
+admin.add_view(BaobabModelView(EventQRToken, db.session))
+admin.add_view(BaobabModelView(Checkin, db.session))
+admin.add_view(BaobabModelView(UserConsent, db.session))
+admin.add_view(BaobabModelView(MemberProfile, db.session))
+admin.add_view(BaobabModelView(MemberProfileLink, db.session))
+admin.add_view(BaobabModelView(MemberProfileInterest, db.session))
+admin.add_view(BaobabModelView(Connection, db.session))
+admin.add_view(BaobabModelView(ConnectionReport, db.session))
+admin.add_view(BaobabModelView(Session, db.session))
+admin.add_view(BaobabModelView(Speaker, db.session))
+admin.add_view(BaobabModelView(Announcement, db.session))
+admin.add_view(BaobabModelView(PushSubscription, db.session))
+admin.add_view(BaobabModelView(EngagementEvent, db.session))
 

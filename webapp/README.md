@@ -1,6 +1,6 @@
 # Baobab Webapp
 
-Front-end web application build using [ReactJS](https://react.dev/) and [Bootstrap](https://getbootstrap.com/).
+Front-end web application build using [ReactJS](https://react.dev/) and [Tailwind CSS](https://tailwindcss.com/).
 
 ### Prerequisites
 #### Runnning through Docker.
@@ -83,5 +83,5 @@ test('Check if Home component renders.', () => {
 });
 ```
 ## Styling
-We use [Bootstrap 4](https://getbootstrap.com/docs/4.0/components/forms/) as a CSS framework.
+We use [Tailwind CSS](https://tailwindcss.com/) as a CSS framework, with custom design tokens defined in `src/App.css`.
 

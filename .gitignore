@@ -1,3 +1,5 @@
+docker-compose.yml
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -9,6 +11,7 @@ __pycache__/
 # Distribution / packaging
 .idea/
 .windsurf/
+.claude/
 .Python
 build/
 develop-eggs/
@@ -29,6 +32,7 @@ api/environment/
 *.egg
 MANIFEST
 node_modules/
+.pnpm-store/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -93,6 +97,9 @@ celerybeat-schedule
 
 # Environments
 .env
+.env.production
+.env.test
+*.pem
 .venv
 env/
 venv/
@@ -139,4 +146,4 @@ integration-tests/cypress/screenshots/
 integration-tests/cypress/plugins/
 
 # Temporary Docs
-/docs/temp/
+# /docs/temp/

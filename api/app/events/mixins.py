@@ -38,6 +38,10 @@ class EventMixin(object):
     req_parser.add_argument('event_type', type=str, required=True)
     req_parser.add_argument('travel_grant', type=bool, required=True)
     req_parser.add_argument('miniconf_url', type=str, required=False)
+    req_parser.add_argument('contact_email', type=str, required=False)
+    req_parser.add_argument('image', type=str, required=False)
+    req_parser.add_argument('timezone', type=str, required=False)
+    req_parser.add_argument('checkin_mode', type=str, required=False)
 
 
 class EventsMixin(object):

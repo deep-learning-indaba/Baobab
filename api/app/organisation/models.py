@@ -21,6 +21,8 @@ class Organisation(db.Model):
     stripe_api_publishable_key = db.Column(db.String(200), nullable=True)
     stripe_api_secret_key = db.Column(db.String(200), nullable=True)
     stripe_webhook_secret_key = db.Column(db.String(200), nullable=True)
+    pwa_icon_192 = db.Column(db.String(255), nullable=True)
+    pwa_icon_512 = db.Column(db.String(255), nullable=True)
 
     events = db.relationship('Event')
 
@@ -73,6 +75,8 @@ class PlainOrganisation:
     stripe_api_publishable_key: str
     stripe_api_secret_key: str
     stripe_webhook_secret_key: str
+    pwa_icon_192: str
+    pwa_icon_512: str
 
     @classmethod
     def from_organisation_model(cls, organisation: Organisation):
@@ -93,4 +97,6 @@ class PlainOrganisation:
             stripe_api_publishable_key=str(organisation.stripe_api_publishable_key),
             stripe_api_secret_key=str(organisation.stripe_api_secret_key),
             stripe_webhook_secret_key=str(organisation.stripe_webhook_secret_key),
+            pwa_icon_192=organisation.pwa_icon_192,
+            pwa_icon_512=organisation.pwa_icon_512,
         )

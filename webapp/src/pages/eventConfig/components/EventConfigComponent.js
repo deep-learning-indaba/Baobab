@@ -62,7 +62,11 @@ class EventConfigComponent extends Component {
       registration_close: "",
       event_type: "",
       travel_grant: "",
-      miniconf_url: ""
+      miniconf_url: "",
+      contact_email: "",
+      image: "",
+      timezone: "UTC",
+      checkin_mode: "per_event"
     }
 
     this.state = {
@@ -70,7 +74,7 @@ class EventConfigComponent extends Component {
       isNewEvent: this.props.event && this.props.event.id ? false : true,
       isMultiLingual: this.props.organisation.languages.length > 1,
       allFieldsComplete: false,
-      optionalFields: ["miniconf_url"],
+      optionalFields: ["miniconf_url", "contact_email", "image", "timezone", "checkin_mode"],
       requiredDateFields: [],
       isValid: false,
       loading: false,
@@ -144,7 +148,7 @@ class EventConfigComponent extends Component {
 
   onClickUpdate = () => {
     const errors = this.validateEventDetails();
-    if (errors.length == 0) { //PUT
+    if (errors.length === 0) { //PUT
       const event_with_times = this.addTimeToDates(this.state.updatedEvent);
       eventService.update(event_with_times).then(result => {
       if (result.error) {
@@ -227,7 +231,7 @@ class EventConfigComponent extends Component {
     if (this.state.updatedEvent.email_from.trim().length === 0) {
       errors.push(this.props.t("Organisation email is required"));
     }
-    if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(this.state.updatedEvent.email_from)) {
+    if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(this.state.updatedEvent.email_from)) {
       errors.push(this.props.t("Organisation email is invalid"));
     }
     if (this.state.updatedEvent.url.trim().length === 0) {
@@ -351,45 +355,42 @@ class EventConfigComponent extends Component {
 
   renderDatePickerTable = () => {
     const datePickers = [];
-    
+
     for (const [i, [open_date_field, close_date_field]] of this.state.requiredDateFields.entries()) {
       const open_date_name = DATE_NAMES[open_date_field];
       const close_date_name = DATE_NAMES[close_date_field];
       datePickers.push(
-        <div className={"form-group row"} key={i}>
-          <label
-            id={open_date_field + "_label"}
-            className={"col-sm-2 col-form-label"}
-            htmlFor={open_date_field}>
-            <span className="required-indicator">*</span>
-            {this.props.t(open_date_name)}
-          </label>
-
-          <div className="col-sm-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4" key={i}>
+          <div className="space-y-1">
+            <label
+              id={open_date_field + "_label"}
+              className="block text-sm font-medium text-foreground/80"
+              htmlFor={open_date_field}>
+              <span className="text-error font-bold mr-1">*</span>
+              {this.props.t(open_date_name)}
+            </label>
             <FormDate
               id={open_date_field}
               name={open_date_field}
               value={this.state.updatedEvent[open_date_field].slice(0,10)}
               required={true}
-              onChange={e =>
-                this.updateEventDateTimePicker(open_date_field, e)}/>
+              onChange={e => this.updateEventDateTimePicker(open_date_field, e)}
+            />
           </div>
-
-          <label
-            className={"col-sm-2 col-form-label"}
-            htmlFor={close_date_field}>
-            <span className="required-indicator">*</span>
-            {this.props.t(close_date_name)}
-          </label>
-
-          <div className="col-sm-4">
+          <div className="space-y-1">
+            <label
+              className="block text-sm font-medium text-foreground/80"
+              htmlFor={close_date_field}>
+              <span className="text-error font-bold mr-1">*</span>
+              {this.props.t(close_date_name)}
+            </label>
             <FormDate
               id={close_date_field}
               name={close_date_field}
               value={this.state.updatedEvent[close_date_field].slice(0,10)}
               required={true}
-              onChange={e =>
-                this.updateEventDateTimePicker(close_date_field, e)} />
+              onChange={e => this.updateEventDateTimePicker(close_date_field, e)}
+            />
           </div>
         </div>
       );
@@ -409,87 +410,75 @@ class EventConfigComponent extends Component {
       isNewEvent
     } = this.state;
 
-    const loadingStyle = {
-      width: "3rem",
-      height: "3rem"
-    };
-
     if (loading) {
       return (
-        <div className="d-flex justify-content-center">
-          <div className="spinner-border"
-            style={loadingStyle}
-            role="status">
-            <span className="sr-only">Loading...</span>
-          </div>
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       );
     }
 
     if (error) {
-      return <div className="alert alert-danger alert-container">
-        {error}
-      </div>;
+      return (
+        <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-6">
+          {error}
+        </div>
+      );
     }
 
     const t = this.props.t;
 
     return (
-      <div>
-        <div className="card">
-          <form>
-            <div className={"form-group row"}>
+      <div className="w-full max-w-5xl mx-auto pt-6 text-left">
+        <div className="bg-white rounded-2xl shadow-sm border border-border p-8 space-y-8">
+          <h1 className="font-heading text-2xl font-bold text-foreground mb-6">
+            {isNewEvent ? t("Create New Event") : t("Event Settings")}
+          </h1>
+          <form className="space-y-6">
+            <div className="space-y-2">
               <label
-                className={"col-sm-2 col-form-label"}
+                className="block text-sm font-semibold text-foreground/90"
                 htmlFor="organisation_name">
                 {t("Organisation")}
               </label>
-
-              <div className="col-sm-10">
-                <input
-                  readOnly
-                  type="text"
-                  className={"form-control-plaintext readonly"}
-                  id="organisation_name"
-                  name="organisation_name"
-                  value={this.props.organisation.name}
-                />
-              </div>
+              <input
+                readOnly
+                type="text"
+                className="w-full bg-slate-50 border border-border rounded-lg px-4 py-3 text-sm text-muted-foreground outline-none cursor-not-allowed"
+                id="organisation_name"
+                name="organisation_name"
+                value={this.props.organisation.name}
+              />
             </div>
 
-
             {this.props.organisation.languages.map((lang) => (
-              <div className={"form-group row"} key={"name_div"+lang.code}>
+              <div className="space-y-2" key={"name_div"+lang.code}>
                 <label
-                  className={"col-sm-2 col-form-label"} 
+                  className="block text-sm font-semibold text-foreground/90" 
                   htmlFor={"name_" + lang.code}>
-                  <span className="required-indicator">*</span>
+                  <span className="text-error mr-1">*</span>
                   {isMultiLingual ? t(this.getFieldNameWithLanguage("Event Name", lang.description)) : t("Event Name")}
                 </label>
-
-                <div className="col-sm-10">
-                  <FormTextBox
-                    id={"name_" + lang.code}
-                    name={"name_" + lang.code}
-                    type="text"
-                    placeholder={isMultiLingual ? t(this.getFieldNameWithLanguage("Name of event", lang.description)) : t("Name of event")}
-                    required={true}
-                    onChange={e => this.updateEventTextField("name", e, lang.code)}
-                    value={updatedEvent.name[lang.code]}
-                  />
-                </div>
+                <FormTextBox
+                  id={"name_" + lang.code}
+                  name={"name_" + lang.code}
+                  type="text"
+                  placeholder={isMultiLingual ? t(this.getFieldNameWithLanguage("Name of event", lang.description)) : t("Name of event")}
+                  required={true}
+                  onChange={e => this.updateEventTextField("name", e, lang.code)}
+                  value={updatedEvent.name[lang.code]}
+                />
               </div>
             ))}
 
-            <div className={"form-group row"}>
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="event_type">
-                <span className="required-indicator">*</span>
-                {t("Event Type")}
-              </label>
-
-              <div className="col-sm-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label
+                  className="block text-sm font-semibold text-foreground/90"
+                  htmlFor="event_type">
+                  <span className="text-error mr-1">*</span>
+                  {t("Event Type")}
+                </label>
                 <FormSelect
                   id="event_type"
                   name="event_type"
@@ -505,17 +494,14 @@ class EventConfigComponent extends Component {
                   ]}
                 />
               </div>
-            </div>
 
-            <div className={"form-group row"}>
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="travel_grant">
-                <span className="required-indicator">*</span>
-                {t("Awards Travel Grants")}
-              </label>
-
-              <div className="col-sm-10">
+              <div className="space-y-2">
+                <label
+                  className="block text-sm font-semibold text-foreground/90"
+                  htmlFor="travel_grant">
+                  <span className="text-error mr-1">*</span>
+                  {t("Awards Travel Grants")}
+                </label>
                 <FormSelect
                   id="travel_grant"
                   name="travel_grant"
@@ -530,57 +516,50 @@ class EventConfigComponent extends Component {
               </div>
             </div>
 
-            <div className={"form-group row"}>
+            <div className="space-y-2">
               <label 
-                className={"col-sm-2 col-form-label"}
+                className="block text-sm font-semibold text-foreground/90"
                 htmlFor="key">
-                <span className="required-indicator">*</span>
+                <span className="text-error mr-1">*</span>
                 {t("Event Key")}
               </label>
-
-              <div className="col-sm-10">
-                <FormTextBox
-                  id="key"
-                  name="key"
-                  type="text"
-                  placeholder={t("Event key for URLs (e.g. indaba2023)")}
-                  required={true}
-                  onChange={e => this.updateEventTextField("key", e)}
-                  value={updatedEvent.key}
-                />
-              </div>
+              <FormTextBox
+                id="key"
+                name="key"
+                type="text"
+                placeholder={t("Event key for URLs (e.g. indaba2023)")}
+                required={true}
+                onChange={e => this.updateEventTextField("key", e)}
+                value={updatedEvent.key}
+              />
             </div>
 
             {this.props.organisation.languages.map((lang) => (
-              <div className={"form-group row"} key={"description_div"+lang.code}>
+              <div className="space-y-2" key={"description_div"+lang.code}>
                 <label
-                  className={"col-sm-2 col-form-label"}
+                  className="block text-sm font-semibold text-foreground/90"
                   htmlFor={"description_" + lang.code}>
-                  <span className="required-indicator">*</span>
+                  <span className="text-error mr-1">*</span>
                   {isMultiLingual ? t(this.getFieldNameWithLanguage("Event Description", lang.description)) : t("Event Description")}
                 </label>
-
-                <div className="col-sm-10">
-                  <FormTextArea
-                    id={"description_" + lang.code}
-                    name={"description_" + lang.code}
-                    placeholder={isMultiLingual ? t(this.getFieldNameWithLanguage("Description of event", lang.description)) : t("Description of event")}
-                    required={true}
-                    rows={2}
-                    onChange={e => this.updateEventTextField("description", e, lang.code)}
-                    value={updatedEvent.description[lang.code]}
-                  />
-                </div>
+                <FormTextArea
+                  id={"description_" + lang.code}
+                  name={"description_" + lang.code}
+                  placeholder={isMultiLingual ? t(this.getFieldNameWithLanguage("Description of event", lang.description)) : t("Description of event")}
+                  required={true}
+                  rows={4}
+                  onChange={e => this.updateEventTextField("description", e, lang.code)}
+                  value={updatedEvent.description[lang.code]}
+                />
               </div>
             ))}
 
-            <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"} htmlFor="email_from">
-                <span className="required-indicator">*</span>
-                {t("Email From")}
-              </label>
-
-              <div className="col-sm-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-foreground/90" htmlFor="email_from">
+                  <span className="text-error mr-1">*</span>
+                  {t("Email From")}
+                </label>
                 <FormTextBox
                   id="email_from"
                   name="email_from"
@@ -589,18 +568,14 @@ class EventConfigComponent extends Component {
                   required={true}
                   value={updatedEvent.email_from}
                   onChange={e => this.updateEventTextField("email_from", e)}
-                  />
+                />
               </div>
-            </div>
 
-            <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"}
-                htmlFor="url">
-                <span className="required-indicator">*</span>
-                {t("Event Website")}
-              </label>
-
-              <div className="col-sm-10">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-foreground/90" htmlFor="url">
+                  <span className="text-error mr-1">*</span>
+                  {t("Event Website")}
+                </label>
                 <FormTextBox
                   id="url"
                   name="url"
@@ -609,45 +584,186 @@ class EventConfigComponent extends Component {
                   value={updatedEvent.url}
                   required={true}
                   onChange={e => this.updateEventTextField("url", e)}
-                  />
+                />
               </div>
             </div>
 
-            {updatedEvent.event_type && this.renderDatePickerTable()}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-foreground/90" htmlFor="timezone">
+                  {t("Event Timezone")}
+                </label>
+                <FormSelect
+                  id="timezone"
+                  name="timezone"
+                  defaultValue={updatedEvent.timezone || "UTC"}
+                  onChange={this.updateEventDropDown}
+                  options={[
+                    { value: "Pacific/Honolulu", label: "(GMT-10) Pacific/Honolulu" },
+                    { value: "America/Anchorage", label: "(GMT-9) America/Anchorage" },
+                    { value: "America/Los_Angeles", label: "(GMT-8) America/Los_Angeles" },
+                    { value: "America/Vancouver", label: "(GMT-8) America/Vancouver" },
+                    { value: "America/Denver", label: "(GMT-7) America/Denver" },
+                    { value: "America/Chicago", label: "(GMT-6) America/Chicago" },
+                    { value: "America/Mexico_City", label: "(GMT-6) America/Mexico_City" },
+                    { value: "America/Bogota", label: "(GMT-5) America/Bogota" },
+                    { value: "America/New_York", label: "(GMT-5) America/New_York" },
+                    { value: "America/Toronto", label: "(GMT-5) America/Toronto" },
+                    { value: "America/Halifax", label: "(GMT-4) America/Halifax" },
+                    { value: "America/Argentina/Buenos_Aires", label: "(GMT-3) America/Buenos_Aires" },
+                    { value: "America/Sao_Paulo", label: "(GMT-3) America/Sao_Paulo" },
+                    { value: "UTC", label: "(GMT+0) UTC" },
+                    { value: "Africa/Abidjan", label: "(GMT+0) Africa/Abidjan" },
+                    { value: "Africa/Accra", label: "(GMT+0) Africa/Accra" },
+                    { value: "Atlantic/Reykjavik", label: "(GMT+0) Atlantic/Reykjavik" },
+                    { value: "Europe/Dublin", label: "(GMT+0) Europe/Dublin" },
+                    { value: "Europe/Lisbon", label: "(GMT+0) Europe/Lisbon" },
+                    { value: "Europe/London", label: "(GMT+0) Europe/London" },
+                    { value: "Africa/Casablanca", label: "(GMT+1) Africa/Casablanca" },
+                    { value: "Africa/Lagos", label: "(GMT+1) Africa/Lagos" },
+                    { value: "Africa/Tunis", label: "(GMT+1) Africa/Tunis" },
+                    { value: "Europe/Amsterdam", label: "(GMT+1) Europe/Amsterdam" },
+                    { value: "Europe/Berlin", label: "(GMT+1) Europe/Berlin" },
+                    { value: "Europe/Brussels", label: "(GMT+1) Europe/Brussels" },
+                    { value: "Europe/Budapest", label: "(GMT+1) Europe/Budapest" },
+                    { value: "Europe/Madrid", label: "(GMT+1) Europe/Madrid" },
+                    { value: "Europe/Oslo", label: "(GMT+1) Europe/Oslo" },
+                    { value: "Europe/Paris", label: "(GMT+1) Europe/Paris" },
+                    { value: "Europe/Prague", label: "(GMT+1) Europe/Prague" },
+                    { value: "Europe/Rome", label: "(GMT+1) Europe/Rome" },
+                    { value: "Europe/Stockholm", label: "(GMT+1) Europe/Stockholm" },
+                    { value: "Europe/Warsaw", label: "(GMT+1) Europe/Warsaw" },
+                    { value: "Europe/Zurich", label: "(GMT+1) Europe/Zurich" },
+                    { value: "Africa/Cairo", label: "(GMT+2) Africa/Cairo" },
+                    { value: "Africa/Johannesburg", label: "(GMT+2) Africa/Johannesburg" },
+                    { value: "Europe/Athens", label: "(GMT+2) Europe/Athens" },
+                    { value: "Europe/Helsinki", label: "(GMT+2) Europe/Helsinki" },
+                    { value: "Africa/Addis_Ababa", label: "(GMT+3) Africa/Addis_Ababa" },
+                    { value: "Africa/Kampala", label: "(GMT+3) Africa/Kampala" },
+                    { value: "Africa/Nairobi", label: "(GMT+3) Africa/Nairobi" },
+                    { value: "Europe/Istanbul", label: "(GMT+3) Europe/Istanbul" },
+                    { value: "Europe/Moscow", label: "(GMT+3) Europe/Moscow" },
+                    { value: "Asia/Tehran", label: "(GMT+3:30) Asia/Tehran" },
+                    { value: "Asia/Dubai", label: "(GMT+4) Asia/Dubai" },
+                    { value: "Asia/Karachi", label: "(GMT+5) Asia/Karachi" },
+                    { value: "Asia/Tashkent", label: "(GMT+5) Asia/Tashkent" },
+                    { value: "Asia/Colombo", label: "(GMT+5:30) Asia/Colombo" },
+                    { value: "Asia/Kolkata", label: "(GMT+5:30) Asia/Kolkata" },
+                    { value: "Asia/Bangkok", label: "(GMT+7) Asia/Bangkok" },
+                    { value: "Asia/Jakarta", label: "(GMT+7) Asia/Jakarta" },
+                    { value: "Asia/Hong_Kong", label: "(GMT+8) Asia/Hong_Kong" },
+                    { value: "Asia/Kuala_Lumpur", label: "(GMT+8) Asia/Kuala_Lumpur" },
+                    { value: "Asia/Shanghai", label: "(GMT+8) Asia/Shanghai" },
+                    { value: "Asia/Singapore", label: "(GMT+8) Asia/Singapore" },
+                    { value: "Australia/Perth", label: "(GMT+8) Australia/Perth" },
+                    { value: "Asia/Seoul", label: "(GMT+9) Asia/Seoul" },
+                    { value: "Asia/Tokyo", label: "(GMT+9) Asia/Tokyo" },
+                    { value: "Australia/Adelaide", label: "(GMT+9:30) Australia/Adelaide" },
+                    { value: "Australia/Brisbane", label: "(GMT+10) Australia/Brisbane" },
+                    { value: "Australia/Melbourne", label: "(GMT+10) Australia/Melbourne" },
+                    { value: "Australia/Sydney", label: "(GMT+10) Australia/Sydney" },
+                    { value: "Pacific/Auckland", label: "(GMT+12) Pacific/Auckland" },
+                    { value: "Pacific/Fiji", label: "(GMT+12) Pacific/Fiji" },
+                  ]}
+                />
+              </div>
 
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-foreground/90">
+                  {t("Check-in Mode")}
+                </label>
+                <div className="flex items-center gap-6 pt-1">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="radio"
+                      name="checkin_mode"
+                      value="per_event"
+                      checked={updatedEvent.checkin_mode === "per_event"}
+                      onChange={e => this.updateEventTextField("checkin_mode", e)}
+                    />
+                    {t("Per event")}
+                  </label>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="radio"
+                      name="checkin_mode"
+                      value="daily"
+                      checked={updatedEvent.checkin_mode === "daily"}
+                      onChange={e => this.updateEventTextField("checkin_mode", e)}
+                    />
+                    {t("Daily")}
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-foreground/90" htmlFor="contact_email">
+                  {t("Support Contact Email")}
+                </label>
+                <FormTextBox
+                  id="contact_email"
+                  name="contact_email"
+                  type="email"
+                  placeholder={t("Contact email shown to applicants (e.g. indabax@example.com)")}
+                  value={updatedEvent.contact_email}
+                  onChange={e => this.updateEventTextField("contact_email", e)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-foreground/90" htmlFor="image">
+                  {t("Event Image URL")}
+                </label>
+                <FormTextBox
+                  id="image"
+                  name="image"
+                  type="text"
+                  placeholder={t("URL of image to display on event cards")}
+                  value={updatedEvent.image}
+                  onChange={e => this.updateEventTextField("image", e)}
+                />
+              </div>
+            </div>
+
+            {updatedEvent.event_type && (
+              <div className="space-y-6 pt-4 border-t border-border/50">
+                <h3 className="text-lg font-semibold text-foreground/90 mb-4">{t("Event Key Dates")}</h3>
+                <div className="space-y-6">
+                  {this.renderDatePickerTable()}
+                </div>
+              </div>
+            )}
           </form>
 
-          <hr></hr>
-
-          <div className={"form-group row"}>
-            <div className={"col-sm-4 ml-md-auto"}>
-              <Link to=".." className="btn btn-danger btn-lg btn-block">
-                {t("Cancel")}
-              </Link>
-            </div>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border-border/50">
+            <Link 
+              to=".." 
+              className="inline-flex items-center justify-center px-6 py-3 rounded-lg text-sm font-semibold transition-colors bg-error text-error-foreground hover:bg-error/90 shadow-sm w-full md:w-auto text-center"
+            >
+              {t("Cancel")}
+            </Link>
             
-            <div className={"col-sm-4 "}>
-              {isNewEvent ? (
-                <button
-                  onClick={() => this.onClickCreate()}
-                  className="btn btn-success btn-lg btn-block"
-                  disabled={!allFieldsComplete}>
-                  {t("Create Event")}
-                </button>
-                ) :
-                (
-                <button
-                  onClick={() => this.onClickUpdate()}
-                  className="btn btn-success btn-lg btn-block"
-                  disabled={!allFieldsComplete}>
-                  {t("Update Event")}
-                </button>
-              )}
-            </div>
+            {isNewEvent ? (
+              <button
+                onClick={() => this.onClickCreate()}
+                className="inline-flex items-center justify-center px-6 py-3 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm w-full md:w-auto disabled:opacity-50"
+                disabled={!allFieldsComplete}>
+                {t("Create Event")}
+              </button>
+            ) : (
+              <button
+                onClick={() => this.onClickUpdate()}
+                className="inline-flex items-center justify-center px-6 py-3 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm w-full md:w-auto disabled:opacity-50"
+                disabled={!allFieldsComplete}>
+                {t("Update Event")}
+              </button>
+            )}
           </div>
 
-          <div className={"form-group-row"}>
-              {errors && showErrors && this.getErrorMessages(errors)}
+          <div className="space-y-2">
+            {errors && showErrors && this.getErrorMessages(errors)}
           </div>
         </div>
       </div>

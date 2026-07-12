@@ -62,14 +62,3 @@
     text-align: right;
     display: inline-block;
 }
-
-.form-check-label {
-    display: contents;
-    margin-bottom: 0;
-}
-
-.form-check-input {
-    position: absolute;
-    margin-top: 8px;
-    margin-left: -1.25rem;
-}

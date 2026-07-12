@@ -2,7 +2,7 @@ service: prod-frontend
 runtime: python312
 
 handlers:
-  - url: /(.*\.(gif|png|jpg|css|js|pdf|json)(|\.map))$
+  - url: /(.*\.(gif|png|jpg|css|js|pdf|json|webmanifest)(|\.map))$
     static_files: build/\1
     upload: build/(.*)(|\.map)
     secure: always
