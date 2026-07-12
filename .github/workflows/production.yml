@@ -1,9 +1,9 @@
-name: Staging CI and Deploy
+name: Production CI and Deploy
 
 on:
   push:
     branches:
-      - staging
+      - master
   workflow_dispatch:
 
 permissions:
@@ -11,7 +11,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: staging-deploy
+  group: production-deploy
   cancel-in-progress: false
 
 jobs:
@@ -56,7 +56,7 @@ jobs:
           BOABAB_HOST: 'http://localhost:5000'
 
   migrate:
-    name: Run staging database migrations
+    name: Run production database migrations
     runs-on: ubuntu-latest
     needs: test
     defaults:
@@ -91,7 +91,7 @@ jobs:
           sudo chmod 777 /cloudsql
 
       - name: Start Cloud SQL Auth Proxy
-        run: ./cloud-sql-proxy --unix-socket /cloudsql ${{ secrets.STAGING_CLOUD_SQL_INSTANCE }} &
+        run: ./cloud-sql-proxy --unix-socket /cloudsql ${{ secrets.PROD_CLOUD_SQL_INSTANCE }} &
 
       - name: Wait for proxy to be ready
         run: sleep 3
@@ -99,8 +99,8 @@ jobs:
       - name: Run migrations
         run: python run.py db upgrade --directory migrations
         env:
-          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
-          SECRET_KEY: ${{ secrets.STAGING_SECRET_KEY }}
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          SECRET_KEY: ${{ secrets.PROD_SECRET_KEY }}
           FILE_SIZE_LIMIT: '10485760'
           GCP_CLIENT_ID: dummy
           GCP_CLIENT_EMAIL: dummy
@@ -117,7 +117,7 @@ jobs:
           BOABAB_HOST: 'http://localhost:5000'
 
   backend:
-    name: Deploy staging backend
+    name: Deploy production backend
     runs-on: ubuntu-latest
     needs: migrate
     defaults:
@@ -138,25 +138,25 @@ jobs:
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      - name: Generate staging App Engine config
+      - name: Generate production App Engine config
         run: |
           python - <<'PY'
           import os
           import sys
 
           required = [
-              "STAGING_DATABASE_URL",
-              "STAGING_SECRET_KEY",
+              "PROD_DATABASE_URL",
+              "PROD_SECRET_KEY",
               "SMTP_USERNAME",
               "SMTP_PASSWORD",
-              "STAGING_GCP_CLIENT_ID",
-              "STAGING_GCP_CLIENT_EMAIL",
-              "STAGING_GCP_PRIVATE_KEY_ID",
-              "STAGING_GCP_PRIVATE_KEY",
+              "PROD_GCP_CLIENT_ID",
+              "PROD_GCP_CLIENT_EMAIL",
+              "PROD_GCP_PRIVATE_KEY_ID",
+              "PROD_GCP_PRIVATE_KEY",
               "GCP_PROJECT_ID",
-              "STAGING_BACKEND_BUCKET",
-              "STAGING_CLOUD_SQL_INSTANCE",
-              "STAGING_GCP_API_KEY",
+              "PROD_BACKEND_BUCKET",
+              "PROD_CLOUD_SQL_INSTANCE",
+              "PROD_GCP_API_KEY",
               "VAPID_PUBLIC_KEY",
               "VAPID_PRIVATE_KEY",
           ]
@@ -166,23 +166,23 @@ jobs:
               sys.exit(1)
 
           env_variables = {
-              "DATABASE_URL": os.environ["STAGING_DATABASE_URL"],
-              "SECRET_KEY": os.environ["STAGING_SECRET_KEY"],
+              "DATABASE_URL": os.environ["PROD_DATABASE_URL"],
+              "SECRET_KEY": os.environ["PROD_SECRET_KEY"],
               "SMTP_USERNAME": os.environ["SMTP_USERNAME"],
               "SMTP_PASSWORD": os.environ["SMTP_PASSWORD"],
               "SMTP_SENDER_NAME": "Deep Learning Indaba",
               "SMTP_SENDER_EMAIL": os.environ.get("SMTP_SENDER_EMAIL", "baobab@deeplearningindaba.com"),
               "SMTP_HOST": os.environ.get("SMTP_HOST", "email-smtp.us-east-1.amazonaws.com"),
               "SMTP_PORT": os.environ.get("SMTP_PORT", "587"),
-              "GCP_CLIENT_ID": os.environ["STAGING_GCP_CLIENT_ID"],
-              "GCP_CLIENT_EMAIL": os.environ["STAGING_GCP_CLIENT_EMAIL"],
-              "GCP_PRIVATE_KEY_ID": os.environ["STAGING_GCP_PRIVATE_KEY_ID"],
-              "GCP_PRIVATE_KEY": os.environ["STAGING_GCP_PRIVATE_KEY"],
+              "GCP_CLIENT_ID": os.environ["PROD_GCP_CLIENT_ID"],
+              "GCP_CLIENT_EMAIL": os.environ["PROD_GCP_CLIENT_EMAIL"],
+              "GCP_PRIVATE_KEY_ID": os.environ["PROD_GCP_PRIVATE_KEY_ID"],
+              "GCP_PRIVATE_KEY": os.environ["PROD_GCP_PRIVATE_KEY"],
               "GCP_PROJECT_NAME": os.environ["GCP_PROJECT_ID"],
-              "GCP_BUCKET_NAME": os.environ["STAGING_BACKEND_BUCKET"],
-              "FILE_SIZE_LIMIT": "10485760",
-              "BOABAB_HOST": os.environ.get("STAGING_BAOBAB_HOST", "https://test-baobab.deeplearningindaba.com/"),
-              "GCP_API_KEY": os.environ["STAGING_GCP_API_KEY"],
+              "GCP_BUCKET_NAME": os.environ["PROD_BACKEND_BUCKET"],
+              "FILE_SIZE_LIMIT": "52428800",
+              "BOABAB_HOST": os.environ.get("PROD_BAOBAB_HOST", "https://baobab.deeplearningindaba.com/"),
+              "GCP_API_KEY": os.environ["PROD_GCP_API_KEY"],
               "VAPID_PUBLIC_KEY": os.environ["VAPID_PUBLIC_KEY"],
               "VAPID_PRIVATE_KEY": os.environ["VAPID_PRIVATE_KEY"],
           }
@@ -191,46 +191,43 @@ jobs:
               return "'" + str(value).replace("\\n", "\\\\n").replace("'", "''") + "'"
 
           with open("app.generated.yaml", "w") as f:
-              f.write("service: staging-api\n")
+              f.write("service: prod-api\n")
               f.write("runtime: python311\n")
-              f.write("instance_class: B4\n")
+              f.write("instance_class: F4\n")
               f.write("entrypoint: " + scalar("gunicorn -c gunicorn.config.py -b :$PORT main:app") + "\n")
-              f.write("\n")
-              f.write("manual_scaling:\n")
-              f.write("  instances: 1\n")
               f.write("\n")
               f.write("env_variables:\n")
               for key, value in env_variables.items():
                   f.write("  " + key + ": " + scalar(value) + "\n")
               f.write("\n")
               f.write("beta_settings:\n")
-              f.write("  cloud_sql_instances: " + scalar(os.environ["STAGING_CLOUD_SQL_INSTANCE"]) + "\n")
+              f.write("  cloud_sql_instances: " + scalar(os.environ["PROD_CLOUD_SQL_INSTANCE"]) + "\n")
           PY
         env:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-          STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
-          STAGING_SECRET_KEY: ${{ secrets.STAGING_SECRET_KEY }}
+          PROD_DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          PROD_SECRET_KEY: ${{ secrets.PROD_SECRET_KEY }}
           SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           SMTP_SENDER_EMAIL: baobab@deeplearningindaba.com
           SMTP_HOST: email-smtp.us-east-1.amazonaws.com
           SMTP_PORT: 587
-          STAGING_GCP_CLIENT_ID: ${{ secrets.STAGING_GCP_CLIENT_ID }}
-          STAGING_GCP_CLIENT_EMAIL: ${{ secrets.STAGING_GCP_CLIENT_EMAIL }}
-          STAGING_GCP_PRIVATE_KEY_ID: ${{ secrets.STAGING_GCP_PRIVATE_KEY_ID }}
-          STAGING_GCP_PRIVATE_KEY: ${{ secrets.STAGING_GCP_PRIVATE_KEY }}
-          STAGING_BACKEND_BUCKET: ${{ secrets.STAGING_BACKEND_BUCKET }}
-          STAGING_BAOBAB_HOST: ${{ secrets.STAGING_BAOBAB_HOST }}
-          STAGING_CLOUD_SQL_INSTANCE: ${{ secrets.STAGING_CLOUD_SQL_INSTANCE }}
-          STAGING_GCP_API_KEY: ${{ secrets.STAGING_GCP_API_KEY }}
+          PROD_GCP_CLIENT_ID: ${{ secrets.PROD_GCP_CLIENT_ID }}
+          PROD_GCP_CLIENT_EMAIL: ${{ secrets.PROD_GCP_CLIENT_EMAIL }}
+          PROD_GCP_PRIVATE_KEY_ID: ${{ secrets.PROD_GCP_PRIVATE_KEY_ID }}
+          PROD_GCP_PRIVATE_KEY: ${{ secrets.PROD_GCP_PRIVATE_KEY }}
+          PROD_BACKEND_BUCKET: ${{ secrets.PROD_BACKEND_BUCKET }}
+          PROD_BAOBAB_HOST: ${{ secrets.PROD_BAOBAB_HOST }}
+          PROD_CLOUD_SQL_INSTANCE: ${{ secrets.PROD_CLOUD_SQL_INSTANCE }}
+          PROD_GCP_API_KEY: ${{ secrets.PROD_GCP_API_KEY }}
           VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
 
-      - name: Deploy backend to App Engine staging service
+      - name: Deploy backend to App Engine production service
         run: gcloud app deploy app.generated.yaml --quiet --promote --stop-previous-version --version=v1
 
   frontend:
-    name: Build and deploy staging frontend
+    name: Build and deploy production frontend
     runs-on: ubuntu-latest
     needs: backend
     defaults:
@@ -255,18 +252,20 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate staging frontend env file
+      - name: Generate production frontend env file
         run: |
-          cat > .env.test <<EOF
-          REACT_APP_API_URL=https://staging-api-dot-baobab.appspot.com
+          cat > .env.production <<EOF
+          REACT_APP_API_URL=https://prod-api-dot-baobab.appspot.com
           REACT_APP_DEFAULT_EVENT_ID=1
+          REACT_APP_STACKDRIVER_API_KEY=$PROD_GCP_API_KEY
           REACT_APP_VAPID_PUBLIC_KEY=$VAPID_PUBLIC_KEY
           EOF
         env:
+          PROD_GCP_API_KEY: ${{ secrets.PROD_GCP_API_KEY }}
           VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
 
-      - name: Build staging frontend
-        run: pnpm build-test
+      - name: Build production frontend
+        run: pnpm build
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
@@ -280,4 +279,4 @@ jobs:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Deploy frontend to App Engine
-        run: gcloud app deploy staging-app.yaml dispatch.yaml --quiet --promote --stop-previous-version --version=v1
+        run: gcloud app deploy prod-app.yaml dispatch.yaml --quiet --promote --stop-previous-version --version=v1
