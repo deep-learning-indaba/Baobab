@@ -118,7 +118,7 @@ function FeaturedEventCard({ event, t }) {
     ? t('Applied')
     : t('Pending Review');
 
-  const contactEmail = event.contact_email || 'support@baobab.network';
+  const contactEmail = event.contact_email;
 
   return (
     <Card className="overflow-hidden p-6 rounded-2xl shadow-sm border border-border">
@@ -145,9 +145,11 @@ function FeaturedEventCard({ event, t }) {
         <a href={`/${event.key}/apply`} className={cn(buttonVariants({ variant: 'secondary' }))}>
           {t('View Application')}
         </a>
-        <a href={`mailto:${contactEmail}`} className={cn(buttonVariants({ variant: 'default' }))}>
-          {t('Contact Support')}
-        </a>
+        {contactEmail && (
+          <a href={`mailto:${contactEmail}`} className={cn(buttonVariants({ variant: 'default' }))}>
+            {t('Contact Support')}
+          </a>
+        )}
       </div>
     </Card>
   );
@@ -358,7 +360,7 @@ class Home extends Component {
                 {t('Welcome back')}{firstName ? `, ${firstName}` : ''}
               </h1>
               <p className="text-sm text-muted-foreground mt-2">
-                {t('Here is a summary of your recent activities and upcoming events in the Baobab network.')}
+                {t('recentActivitySummary', { systemName: organisation?.system_name })}
               </p>
             </div>
 

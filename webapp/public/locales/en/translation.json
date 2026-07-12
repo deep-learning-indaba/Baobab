@@ -1006,7 +1006,7 @@
   "Information": "Information",
   "Social & Comms": "Social & Comms",
   "Welcome back": "Welcome back",
-  "Here is a summary of your recent activities and upcoming events in the Baobab network.": "Here is a summary of your recent activities and upcoming events in the Baobab network.",
+  "recentActivitySummary": "Here is a summary of your recent activities and upcoming events in the {{systemName}} network.",
   "Summary Statistics": "Summary Statistics",
   "Applications in Progress": "Applications in Progress",
   "Offers Received": "Offers Received",
