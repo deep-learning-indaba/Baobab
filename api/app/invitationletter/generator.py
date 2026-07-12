@@ -142,7 +142,7 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
         batch = doc_service.documents().batchUpdate(documentId=copied_document_id, body={'requests': replace_requests}).execute()
     
     export_request = drive_service.files().export(fileId=copied_document_id, mimeType='application/pdf').execute()
-    output_file = str(uuid.uuid4()) + ".pdf"
+    output_file = os.path.join('/tmp', str(uuid.uuid4()) + ".pdf")
 
     with open(output_file, "wb") as f:
         f.write(export_request)

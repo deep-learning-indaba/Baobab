@@ -9,19 +9,7 @@ class Address extends Component {
     super(props);
 
     this.state = {
-      streetAddress1: props.streetAddress1,
-      streetAddress2: props.streetAddress2,
-      city: props.city,
-      postalCode: props.postalCode,
-      country: props.country,
-      countryOptions: [],
-      addressText: {
-        streetAddress1Value: props.streetAddress1Value,
-        streetAddress2Value: props.streetAddress2Value,
-        cityValue: props.cityValue,
-        postalCodeValue: props.postalCodeValue,
-        countryValue: props.countryValue
-      }
+      countryOptions: []
     };
   }
 
@@ -32,7 +20,7 @@ class Address extends Component {
       return [];
   }
 
-  componentWillMount() {
+  componentDidMount() {
     getCountries.then(result => {
       this.setState({
         countryOptions: this.checkOptionsList(result)
@@ -46,16 +34,13 @@ class Address extends Component {
       streetAddress2,
       city,
       postalCode,
-      country
-    } = this.state;
-
-    const {
+      country,
       streetAddress1Value,
       streetAddress2Value,
       cityValue,
       postalCodeValue,
       countryValue
-    } = this.state.addressText;
+    } = this.props;
 
     return (
       <div className="space-y-4 p-6 bg-surface-low rounded-xl border border-border">
