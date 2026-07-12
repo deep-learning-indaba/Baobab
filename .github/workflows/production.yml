@@ -190,6 +190,14 @@ jobs:
           def scalar(value):
               return "'" + str(value).replace("\\n", "\\\\n").replace("'", "''") + "'"
 
+          # GCP_PRIVATE_KEY is stored as a service-account JSON "private_key" value,
+          # i.e. already a single line with literal backslash-n sequences in place of
+          # real newlines. It must NOT go through scalar()'s newline-escaping, or the
+          # backslashes get escaped a second time and generator.py's single unescape
+          # leaves stray backslashes that break PEM parsing.
+          def preescaped_scalar(value):
+              return "'" + str(value).replace("'", "''") + "'"
+
           with open("app.generated.yaml", "w") as f:
               f.write("service: prod-api\n")
               f.write("runtime: python311\n")
@@ -198,7 +206,8 @@ jobs:
               f.write("\n")
               f.write("env_variables:\n")
               for key, value in env_variables.items():
-                  f.write("  " + key + ": " + scalar(value) + "\n")
+                  value_scalar = preescaped_scalar(value) if key == "GCP_PRIVATE_KEY" else scalar(value)
+                  f.write("  " + key + ": " + value_scalar + "\n")
               f.write("\n")
               f.write("beta_settings:\n")
               f.write("  cloud_sql_instances: " + scalar(os.environ["PROD_CLOUD_SQL_INSTANCE"]) + "\n")
