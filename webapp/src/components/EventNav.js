@@ -99,9 +99,12 @@ class EventNav extends Component {
             <SidebarLink to={`/${this.props.eventKey}/eventRoleAdmin`} label={t('Event Roles')} />
             <SidebarLink to={`/${this.props.eventKey}/formConfig`} label={t('Form Configuration')} />
             <SidebarLink to={`/${this.props.eventKey}/resourceLinks`} label={t('Resource Links')} />
-            {isProgrammeEditor(this.props.user, this.props.event) && (
-              <SidebarLink to={`/${this.props.eventKey}/programmeEditor`} label={t('Programme Editor')} />
-            )}
+          </SidebarSection>
+        )}
+
+        {isProgrammeEditor(this.props.user, this.props.event) && this.props.event && (
+          <SidebarSection title={t('Programme')}>
+            <SidebarLink to={`/${this.props.eventKey}/programmeEditor`} label={t('Programme Editor')} />
           </SidebarSection>
         )}
 
