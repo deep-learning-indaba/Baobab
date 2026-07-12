@@ -24,7 +24,6 @@ pytest
 passlib
 pytz
 six
-flask-cors
 python-dateutil
 gunicorn
 google-cloud-storage

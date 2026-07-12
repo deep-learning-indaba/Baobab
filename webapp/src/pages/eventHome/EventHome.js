@@ -43,7 +43,6 @@ import { useInstall } from '../../context/InstallContext';
 import { EventAppProgramme, ProgrammeEditor, EventAppAnnouncements, AnnouncementDetail, AnnouncementsAdmin, MyTicket, CheckinConsole, BadgeExport, MyProfile, ViewMemberProfile, ProfileBrowser, ScanConnect, Connections, ConnectLanding, DiscussionBoard, DiscussionThread, NewDiscussionThread, DiscussionReportsAdmin } from '../eventApp';
 import EventDashboard from '../eventDashboard';
 import ResourceLinksAdmin from '../resourceLinks';
-import ConsentGate from '../../components/ConsentGate';
 
 function iconCls(icon) {
   if (!icon) return null;
@@ -931,7 +930,6 @@ class EventHome extends Component {
             />
           )}
         />
-        <ConsentGate event={event} />
         </div>
       </div>
     );

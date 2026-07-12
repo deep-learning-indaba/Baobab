@@ -1,5 +1,4 @@
 from flask import Flask, g, url_for, redirect, render_template, request, flash
-from flask_cors import CORS
 import flask_restful as restful
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
@@ -15,12 +14,6 @@ import tldextract
 
 app = Flask(__name__)
 app.config.from_object('config')
-_allowed_origins = [
-    app.config.get('BOABAB_HOST', 'http://localhost:8080').rstrip('/'),
-    'http://localhost:3000',
-    'http://localhost:8080',
-]
-CORS(app, resources={r"/api/*": {"origins": _allowed_origins}}, supports_credentials=True)
 print((app.config['SQLALCHEMY_DATABASE_URI']))
 rest_api = restful.Api(app)
 db = SQLAlchemy(app)
@@ -91,6 +84,30 @@ def populate_organisation():
     else:
         domain = get_domain()
         g.organisation = OrganisationResolver.resolve_from_domain(domain)
+
+CORS_ALLOWED_METHODS = 'GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS'
+
+@app.after_request
+def set_cors_headers(response):
+    # populate_organisation() above already rejects any /api/* request whose
+    # Origin/Referer domain doesn't match a known Organisation, so reflecting
+    # the Origin back here is only ever done for domains we've already
+    # validated against the Organisation table - no separate allow-list to
+    # keep in sync with webapp/dispatch.yaml.
+    if not request.path.startswith('/api/') or getattr(g, 'organisation', None) is None:
+        return response
+    origin = request.environ.get('HTTP_ORIGIN', '')
+    if not origin:
+        return response
+    response.headers['Access-Control-Allow-Origin'] = origin
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    response.headers.add('Vary', 'Origin')
+    if request.method == 'OPTIONS':
+        response.headers['Access-Control-Allow-Methods'] = CORS_ALLOWED_METHODS
+        requested_headers = request.environ.get('HTTP_ACCESS_CONTROL_REQUEST_HEADERS')
+        if requested_headers:
+            response.headers['Access-Control-Allow-Headers'] = requested_headers
+    return response
 
 ## Flask Admin Config
 
