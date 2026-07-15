@@ -307,16 +307,47 @@ code {
 }
 
 /* ── 7. Page Body Layout ───────────────────────────────────── */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  /* Must be a definite height (not min-height) — flex-grow only caps a
+     child's size against a definite container size. With min-height,
+     an auto-height container just grows to fit its content instead of
+     capping it, which defeats .Body's flex:1 and lets the page grow
+     taller than the viewport (pushing the footer off-screen and
+     producing a second, outer scrollbar). */
+  height: 100vh;
+}
+
 .Body {
   background: var(--clr-surface);
-  min-height: 80vh;
   padding: 2rem 0 3rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  /* Fallback for routed pages that don't manage their own internal
+     scrolling (unlike EventHome, which fills this space exactly) —
+     lets their content scroll within the viewport instead of growing
+     the whole document past it. */
+  overflow-y: auto;
 }
 
 .container-fluid {
   width: 100%;
   padding-left: 2rem;
   padding-right: 2rem;
+}
+
+/* Only the top-level container-fluid (direct child of .Body) needs to
+   participate in the flex height chain so routed pages like EventHome
+   can size themselves to exactly fill the space between the navbar and
+   the footer, instead of guessing a viewport-height calc(). */
+.Body > .container-fluid {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ── 8. Cards ──────────────────────────────────────────────── */
@@ -668,7 +699,47 @@ footer .btn {
 
 /* ── 15. Spinner / Loading ─────────────────────────────────── */
 .spinner-border {
+  display: inline-block;
+  width: 2rem;
+  height: 2rem;
+  vertical-align: -0.125em;
+  border: 0.25em solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
   color: var(--clr-primary);
+  animation: spinner-border 0.75s linear infinite;
+}
+
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 0.2em;
+}
+
+.spinner-grow {
+  display: inline-block;
+  width: 2rem;
+  height: 2rem;
+  vertical-align: -0.125em;
+  background-color: currentColor;
+  border-radius: 50%;
+  color: var(--clr-primary);
+  opacity: 0;
+  animation: spinner-grow 0.75s linear infinite;
+}
+
+.spinner-grow-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+@keyframes spinner-border {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spinner-grow {
+  0%   { transform: scale(0); }
+  50%  { opacity: 1; transform: none; }
 }
 
 /* ── 16. Cursors & Nav helpers ─────────────────────────────── */

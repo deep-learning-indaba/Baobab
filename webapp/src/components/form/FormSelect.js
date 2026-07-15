@@ -16,12 +16,28 @@ class FormSelect extends React.Component {
     }
   }
 
-  render() {
-    const { id, options, placeholder, onChange, defaultValue, searchable } = this.props;
-    let value = this.props.value;
-    if (defaultValue) {
-      value = options.filter(option => option.value === defaultValue);
+  // Callers pass the current selection in one of three shapes:
+  //  - a raw scalar matching option.value (most callers, via value or defaultValue)
+  //  - a {value, label} option object
+  //  - a [{value, label}] array, from callers using getContentValue()'s .filter()
+  // react-select needs a single {value, label} object (or null), so normalise here.
+  resolveOption(rawValue, options) {
+    if (rawValue === undefined || rawValue === null || rawValue === "") {
+      return null;
     }
+    if (Array.isArray(rawValue)) {
+      return rawValue.length > 0 ? rawValue[0] : null;
+    }
+    if (typeof rawValue === "object") {
+      return rawValue;
+    }
+    return (options && options.find(option => option.value === rawValue)) || null;
+  }
+
+  render() {
+    const { id, options, placeholder, onChange, searchable } = this.props;
+    const rawValue = this.props.value ?? this.props.defaultValue;
+    const value = this.resolveOption(rawValue, options);
     return (
       <div>
         <FormGroup
@@ -42,7 +58,6 @@ class FormSelect extends React.Component {
             placeholder={placeholder}
             value={value}
             onChange={e => onChange(id, e)}
-            defaultValue={value || null}
             isSearchable={searchable}
             className={
               this.shouldDisplayError()

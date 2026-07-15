@@ -40,6 +40,7 @@ import ApplicationFormResponsePage from "../applicationFormResponse";
 import FormConfigPage from "../formConfig";
 import { withTranslation, useTranslation } from 'react-i18next';
 import { useInstall } from '../../context/InstallContext';
+import { isPushSupported, getNotificationPermission, registerPushSubscription } from '../../utils/push';
 import { EventAppProgramme, ProgrammeEditor, EventAppAnnouncements, AnnouncementDetail, AnnouncementsAdmin, MyTicket, CheckinConsole, BadgeExport, MyProfile, ViewMemberProfile, ProfileBrowser, ScanConnect, Connections, ConnectLanding, DiscussionBoard, DiscussionThread, NewDiscussionThread, DiscussionReportsAdmin } from '../eventApp';
 import EventDashboard from '../eventDashboard';
 import ResourceLinksAdmin from '../resourceLinks';
@@ -236,6 +237,9 @@ class EventInfo extends Component {
           </div>
         )}
 
+        {/* Notifications prompt — mobile only, hidden once enabled */}
+        {isConfirmedGuest && <NotificationBanner />}
+
         {/* Quick links */}
         {isConfirmedGuest && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -302,6 +306,46 @@ class EventInfo extends Component {
       </div>
     );
   }
+}
+
+function NotificationBanner() {
+  const { t } = useTranslation();
+  const [permission, setPermission] = React.useState(getNotificationPermission());
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState(null);
+
+  if (!isPushSupported() || permission === 'granted') return null;
+
+  const enable = () => {
+    setBusy(true);
+    setError(null);
+    registerPushSubscription({ requestPermission: true }).then((result) => {
+      setBusy(false);
+      setPermission(getNotificationPermission());
+      if (!result.ok) {
+        setError(result.reason === 'denied'
+          ? t('Notifications are blocked. Allow notifications for this site in your browser settings, then try again.')
+          : t('Could not enable notifications. Please try again.'));
+      }
+    });
+  };
+
+  return (
+    <div className="mobile-only bg-white rounded-xl border border-border p-4 items-start justify-between gap-3">
+      <div className="min-w-0">
+        <p className="text-sm font-semibold text-foreground">{t('Notifications')}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{t('Get announcements from organisers even when the app is closed.')}</p>
+        {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+      </div>
+      <button
+        onClick={enable}
+        disabled={busy}
+        className="shrink-0 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground font-semibold text-xs hover:bg-primary-container transition-all disabled:opacity-60"
+      >
+        {busy ? t('Enabling...') : t('Enable notifications')}
+      </button>
+    </div>
+  );
 }
 
 function InstallHint() {
@@ -434,7 +478,7 @@ class EventHome extends Component {
     const sidebarClass = `event-sidebar${sidebarOpen ? ' event-sidebar--open' : ''}`;
 
     return (
-      <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-[#f8f9fa] -mx-4 md:-mx-8 -mt-8 -mb-8 md:-mb-12">
+      <div className="flex flex-1 min-h-0 overflow-hidden bg-[#f8f9fa] -mx-4 md:-mx-8 -mt-8 -mb-8 md:-mb-12">
         {/* Backdrop — mobile only, shown when drawer is open */}
         {sidebarOpen && (
           <div
@@ -465,7 +509,7 @@ class EventHome extends Component {
           />
         </div>
 
-        <div className="flex-1 overflow-y-auto py-8 px-4 md:px-8 max-w-[1200px] min-w-0">
+        <div className="flex-1 overflow-y-auto py-8 px-4 md:px-8 min-w-0">
           {/* Mobile hamburger button */}
           <button
             className="mobile-only items-center gap-2 mb-6 px-3 py-2 rounded-lg bg-white border border-border shadow-sm text-sm font-medium text-foreground hover:bg-surface-low transition-colors"

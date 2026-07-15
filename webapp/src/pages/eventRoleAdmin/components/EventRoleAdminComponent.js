@@ -78,7 +78,7 @@ class EventRoleAdminComponent extends Component {
         }
 
         return (
-        <div className="w-full max-w-5xl mx-auto pt-6 text-left space-y-8">
+        <div className="w-full pt-6 text-left space-y-8">
             <h1 className="font-heading text-2xl font-bold text-foreground mb-6">{this.props.t("Event Role Admin")}</h1>
             
             <div className="bg-white rounded-2xl shadow-sm border border-border p-6 space-y-6">

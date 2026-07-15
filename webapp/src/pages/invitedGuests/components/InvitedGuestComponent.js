@@ -458,7 +458,7 @@ class InvitedGuests extends Component {
   const guestName = this.state.selectedGuest ? this.state.selectedGuest.user.user_title + " " + this.state.selectedGuest.user.firstname + " " + this.state.selectedGuest.user.lastname : "";
 
     return (
-      <div className="w-full max-w-5xl mx-auto pt-6 text-left space-y-6">
+      <div className="w-full pt-6 text-left space-y-6">
         {error && (
           <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-6">
             {JSON.stringify(error)}
@@ -684,7 +684,7 @@ class InvitedGuests extends Component {
 
         <TagSelectorDialog
           visible={this.state.tagSelectorVisible}
-          onClose={() => this.setState({ tagSelectorVisible: false })}
+          onCancel={() => this.setState({ tagSelectorVisible: false })}
           onSelectTag={(tag) => {
             if (this.state.selectedGuest) {
               this.onSelectTag(tag);

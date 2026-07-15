@@ -30,12 +30,18 @@ export default function QrScanner({ onScan }) {
   const { t } = useTranslation();
   const [status, setStatus] = useState('requesting');
   const [canFlip, setCanFlip] = useState(false);
-  const [facingMode, setFacingMode] = useState('environment');
 
   const instanceRef = useRef(null);
   const elementId = useRef('qr-el-' + (++_idCounter)).current;
   const onScanRef = useRef(onScan);
   onScanRef.current = onScan;
+
+  // Cameras discovered so far, and the deviceId of whichever one is currently
+  // running. Once we know deviceIds we flip by deviceId rather than by
+  // re-requesting a facingMode constraint.
+  const camerasRef = useRef([]);
+  const activeCameraIdRef = useRef(null);
+  const facingModeRef = useRef('environment');
 
   const stopScanner = useCallback(async () => {
     const inst = instanceRef.current;
@@ -47,7 +53,7 @@ export default function QrScanner({ onScan }) {
     if (el) el.innerHTML = '';
   }, [elementId]);
 
-  const startScanner = useCallback(async (facing) => {
+  const startScanner = useCallback(async (cameraIdOrConfig) => {
     await stopScanner();
     setStatus('requesting');
 
@@ -56,13 +62,20 @@ export default function QrScanner({ onScan }) {
 
     try {
       await instance.start(
-        { facingMode: facing },
+        cameraIdOrConfig,
         { fps: 10, qrbox: { width: 250, height: 250 } },
         (text) => onScanRef.current(text),
         () => {}
       );
       setStatus('scanning');
+
+      try {
+        const settings = instance.getRunningTrackSettings();
+        if (settings && settings.deviceId) activeCameraIdRef.current = settings.deviceId;
+      } catch (_) {}
+
       Html5Qrcode.getCameras().then((cams) => {
+        camerasRef.current = cams;
         setCanFlip(cams.length > 1);
       }).catch(() => {});
     } catch (err) {
@@ -78,19 +91,31 @@ export default function QrScanner({ onScan }) {
   }, [elementId, stopScanner]);
 
   useEffect(() => {
-    startScanner('environment');
+    startScanner({ facingMode: 'environment' });
     return () => { stopScanner(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleFlip = useCallback(async () => {
-    const next = facingMode === 'environment' ? 'user' : 'environment';
-    setFacingMode(next);
-    await startScanner(next);
-  }, [facingMode, startScanner]);
+    const cams = camerasRef.current;
+    const activeId = activeCameraIdRef.current;
+
+    if (cams.length > 1) {
+      // Re-requesting a facingMode constraint on iOS Safari after a camera
+      // has already been streaming reliably yields a live-but-frozen grey
+      // frame for the back camera, so target the next camera by deviceId.
+      const idx = activeId ? cams.findIndex((c) => c.id === activeId) : -1;
+      const next = cams[idx === -1 ? 0 : (idx + 1) % cams.length];
+      await startScanner(next.id);
+    } else {
+      const next = facingModeRef.current === 'environment' ? 'user' : 'environment';
+      facingModeRef.current = next;
+      await startScanner({ facingMode: next });
+    }
+  }, [startScanner]);
 
   const handleRetry = useCallback(() => {
-    startScanner(facingMode);
-  }, [facingMode, startScanner]);
+    startScanner(activeCameraIdRef.current || { facingMode: facingModeRef.current });
+  }, [startScanner]);
 
   return (
     <div className="relative min-h-[300px]">

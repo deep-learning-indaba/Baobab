@@ -196,7 +196,7 @@ class AppComponent extends Component {
     return (
       <InstallProvider>
       <Router history={history}>
-        <div className="notranslate" translate="no">
+        <div className="notranslate app-shell" translate="no">
           <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
             <a
               className={

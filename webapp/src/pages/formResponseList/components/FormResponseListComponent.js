@@ -138,7 +138,7 @@ class FormResponseListComponent extends Component {
     }
 
     return (
-      <div className="w-full max-w-5xl mx-auto pt-6 text-left space-y-6">
+      <div className="w-full pt-6 text-left space-y-6">
         <div className="bg-white rounded-2xl shadow-sm border border-border p-8 space-y-6">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <h1 className="font-heading text-2xl font-bold text-foreground">{t("Response List")}</h1>

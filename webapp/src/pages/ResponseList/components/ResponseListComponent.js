@@ -260,7 +260,7 @@ class ResponseListComponent extends Component {
         ];
 
         return (
-            <div className="w-full max-w-5xl mx-auto pt-6 text-left space-y-6">
+            <div className="w-full pt-6 text-left space-y-6">
 
                 {error && (
                     <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-6">
@@ -291,7 +291,7 @@ class ResponseListComponent extends Component {
                                 type="text"
                                 placeholder="Search"
                                 onChange={e => this.setState({ emailSearch: e.target.value })}
-                                defaultValue={this.state.emailSearch}
+                                value={this.state.emailSearch}
                             />
                         </div>
 

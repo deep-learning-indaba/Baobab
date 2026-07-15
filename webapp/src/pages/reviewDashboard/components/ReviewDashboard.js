@@ -369,7 +369,7 @@ class ReviewDashboard extends Component {
         const { stage, error } = this.state;
 
         return (
-            <div className="w-full max-w-5xl mx-auto pt-6 text-left space-y-8">
+            <div className="w-full pt-6 text-left space-y-8">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                     <div>
                         <h1 className="font-heading text-2xl font-bold text-foreground mb-1">{t("Review Dashboard")}</h1>

@@ -45,10 +45,33 @@
         window.process.cwd = function() { return '/'; };
       }
     </script>
+    <style>
+      /* Shown before the JS bundle has downloaded/parsed; React wipes this
+         out automatically the moment it mounts into #root. */
+      #initial-loader {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+      }
+      #initial-loader .spinner {
+        width: 2.5rem;
+        height: 2.5rem;
+        border: 0.25em solid #0f5238;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: initial-spin 0.75s linear infinite;
+      }
+      @keyframes initial-spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
+    <div id="root">
+      <div id="initial-loader"><div class="spinner" role="status"></div></div>
+    </div>
     <script type="module" src="/src/index.js"></script>
   </body>
 </html>
