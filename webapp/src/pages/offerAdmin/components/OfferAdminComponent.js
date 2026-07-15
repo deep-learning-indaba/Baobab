@@ -393,7 +393,7 @@ class OfferAdminComponent extends Component {
         }
 
         return (
-            <div className="w-full max-w-5xl mx-auto pt-6 text-left space-y-6">
+            <div className="w-full pt-6 text-left space-y-6">
                 {error && (
                     <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-6">
                         {JSON.stringify(error)}

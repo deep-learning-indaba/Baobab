@@ -376,7 +376,7 @@ class TagConfigComponent extends Component {
   ];
 
     return (
-      <div key='card-container' className="w-full max-w-5xl mx-auto pt-6 text-left">
+      <div key='card-container' className="w-full pt-6 text-left">
         <div className="bg-white rounded-2xl shadow-sm border border-border p-8 space-y-6" key="tag-table">
           <h1 className="font-heading text-2xl font-bold text-foreground mb-6">{t("Tags")}</h1>
           <div className="react-table">

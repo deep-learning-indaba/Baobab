@@ -4,6 +4,7 @@ import os
 import requests
 import json
 import pytz
+import uuid
 
 from datetime import datetime
 
@@ -210,11 +211,7 @@ def from_invoice_model(invoice, organisation):
             description=line_item.description,
             quantity=1,
             unit_cost=line_item.amount_float)
-    invoice_pdf = 'app/invoice/invoice.pdf'
-    if not os.path.exists('app/invoice'):
-        os.makedirs('app/invoice')
-    if os.path.exists(invoice_pdf):
-        os.remove(invoice_pdf)
+    invoice_pdf = os.path.join('/tmp', f'{uuid.uuid4()}-invoice.pdf')
 
     generator.download(invoice_pdf)
     return invoice_pdf, invoice_number

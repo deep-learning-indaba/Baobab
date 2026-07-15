@@ -76,6 +76,76 @@ function SpeakerList(props) {
   );
 }
 
+// ── Session detail popup ────────────────────────────────────────────────────
+// Shown instead of expanding the card in place — parallel-session cards are too
+// narrow (especially on mobile) to comfortably fit a long description inline.
+
+function SessionDetailModal(props) {
+  var session = props.session;
+  var timezone = props.timezone;
+  var t = props.t;
+
+  var startFmt = formatTimeInEventTz(session.start_time, timezone);
+  var endFmt = formatTimeInEventTz(session.end_time, timezone);
+  var title = session.title || t('Untitled Session');
+  var speakerCount = (session.speakers || []).length;
+
+  return React.createElement('div', {
+    className: 'fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40',
+    onClick: function(e) { if (e.target === e.currentTarget) props.onClose(); }
+  },
+    React.createElement('div', {
+      className: 'text-left bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl max-h-[85vh] flex flex-col shadow-2xl'
+    },
+      // Header
+      React.createElement('div', { className: 'flex items-start justify-between gap-3 px-5 py-4 border-b border-border flex-shrink-0' },
+        React.createElement('div', { className: 'min-w-0' },
+          React.createElement('div', { className: 'flex flex-wrap items-center gap-1.5' },
+            React.createElement('span', { className: 'text-xs font-semibold text-primary whitespace-nowrap tabular-nums' },
+              startFmt + ' – ' + endFmt
+            ),
+            session.session_type && React.createElement('span', {
+              className: 'bg-primary/10 text-primary text-xs px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap'
+            }, session.session_type.name)
+          ),
+          React.createElement('h2', { className: 'font-heading text-lg font-bold text-foreground mt-1' }, title)
+        ),
+        React.createElement('button', {
+          type: 'button',
+          onClick: props.onClose,
+          className: 'flex-none text-muted-foreground hover:text-foreground p-1'
+        },
+          React.createElement('i', { className: 'fas fa-times', style: { fontSize: 18 } })
+        )
+      ),
+      // Body — scrollable
+      React.createElement('div', { className: 'overflow-y-auto flex-1 px-5 py-4 space-y-3' },
+        session.venue && React.createElement('div', { className: 'flex items-center gap-1.5 text-sm text-muted-foreground' },
+          React.createElement('i', { className: 'fas fa-map-marker-alt flex-none', style: { fontSize: 12 } }),
+          session.venue
+        ),
+        speakerCount > 0 && React.createElement(SpeakerList, {
+          session: session,
+          eventKey: props.eventKey,
+          linkSpeakers: props.linkSpeakers,
+          expanded: true
+        }),
+        session.description && React.createElement('p', {
+          className: 'text-sm text-foreground/80 whitespace-pre-line leading-relaxed'
+        }, session.description),
+        (session.tracks || []).length > 0 && React.createElement('div', { className: 'flex flex-wrap gap-1.5' },
+          (session.tracks || []).map(function(track) {
+            return React.createElement('span', {
+              key: track.id,
+              className: 'bg-muted text-muted-foreground text-xs px-1.5 py-0.5 rounded-full whitespace-nowrap'
+            }, track.name);
+          })
+        )
+      )
+    )
+  );
+}
+
 // ── Session card (shared by viewer + editor) ──────────────────────────────────
 
 function SessionCard(props) {
@@ -83,9 +153,9 @@ function SessionCard(props) {
   var timezone = props.timezone;
   var t = props.t;
   var compact = props.compact;
-  var expandedState = useState(false);
-  var expanded = expandedState[0];
-  var setExpanded = expandedState[1];
+  var showDetailsState = useState(false);
+  var showDetails = showDetailsState[0];
+  var setShowDetails = showDetailsState[1];
 
   var startFmt = formatTimeInEventTz(session.start_time, timezone);
   var endFmt = formatTimeInEventTz(session.end_time, timezone);
@@ -95,7 +165,8 @@ function SessionCard(props) {
   var titleLong = title.length > 42;
   var hasExtra = !!session.description || titleLong || speakerCount > 0;
 
-  return React.createElement('div', {
+  return React.createElement(React.Fragment, null,
+  React.createElement('div', {
     // text-left guards against the app-wide `.container-fluid { text-align:center }`
     className: 'text-left bg-white rounded-xl border border-border shadow-sm overflow-hidden flex flex-col h-full'
   },
@@ -127,14 +198,19 @@ function SessionCard(props) {
         props.actions
       ),
 
-      // Title — clamped when collapsed, full title available on hover + on expand.
+      // Title — clamped to two lines; full title available on hover and in the
+      // details popup, which it opens on click (same as the Details link below).
       // Rendered as a div (not h3) so the global heading font-size does not win
       // over these Tailwind text-size utilities in the cascade.
       React.createElement('div', {
         title: title,
-        className: 'font-heading font-semibold text-foreground leading-snug ' +
+        onClick: hasExtra ? function() { setShowDetails(true); } : undefined,
+        role: hasExtra ? 'button' : undefined,
+        tabIndex: hasExtra ? 0 : undefined,
+        onKeyDown: hasExtra ? function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowDetails(true); } } : undefined,
+        className: 'font-heading font-semibold text-foreground leading-snug line-clamp-2 ' +
           (compact ? 'text-sm ' : 'text-[15px] ') +
-          (expanded ? '' : 'line-clamp-2')
+          (hasExtra ? 'cursor-pointer hover:text-primary transition-colors' : '')
       }, title),
 
       // Venue
@@ -150,30 +226,22 @@ function SessionCard(props) {
         session: session,
         eventKey: props.eventKey,
         linkSpeakers: props.linkSpeakers,
-        expanded: expanded
+        expanded: false
       }),
 
-      // Description — only when expanded
-      expanded && session.description && React.createElement('p', {
-        className: 'text-xs text-muted-foreground whitespace-pre-line leading-relaxed'
-      }, session.description),
-
-      // Footer — Details toggle (left) and track tags (right), on the same row so a
-      // card's title/venue/speakers position doesn't shift depending on whether it has
-      // tracks or not.
+      // Footer — Details button (left, opens popup) and track tags (right), on the
+      // same row so a card's title/venue/speakers position doesn't shift depending
+      // on whether it has tracks or not.
       (hasExtra || (session.tracks || []).length > 0) && React.createElement('div', {
         className: 'mt-auto pt-1 flex items-center gap-2'
       },
         hasExtra && React.createElement('button', {
           type: 'button',
-          onClick: function() { setExpanded(!expanded); },
-          className: 'flex-none flex items-center gap-1 text-xs font-medium text-primary hover:underline'
+          onClick: function() { setShowDetails(true); },
+          className: 'flex-none flex items-center gap-1 text-xs font-medium text-primary hover:underline cursor-pointer'
         },
-          expanded ? t('Hide details') : t('Details'),
-          React.createElement('i', {
-            className: 'fas ' + (expanded ? 'fa-chevron-up' : 'fa-chevron-down'),
-            style: { fontSize: 10 }
-          })
+          t('Details'),
+          React.createElement('i', { className: 'fas fa-chevron-right', style: { fontSize: 10 } })
         ),
         (session.tracks || []).length > 0 && React.createElement('div', {
           className: 'ml-auto flex flex-wrap items-center justify-end gap-1.5 min-w-0'
@@ -187,6 +255,15 @@ function SessionCard(props) {
         )
       )
     )
+  ),
+  showDetails && React.createElement(SessionDetailModal, {
+    session: session,
+    timezone: timezone,
+    t: t,
+    eventKey: props.eventKey,
+    linkSpeakers: props.linkSpeakers,
+    onClose: function() { setShowDetails(false); }
+  })
   );
 }
 
