@@ -38,6 +38,23 @@ function GuestHero({ organisation, t }) {
   );
 }
 
+/* ── Confirmed-attendee upcoming redirect ───────────────────── */
+function findUpcomingConfirmedEvent(events) {
+  const now = new Date();
+  const oneMonthFromNow = new Date(now);
+  oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+
+  const candidates = events.filter((e) => {
+    if (!e.status?.is_event_attendee || !e.start_date) return false;
+    const start = new Date(e.start_date);
+    if (isNaN(start.getTime())) return false;
+    return start > now && start < oneMonthFromNow;
+  });
+
+  candidates.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+  return candidates[0] || null;
+}
+
 /* ── Application status stepper ─────────────────────────────── */
 function getApplicationStep(event) {
   const s = event?.status;
@@ -283,6 +300,13 @@ class Home extends Component {
         }
         if (response.events) {
           const ev = response.events;
+
+          const upcomingConfirmedEvent = findUpcomingConfirmedEvent(ev);
+          if (upcomingConfirmedEvent && this.props.history) {
+            this.props.history.push(`/${upcomingConfirmedEvent.key}`);
+            return;
+          }
+
           this.setState({
             allEvents: ev,
             upcomingEvents: ev.filter((e) => e.event_type === 'EVENT' && (e.is_event_opening || e.is_event_open)),

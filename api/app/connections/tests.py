@@ -105,6 +105,14 @@ class ConnectionApiTest(ApiTestCase):
         self.assertIsNotNone(row)
         self.assertEqual(row.status, ConnectionStatus.PENDING)
 
+        # B is the target of the scan, so B is the one who should be notified.
+        mock_push.assert_called_once_with(self.user_b_id, {
+            'title': 'New connection request',
+            'body': '{} {} wants to connect with you.'.format(
+                self.user_a.firstname, self.user_a.lastname),
+            'url': '/CONN2025/app/connections',
+        })
+
     @patch('app.connections.api.push_to_user', return_value=0)
     def test_rescan_is_idempotent(self, mock_push):
         ConnectionRepository.upsert_request(self.event_id, self.user_a_id, self.user_b_id)
