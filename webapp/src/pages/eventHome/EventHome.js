@@ -41,7 +41,7 @@ import FormConfigPage from "../formConfig";
 import { withTranslation, useTranslation } from 'react-i18next';
 import { useInstall } from '../../context/InstallContext';
 import { isPushSupported, getNotificationPermission, registerPushSubscription } from '../../utils/push';
-import { EventAppProgramme, ProgrammeEditor, EventAppAnnouncements, AnnouncementDetail, AnnouncementsAdmin, MyTicket, CheckinConsole, BadgeExport, MyProfile, ViewMemberProfile, ProfileBrowser, ScanConnect, Connections, ConnectLanding, DiscussionBoard, DiscussionThread, NewDiscussionThread, DiscussionReportsAdmin } from '../eventApp';
+import { EventAppProgramme, ProgrammeEditor, EventAppAnnouncements, AnnouncementDetail, AnnouncementsAdmin, MyTicket, CheckinConsole, BadgeExport, MyProfile, ViewMemberProfile, ProfileBrowser, ScanConnect, Connections, ConnectLanding, DiscussionSpaces, DiscussionBoard, DiscussionThread, NewDiscussionThread, DiscussionReportsAdmin } from '../eventApp';
 import EventDashboard from '../eventDashboard';
 import ResourceLinksAdmin from '../resourceLinks';
 
@@ -835,6 +835,17 @@ class EventHome extends Component {
           exact
           path={`${match.path}/event-app/discussion`}
           render={(props) => (
+            <DiscussionSpaces
+              {...props}
+              event={event}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/event-app/discussion/space/:spaceId(\\d+)`}
+          render={(props) => (
             <DiscussionBoard
               {...props}
               event={event}
@@ -844,7 +855,7 @@ class EventHome extends Component {
         />
         <Route
           exact
-          path={`${match.path}/event-app/discussion/new`}
+          path={`${match.path}/event-app/discussion/space/:spaceId(\\d+)/new`}
           render={(props) => (
             <NewDiscussionThread
               {...props}

@@ -92,9 +92,12 @@ def _serialize_thread_summary(thread, current_user_id):
     is_subscribed = bool(sub and sub.subscribed)
     read = repo.get_read(thread.id, current_user_id)
     unread = bool(read is None or thread.last_activity_at > read.last_read_at)
+    space = repo.get_space(thread.space_id)
     return {
         'id': thread.id,
         'event_id': thread.event_id,
+        'space_id': thread.space_id,
+        'space_name': space.name if space else None,
         'subject': subject,
         'preview': preview,
         'author': _author_block(thread.created_by_user_id, thread.event_id),
@@ -127,11 +130,35 @@ def _rate_limited(user_id, event_id):
     return repo.count_recent_messages(user_id, event_id, RATE_LIMIT_WINDOW_SECONDS) >= RATE_LIMIT_COUNT
 
 
-# ---------------- Thread list + create ----------------
+def _get_valid_space(space_id, event_id, require_open=False):
+    """Look up a space, returning None if missing, wrong event, or (if require_open) archived."""
+    space = repo.get_space(space_id)
+    if not space or space.event_id != event_id:
+        return None
+    if require_open and space.is_archived:
+        return None
+    return space
 
-class DiscussionThreadListAPI(restful.Resource):
-    """GET  /api/v1/discussion/thread?event_id=   list board threads
-       POST /api/v1/discussion/thread              create a thread (+root message)"""
+
+# ---------------- Spaces ----------------
+
+def _serialize_space(space, user_id):
+    return {
+        'id': space.id,
+        'event_id': space.event_id,
+        'name': space.name,
+        'description': space.description,
+        'subscribe_on_reply': space.subscribe_on_reply,
+        'position': space.position,
+        'is_archived': space.is_archived,
+        'thread_count': repo.thread_count(space.id),
+        'has_unread': repo.space_has_unread(space.id, user_id),
+    }
+
+
+class DiscussionSpaceListAPI(restful.Resource):
+    """GET  /api/v1/discussion/space?event_id=   list spaces (any confirmed guest)
+       POST /api/v1/discussion/space              create a space (comms officer)"""
 
     @auth_required
     def get(self):
@@ -141,16 +168,129 @@ class DiscussionThreadListAPI(restful.Resource):
         event_id, user_id = args['event_id'], g.current_user['id']
         if not _is_confirmed_guest(event_id, user_id):
             return errors.FORBIDDEN
-        threads = repo.list_threads(event_id)
+        include_archived = _is_moderator(user_id, event_id)
+        spaces = repo.list_spaces(event_id, include_archived=include_archived)
+        return [_serialize_space(s, user_id) for s in spaces]
+
+    @auth_required
+    def post(self):
+        body = request.get_json() or {}
+        event_id = body.get('event_id')
+        name = (body.get('name') or '').strip()
+        description = (body.get('description') or '').strip()
+        subscribe_on_reply = body.get('subscribe_on_reply', True)
+        if not event_id or not name:
+            return errors.MISSING_FIELDS
+        if len(name) > MAX_SUBJECT_LEN:
+            return errors.MISSING_FIELDS
+
+        user_id = g.current_user['id']
+        if not _is_moderator(user_id, event_id):
+            return errors.FORBIDDEN
+        event = event_repository.get_by_id(event_id)
+        if not event:
+            return errors.EVENT_NOT_FOUND
+
+        space = repo.create_space(event_id, user_id, name, description, subscribe_on_reply)
+        return _serialize_space(space, user_id), 201
+
+
+class DiscussionSpaceAPI(restful.Resource):
+    """GET    /api/v1/discussion/space/<id>?event_id=   space detail (any confirmed guest, incl. archived)
+       PUT    /api/v1/discussion/space/<id>   edit a space (comms officer)
+       DELETE /api/v1/discussion/space/<id>   archive (if non-empty) or delete (if empty)"""
+
+    @auth_required
+    def get(self, space_id):
+        parser = reqparse.RequestParser()
+        parser.add_argument('event_id', type=int, required=True)
+        args = parser.parse_args()
+        event_id, user_id = args['event_id'], g.current_user['id']
+        if not _is_confirmed_guest(event_id, user_id):
+            return errors.FORBIDDEN
+
+        space = _get_valid_space(space_id, event_id)
+        if not space:
+            return {'message': 'Space not found'}, 404
+        return _serialize_space(space, user_id), 200
+
+    @auth_required
+    def put(self, space_id):
+        body = request.get_json() or {}
+        event_id = body.get('event_id')
+        if not event_id:
+            return errors.MISSING_FIELDS
+        user_id = g.current_user['id']
+        if not _is_moderator(user_id, event_id):
+            return errors.FORBIDDEN
+
+        space = _get_valid_space(space_id, event_id)
+        if not space:
+            return {'message': 'Space not found'}, 404
+
+        name = body.get('name')
+        if name is not None:
+            name = name.strip()
+            if not name or len(name) > MAX_SUBJECT_LEN:
+                return errors.MISSING_FIELDS
+        description = body.get('description')
+        if description is not None:
+            description = description.strip()
+
+        repo.update_space(
+            space, name=name, description=description,
+            subscribe_on_reply=body.get('subscribe_on_reply'), position=body.get('position'))
+        return _serialize_space(space, user_id), 200
+
+    @auth_required
+    def delete(self, space_id):
+        parser = reqparse.RequestParser()
+        parser.add_argument('event_id', type=int, required=True)
+        args = parser.parse_args()
+        event_id, user_id = args['event_id'], g.current_user['id']
+        if not _is_moderator(user_id, event_id):
+            return errors.FORBIDDEN
+
+        space = _get_valid_space(space_id, event_id)
+        if not space:
+            return {'message': 'Space not found'}, 404
+
+        if repo.thread_count(space.id) > 0:
+            repo.archive_space(space)
+            return {'is_archived': True}, 200
+
+        repo.delete_space(space)
+        return {}, 204
+
+
+# ---------------- Thread list + create ----------------
+
+class DiscussionThreadListAPI(restful.Resource):
+    """GET  /api/v1/discussion/thread?event_id=&space_id=   list threads in a space
+       POST /api/v1/discussion/thread                        create a thread (+root message)"""
+
+    @auth_required
+    def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('event_id', type=int, required=True)
+        parser.add_argument('space_id', type=int, required=True)
+        args = parser.parse_args()
+        event_id, space_id, user_id = args['event_id'], args['space_id'], g.current_user['id']
+        if not _is_confirmed_guest(event_id, user_id):
+            return errors.FORBIDDEN
+        if not _get_valid_space(space_id, event_id):
+            return {'message': 'Space not found'}, 404
+        threads = repo.list_threads(event_id, space_id)
         return [_serialize_thread_summary(t, user_id) for t in threads]
 
     @auth_required
     def post(self):
         body = request.get_json() or {}
         event_id = body.get('event_id')
+        space_id = body.get('space_id')
         body_markdown = (body.get('body_markdown') or '').strip()
         subject = (body.get('subject') or '').strip()
-        if not event_id or not body_markdown:
+        if not event_id or not space_id or not body_markdown:
             return errors.MISSING_FIELDS
         if len(subject) > MAX_SUBJECT_LEN or len(body_markdown) > MAX_BODY_LEN:
             return errors.MISSING_FIELDS
@@ -161,11 +301,15 @@ class DiscussionThreadListAPI(restful.Resource):
         event = event_repository.get_by_id(event_id)
         if not event:
             return errors.EVENT_NOT_FOUND
+        space = _get_valid_space(space_id, event_id, require_open=True)
+        if not space:
+            return {'message': 'Space not found'}, 404
         if _rate_limited(user_id, event_id):
             return errors.TOO_MANY_REQUESTS
 
-        thread, root = repo.create_thread(event_id, user_id, subject, body_markdown)
-        repo.auto_subscribe(thread.id, user_id)
+        thread, root = repo.create_thread(event_id, space_id, user_id, subject, body_markdown)
+        if space.subscribe_on_reply:
+            repo.auto_subscribe(thread.id, user_id)
         repo.mark_read(thread.id, user_id)  # the author has necessarily "seen" their own post
         _emit(event, user_id, 'thread_created', {'thread_id': thread.id})
         return {'thread_id': thread.id, 'message_id': root.id}, 201
@@ -190,9 +334,12 @@ class DiscussionThreadDetailAPI(restful.Resource):
 
         is_mod = _is_moderator(user_id, event_id)
         messages = repo.list_messages(thread_id)
+        space = repo.get_space(thread.space_id)
         repo.mark_read(thread_id, user_id)  # in-app "inbox" read tracking
         return {
             'id': thread.id,
+            'space_id': thread.space_id,
+            'space_name': space.name if space else None,
             'subject': thread.subject,
             'is_pinned': thread.is_pinned,
             'is_subscribed': repo.is_subscribed(thread_id, user_id),
@@ -226,7 +373,9 @@ class DiscussionReplyAPI(restful.Resource):
             return errors.TOO_MANY_REQUESTS
 
         reply = repo.create_reply(thread, user_id, body_markdown)
-        repo.auto_subscribe(thread.id, user_id)
+        space = repo.get_space(thread.space_id)
+        if space.subscribe_on_reply:
+            repo.auto_subscribe(thread.id, user_id)
         repo.mark_read(thread.id, user_id)  # replying bumps last_activity_at; don't self-mark unread
 
         actor = user_repository.get_by_id(user_id)
@@ -349,7 +498,7 @@ class DiscussionSubscriptionAPI(restful.Resource):
 
 
 class DiscussionSubscriptionListAPI(restful.Resource):
-    """GET /api/v1/discussion/subscription?event_id=   'My subscriptions' view"""
+    """GET /api/v1/discussion/subscription?event_id=   'My subscriptions' view, across every space"""
 
     @auth_required
     def get(self):

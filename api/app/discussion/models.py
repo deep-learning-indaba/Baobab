@@ -3,10 +3,33 @@ from datetime import datetime
 from app import db
 
 
+class DiscussionSpace(db.Model):
+    """A hierarchical grouping of threads (e.g. "Introductions", "Ideathon").
+
+    Every thread must belong to exactly one space. subscribe_on_reply sets
+    the space-wide default for whether posting/replying auto-subscribes the
+    user to the thread (a user's own sticky (un)subscribe choice always wins).
+    """
+    __tablename__ = 'discussion_space'
+    id = db.Column(db.Integer(), primary_key=True)
+    event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text(), nullable=True)
+    subscribe_on_reply = db.Column(db.Boolean(), nullable=False, default=True)
+    position = db.Column(db.Integer(), nullable=False, default=0)
+    is_archived = db.Column(db.Boolean(), nullable=False, default=False)
+    created_by_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
+    created_at = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow)
+    __table_args__ = (
+        db.Index('ix_discussion_space_event', 'event_id', 'position'),
+    )
+
+
 class DiscussionThread(db.Model):
     __tablename__ = 'discussion_thread'
     id = db.Column(db.Integer(), primary_key=True)
     event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
+    space_id = db.Column(db.Integer(), db.ForeignKey('discussion_space.id'), nullable=False)
     created_by_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
     subject = db.Column(db.String(200), nullable=True)
     is_pinned = db.Column(db.Boolean(), nullable=False, default=False)
@@ -15,6 +38,7 @@ class DiscussionThread(db.Model):
     last_activity_at = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow)
     __table_args__ = (
         db.Index('ix_discussion_thread_event_activity', 'event_id', 'last_activity_at'),
+        db.Index('ix_discussion_thread_space', 'space_id'),
     )
 
 
