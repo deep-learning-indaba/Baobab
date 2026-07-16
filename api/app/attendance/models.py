@@ -11,6 +11,8 @@ class Attendance(db.Model):
     updated_by_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
     indemnity_signed = db.Column(db.Boolean(), nullable=False)
     confirmed = db.Column(db.Boolean(), nullable=False)
+    badge_exported = db.Column(db.Boolean(), nullable=False, server_default='false', default=False)
+    badge_exported_at = db.Column(db.DateTime(), nullable=True)
 
     event = db.relationship('Event', foreign_keys=[event_id])
     user = db.relationship('AppUser', foreign_keys=[user_id])
@@ -26,12 +28,18 @@ class Attendance(db.Model):
         self.updated_by_user_id = updated_by_user_id
         self.indemnity_signed = False
         self.confirmed=False
+        self.badge_exported = False
+        self.badge_exported_at = None
 
     def sign_indemnity(self):
         self.indemnity_signed = True
 
     def confirm(self):
         self.confirmed = True
+
+    def mark_badge_exported(self):
+        self.badge_exported = True
+        self.badge_exported_at = datetime.now()
 
 
 class EventIndemnity(db.Model):

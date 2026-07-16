@@ -133,7 +133,11 @@ class AnnouncementsAdmin extends Component {
     var self = this;
     var event = this.props.event;
     if (!event) return;
-    announcementService.remove(id, event.id).then(function() {
+    announcementService.remove(id, event.id).then(function(result) {
+      if (result.error) {
+        self.setState({ adminError: result.error });
+        return;
+      }
       self.setState(function(prev) {
         return { adminList: prev.adminList.filter(function(a) { return a.id !== id; }) };
       });
