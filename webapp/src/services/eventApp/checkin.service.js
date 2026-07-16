@@ -8,6 +8,7 @@ export const checkinService = {
   resolveToken,
   checkin,
   getBadgeExport,
+  markBadgesExported,
 };
 
 function getMyTicket(eventId) {
@@ -51,6 +52,19 @@ function checkin(params) {
         error: extractErrorMessage(error),
         statusCode: error.response && error.response.status,
       };
+    });
+}
+
+function markBadgesExported(eventId, userIds) {
+  return axios
+    .post(baseUrl + '/api/v1/checkin/badge-export', { event_id: eventId, user_ids: userIds }, {
+      headers: authHeader(),
+    })
+    .then(function(response) {
+      return { data: response.data, error: '' };
+    })
+    .catch(function(error) {
+      return { data: null, error: extractErrorMessage(error) };
     });
 }
 

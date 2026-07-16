@@ -65,17 +65,18 @@ function CheckinConsole(props) {
       setCheckinLoading(false);
       setPreview(null);
       if (res.data && res.data.already_checked_in) {
-        setResult({ type: 'already', message: t('{{name}} is already checked in', { name: res.data.fullname }) });
+        setResult({ type: 'already', message: t('{{name}} is already checked in', { name: res.data.fullname }), badgeNotPrinted: !res.data.badge_exported });
       } else if (res.error) {
         setResult({ type: 'error', message: res.error });
       } else {
-        setResult({ type: 'success', message: t('Checked in {{name}}', { name: res.data && res.data.fullname }) });
+        setResult({ type: 'success', message: t('Checked in {{name}}', { name: res.data && res.data.fullname }), badgeNotPrinted: !(res.data && res.data.badge_exported) });
       }
     });
   }, [event && event.id, t]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const showScanner = !previewLoading && !preview && !result;
   const indemnityBlocked = preview && preview.has_indemnity_form && !preview.indemnity_signed;
+  const badgeNotPrinted = preview && !preview.badge_exported;
 
   return (
     <div className="max-w-lg mx-auto py-6 px-4 space-y-4">
@@ -113,6 +114,11 @@ function CheckinConsole(props) {
               {t('Indemnity form not signed — check-in cannot proceed until the attendee signs.')}
             </p>
           )}
+          {badgeNotPrinted && (
+            <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800 font-medium">
+              {t('No badge was printed for this attendee — don\'t waste time searching for one; direct them to the registration desk.')}
+            </div>
+          )}
           <div className="flex gap-3 pt-2">
             <button
               className="flex-1 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary-container transition-all disabled:opacity-40 disabled:cursor-not-allowed"
@@ -142,6 +148,11 @@ function CheckinConsole(props) {
           }>
             {result.message}
           </div>
+          {result.type !== 'error' && result.badgeNotPrinted && (
+            <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800 font-medium">
+              {t('No badge was printed for this attendee — don\'t waste time searching for one; direct them to the registration desk.')}
+            </div>
+          )}
           <button
             onClick={resetToScanner}
             className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary-container transition-all"

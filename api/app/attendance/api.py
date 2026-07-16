@@ -412,6 +412,7 @@ class CheckinResolveAPI(restful.Resource):
         role = invited_guest.role if invited_guest else 'General Attendee'
         attendance = attendance_repository.get(event_id, qr.user_id)
         indemnity_signed = attendance.indemnity_signed if attendance else False
+        badge_exported = attendance.badge_exported if attendance else False
         indemnity = indemnity_repository.get(event_id)
 
         event = event_repository.get_by_id(event_id)
@@ -429,6 +430,7 @@ class CheckinResolveAPI(restful.Resource):
             'indemnity_signed': indemnity_signed,
             'has_indemnity_form': indemnity is not None,
             'already_checked_in': already_checked_in,
+            'badge_exported': badge_exported,
         }, 200
 
 
@@ -479,7 +481,12 @@ class CheckinAPI(restful.Resource):
 
         if checkin_repository.is_checked_in(event_id, target_user_id, day):
             user = user_repository.get_by_id(target_user_id)
-            return {'already_checked_in': True, 'fullname': user.full_name}, 200
+            existing_attendance = attendance_repository.get(event_id, target_user_id)
+            return {
+                'already_checked_in': True,
+                'fullname': user.full_name,
+                'badge_exported': existing_attendance.badge_exported if existing_attendance else False,
+            }, 200
 
         checkin = checkin_repository.create(event_id, target_user_id, by_user_id, method, day)
 
@@ -507,6 +514,7 @@ class CheckinAPI(restful.Resource):
             'checked_in': True,
             'fullname': user.full_name,
             'checked_in_at': checkin.checked_in_at.isoformat() + 'Z',
+            'badge_exported': attendance.badge_exported,
         }, 201
 
 
@@ -546,3 +554,30 @@ class BadgeExportAPI(restful.Resource):
             })
 
         return result, 200
+
+    @auth_required
+    def post(self):
+        # Record that badges were actually generated (CSV downloaded / printed)
+        # for the given guests, so check-in can warn when no badge exists.
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
+        req_parser.add_argument('user_ids', type=int, action='append', required=False)
+        args = req_parser.parse_args()
+        event_id = args['event_id']
+        current_user_id = g.current_user['id']
+
+        current_user = user_repository.get_by_id(current_user_id)
+        if not current_user.is_registration_volunteer(event_id):
+            return FORBIDDEN
+
+        event = event_repository.get_by_id(event_id)
+        if event is None:
+            return EVENT_NOT_FOUND
+
+        user_ids = args['user_ids']
+        if not user_ids:
+            user_ids = attendance_repository.get_all_guest_user_ids_for_event(event_id)
+
+        attendance_repository.mark_exported(event_id, user_ids, current_user_id)
+
+        return {'exported_count': len(user_ids)}, 200
