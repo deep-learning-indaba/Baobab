@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from app import db
 from app.discussion.models import (
-    DiscussionThread, DiscussionMessage, DiscussionSubscription, DiscussionReport)
+    DiscussionThread, DiscussionMessage, DiscussionSubscription, DiscussionReport, DiscussionSpace)
 from app.discussion.repository import DiscussionRepository
 from app.invitedGuest.models import InvitedGuest
 from app.utils.testing import ApiTestCase
@@ -41,10 +41,29 @@ class DiscussionApiTest(ApiTestCase):
         self.mod_header = self.get_auth_header_for('mod@test.com')
         self.out_header = self.get_auth_header_for('out@test.com')
 
-    def _create_thread(self, header, subject='Hi', body='hello'):
+        # Every post must live in a space; set up one default (auto-subscribing) space
+        # used by the bulk of these tests, which predate spaces and don't care about them.
+        self.space_id = self._create_space_id(subscribe_on_reply=True)
+
+    def _create_space(self, header=None, name='General', description='', subscribe_on_reply=True):
+        return self.app.post(
+            '/api/v1/discussion/space',
+            data=json.dumps({
+                'event_id': self.event_id, 'name': name, 'description': description,
+                'subscribe_on_reply': subscribe_on_reply,
+            }),
+            content_type='application/json', headers=(header or self.mod_header))
+
+    def _create_space_id(self, **kwargs):
+        return json.loads(self._create_space(**kwargs).data)['id']
+
+    def _create_thread(self, header, subject='Hi', body='hello', space_id=None):
         return self.app.post(
             '/api/v1/discussion/thread',
-            data=json.dumps({'event_id': self.event_id, 'subject': subject, 'body_markdown': body}),
+            data=json.dumps({
+                'event_id': self.event_id, 'space_id': (space_id or self.space_id),
+                'subject': subject, 'body_markdown': body,
+            }),
             content_type='application/json', headers=header)
 
     def _reply(self, header, thread_id, body='a reply'):
@@ -58,7 +77,7 @@ class DiscussionApiTest(ApiTestCase):
     @patch('app.discussion.api.push_to_user')
     def test_non_guest_cannot_list_or_post(self, mock_push):
         resp = self.app.get(
-            '/api/v1/discussion/thread?event_id={}'.format(self.event_id),
+            '/api/v1/discussion/thread?event_id={}&space_id={}'.format(self.event_id, self.space_id),
             headers=self.out_header)
         self.assertEqual(resp.status_code, 403)
 
@@ -67,7 +86,7 @@ class DiscussionApiTest(ApiTestCase):
 
     def test_guest_can_list_empty_board(self):
         resp = self.app.get(
-            '/api/v1/discussion/thread?event_id={}'.format(self.event_id),
+            '/api/v1/discussion/thread?event_id={}&space_id={}'.format(self.event_id, self.space_id),
             headers=self.g1_header)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(json.loads(resp.data), [])
@@ -119,7 +138,7 @@ class DiscussionApiTest(ApiTestCase):
         DiscussionRepository.set_pinned(t1, True)
 
         resp = self.app.get(
-            '/api/v1/discussion/thread?event_id={}'.format(self.event_id),
+            '/api/v1/discussion/thread?event_id={}&space_id={}'.format(self.event_id, self.space_id),
             headers=self.g1_header)
         ids = [t['id'] for t in json.loads(resp.data)]
         self.assertEqual(ids[0], t1_id)
@@ -132,7 +151,7 @@ class DiscussionApiTest(ApiTestCase):
         reply_id = json.loads(reply_resp.data)['message_id']
 
         resp = self.app.get(
-            '/api/v1/discussion/thread?event_id={}'.format(self.event_id),
+            '/api/v1/discussion/thread?event_id={}&space_id={}'.format(self.event_id, self.space_id),
             headers=self.g1_header)
         thread_data = next(t for t in json.loads(resp.data) if t['id'] == thread_id)
         self.assertEqual(thread_data['reply_count'], 1)
@@ -142,7 +161,7 @@ class DiscussionApiTest(ApiTestCase):
             headers=self.g2_header)
 
         resp = self.app.get(
-            '/api/v1/discussion/thread?event_id={}'.format(self.event_id),
+            '/api/v1/discussion/thread?event_id={}&space_id={}'.format(self.event_id, self.space_id),
             headers=self.g1_header)
         thread_data = next(t for t in json.loads(resp.data) if t['id'] == thread_id)
         self.assertEqual(thread_data['reply_count'], 0)
@@ -153,7 +172,7 @@ class DiscussionApiTest(ApiTestCase):
         thread_id = json.loads(self._create_thread(self.g1_header).data)['thread_id']
 
         resp = self.app.get(
-            '/api/v1/discussion/thread?event_id={}'.format(self.event_id),
+            '/api/v1/discussion/thread?event_id={}&space_id={}'.format(self.event_id, self.space_id),
             headers=self.g2_header)
         thread_data = next(t for t in json.loads(resp.data) if t['id'] == thread_id)
         self.assertTrue(thread_data['unread'])
@@ -163,7 +182,7 @@ class DiscussionApiTest(ApiTestCase):
             headers=self.g2_header)
 
         resp = self.app.get(
-            '/api/v1/discussion/thread?event_id={}'.format(self.event_id),
+            '/api/v1/discussion/thread?event_id={}&space_id={}'.format(self.event_id, self.space_id),
             headers=self.g2_header)
         thread_data = next(t for t in json.loads(resp.data) if t['id'] == thread_id)
         self.assertFalse(thread_data['unread'])
@@ -171,7 +190,7 @@ class DiscussionApiTest(ApiTestCase):
     def test_creating_thread_marks_it_read_for_author(self):
         thread_id = json.loads(self._create_thread(self.g1_header).data)['thread_id']
         resp = self.app.get(
-            '/api/v1/discussion/thread?event_id={}'.format(self.event_id),
+            '/api/v1/discussion/thread?event_id={}&space_id={}'.format(self.event_id, self.space_id),
             headers=self.g1_header)
         thread_data = next(t for t in json.loads(resp.data) if t['id'] == thread_id)
         self.assertFalse(thread_data['unread'])
@@ -186,13 +205,13 @@ class DiscussionApiTest(ApiTestCase):
         self._reply(self.g2_header, thread_id)
 
         resp = self.app.get(
-            '/api/v1/discussion/thread?event_id={}'.format(self.event_id),
+            '/api/v1/discussion/thread?event_id={}&space_id={}'.format(self.event_id, self.space_id),
             headers=self.g2_header)
         thread_data = next(t for t in json.loads(resp.data) if t['id'] == thread_id)
         self.assertFalse(thread_data['unread'])
 
         resp = self.app.get(
-            '/api/v1/discussion/thread?event_id={}'.format(self.event_id),
+            '/api/v1/discussion/thread?event_id={}&space_id={}'.format(self.event_id, self.space_id),
             headers=self.g1_header)
         thread_data = next(t for t in json.loads(resp.data) if t['id'] == thread_id)
         self.assertTrue(thread_data['unread'])
@@ -248,6 +267,18 @@ class DiscussionApiTest(ApiTestCase):
             headers=self.g2_header)
         ids = {t['id'] for t in json.loads(resp.data)}
         self.assertEqual(ids, {t2_id})
+
+    @patch('app.discussion.api.push_to_user')
+    def test_my_subscriptions_spans_every_space(self, mock_push):
+        other_space_id = self._create_space_id(name='Ideathon')
+        t1_id = json.loads(self._create_thread(self.g1_header, subject='In default space').data)['thread_id']
+        t2_id = json.loads(self._create_thread(self.g1_header, subject='In Ideathon', space_id=other_space_id).data)['thread_id']
+
+        resp = self.app.get(
+            '/api/v1/discussion/subscription?event_id={}'.format(self.event_id),
+            headers=self.g1_header)
+        ids = {t['id'] for t in json.loads(resp.data)}
+        self.assertEqual(ids, {t1_id, t2_id})
 
     # ---------- Notifications ----------
 
@@ -396,10 +427,191 @@ class DiscussionApiTest(ApiTestCase):
             resp = self._create_thread(self.g1_header, subject='3')
             self.assertEqual(resp.status_code, 429)
 
+    # ---------- Spaces: access control ----------
+
+    def test_guest_cannot_create_edit_or_delete_space(self):
+        resp = self._create_space(header=self.g1_header)
+        self.assertEqual(resp.status_code, 403)
+
+        resp = self.app.put(
+            '/api/v1/discussion/space/{}'.format(self.space_id),
+            data=json.dumps({'event_id': self.event_id, 'name': 'Hijacked'}),
+            content_type='application/json', headers=self.g1_header)
+        self.assertEqual(resp.status_code, 403)
+
+        resp = self.app.delete(
+            '/api/v1/discussion/space/{}?event_id={}'.format(self.space_id, self.event_id),
+            headers=self.g1_header)
+        self.assertEqual(resp.status_code, 403)
+
+    def test_guest_can_list_spaces(self):
+        resp = self.app.get(
+            '/api/v1/discussion/space?event_id={}'.format(self.event_id),
+            headers=self.g1_header)
+        self.assertEqual(resp.status_code, 200)
+        ids = [s['id'] for s in json.loads(resp.data)]
+        self.assertIn(self.space_id, ids)
+
+    def test_get_space_detail(self):
+        resp = self.app.get(
+            '/api/v1/discussion/space/{}?event_id={}'.format(self.space_id, self.event_id),
+            headers=self.g1_header)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(json.loads(resp.data)['id'], self.space_id)
+
+        resp = self.app.get(
+            '/api/v1/discussion/space/{}?event_id={}'.format(self.space_id, self.event_id),
+            headers=self.out_header)
+        self.assertEqual(resp.status_code, 403)
+
+    def test_comms_officer_can_create_and_edit_space(self):
+        resp = self._create_space(name='Introductions', description='Say hi!', subscribe_on_reply=False)
+        self.assertEqual(resp.status_code, 201)
+        data = json.loads(resp.data)
+        self.assertEqual(data['name'], 'Introductions')
+        self.assertFalse(data['subscribe_on_reply'])
+
+        resp = self.app.put(
+            '/api/v1/discussion/space/{}'.format(data['id']),
+            data=json.dumps({'event_id': self.event_id, 'name': 'Intros', 'subscribe_on_reply': True}),
+            content_type='application/json', headers=self.mod_header)
+        self.assertEqual(resp.status_code, 200)
+        updated = json.loads(resp.data)
+        self.assertEqual(updated['name'], 'Intros')
+        self.assertTrue(updated['subscribe_on_reply'])
+
+    # ---------- Spaces: posts must live in a space ----------
+
+    def test_thread_requires_valid_space(self):
+        resp = self.app.post(
+            '/api/v1/discussion/thread',
+            data=json.dumps({'event_id': self.event_id, 'body_markdown': 'hello'}),
+            content_type='application/json', headers=self.g1_header)
+        self.assertEqual(resp.status_code, 400)
+
+        resp = self._create_thread(self.g1_header, space_id=999999)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_thread_rejects_space_from_another_event(self):
+        other_event = self.add_event(key='DISC2027')
+        _invited_guest(other_event.id, self.g1_id)
+        self.add_event_role('comms-officer', self.mod_id, other_event.id)
+        other_space_id = json.loads(self.app.post(
+            '/api/v1/discussion/space',
+            data=json.dumps({'event_id': other_event.id, 'name': 'Other'}),
+            content_type='application/json', headers=self.mod_header).data)['id']
+
+        resp = self._create_thread(self.g1_header, space_id=other_space_id)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_cannot_post_new_thread_in_archived_space(self):
+        space_id = self._create_space_id(name='Retiring')
+        self._create_thread(self.g1_header, space_id=space_id)  # give it a thread so delete archives it
+        self.app.delete(
+            '/api/v1/discussion/space/{}?event_id={}'.format(space_id, self.event_id),
+            headers=self.mod_header)
+
+        resp = self._create_thread(self.g1_header, space_id=space_id)
+        self.assertEqual(resp.status_code, 404)
+
+    # ---------- Spaces: archive vs hard-delete ----------
+
+    def test_deleting_empty_space_hard_deletes(self):
+        space_id = self._create_space_id(name='Empty space')
+        resp = self.app.delete(
+            '/api/v1/discussion/space/{}?event_id={}'.format(space_id, self.event_id),
+            headers=self.mod_header)
+        self.assertEqual(resp.status_code, 204)
+        self.assertIsNone(db.session.query(DiscussionSpace).get(space_id))
+
+    def test_deleting_nonempty_space_archives_and_keeps_threads_reachable(self):
+        space_id = self._create_space_id(name='Has posts')
+        thread_id, _ = self._create_thread_ids(self.g1_header, space_id=space_id)
+
+        resp = self.app.delete(
+            '/api/v1/discussion/space/{}?event_id={}'.format(space_id, self.event_id),
+            headers=self.mod_header)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(json.loads(resp.data)['is_archived'])
+
+        space = db.session.query(DiscussionSpace).get(space_id)
+        self.assertIsNotNone(space)
+        self.assertTrue(space.is_archived)
+
+        # Archived space drops off the guest-facing list...
+        resp = self.app.get(
+            '/api/v1/discussion/space?event_id={}'.format(self.event_id),
+            headers=self.g1_header)
+        self.assertNotIn(space_id, [s['id'] for s in json.loads(resp.data)])
+
+        # ...but its existing thread is still reachable.
+        resp = self.app.get(
+            '/api/v1/discussion/thread/{}?event_id={}'.format(thread_id, self.event_id),
+            headers=self.g1_header)
+        self.assertEqual(resp.status_code, 200)
+
+    # ---------- Spaces: subscribe_on_reply default ----------
+
+    @patch('app.discussion.api.push_to_user')
+    def test_subscribe_on_reply_false_does_not_autosubscribe_on_post_or_reply(self, mock_push):
+        space_id = self._create_space_id(name='Introductions', subscribe_on_reply=False)
+
+        thread_id, _ = self._create_thread_ids(self.g1_header, space_id=space_id)
+        author_sub = db.session.query(DiscussionSubscription).filter_by(
+            thread_id=thread_id, user_id=self.g1_id).first()
+        self.assertIsNone(author_sub)
+
+        self._reply(self.g2_header, thread_id)
+        replier_sub = db.session.query(DiscussionSubscription).filter_by(
+            thread_id=thread_id, user_id=self.g2_id).first()
+        self.assertIsNone(replier_sub)
+
+        # Manual opt-in still works even though the space default is off.
+        resp = self.app.post(
+            '/api/v1/discussion/thread/{}/subscription'.format(thread_id),
+            data=json.dumps({'event_id': self.event_id, 'subscribed': True}),
+            content_type='application/json', headers=self.g2_header)
+        self.assertEqual(resp.status_code, 200)
+        replier_sub = db.session.query(DiscussionSubscription).filter_by(
+            thread_id=thread_id, user_id=self.g2_id).first()
+        self.assertTrue(replier_sub.subscribed)
+
+    @patch('app.discussion.api.push_to_user')
+    def test_subscribe_on_reply_true_autosubscribes_on_post_and_reply(self, mock_push):
+        space_id = self._create_space_id(name='Ideathon', subscribe_on_reply=True)
+
+        thread_id, _ = self._create_thread_ids(self.g1_header, space_id=space_id)
+        author_sub = db.session.query(DiscussionSubscription).filter_by(
+            thread_id=thread_id, user_id=self.g1_id).first()
+        self.assertTrue(author_sub.subscribed)
+
+        self._reply(self.g2_header, thread_id)
+        replier_sub = db.session.query(DiscussionSubscription).filter_by(
+            thread_id=thread_id, user_id=self.g2_id).first()
+        self.assertTrue(replier_sub.subscribed)
+
+    def test_space_thread_count_and_unread(self):
+        space_id = self._create_space_id(name='Counted')
+        self._create_thread(self.g1_header, space_id=space_id)
+        self._create_thread(self.g1_header, space_id=space_id)
+
+        resp = self.app.get(
+            '/api/v1/discussion/space?event_id={}'.format(self.event_id),
+            headers=self.g1_header)
+        space_data = next(s for s in json.loads(resp.data) if s['id'] == space_id)
+        self.assertEqual(space_data['thread_count'], 2)
+        self.assertFalse(space_data['has_unread'])  # g1 authored both, so already read
+
+        resp = self.app.get(
+            '/api/v1/discussion/space?event_id={}'.format(self.event_id),
+            headers=self.g2_header)
+        space_data = next(s for s in json.loads(resp.data) if s['id'] == space_id)
+        self.assertTrue(space_data['has_unread'])  # g2 has never viewed either thread
+
     # ---------- helpers ----------
 
-    def _create_thread_ids(self, header):
-        data = json.loads(self._create_thread(header).data)
+    def _create_thread_ids(self, header, space_id=None):
+        data = json.loads(self._create_thread(header, space_id=space_id).data)
         return data['thread_id'], data['message_id']
 
 

@@ -189,11 +189,11 @@ function DiscussionThread(props) {
   return (
     <div className="w-full max-w-5xl mx-auto pt-6 space-y-4 pb-8">
       <button
-        onClick={function () { history.push('/' + eventKey + '/event-app/discussion'); }}
+        onClick={function () { history.push('/' + eventKey + '/event-app/discussion/space/' + thread.space_id); }}
         className="flex items-center gap-1.5 text-sm text-primary hover:underline"
       >
         <i className="fas fa-chevron-left" style={{ fontSize: 13 }} />
-        {t('Back to Discussion')}
+        {thread.space_name ? t('Back to {{space}}', { space: thread.space_name }) : t('Back to Discussion')}
       </button>
 
       <div className="flex items-center justify-between gap-3">
