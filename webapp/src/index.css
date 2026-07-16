@@ -73,6 +73,22 @@ code {
   font-family: var(--font-mono);
 }
 
+/* Tailwind's preflight leaves <button> at the browser default (arrow)
+   cursor, unlike <a>. Give every button the hand cursor project-wide so
+   individual components don't need to add `cursor-pointer` by hand. */
+button:not(:disabled),
+[type='button']:not(:disabled),
+[type='reset']:not(:disabled),
+[type='submit']:not(:disabled) {
+  cursor: pointer;
+}
+button:disabled,
+[type='button']:disabled,
+[type='reset']:disabled,
+[type='submit']:disabled {
+  cursor: not-allowed;
+}
+
 /* ── Form-editor shared utilities ──────────────────────────── */
 
 /* Toggle switch — uses peer checkbox + this span sibling */

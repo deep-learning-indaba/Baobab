@@ -7,14 +7,29 @@ function ok(r) { return { data: r.data, error: '' }; }
 function fail(e) { return { data: null, error: extractErrorMessage(e) }; }
 
 export var discussionService = {
-  listThreads: function (eventId) {
-    return axios.get(baseUrl + '/api/v1/discussion/thread?event_id=' + eventId, { headers: authHeader() }).then(ok).catch(fail);
+  listSpaces: function (eventId) {
+    return axios.get(baseUrl + '/api/v1/discussion/space?event_id=' + eventId, { headers: authHeader() }).then(ok).catch(fail);
+  },
+  getSpace: function (eventId, spaceId) {
+    return axios.get(baseUrl + '/api/v1/discussion/space/' + spaceId + '?event_id=' + eventId, { headers: authHeader() }).then(ok).catch(fail);
+  },
+  createSpace: function (eventId, name, description, subscribeOnReply) {
+    return axios.post(baseUrl + '/api/v1/discussion/space', { event_id: eventId, name: name, description: description, subscribe_on_reply: subscribeOnReply }, { headers: authHeader() }).then(ok).catch(fail);
+  },
+  updateSpace: function (eventId, spaceId, fields) {
+    return axios.put(baseUrl + '/api/v1/discussion/space/' + spaceId, Object.assign({ event_id: eventId }, fields), { headers: authHeader() }).then(ok).catch(fail);
+  },
+  deleteSpace: function (eventId, spaceId) {
+    return axios.delete(baseUrl + '/api/v1/discussion/space/' + spaceId + '?event_id=' + eventId, { headers: authHeader() }).then(ok).catch(fail);
+  },
+  listThreads: function (eventId, spaceId) {
+    return axios.get(baseUrl + '/api/v1/discussion/thread?event_id=' + eventId + '&space_id=' + spaceId, { headers: authHeader() }).then(ok).catch(fail);
   },
   getThread: function (eventId, threadId) {
     return axios.get(baseUrl + '/api/v1/discussion/thread/' + threadId + '?event_id=' + eventId, { headers: authHeader() }).then(ok).catch(fail);
   },
-  createThread: function (eventId, subject, bodyMarkdown) {
-    return axios.post(baseUrl + '/api/v1/discussion/thread', { event_id: eventId, subject: subject, body_markdown: bodyMarkdown }, { headers: authHeader() }).then(ok).catch(fail);
+  createThread: function (eventId, spaceId, subject, bodyMarkdown) {
+    return axios.post(baseUrl + '/api/v1/discussion/thread', { event_id: eventId, space_id: spaceId, subject: subject, body_markdown: bodyMarkdown }, { headers: authHeader() }).then(ok).catch(fail);
   },
   reply: function (eventId, threadId, bodyMarkdown) {
     return axios.post(baseUrl + '/api/v1/discussion/thread/' + threadId + '/reply', { event_id: eventId, body_markdown: bodyMarkdown }, { headers: authHeader() }).then(ok).catch(fail);

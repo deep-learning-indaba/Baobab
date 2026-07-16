@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { discussionService } from '../../services/eventApp/discussion.service';
 
@@ -6,6 +6,7 @@ var MAX_SUBJECT_LEN = 200;
 
 function NewDiscussionThread(props) {
   var event = props.event, history = props.history;
+  var spaceId = props.match && props.match.params && props.match.params.spaceId;
   var { t } = useTranslation();
   var eventId = event && event.id;
   var eventKey = event && event.key;
@@ -14,12 +15,20 @@ function NewDiscussionThread(props) {
   var [body, setBody] = useState('');
   var [posting, setPosting] = useState(false);
   var [error, setError] = useState(null);
+  var [spaceName, setSpaceName] = useState(null);
+
+  useEffect(function () {
+    if (!eventId || !spaceId) return;
+    discussionService.getSpace(eventId, spaceId).then(function (r) {
+      if (!r.error) setSpaceName(r.data.name);
+    });
+  }, [eventId, spaceId]);
 
   function handlePost() {
-    if (!body.trim() || !eventId) return;
+    if (!body.trim() || !eventId || !spaceId) return;
     setPosting(true);
     setError(null);
-    discussionService.createThread(eventId, subject.trim(), body.trim()).then(function (r) {
+    discussionService.createThread(eventId, spaceId, subject.trim(), body.trim()).then(function (r) {
       setPosting(false);
       if (r.error) { setError(r.error); return; }
       history.push('/' + eventKey + '/event-app/discussion/' + r.data.thread_id);
@@ -29,11 +38,11 @@ function NewDiscussionThread(props) {
   return (
     <div className="w-full max-w-5xl mx-auto pt-6 space-y-4">
       <button
-        onClick={function () { history.push('/' + eventKey + '/event-app/discussion'); }}
+        onClick={function () { history.push('/' + eventKey + '/event-app/discussion/space/' + spaceId); }}
         className="flex items-center gap-1.5 text-sm text-primary hover:underline"
       >
         <i className="fas fa-chevron-left" style={{ fontSize: 13 }} />
-        {t('Back to Discussion')}
+        {spaceName ? t('Back to {{space}}', { space: spaceName }) : t('Back to Discussion')}
       </button>
 
       <h1 className="font-heading text-2xl font-bold text-foreground">{t('New discussion')}</h1>

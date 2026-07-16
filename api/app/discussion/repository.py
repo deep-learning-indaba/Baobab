@@ -5,18 +5,84 @@ from sqlalchemy import func
 from app import db
 from app.discussion.models import (
     DiscussionThread, DiscussionMessage, DiscussionSubscription, DiscussionReport, DiscussionRead,
+    DiscussionSpace,
 )
 
 
 class DiscussionRepository:
 
+    # ---------- Spaces ----------
+
+    @staticmethod
+    def list_spaces(event_id, include_archived=False):
+        q = db.session.query(DiscussionSpace).filter(DiscussionSpace.event_id == event_id)
+        if not include_archived:
+            q = q.filter(DiscussionSpace.is_archived.is_(False))
+        return q.order_by(DiscussionSpace.position.asc(), DiscussionSpace.created_at.asc()).all()
+
+    @staticmethod
+    def get_space(space_id):
+        return db.session.query(DiscussionSpace).get(space_id)
+
+    @staticmethod
+    def create_space(event_id, user_id, name, description, subscribe_on_reply, position=0):
+        space = DiscussionSpace(
+            event_id=event_id, created_by_user_id=user_id, name=name,
+            description=(description or None), subscribe_on_reply=bool(subscribe_on_reply),
+            position=position,
+        )
+        db.session.add(space)
+        db.session.commit()
+        return space
+
+    @staticmethod
+    def update_space(space, name=None, description=None, subscribe_on_reply=None, position=None):
+        if name is not None:
+            space.name = name
+        if description is not None:
+            space.description = (description or None)
+        if subscribe_on_reply is not None:
+            space.subscribe_on_reply = bool(subscribe_on_reply)
+        if position is not None:
+            space.position = position
+        db.session.commit()
+        return space
+
+    @staticmethod
+    def archive_space(space):
+        space.is_archived = True
+        db.session.commit()
+
+    @staticmethod
+    def delete_space(space):
+        db.session.delete(space)
+        db.session.commit()
+
+    @staticmethod
+    def thread_count(space_id):
+        return (db.session.query(func.count(DiscussionThread.id))
+                .filter(DiscussionThread.space_id == space_id)
+                .scalar())
+
+    @staticmethod
+    def space_has_unread(space_id, user_id):
+        """True if any thread in the space has newer activity than the user's read marker."""
+        rows = (db.session.query(DiscussionThread.last_activity_at, DiscussionRead.last_read_at)
+                .outerjoin(DiscussionRead,
+                           (DiscussionRead.thread_id == DiscussionThread.id)
+                           & (DiscussionRead.user_id == user_id))
+                .filter(DiscussionThread.space_id == space_id)
+                .all())
+        return any(read_at is None or activity_at > read_at for activity_at, read_at in rows)
+
     # ---------- Threads ----------
 
     @staticmethod
-    def list_threads(event_id):
+    def list_threads(event_id, space_id):
         """Board view: pinned first, then most-recent-activity first."""
         return (db.session.query(DiscussionThread)
-                .filter(DiscussionThread.event_id == event_id)
+                .filter(DiscussionThread.event_id == event_id,
+                        DiscussionThread.space_id == space_id)
                 .order_by(DiscussionThread.is_pinned.desc(),
                           DiscussionThread.last_activity_at.desc())
                 .all())
@@ -26,11 +92,11 @@ class DiscussionRepository:
         return db.session.query(DiscussionThread).get(thread_id)
 
     @staticmethod
-    def create_thread(event_id, user_id, subject, body_markdown):
+    def create_thread(event_id, space_id, user_id, subject, body_markdown):
         """Create a thread and its root message atomically. Returns (thread, root_message)."""
         now = datetime.utcnow()
         thread = DiscussionThread(
-            event_id=event_id, created_by_user_id=user_id,
+            event_id=event_id, space_id=space_id, created_by_user_id=user_id,
             subject=(subject or None), created_at=now, last_activity_at=now,
         )
         db.session.add(thread)

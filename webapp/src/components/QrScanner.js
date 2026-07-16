@@ -30,52 +30,57 @@ export default function QrScanner({ onScan }) {
   const { t } = useTranslation();
   const [status, setStatus] = useState('requesting');
   const [canFlip, setCanFlip] = useState(false);
+  const [facingMode, setFacingMode] = useState('environment');
 
   const instanceRef = useRef(null);
   const elementId = useRef('qr-el-' + (++_idCounter)).current;
   const onScanRef = useRef(onScan);
   onScanRef.current = onScan;
 
-  // Cameras discovered so far, and the deviceId of whichever one is currently
-  // running. Once we know deviceIds we flip by deviceId rather than by
-  // re-requesting a facingMode constraint.
-  const camerasRef = useRef([]);
-  const activeCameraIdRef = useRef(null);
-  const facingModeRef = useRef('environment');
-
   const stopScanner = useCallback(async () => {
     const inst = instanceRef.current;
     instanceRef.current = null;
+
+    // iOS/WebKit keeps the camera held (and paints the next capture as a frozen
+    // grey frame) unless we detach the MediaStream from the <video> ourselves.
+    // The library removes the element on stop() but never pauses it or nulls
+    // srcObject, so do that first.
+    const el = document.getElementById(elementId);
+    const video = el && el.querySelector('video');
+    if (video) {
+      try { video.pause(); } catch (_) {}
+      video.srcObject = null;
+    }
+
     if (inst) {
       try { await inst.stop(); } catch (_) {}
     }
-    const el = document.getElementById(elementId);
     if (el) el.innerHTML = '';
   }, [elementId]);
 
-  const startScanner = useCallback(async (cameraIdOrConfig) => {
+  const startScanner = useCallback(async (facing) => {
+    const hadPreviousCamera = !!instanceRef.current;
     await stopScanner();
     setStatus('requesting');
+
+    // After releasing a camera, iOS needs a moment before the next capture will
+    // actually paint — starting immediately gives a live-but-grey video.
+    if (hadPreviousCamera) {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    }
 
     const instance = new Html5Qrcode(elementId);
     instanceRef.current = instance;
 
     try {
       await instance.start(
-        cameraIdOrConfig,
+        { facingMode: facing },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         (text) => onScanRef.current(text),
         () => {}
       );
       setStatus('scanning');
-
-      try {
-        const settings = instance.getRunningTrackSettings();
-        if (settings && settings.deviceId) activeCameraIdRef.current = settings.deviceId;
-      } catch (_) {}
-
       Html5Qrcode.getCameras().then((cams) => {
-        camerasRef.current = cams;
         setCanFlip(cams.length > 1);
       }).catch(() => {});
     } catch (err) {
@@ -91,31 +96,19 @@ export default function QrScanner({ onScan }) {
   }, [elementId, stopScanner]);
 
   useEffect(() => {
-    startScanner({ facingMode: 'environment' });
+    startScanner('environment');
     return () => { stopScanner(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleFlip = useCallback(async () => {
-    const cams = camerasRef.current;
-    const activeId = activeCameraIdRef.current;
-
-    if (cams.length > 1) {
-      // Re-requesting a facingMode constraint on iOS Safari after a camera
-      // has already been streaming reliably yields a live-but-frozen grey
-      // frame for the back camera, so target the next camera by deviceId.
-      const idx = activeId ? cams.findIndex((c) => c.id === activeId) : -1;
-      const next = cams[idx === -1 ? 0 : (idx + 1) % cams.length];
-      await startScanner(next.id);
-    } else {
-      const next = facingModeRef.current === 'environment' ? 'user' : 'environment';
-      facingModeRef.current = next;
-      await startScanner({ facingMode: next });
-    }
-  }, [startScanner]);
+    const next = facingMode === 'environment' ? 'user' : 'environment';
+    setFacingMode(next);
+    await startScanner(next);
+  }, [facingMode, startScanner]);
 
   const handleRetry = useCallback(() => {
-    startScanner(activeCameraIdRef.current || { facingMode: facingModeRef.current });
-  }, [startScanner]);
+    startScanner(facingMode);
+  }, [facingMode, startScanner]);
 
   return (
     <div className="relative min-h-[300px]">
