@@ -472,6 +472,61 @@ class AnnouncementApiTest(ApiTestCase):
         self.assertEqual(json.loads(resp.data)['title'], 'Nur Deutsch')
 
     @patch('app.announcements.api.push_to_user', return_value=0)
+    def test_delete_removes_announcement_with_translations_and_receipts(self, mock_push):
+        # A sent announcement has both translation rows and receipt rows
+        # pointing at it via FK — deleting it must not violate those constraints.
+        payload = {
+            'event_id': self.event_id,
+            'translations': [{'language': 'en', 'title': 'Bye', 'body_markdown': 'body'}],
+        }
+        create_resp = self.app.post(
+            '/api/v1/announcement',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=self.comms_header,
+        )
+        ann_id = json.loads(create_resp.data)['id']
+        self.assertTrue(
+            db.session.query(AnnouncementReceipt).filter_by(announcement_id=ann_id).count() > 0)
+
+        resp = self.app.delete(
+            '/api/v1/announcement/{}?event_id={}'.format(ann_id, self.event_id),
+            headers=self.comms_header,
+        )
+        self.assertEqual(resp.status_code, 204)
+
+        self.assertIsNone(db.session.query(Announcement).filter_by(id=ann_id).first())
+        self.assertEqual(
+            db.session.query(AnnouncementTranslation).filter_by(announcement_id=ann_id).count(), 0)
+        self.assertEqual(
+            db.session.query(AnnouncementReceipt).filter_by(announcement_id=ann_id).count(), 0)
+
+    def test_delete_forbidden_for_non_comms_officer(self):
+        ann = AnnouncementRepository.create(
+            self.event_id, self.comms_id, None,
+            translations=[('en', 'Keep', 'body')],
+        )
+        resp = self.app.delete(
+            '/api/v1/announcement/{}?event_id={}'.format(ann.id, self.event_id),
+            headers=self.a1_header,
+        )
+        self.assertEqual(resp.status_code, 403)
+        self.assertIsNotNone(db.session.query(Announcement).filter_by(id=ann.id).first())
+
+    def test_delete_not_found_for_wrong_event(self):
+        other_event = self.add_event(key='OTHEREVENT2025')
+        self.add_event_role('comms-officer', self.comms_id, other_event.id)
+        ann = AnnouncementRepository.create(
+            self.event_id, self.comms_id, None,
+            translations=[('en', 'Keep', 'body')],
+        )
+        resp = self.app.delete(
+            '/api/v1/announcement/{}?event_id={}'.format(ann.id, other_event.id),
+            headers=self.comms_header,
+        )
+        self.assertEqual(resp.status_code, 404)
+
+    @patch('app.announcements.api.push_to_user', return_value=0)
     def test_admin_list_shows_delivery_stats(self, mock_push):
         payload = {
             'event_id': self.event_id,

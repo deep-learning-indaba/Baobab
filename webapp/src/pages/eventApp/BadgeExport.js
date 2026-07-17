@@ -10,8 +10,28 @@ class BadgeExport extends Component {
       badges: null,
       isLoading: true,
       error: null,
+      exportMarked: false,
     };
   }
+
+  markExported = function() {
+    var badges = this.state.badges;
+    var eventId = this.props.event && this.props.event.id;
+    if (!badges || !badges.length || !eventId) {
+      return;
+    }
+    var userIds = badges.map(function(b) { return b.user_id; });
+    checkinService.markBadgesExported(eventId, userIds).then(function(result) {
+      if (!result.error) {
+        this.setState({ exportMarked: true });
+      }
+    }.bind(this));
+  }.bind(this);
+
+  printBadges = function() {
+    this.markExported();
+    window.print();
+  }.bind(this);
 
   componentDidMount() {
     var eventId = this.props.event && this.props.event.id;
@@ -45,6 +65,7 @@ class BadgeExport extends Component {
     a.download = 'badges.csv';
     a.click();
     URL.revokeObjectURL(url);
+    this.markExported();
   }.bind(this);
 
   render() {
@@ -84,12 +105,18 @@ class BadgeExport extends Component {
             </button>
             <button
               className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary-container transition-all"
-              onClick={function() { window.print(); }}
+              onClick={this.printBadges}
             >
               {t('Print Badges')}
             </button>
           </div>
         </div>
+
+        {this.state.exportMarked && (
+          <div className="alert alert-success mb-6 no-print">
+            {t('Badges marked as printed — check-in will no longer warn for these attendees.')}
+          </div>
+        )}
 
         <div className="badge-grid">
           {badges.map(function(badge) {

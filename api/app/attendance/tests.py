@@ -553,6 +553,41 @@ class CheckinAPITest(ApiTestCase):
         )
         self.assertEqual(response.status_code, 400)
 
+    def test_resolve_reports_badge_not_exported_by_default(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('volunteer@test.com')
+        response = self.app.get(
+            '/api/v1/checkin/resolve', headers=header,
+            query_string={'event_id': self.event_id, 't': self.token_str}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertFalse(data['badge_exported'])
+
+    def test_resolve_reports_badge_exported_after_mark(self):
+        self.seed_static_data()
+        attendance_repository.mark_exported(self.event_id, [self.guest_id], self.volunteer.id)
+        header = self.get_auth_header_for('volunteer@test.com')
+        response = self.app.get(
+            '/api/v1/checkin/resolve', headers=header,
+            query_string={'event_id': self.event_id, 't': self.token_str}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertTrue(data['badge_exported'])
+
+    def test_checkin_response_includes_badge_exported(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('volunteer@test.com')
+        response = self.app.post(
+            '/api/v1/checkin', headers=header,
+            data={'event_id': self.event_id, 'token': self.token_str}
+        )
+        self.assertEqual(response.status_code, 201)
+        data = json.loads(response.data)
+        self.assertIn('badge_exported', data)
+        self.assertFalse(data['badge_exported'])
+
     def test_volunteer_can_checkin_guest_by_user_id(self):
         self.seed_static_data()
         header = self.get_auth_header_for('volunteer@test.com')
@@ -685,5 +720,42 @@ class BadgeExportAPITest(ApiTestCase):
         response = self.app.get(
             '/api/v1/checkin/badge-export', headers=header,
             query_string={'event_id': self.event_id}
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_badge_export_post_marks_guests(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('admin@test.com')
+        response = self.app.post(
+            '/api/v1/checkin/badge-export', headers=header,
+            data={'event_id': self.event_id, 'user_ids': self.guest_id}
+        )
+        self.assertEqual(response.status_code, 200)
+        attendance = attendance_repository.get(self.event_id, self.guest_id)
+        self.assertIsNotNone(attendance)
+        self.assertTrue(attendance.badge_exported)
+        self.assertIsNotNone(attendance.badge_exported_at)
+        # A row created purely to hold the flag must not be treated as confirmed.
+        self.assertFalse(attendance.confirmed)
+
+    def test_badge_export_post_defaults_to_all_guests(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('admin@test.com')
+        response = self.app.post(
+            '/api/v1/checkin/badge-export', headers=header,
+            data={'event_id': self.event_id}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['exported_count'], 1)
+        attendance = attendance_repository.get(self.event_id, self.guest_id)
+        self.assertTrue(attendance.badge_exported)
+
+    def test_badge_export_post_forbidden_for_non_admin(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('guest@test.com')
+        response = self.app.post(
+            '/api/v1/checkin/badge-export', headers=header,
+            data={'event_id': self.event_id, 'user_ids': self.guest_id}
         )
         self.assertEqual(response.status_code, 403)

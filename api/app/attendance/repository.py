@@ -30,6 +30,20 @@ class AttendanceRepository():
         db.session.commit()
 
     @staticmethod
+    def mark_exported(event_id, user_ids, updated_by_user_id):
+        # Flag each guest's badge as exported. Guests without an Attendance row
+        # yet (haven't signed indemnity or checked in) get an unconfirmed row
+        # created purely to hold the flag — nothing treats row-existence as
+        # confirmation, so this is safe.
+        for user_id in user_ids:
+            attendance = AttendanceRepository.get(event_id, user_id)
+            if attendance is None:
+                attendance = Attendance(event_id, user_id, updated_by_user_id)
+                db.session.add(attendance)
+            attendance.mark_badge_exported()
+        db.session.commit()
+
+    @staticmethod
     def get_all_guests_for_event(event_id):
         # All users who either accepted an offer or are invited guests for the event.
         # We LEFT JOIN Attendance so we still include users without an Attendance record.

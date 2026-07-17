@@ -54,6 +54,8 @@ class AnnouncementRepository:
 
     @staticmethod
     def delete(announcement):
+        db.session.query(AnnouncementReceipt).filter_by(announcement_id=announcement.id).delete()
+        db.session.query(AnnouncementTranslation).filter_by(announcement_id=announcement.id).delete()
         db.session.delete(announcement)
         db.session.commit()
 

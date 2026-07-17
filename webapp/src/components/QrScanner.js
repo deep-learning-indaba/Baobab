@@ -79,10 +79,21 @@ export default function QrScanner({ onScan }) {
         (text) => onScanRef.current(text),
         () => {}
       );
+
+      // The library sets srcObject then calls video.play() without awaiting or
+      // retrying. On iOS that play() is dropped right after a camera switch, so
+      // the video never fires "playing" and shows a blank frame. Nudge it.
+      const el = document.getElementById(elementId);
+      const video = el && el.querySelector('video');
+      if (video) {
+        for (let i = 0; i < 3 && instanceRef.current === instance; i++) {
+          if (!video.paused && video.readyState >= 2) break;
+          try { await video.play(); } catch (_) {}
+          await new Promise((resolve) => setTimeout(resolve, 150));
+        }
+      }
+
       setStatus('scanning');
-      Html5Qrcode.getCameras().then((cams) => {
-        setCanFlip(cams.length > 1);
-      }).catch(() => {});
     } catch (err) {
       instanceRef.current = null;
       const msg = String(err?.message ?? err ?? '');
@@ -96,8 +107,19 @@ export default function QrScanner({ onScan }) {
   }, [elementId, stopScanner]);
 
   useEffect(() => {
-    startScanner('environment');
-    return () => { stopScanner(); };
+    let cancelled = false;
+    // Probe the camera list ONCE, before starting our own stream. getCameras()
+    // internally opens its own getUserMedia; doing that while our scanner stream
+    // is live acquires a second camera and iOS ends our running track (fatal for
+    // the heavier dual-wide back camera). So never call it during scanning.
+    (async () => {
+      try {
+        const cams = await Html5Qrcode.getCameras();
+        if (!cancelled) setCanFlip(cams.length > 1);
+      } catch (_) {}
+      if (!cancelled) startScanner('environment');
+    })();
+    return () => { cancelled = true; stopScanner(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleFlip = useCallback(async () => {
