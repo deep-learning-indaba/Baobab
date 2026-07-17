@@ -26,16 +26,11 @@ function CameraFlipIcon() {
 
 let _idCounter = 0;
 
-// TEMP DEBUG: on-screen readout to diagnose the iOS camera-switch issue.
-// Remove once the flip is confirmed working.
-const QR_DEBUG = true;
-
 export default function QrScanner({ onScan }) {
   const { t } = useTranslation();
   const [status, setStatus] = useState('requesting');
   const [canFlip, setCanFlip] = useState(false);
   const [facingMode, setFacingMode] = useState('environment');
-  const [debug, setDebug] = useState('');
 
   const instanceRef = useRef(null);
   const elementId = useRef('qr-el-' + (++_idCounter)).current;
@@ -127,32 +122,6 @@ export default function QrScanner({ onScan }) {
     return () => { cancelled = true; stopScanner(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // TEMP DEBUG: poll the live <video> + track state so a screenshot pins down
-  // which stage of the camera switch is failing. Remove with QR_DEBUG.
-  useEffect(() => {
-    if (!QR_DEBUG) return;
-    const id = setInterval(() => {
-      const el = document.getElementById(elementId);
-      const video = el && el.querySelector('video');
-      if (!video) {
-        setDebug('status=' + status + ' facing=' + facingMode + ' | no <video>');
-        return;
-      }
-      const stream = video.srcObject;
-      const track = stream && stream.getVideoTracks && stream.getVideoTracks()[0];
-      const s = track && track.getSettings ? track.getSettings() : {};
-      setDebug(
-        'status=' + status + ' want=' + facingMode +
-        ' paused=' + video.paused + ' rs=' + video.readyState +
-        ' vid=' + video.videoWidth + 'x' + video.videoHeight +
-        ' | track=' + (track ? track.readyState : 'none') +
-        ' facing=' + (s.facingMode || '?') +
-        ' lbl=' + (track ? String(track.label).slice(0, 24) : '-')
-      );
-    }, 500);
-    return () => clearInterval(id);
-  }, [elementId, status, facingMode]);
-
   const handleFlip = useCallback(async () => {
     const next = facingMode === 'environment' ? 'user' : 'environment';
     setFacingMode(next);
@@ -218,12 +187,6 @@ export default function QrScanner({ onScan }) {
         >
           <CameraFlipIcon />
         </button>
-      )}
-
-      {QR_DEBUG && (
-        <div className="absolute top-1 left-1 right-1 z-20 bg-black/80 text-green-300 text-[10px] leading-tight font-mono p-1.5 rounded break-all pointer-events-none">
-          {debug || 'debug…'}
-        </div>
       )}
     </div>
   );
