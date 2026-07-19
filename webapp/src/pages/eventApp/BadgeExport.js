@@ -12,7 +12,7 @@ class BadgeExport extends Component {
       error: null,
       exportMarked: false,
       blankCount: 10,
-      blankBadges: null,
+      blankBadges: [],
       blankLoading: false,
       blankError: null,
     };
@@ -34,13 +34,15 @@ class BadgeExport extends Component {
       if (result.error) {
         this.setState({ blankLoading: false, blankError: result.error });
       } else {
-        this.setState({ blankLoading: false, blankBadges: result.data });
+        this.setState(function(prevState) {
+          return { blankLoading: false, blankBadges: prevState.blankBadges.concat(result.data) };
+        });
       }
     }.bind(this));
   }.bind(this);
 
   clearBlankBadges = function() {
-    this.setState({ blankBadges: null, blankError: null });
+    this.setState({ blankBadges: [], blankError: null });
   }.bind(this);
 
   blankBadgeStyles = function() {
@@ -120,15 +122,20 @@ class BadgeExport extends Component {
   }
 
   downloadCsv = function() {
-    var badges = this.state.badges;
-    if (!badges || !badges.length) {
+    var t = this.props.t;
+    var badges = this.state.badges || [];
+    var blankBadges = this.state.blankBadges || [];
+    if (!badges.length && !blankBadges.length) {
       return;
     }
-    var header = ['user_id', 'fullname', 'role', 'token', 'qr_url'];
-    var rows = badges.map(function(b) {
-      return [b.user_id, '"' + b.fullname + '"', '"' + b.role + '"', b.token, b.qr_url].join(',');
+    var header = ['user_id', 'firstname', 'lastname', 'role', 'token', 'qr_url'];
+    var attendeeRows = badges.map(function(b) {
+      return [b.user_id, '"' + b.firstname + '"', '"' + b.lastname + '"', '"' + b.role + '"', b.token, b.qr_url].join(',');
     });
-    var csv = [header.join(',')].concat(rows).join('\n');
+    var blankRows = blankBadges.map(function(b) {
+      return ['', '', '', '"' + t('Blank Badge') + '"', b.token, b.qr_url].join(',');
+    });
+    var csv = [header.join(',')].concat(attendeeRows).concat(blankRows).join('\n');
     var blob = new Blob([csv], { type: 'text/csv' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
@@ -141,7 +148,6 @@ class BadgeExport extends Component {
 
   render() {
     var t = this.props.t;
-    var badges = this.state.badges;
     var isLoading = this.state.isLoading;
     var error = this.state.error;
 
@@ -159,63 +165,27 @@ class BadgeExport extends Component {
       return <div className="alert alert-danger mt-4">{error}</div>;
     }
 
-    var blankBadges = this.state.blankBadges;
+    var badges = this.state.badges || [];
+    var blankBadges = this.state.blankBadges || [];
 
-    // Dedicated blank-badge view: QR-only badges carrying fresh random tokens
-    // that a volunteer can later link to an attendee. Shown exclusively so that
-    // printing here produces only blanks, not the named attendee badges.
-    if (blankBadges) {
-      return (
-        <div className="py-6 px-4">
-          <div className="flex items-center justify-between mb-6 no-print">
-            <h1 className="text-2xl font-bold text-foreground">
-              {t('Blank Badges')} ({blankBadges.length})
-            </h1>
-            <div className="flex gap-3">
-              <button
-                className="px-4 py-2 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-surface-low transition-all"
-                onClick={this.clearBlankBadges}
-              >
-                {t('Back to badges')}
-              </button>
-              <button
-                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary-container transition-all"
-                onClick={function() { window.print(); }}
-              >
-                {t('Print Blank Badges')}
-              </button>
-            </div>
-          </div>
+    // Attendee badges and generated blank badges are rendered in a single
+    // list so they can be printed or exported to CSV together.
+    var allBadges = badges.map(function(b) {
+      return { key: 'attendee-' + b.user_id, name: b.fullname, role: b.role, qr_url: b.qr_url };
+    }).concat(blankBadges.map(function(b, idx) {
+      return { key: 'blank-' + b.token, name: t('Blank Badge'), role: '#' + (idx + 1), qr_url: b.qr_url };
+    }));
 
-          <div className="alert alert-info mb-6 no-print">
-            {t('These are blank badges. Print them, then link one to an attendee whose badge was not printed by scanning it at the registration desk or check-in console.')}
-          </div>
-
-          <div className="badge-grid">
-            {blankBadges.map(function(badge, idx) {
-              return (
-                <div key={badge.token} className="badge-card">
-                  <QRCodeCanvas value={badge.qr_url} size={140} includeMargin={false} />
-                  <p className="badge-name">{t('Blank Badge')}</p>
-                  <p className="badge-role">#{idx + 1}</p>
-                </div>
-              );
-            })}
-          </div>
-
-          {this.blankBadgeStyles()}
-        </div>
-      );
-    }
-
-    if (!badges || !badges.length) {
+    if (!allBadges.length) {
       return <div className="alert alert-warning mt-4">{t('No guests found.')}</div>;
     }
 
     return (
       <div className="py-6 px-4">
         <div className="flex items-center justify-between mb-6 no-print">
-          <h1 className="text-2xl font-bold text-foreground">{t('Badge Export')}</h1>
+          <h1 className="text-2xl font-bold text-foreground">
+            {t('Badge Export')} ({allBadges.length})
+          </h1>
           <div className="flex gap-3">
             <button
               className="px-4 py-2 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-surface-low transition-all"
@@ -250,10 +220,24 @@ class BadgeExport extends Component {
           >
             {this.state.blankLoading ? t('Generating...') : t('Generate blank badges')}
           </button>
+          {blankBadges.length > 0 && (
+            <button
+              className="px-4 py-2 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-surface-low transition-all"
+              onClick={this.clearBlankBadges}
+            >
+              {t('Clear blank badges')}
+            </button>
+          )}
           {this.state.blankError && (
             <span className="text-sm text-error">{this.state.blankError}</span>
           )}
         </div>
+
+        {blankBadges.length > 0 && (
+          <div className="alert alert-info mb-6 no-print">
+            {t('Blank badges are included in the list below. Print or export them together with attendee badges, then link one to an attendee whose badge was not printed by scanning it at the registration desk or check-in console.')}
+          </div>
+        )}
 
         {this.state.exportMarked && (
           <div className="alert alert-success mb-6 no-print">
@@ -262,11 +246,11 @@ class BadgeExport extends Component {
         )}
 
         <div className="badge-grid">
-          {badges.map(function(badge) {
+          {allBadges.map(function(badge) {
             return (
-              <div key={badge.user_id} className="badge-card">
+              <div key={badge.key} className="badge-card">
                 <QRCodeCanvas value={badge.qr_url} size={140} includeMargin={false} />
-                <p className="badge-name">{badge.fullname}</p>
+                <p className="badge-name">{badge.name}</p>
                 <p className="badge-role">{badge.role}</p>
               </div>
             );

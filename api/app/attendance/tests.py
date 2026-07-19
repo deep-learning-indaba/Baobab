@@ -682,6 +682,8 @@ class BadgeExportAPITest(ApiTestCase):
         self.admin = self.add_user('admin@test.com')
         self.guest = self.add_user('guest@test.com')
         self.guest_fullname = self.guest.full_name
+        self.guest_firstname = self.guest.firstname
+        self.guest_lastname = self.guest.lastname
         self.guest_id = self.guest.id
         self.event = self.add_event(
             {'en': 'Badge Event'}, {'en': 'Desc'},
@@ -711,6 +713,8 @@ class BadgeExportAPITest(ApiTestCase):
         data = json.loads(response.data)
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]['fullname'], self.guest_fullname)
+        self.assertEqual(data[0]['firstname'], self.guest_firstname)
+        self.assertEqual(data[0]['lastname'], self.guest_lastname)
         self.assertIn('token', data[0])
         self.assertIn('qr_url', data[0])
 

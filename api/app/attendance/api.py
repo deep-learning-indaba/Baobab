@@ -550,6 +550,8 @@ class BadgeExportAPI(restful.Resource):
             role = invited_guest.role if invited_guest else 'General Attendee'
             result.append({
                 'user_id': user.id,
+                'firstname': user.firstname,
+                'lastname': user.lastname,
                 'fullname': user.full_name,
                 'role': role,
                 'token': token.token,
