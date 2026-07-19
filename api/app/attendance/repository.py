@@ -1,8 +1,8 @@
 from app import db
 from app.attendance.models import Attendance, EventIndemnity, EventQRToken, Checkin
-from app.invitedGuest.models import InvitedGuest
+from app.invitedGuest.models import InvitedGuest, InvitedGuestTag
 from app.invoice.models import InvoicePaymentStatus, OfferInvoice, PaymentStatus
-from app.offer.models import Offer
+from app.offer.models import Offer, OfferTag
 from app.users.models import AppUser
 from sqlalchemy import and_, case, or_, exists
 from sqlalchemy.sql import func
@@ -225,6 +225,26 @@ class AttendanceRepository():
         return list({row[0] for row in offer_ids.union(invited_ids).all()})
 
     @staticmethod
+    def get_user_ids_with_tag(event_id, tag_id):
+        """User IDs, for this event, whose Offer or InvitedGuest entry carries
+        the given tag — regardless of confirmation/payment/check-in status.
+        Callers intersect this with whichever base audience they've already
+        computed (checked-in / guest-list)."""
+        offer_ids = (
+            db.session.query(Offer.user_id)
+            .join(OfferTag, OfferTag.offer_id == Offer.id)
+            .filter(Offer.event_id == event_id, OfferTag.tag_id == tag_id)
+        )
+
+        invited_ids = (
+            db.session.query(InvitedGuest.user_id)
+            .join(InvitedGuestTag, InvitedGuestTag.invited_guest_id == InvitedGuest.id)
+            .filter(InvitedGuest.event_id == event_id, InvitedGuestTag.tag_id == tag_id)
+        )
+
+        return {row[0] for row in offer_ids.union(invited_ids).all()}
+
+    @staticmethod
     def is_confirmed_guest(event_id, user_id):
         is_invited = db.session.query(
             exists().where(
@@ -303,6 +323,22 @@ class QRTokenRepository():
     @staticmethod
     def resolve(token_str):
         return db.session.query(EventQRToken).filter_by(token=token_str).first()
+
+    @staticmethod
+    def relink(event_id, user_id, new_token):
+        # Reassign an attendee's QR token to a (pre-printed, blank) badge token.
+        # The attendee's previous token is freed and stops resolving, so their
+        # My Ticket QR and any old printed badge switch over to the new one.
+        # The UNIQUE(token) constraint is the hard guard against a blank badge
+        # being linked to two people; callers should also check resolve() first
+        # to return a friendly error before we hit the constraint.
+        token = db.session.query(EventQRToken).filter_by(event_id=event_id, user_id=user_id).first()
+        if token is None:
+            token = EventQRToken(event_id, user_id)
+            db.session.add(token)
+        token.token = new_token
+        db.session.commit()
+        return token
 
 
 class CheckinRepository():

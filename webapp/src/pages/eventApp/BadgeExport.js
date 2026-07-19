@@ -11,8 +11,79 @@ class BadgeExport extends Component {
       isLoading: true,
       error: null,
       exportMarked: false,
+      blankCount: 10,
+      blankBadges: null,
+      blankLoading: false,
+      blankError: null,
     };
   }
+
+  onBlankCountChange = function(e) {
+    var value = parseInt(e.target.value, 10);
+    this.setState({ blankCount: isNaN(value) ? '' : value });
+  }.bind(this);
+
+  generateBlankBadges = function() {
+    var eventId = this.props.event && this.props.event.id;
+    var count = this.state.blankCount;
+    if (!eventId || !count || count < 1) {
+      return;
+    }
+    this.setState({ blankLoading: true, blankError: null });
+    checkinService.getBlankBadges(eventId, count).then(function(result) {
+      if (result.error) {
+        this.setState({ blankLoading: false, blankError: result.error });
+      } else {
+        this.setState({ blankLoading: false, blankBadges: result.data });
+      }
+    }.bind(this));
+  }.bind(this);
+
+  clearBlankBadges = function() {
+    this.setState({ blankBadges: null, blankError: null });
+  }.bind(this);
+
+  blankBadgeStyles = function() {
+    return (
+      <style>{`
+        .badge-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+          gap: 16px;
+        }
+        .badge-card {
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          padding: 12px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+          background: white;
+          page-break-inside: avoid;
+        }
+        .badge-name {
+          font-weight: 600;
+          font-size: 13px;
+          text-align: center;
+          margin: 0;
+        }
+        .badge-role {
+          font-size: 11px;
+          color: #64748b;
+          text-align: center;
+          margin: 0;
+        }
+        @media print {
+          .no-print { display: none !important; }
+          .badge-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+          }
+        }
+      `}</style>
+    );
+  };
 
   markExported = function() {
     var badges = this.state.badges;
@@ -88,6 +159,55 @@ class BadgeExport extends Component {
       return <div className="alert alert-danger mt-4">{error}</div>;
     }
 
+    var blankBadges = this.state.blankBadges;
+
+    // Dedicated blank-badge view: QR-only badges carrying fresh random tokens
+    // that a volunteer can later link to an attendee. Shown exclusively so that
+    // printing here produces only blanks, not the named attendee badges.
+    if (blankBadges) {
+      return (
+        <div className="py-6 px-4">
+          <div className="flex items-center justify-between mb-6 no-print">
+            <h1 className="text-2xl font-bold text-foreground">
+              {t('Blank Badges')} ({blankBadges.length})
+            </h1>
+            <div className="flex gap-3">
+              <button
+                className="px-4 py-2 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-surface-low transition-all"
+                onClick={this.clearBlankBadges}
+              >
+                {t('Back to badges')}
+              </button>
+              <button
+                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary-container transition-all"
+                onClick={function() { window.print(); }}
+              >
+                {t('Print Blank Badges')}
+              </button>
+            </div>
+          </div>
+
+          <div className="alert alert-info mb-6 no-print">
+            {t('These are blank badges. Print them, then link one to an attendee whose badge was not printed by scanning it at the registration desk or check-in console.')}
+          </div>
+
+          <div className="badge-grid">
+            {blankBadges.map(function(badge, idx) {
+              return (
+                <div key={badge.token} className="badge-card">
+                  <QRCodeCanvas value={badge.qr_url} size={140} includeMargin={false} />
+                  <p className="badge-name">{t('Blank Badge')}</p>
+                  <p className="badge-role">#{idx + 1}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {this.blankBadgeStyles()}
+        </div>
+      );
+    }
+
     if (!badges || !badges.length) {
       return <div className="alert alert-warning mt-4">{t('No guests found.')}</div>;
     }
@@ -112,6 +232,29 @@ class BadgeExport extends Component {
           </div>
         </div>
 
+        <div className="flex flex-wrap items-end gap-3 mb-6 p-4 rounded-xl border border-border bg-surface-low no-print">
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-foreground">{t('Blank badges to generate')}</label>
+            <input
+              type="number"
+              min="1"
+              value={this.state.blankCount}
+              onChange={this.onBlankCountChange}
+              className="w-28 px-3 py-2 rounded-lg border border-border text-sm text-foreground"
+            />
+          </div>
+          <button
+            className="px-4 py-2 rounded-lg border border-primary text-primary text-sm font-semibold hover:bg-primary/10 transition-all disabled:opacity-50"
+            onClick={this.generateBlankBadges}
+            disabled={this.state.blankLoading}
+          >
+            {this.state.blankLoading ? t('Generating...') : t('Generate blank badges')}
+          </button>
+          {this.state.blankError && (
+            <span className="text-sm text-error">{this.state.blankError}</span>
+          )}
+        </div>
+
         {this.state.exportMarked && (
           <div className="alert alert-success mb-6 no-print">
             {t('Badges marked as printed — check-in will no longer warn for these attendees.')}
@@ -130,43 +273,7 @@ class BadgeExport extends Component {
           })}
         </div>
 
-        <style>{`
-          .badge-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 16px;
-          }
-          .badge-card {
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            background: white;
-            page-break-inside: avoid;
-          }
-          .badge-name {
-            font-weight: 600;
-            font-size: 13px;
-            text-align: center;
-            margin: 0;
-          }
-          .badge-role {
-            font-size: 11px;
-            color: #64748b;
-            text-align: center;
-            margin: 0;
-          }
-          @media print {
-            .no-print { display: none !important; }
-            .badge-grid {
-              grid-template-columns: repeat(4, 1fr);
-              gap: 8px;
-            }
-          }
-        `}</style>
+        {this.blankBadgeStyles()}
       </div>
     );
   }

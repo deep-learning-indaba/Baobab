@@ -8,7 +8,8 @@ from app.announcements.models import Announcement, AnnouncementTranslation, Anno
 from app.announcements.repository import AnnouncementRepository
 from app.attendance.models import Checkin
 from app.events.models import EventRole
-from app.invitedGuest.models import InvitedGuest
+from app.invitedGuest.models import InvitedGuest, InvitedGuestTag
+from app.offer.models import OfferTag
 from app.utils.testing import ApiTestCase
 
 
@@ -289,6 +290,121 @@ class AnnouncementApiTest(ApiTestCase):
         receipts = db.session.query(AnnouncementReceipt).filter_by(announcement_id=data['id']).all()
         recipient_ids = {r.user_id for r in receipts}
         self.assertNotIn(not_checked_in_id, recipient_ids)
+
+    @patch('app.announcements.api.push_to_user', return_value=0)
+    def test_tag_filter_restricts_to_tagged_invited_guests(self, mock_push):
+        tag = self.add_tag(event_id=self.event_id, tag_type='GRANT', names={'en': 'Accommodation'})
+        ig = db.session.query(InvitedGuest).filter_by(
+            event_id=self.event_id, user_id=self.attendee1_id).first()
+        db.session.add(InvitedGuestTag(ig.id, tag.id))
+        db.session.commit()
+
+        payload = {
+            'event_id': self.event_id,
+            'tag_id': tag.id,
+            'translations': [{'language': 'en', 'title': 'Accommodation Info', 'body_markdown': 'body'}],
+        }
+        resp = self.app.post(
+            '/api/v1/announcement',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=self.comms_header,
+        )
+        self.assertEqual(resp.status_code, 201)
+        data = json.loads(resp.data)
+        self.assertEqual(data['audience_count'], 1)
+
+        receipts = db.session.query(AnnouncementReceipt).filter_by(announcement_id=data['id']).all()
+        recipient_ids = {r.user_id for r in receipts}
+        self.assertEqual(recipient_ids, {self.attendee1_id})
+
+    @patch('app.announcements.api.push_to_user', return_value=0)
+    def test_tag_filter_matches_tagged_offer_holders_and_combines_with_guest_list_audience(self, mock_push):
+        tag = self.add_tag(event_id=self.event_id, tag_type='GRANT', names={'en': 'Travel'})
+        traveller = self.add_user('traveller@test.com')
+        traveller_id = traveller.id
+        self.add_offer(traveller_id, event_id=self.event_id, payment_required=False,
+                        candidate_response=True, tags=[tag])
+        # A confirmed guest without the tag must NOT be included.
+        untagged_offer_holder = self.add_user('notravel@test.com')
+        untagged_offer_holder_id = untagged_offer_holder.id
+        self.add_offer(untagged_offer_holder_id, event_id=self.event_id, payment_required=False,
+                        candidate_response=True)
+
+        payload = {
+            'event_id': self.event_id,
+            'target_audience': 'guest_list',
+            'tag_id': tag.id,
+            'translations': [{'language': 'en', 'title': 'Travel Info', 'body_markdown': 'body'}],
+        }
+        resp = self.app.post(
+            '/api/v1/announcement',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=self.comms_header,
+        )
+        self.assertEqual(resp.status_code, 201)
+        data = json.loads(resp.data)
+        self.assertEqual(data['audience_count'], 1)
+
+        receipts = db.session.query(AnnouncementReceipt).filter_by(announcement_id=data['id']).all()
+        recipient_ids = {r.user_id for r in receipts}
+        self.assertEqual(recipient_ids, {traveller_id})
+
+    @patch('app.announcements.api.push_to_user', return_value=0)
+    def test_tag_filter_excludes_tagged_guest_not_matching_checked_in_audience(self, mock_push):
+        tag = self.add_tag(event_id=self.event_id, tag_type='GRANT', names={'en': 'Accommodation'})
+        not_checked_in = self.add_user('tagged-not-checked-in@test.com')
+        ig = _invited_guest(self.event_id, not_checked_in.id)
+        db.session.add(InvitedGuestTag(ig.id, tag.id))
+        db.session.commit()
+
+        payload = {
+            'event_id': self.event_id,
+            'target_audience': 'checked_in',
+            'tag_id': tag.id,
+            'translations': [{'language': 'en', 'title': 'Accommodation Info', 'body_markdown': 'body'}],
+        }
+        resp = self.app.post(
+            '/api/v1/announcement',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=self.comms_header,
+        )
+        self.assertEqual(resp.status_code, 201)
+        data = json.loads(resp.data)
+        self.assertEqual(data['audience_count'], 0)
+
+    def test_tag_filter_with_unknown_tag_id_returns_error(self):
+        payload = {
+            'event_id': self.event_id,
+            'tag_id': 999999,
+            'translations': [{'language': 'en', 'title': 'Hi', 'body_markdown': 'body'}],
+        }
+        resp = self.app.post(
+            '/api/v1/announcement',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=self.comms_header,
+        )
+        self.assertEqual(resp.status_code, 404)
+
+    def test_tag_filter_with_tag_from_another_event_returns_error(self):
+        other_event = self.add_event(key='OTHERTAGEVENT')
+        other_tag = self.add_tag(event_id=other_event.id, tag_type='GRANT', names={'en': 'Other'})
+
+        payload = {
+            'event_id': self.event_id,
+            'tag_id': other_tag.id,
+            'translations': [{'language': 'en', 'title': 'Hi', 'body_markdown': 'body'}],
+        }
+        resp = self.app.post(
+            '/api/v1/announcement',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=self.comms_header,
+        )
+        self.assertEqual(resp.status_code, 404)
 
     @patch('app.announcements.api.push_to_user', return_value=0)
     def test_invalid_target_audience_returns_error(self, mock_push):
