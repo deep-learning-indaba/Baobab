@@ -161,6 +161,7 @@ INVALID_TIMEZONE = ({'message': 'Invalid timezone. Please use a valid IANA timez
 INVALID_CHECKIN_MODE = ({'message': "Invalid check-in mode. Must be 'per_event' or 'daily'."}, 400)
 INVALID_QR = ({'message': 'Invalid QR code. Please refer this person to the help desk.'}, 400)
 NOT_ON_GUEST_LIST = ({'message': 'This person is not on the guest list. Please refer them to the help desk.'}, 403)
+BADGE_ALREADY_LINKED = ({'message': 'This badge is already linked to another attendee. Please use a fresh blank badge.'}, 409)
 NOT_A_GUEST = ({'message': 'You are not a confirmed guest of this event.'}, 403)
 EVENT_RESOURCE_LINK_NOT_FOUND = ({'message': 'Event resource link not found.'}, 404)
 SESSION_NOT_FOUND = ({'message': 'No session found with the given ID.'}, 404)

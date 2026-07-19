@@ -13,6 +13,7 @@ from app.utils.emailer import send_mail
 from app.announcements.models import Announcement, AnnouncementTranslation, AnnouncementReceipt, PushSubscription
 from app.announcements.repository import AnnouncementRepository
 from app.attendance.repository import AttendanceRepository, CheckinRepository
+from app.tags.repository import TagRepository as tag_repository
 from app.users.repository import UserRepository as user_repository
 from app.events.repository import EventRepository as event_repository
 
@@ -57,17 +58,26 @@ def _serialize_announcement(ann, receipt=None, language='en'):
 VALID_AUDIENCES = ('checked_in', 'guest_list')
 
 
-def _dispatch(ann, event, critical, target_audience='checked_in'):
+def _dispatch(ann, event, critical, target_audience='checked_in', tag_id=None):
     """Create receipts and send push (+ email if critical) to the target audience.
 
     target_audience:
       'checked_in' — only users who have physically checked in (default)
       'guest_list' — all confirmed guests (accepted offer or invited guest)
+
+    tag_id, if given, further restricts the audience to guests whose Offer or
+    InvitedGuest entry carries that tag (e.g. only guests with an
+    accommodation or travel tag).
     """
     if target_audience == 'guest_list':
         user_ids = AttendanceRepository.get_all_guest_user_ids_for_event(event.id)
     else:
         user_ids = list({row.user_id for row in CheckinRepository.list_for_event(event.id)})
+
+    if tag_id:
+        tagged_user_ids = AttendanceRepository.get_user_ids_with_tag(event.id, tag_id)
+        user_ids = [uid for uid in user_ids if uid in tagged_user_ids]
+
     now = datetime.utcnow()
 
     for uid in user_ids:
@@ -180,10 +190,16 @@ class AnnouncementListAPI(restful.Resource):
         if target_audience not in VALID_AUDIENCES:
             return errors.MISSING_FIELDS
 
+        tag_id = body.get('tag_id')
+        if tag_id is not None:
+            tag = tag_repository.get_by_id(tag_id)
+            if not tag or tag.event_id != event_id:
+                return errors.TAG_NOT_FOUND
+
         ann = AnnouncementRepository.create(event_id, g.current_user['id'], expiry_at, translations)
 
         critical = bool(body.get('critical', False))
-        audience = _dispatch(ann, event, critical, target_audience)
+        audience = _dispatch(ann, event, critical, target_audience, tag_id)
 
         return {'id': ann.id, 'audience_count': audience}, 201
 

@@ -759,3 +759,205 @@ class BadgeExportAPITest(ApiTestCase):
             data={'event_id': self.event_id, 'user_ids': self.guest_id}
         )
         self.assertEqual(response.status_code, 403)
+
+
+class BlankBadgeAPITest(ApiTestCase):
+
+    def seed_static_data(self):
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
+        self.volunteer = self.add_user('volunteer@test.com')
+        self.outsider = self.add_user('outsider@test.com')
+        self.event = self.add_event(
+            {'en': 'Blank Event'}, {'en': 'Desc'},
+            datetime(2025, 6, 1), datetime(2025, 6, 10), 'BLNKEV'
+        )
+        self.event_id = self.event.id
+        self.add_event_role('registration-volunteer', self.volunteer.id, self.event_id)
+        db.session.commit()
+
+    def test_blank_badges_returns_requested_count_with_unique_tokens(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('volunteer@test.com')
+        response = self.app.get(
+            '/api/v1/checkin/blank-badges', headers=header,
+            query_string={'event_id': self.event_id, 'count': 5}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(len(data), 5)
+        tokens = [b['token'] for b in data]
+        self.assertEqual(len(set(tokens)), 5)
+        for b in data:
+            self.assertIn('token', b)
+            self.assertIn('qr_url', b)
+            self.assertIn(b['token'], b['qr_url'])
+
+    def test_blank_badges_not_persisted(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('volunteer@test.com')
+        response = self.app.get(
+            '/api/v1/checkin/blank-badges', headers=header,
+            query_string={'event_id': self.event_id, 'count': 3}
+        )
+        data = json.loads(response.data)
+        # A blank token must not exist in the DB until it's linked to someone.
+        for b in data:
+            self.assertIsNone(qr_token_repository.resolve(b['token']))
+
+    def test_blank_badges_forbidden_for_non_volunteer(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('outsider@test.com')
+        response = self.app.get(
+            '/api/v1/checkin/blank-badges', headers=header,
+            query_string={'event_id': self.event_id, 'count': 2}
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_blank_badges_invalid_count_returns_missing_fields(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('volunteer@test.com')
+        response = self.app.get(
+            '/api/v1/checkin/blank-badges', headers=header,
+            query_string={'event_id': self.event_id, 'count': 0}
+        )
+        self.assertEqual(response.status_code, 400)
+
+
+class LinkBadgeAPITest(ApiTestCase):
+
+    def seed_static_data(self):
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
+        self.guest = self.add_user('guest@test.com')
+        self.other_guest = self.add_user('other@test.com')
+        self.volunteer = self.add_user('volunteer@test.com')
+        self.non_guest = self.add_user('nonguest@test.com')
+        self.guest_id = self.guest.id
+        self.other_guest_id = self.other_guest.id
+        self.non_guest_id = self.non_guest.id
+        self.guest_fullname = self.guest.full_name
+        self.event = self.add_event(
+            {'en': 'Link Event'}, {'en': 'Desc'},
+            datetime(2025, 6, 1), datetime(2025, 6, 10), 'LNKEV'
+        )
+        self.event_id = self.event.id
+        self.add_event_role('registration-volunteer', self.volunteer.id, self.event_id)
+        for uid in (self.guest_id, self.other_guest_id):
+            offer = Offer(
+                user_id=uid,
+                event_id=self.event_id,
+                offer_date=datetime.now(),
+                expiry_date=datetime.now() + timedelta(days=15),
+                payment_required=False,
+                candidate_response=True,
+            )
+            db.session.add(offer)
+        db.session.commit()
+        self.add_email_template('attendance-confirmation')
+
+    def _blank_token(self):
+        return 'blankbadge' + str(datetime.now().timestamp()).replace('.', '')
+
+    def test_link_replaces_attendee_token(self):
+        self.seed_static_data()
+        original = qr_token_repository.get_or_create(self.event_id, self.guest_id)
+        original_token = original.token
+        blank = self._blank_token()
+        header = self.get_auth_header_for('volunteer@test.com')
+        response = self.app.post(
+            '/api/v1/checkin/link-badge', headers=header,
+            data={'event_id': self.event_id, 'user_id': self.guest_id, 'token': blank}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['token'], blank)
+        self.assertEqual(data['fullname'], self.guest_fullname)
+        # New token resolves to the guest; old token is now dead.
+        resolved = qr_token_repository.resolve(blank)
+        self.assertIsNotNone(resolved)
+        self.assertEqual(resolved.user_id, self.guest_id)
+        self.assertIsNone(qr_token_repository.resolve(original_token))
+
+    def test_my_ticket_reflects_linked_token(self):
+        self.seed_static_data()
+        blank = self._blank_token()
+        header = self.get_auth_header_for('volunteer@test.com')
+        self.app.post(
+            '/api/v1/checkin/link-badge', headers=header,
+            data={'event_id': self.event_id, 'user_id': self.guest_id, 'token': blank}
+        )
+        guest_header = self.get_auth_header_for('guest@test.com')
+        response = self.app.get(
+            '/api/v1/my-ticket', headers=guest_header,
+            query_string={'event_id': self.event_id}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['token'], blank)
+
+    def test_linked_badge_checks_in_attendee(self):
+        self.seed_static_data()
+        blank = self._blank_token()
+        header = self.get_auth_header_for('volunteer@test.com')
+        self.app.post(
+            '/api/v1/checkin/link-badge', headers=header,
+            data={'event_id': self.event_id, 'user_id': self.guest_id, 'token': blank}
+        )
+        response = self.app.post(
+            '/api/v1/checkin', headers=header,
+            data={'event_id': self.event_id, 'token': blank}
+        )
+        self.assertEqual(response.status_code, 201)
+        data = json.loads(response.data)
+        self.assertTrue(data['checked_in'])
+        self.assertEqual(data['fullname'], self.guest_fullname)
+
+    def test_cannot_link_badge_already_linked_to_another(self):
+        self.seed_static_data()
+        blank = self._blank_token()
+        header = self.get_auth_header_for('volunteer@test.com')
+        self.app.post(
+            '/api/v1/checkin/link-badge', headers=header,
+            data={'event_id': self.event_id, 'user_id': self.guest_id, 'token': blank}
+        )
+        # Attempting to link the same physical badge to a different attendee fails.
+        response = self.app.post(
+            '/api/v1/checkin/link-badge', headers=header,
+            data={'event_id': self.event_id, 'user_id': self.other_guest_id, 'token': blank}
+        )
+        self.assertEqual(response.status_code, 409)
+        # The badge still belongs to the original guest.
+        self.assertEqual(qr_token_repository.resolve(blank).user_id, self.guest_id)
+
+    def test_relinking_same_badge_to_same_user_is_idempotent(self):
+        self.seed_static_data()
+        blank = self._blank_token()
+        header = self.get_auth_header_for('volunteer@test.com')
+        self.app.post(
+            '/api/v1/checkin/link-badge', headers=header,
+            data={'event_id': self.event_id, 'user_id': self.guest_id, 'token': blank}
+        )
+        response = self.app.post(
+            '/api/v1/checkin/link-badge', headers=header,
+            data={'event_id': self.event_id, 'user_id': self.guest_id, 'token': blank}
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_cannot_link_to_non_guest(self):
+        self.seed_static_data()
+        blank = self._blank_token()
+        header = self.get_auth_header_for('volunteer@test.com')
+        response = self.app.post(
+            '/api/v1/checkin/link-badge', headers=header,
+            data={'event_id': self.event_id, 'user_id': self.non_guest_id, 'token': blank}
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_link_forbidden_for_non_volunteer(self):
+        self.seed_static_data()
+        blank = self._blank_token()
+        header = self.get_auth_header_for('guest@test.com')
+        response = self.app.post(
+            '/api/v1/checkin/link-badge', headers=header,
+            data={'event_id': self.event_id, 'user_id': self.guest_id, 'token': blank}
+        )
+        self.assertEqual(response.status_code, 403)

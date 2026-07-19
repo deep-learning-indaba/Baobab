@@ -34,7 +34,7 @@ function DiscussionBoard(props) {
   }, [eventId, spaceId]);
 
   return (
-    <div className="w-full max-w-5xl mx-auto pt-6 space-y-4">
+    <div className="w-full max-w-5xl pt-6 space-y-4">
       <button
         onClick={function () { history.push('/' + eventKey + '/event-app/discussion'); }}
         className="flex items-center gap-1.5 text-sm text-primary hover:underline"

@@ -100,12 +100,13 @@ function updateTag(tag, eventId) {
         });
 }
 
-function getTagList(eventId) {
+function getTagList(eventId, language) {
     return axios
-        .get(baseUrl + "/api/v1/tags", { 
+        .get(baseUrl + "/api/v1/tags", {
             "headers": authHeader(),
             "params": {
-                event_id: eventId
+                event_id: eventId,
+                language: language || 'en'
             }
         })
         .then(response => {

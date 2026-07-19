@@ -5,6 +5,9 @@ import { checkinService } from '../../services/eventApp/checkin.service';
 import { attendanceService } from '../../services/attendance/attendance.service';
 
 const POLL_INTERVAL_MS = 5000;
+// Keep polling this long after check-in so a badge linked slightly after check-in
+// still swaps the QR live; then stop to avoid indefinite background requests.
+const POLL_AFTER_CHECKIN_MS = 120000;
 
 function MyTicket(props) {
   const event = props.event;
@@ -54,19 +57,35 @@ function MyTicket(props) {
     });
   }, [needsIndemnity, eventId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Poll for check-in status every 5 s, but only when the tab is visible
+  // Poll every 5 s (while the tab is visible) to reflect two things a registration
+  // volunteer may change from their side, without the attendee reloading: getting
+  // checked in, and having a blank badge linked (which swaps the ticket token/QR).
+  // Before check-in we poll indefinitely; after check-in we keep polling for a
+  // short window so a badge linked just after check-in is still picked up live.
   const checkedIn = ticket ? ticket.checked_in : false;
   useEffect(function() {
-    if (!eventId || checkedIn) return;
+    if (!eventId) return;
     var interval = setInterval(function() {
       if (document.hidden) return;
       checkinService.getMyTicket(eventId).then(function(result) {
-        if (result.data && result.data.checked_in) {
-          setTicket(result.data);
-        }
+        if (!result.data) return;
+        setTicket(function(prev) {
+          if (!prev) return result.data;
+          if (result.data.checked_in !== prev.checked_in || result.data.token !== prev.token) {
+            return result.data;
+          }
+          return prev;
+        });
       });
     }, POLL_INTERVAL_MS);
-    return function() { clearInterval(interval); };
+    var stopTimeout = null;
+    if (checkedIn) {
+      stopTimeout = setTimeout(function() { clearInterval(interval); }, POLL_AFTER_CHECKIN_MS);
+    }
+    return function() {
+      clearInterval(interval);
+      if (stopTimeout) clearTimeout(stopTimeout);
+    };
   }, [eventId, checkedIn]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSignIndemnity = useCallback(function(e) {

@@ -1,4 +1,5 @@
 from datetime import datetime
+import uuid
 from flask import g
 import flask_restful as restful
 from flask_restful import reqparse, fields, marshal
@@ -19,7 +20,7 @@ from app.utils.auth import auth_required
 from app.utils.emailer import email_user
 from app.utils.misc import get_baobab_host
 from app.utils.datetime_utils import event_local_date
-from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, ATTENDANCE_NOT_FOUND, EVENT_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, INDEMNITY_NOT_FOUND, INDEMNITY_NOT_SIGNED, NOT_A_GUEST, INVALID_QR, NOT_ON_GUEST_LIST, MISSING_FIELDS
+from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, ATTENDANCE_NOT_FOUND, EVENT_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, INDEMNITY_NOT_FOUND, INDEMNITY_NOT_SIGNED, NOT_A_GUEST, INVALID_QR, NOT_ON_GUEST_LIST, MISSING_FIELDS, BADGE_ALREADY_LINKED
 from app import LOGGER
 
 
@@ -484,6 +485,7 @@ class CheckinAPI(restful.Resource):
             existing_attendance = attendance_repository.get(event_id, target_user_id)
             return {
                 'already_checked_in': True,
+                'user_id': target_user_id,
                 'fullname': user.full_name,
                 'badge_exported': existing_attendance.badge_exported if existing_attendance else False,
             }, 200
@@ -512,6 +514,7 @@ class CheckinAPI(restful.Resource):
 
         return {
             'checked_in': True,
+            'user_id': target_user_id,
             'fullname': user.full_name,
             'checked_in_at': checkin.checked_in_at.isoformat() + 'Z',
             'badge_exported': attendance.badge_exported,
@@ -581,3 +584,91 @@ class BadgeExportAPI(restful.Resource):
         attendance_repository.mark_exported(event_id, user_ids, current_user_id)
 
         return {'exported_count': len(user_ids)}, 200
+
+
+class BlankBadgeAPI(restful.Resource):
+    # Generate N blank badges: QR codes carrying fresh, unsaved random tokens.
+    # Nothing is persisted — a blank token only becomes meaningful once a
+    # volunteer links it to an attendee (see LinkBadgeAPI), at which point it
+    # becomes that attendee's EventQRToken. Volunteers print these ahead of
+    # time and hand them out when an attendee's badge wasn't printed.
+    MAX_BLANK_BADGES = 500
+
+    @auth_required
+    def get(self):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
+        req_parser.add_argument('count', type=int, required=True)
+        args = req_parser.parse_args()
+        event_id = args['event_id']
+        count = args['count']
+        current_user_id = g.current_user['id']
+
+        current_user = user_repository.get_by_id(current_user_id)
+        if not current_user.is_registration_volunteer(event_id):
+            return FORBIDDEN
+
+        event = event_repository.get_by_id(event_id)
+        if event is None:
+            return EVENT_NOT_FOUND
+
+        if count is None or count < 1:
+            return MISSING_FIELDS
+        count = min(count, self.MAX_BLANK_BADGES)
+
+        host = get_baobab_host()
+        result = []
+        for _ in range(count):
+            token = uuid.uuid4().hex
+            qr_url = '{}/{}/connect?t={}'.format(host, event.key, token)
+            result.append({'token': token, 'qr_url': qr_url})
+
+        return result, 200
+
+
+class LinkBadgeAPI(restful.Resource):
+    # Link a (blank) badge's QR token to an attendee, replacing whatever token
+    # they had. Used when an attendee's badge wasn't printed: a volunteer scans
+    # a blank badge and assigns it to them. The attendee's My Ticket QR and any
+    # previously printed badge switch over to this token automatically.
+    @auth_required
+    def post(self):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
+        req_parser.add_argument('user_id', type=int, required=True)
+        req_parser.add_argument('token', type=str, required=True)
+        args = req_parser.parse_args()
+        event_id = args['event_id']
+        user_id = args['user_id']
+        token_str = args['token']
+        current_user_id = g.current_user['id']
+
+        current_user = user_repository.get_by_id(current_user_id)
+        if not current_user.is_registration_volunteer(event_id):
+            return FORBIDDEN
+
+        event = event_repository.get_by_id(event_id)
+        if event is None:
+            return EVENT_NOT_FOUND
+
+        user = user_repository.get_by_id(user_id)
+        if user is None:
+            return USER_NOT_FOUND
+
+        if not attendance_repository.is_confirmed_guest(event_id, user_id):
+            return NOT_ON_GUEST_LIST
+
+        # Prevent stealing a badge already linked to someone else. A blank badge
+        # that has never been linked resolves to None; a linked one resolves to
+        # its owner. Re-scanning the same attendee's own badge is a no-op.
+        existing = qr_token_repository.resolve(token_str)
+        if existing is not None and not (existing.event_id == event_id and existing.user_id == user_id):
+            return BADGE_ALREADY_LINKED
+
+        qr_token_repository.relink(event_id, user_id, token_str)
+
+        return {
+            'user_id': user_id,
+            'fullname': user.full_name,
+            'token': token_str,
+        }, 200
