@@ -5,14 +5,17 @@ import { Trans, withTranslation } from 'react-i18next'
 import ReactTable from "react-table";
 import { getDownloadURL } from "../../../utils/files";
 import { ConfirmModal } from "../../../components/Modal";
+import FormTextBox from "../../../components/form/FormTextBox";
 
 class InvoiceAdminList extends Component {
     constructor(props) {
         super(props);
 
         this.state = {
-            loading: true,
+            isLoading: true,
             invoices: [],
+            filteredInvoices: [],
+            searchTerm: "",
             error: "",
             isActionProcessing: false,
             selectedInvoice: null
@@ -24,11 +27,26 @@ class InvoiceAdminList extends Component {
         invoiceService.getAllInvoicesForEvent(this.props.event.id)
             .then(response => {
                 this.setState({
-                    invoices: response.invoices,
+                    invoices: response.invoices || [],
+                    filteredInvoices: response.invoices || [],
                     error: response.error,
                     isLoading: false
                 })
             });
+    }
+
+    onSearchChange = (field) => {
+        const value = field.target.value.toLowerCase();
+        this.setState({ searchTerm: value }, () => this.filterInvoices());
+    }
+
+    filterInvoices = () => {
+        const value = this.state.searchTerm;
+        const filteredInvoices = this.state.invoices.filter(invoice =>
+            (invoice.customer_name || "").toLowerCase().indexOf(value) > -1 ||
+            (invoice.customer_email || "").toLowerCase().indexOf(value) > -1
+        );
+        this.setState({ filteredInvoices });
     }
 
     invoiceStatusCell = (props) => {
@@ -72,7 +90,7 @@ class InvoiceAdminList extends Component {
                         }
                         return invoice;
                     })
-                });
+                }, () => this.filterInvoices());
             });
     }
 
@@ -94,9 +112,9 @@ class InvoiceAdminList extends Component {
                     invoices: this.state.invoices.filter(invoice => {
                         return !response.updatedInvoice || (invoice.id !== response.updatedInvoice.id)
                     })
-                });
+                }, () => this.filterInvoices());
             });
-    }   
+    }
 
     actionCell = (props) => {
         const t = this.props.t;
@@ -125,7 +143,7 @@ class InvoiceAdminList extends Component {
     }
 
     render() {
-        const { error, isLoading, invoices, selectedInvoice } = this.state;
+        const { error, isLoading, filteredInvoices, searchTerm, selectedInvoice } = this.state;
         const t = this.props.t;
         const selectedInvoiceNumber = selectedInvoice ? selectedInvoice.invoice_number : "";
         
@@ -198,9 +216,16 @@ class InvoiceAdminList extends Component {
             <div className="w-full pt-6 text-left space-y-6">
                 <div className="bg-white rounded-2xl shadow-sm border border-border p-8 space-y-6">
                     <h1 className="font-heading text-2xl font-bold text-foreground mb-6">{t("Invoice Admin")}</h1>
+                    <div className="mb-4">
+                        <FormTextBox
+                            placeholder={t("Search Full-name or Email")}
+                            value={searchTerm}
+                            onChange={this.onSearchChange}
+                        />
+                    </div>
                     <div className="react-table">
                         <ReactTable
-                            data={invoices}
+                            data={filteredInvoices}
                             columns={columns}
                             minRows={0}
                             className="ReactTable"

@@ -23,13 +23,24 @@ function CheckinConsole(props) {
   const [checkinLoading, setCheckinLoading] = useState(false);
   const [result, setResult] = useState(null);
 
+  // Blank-badge linking. linkTarget holds the attendee we're assigning a badge
+  // to; while it's set the scanner reads blank badges instead of doing check-in.
+  const [linkTarget, setLinkTarget] = useState(null);
+  const [linkLoading, setLinkLoading] = useState(false);
+  const [linkResult, setLinkResult] = useState(null);
+
   const lastScannedTokenRef = useRef(null);
   const lastScannedAtRef = useRef(0);
+  const linkingRef = useRef(false);
 
   const resetToScanner = useCallback(function() {
     setPreview(null);
     setResult(null);
     setPreviewLoading(false);
+    setLinkTarget(null);
+    setLinkResult(null);
+    setLinkLoading(false);
+    linkingRef.current = false;
     lastScannedTokenRef.current = null;
     lastScannedAtRef.current = 0;
   }, []);
@@ -64,19 +75,57 @@ function CheckinConsole(props) {
     checkinService.checkin({ eventId: eventId, token: token, method: 'scan' }).then(function(res) {
       setCheckinLoading(false);
       setPreview(null);
-      if (res.data && res.data.already_checked_in) {
-        setResult({ type: 'already', message: t('{{name}} is already checked in', { name: res.data.fullname }), badgeNotPrinted: !res.data.badge_exported });
+      const data = res.data;
+      if (data && data.already_checked_in) {
+        setResult({ type: 'already', message: t('{{name}} is already checked in', { name: data.fullname }), badgeNotPrinted: !data.badge_exported, userId: data.user_id, fullname: data.fullname });
       } else if (res.error) {
         setResult({ type: 'error', message: res.error });
       } else {
-        setResult({ type: 'success', message: t('Checked in {{name}}', { name: res.data && res.data.fullname }), badgeNotPrinted: !(res.data && res.data.badge_exported) });
+        setResult({ type: 'success', message: t('Checked in {{name}}', { name: data && data.fullname }), badgeNotPrinted: !(data && data.badge_exported), userId: data && data.user_id, fullname: data && data.fullname });
       }
     });
   }, [event && event.id, t]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const showScanner = !previewLoading && !preview && !result;
+  // Enter link mode: the next scan is treated as a blank badge to assign to this
+  // attendee. Reset the scan debounce so an immediately-repeated code still fires.
+  const startLink = useCallback(function(userId, fullname) {
+    setPreview(null);
+    setResult(null);
+    setLinkResult(null);
+    linkingRef.current = false;
+    lastScannedTokenRef.current = null;
+    lastScannedAtRef.current = 0;
+    setLinkTarget({ userId: userId, fullname: fullname });
+  }, []);
+
+  const handleLinkScan = useCallback(function(decodedText) {
+    if (linkingRef.current || !linkTarget) return;
+    const token = extractToken(decodedText);
+    linkingRef.current = true;
+    setLinkLoading(true);
+    const eventId = event && event.id;
+    checkinService.linkBadge(eventId, linkTarget.userId, token).then(function(res) {
+      setLinkLoading(false);
+      linkingRef.current = false;
+      if (res.error) {
+        setLinkResult({ type: 'error', message: res.error });
+      } else {
+        setLinkResult({ type: 'success', message: t('Blank badge linked to {{name}}. Hand them this badge.', { name: linkTarget.fullname }) });
+      }
+    });
+  }, [event && event.id, linkTarget, t]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const retryLink = useCallback(function() {
+    setLinkResult(null);
+    linkingRef.current = false;
+    lastScannedTokenRef.current = null;
+    lastScannedAtRef.current = 0;
+  }, []);
+
+  const showScanner = !previewLoading && !preview && !result && !linkTarget;
   const indemnityBlocked = preview && preview.has_indemnity_form && !preview.indemnity_signed;
   const badgeNotPrinted = preview && !preview.badge_exported;
+  const showLinkScanner = linkTarget && !linkLoading && !linkResult;
 
   return (
     <div className="max-w-lg mx-auto py-6 px-4 space-y-4">
@@ -116,7 +165,7 @@ function CheckinConsole(props) {
           )}
           {badgeNotPrinted && (
             <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800 font-medium">
-              {t('No badge was printed for this attendee — don\'t waste time searching for one; direct them to the registration desk.')}
+              {t('No badge was printed for this attendee — link a blank badge to them below.')}
             </div>
           )}
           <div className="flex gap-3 pt-2">
@@ -134,6 +183,17 @@ function CheckinConsole(props) {
               {t('Cancel')}
             </button>
           </div>
+          <button
+            className={
+              'w-full px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ' +
+              (badgeNotPrinted
+                ? 'bg-amber-500 text-white hover:bg-amber-600'
+                : 'border border-border text-foreground hover:bg-surface-low')
+            }
+            onClick={function() { startLink(preview.user_id, preview.fullname); }}
+          >
+            {t('Link a blank badge')}
+          </button>
         </div>
       )}
 
@@ -149,8 +209,16 @@ function CheckinConsole(props) {
             {result.message}
           </div>
           {result.type !== 'error' && result.badgeNotPrinted && (
-            <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800 font-medium">
-              {t('No badge was printed for this attendee — don\'t waste time searching for one; direct them to the registration desk.')}
+            <div className="space-y-3">
+              <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800 font-medium">
+                {t('No badge was printed for this attendee — link a blank badge to them.')}
+              </div>
+              <button
+                onClick={function() { startLink(result.userId, result.fullname); }}
+                className="w-full py-3 rounded-xl bg-amber-500 text-white font-semibold text-sm hover:bg-amber-600 transition-all"
+              >
+                {t('Link a blank badge')}
+              </button>
             </div>
           )}
           <button
@@ -159,6 +227,57 @@ function CheckinConsole(props) {
           >
             {t('Scan next attendee')}
           </button>
+        </div>
+      )}
+
+      {linkTarget && (
+        <div className="bg-white rounded-2xl border border-border shadow-sm p-5 space-y-3">
+          <p className="text-sm font-medium text-foreground">
+            {t('Linking a blank badge to')} <span className="font-bold">{linkTarget.fullname}</span>
+          </p>
+
+          {showLinkScanner && (
+            <>
+              <p className="text-sm text-muted-foreground">{t('Scan the QR code on a blank badge.')}</p>
+              <QrScanner onScan={handleLinkScan} />
+              <button
+                className="w-full px-4 py-2.5 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-surface-low transition-all"
+                onClick={resetToScanner}
+              >
+                {t('Cancel')}
+              </button>
+            </>
+          )}
+
+          {linkLoading && (
+            <div className="flex justify-center py-8">
+              <div className="spinner-border" role="status">
+                <span className="sr-only">{t('Loading...')}</span>
+              </div>
+            </div>
+          )}
+
+          {linkResult && (
+            <div className="space-y-3">
+              <div className={linkResult.type === 'success' ? 'alert alert-success rounded-xl' : 'alert alert-danger rounded-xl'}>
+                {linkResult.message}
+              </div>
+              {linkResult.type === 'error' && (
+                <button
+                  onClick={retryLink}
+                  className="w-full py-3 rounded-xl bg-amber-500 text-white font-semibold text-sm hover:bg-amber-600 transition-all"
+                >
+                  {t('Scan a different badge')}
+                </button>
+              )}
+              <button
+                onClick={resetToScanner}
+                className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary-container transition-all"
+              >
+                {t('Done')}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

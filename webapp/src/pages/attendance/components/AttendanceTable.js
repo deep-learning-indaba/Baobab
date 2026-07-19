@@ -1,10 +1,20 @@
-// TODO: ADD TRANSLATION
-
 import React from "react";
+import { withTranslation } from "react-i18next";
 import ReactTable from "react-table";
 import { attendanceService } from "../../../services/attendance/attendance.service";
+import { checkinService } from "../../../services/eventApp/checkin.service";
 import FormTextBox from "../../../components/form/FormTextBox";
 import Modal from "../../../components/Modal";
+import QrScanner from "../../../components/QrScanner";
+
+function extractToken(decodedText) {
+  try {
+    const url = new URL(decodedText);
+    const t = url.searchParams.get("t");
+    if (t) return t;
+  } catch (e) {}
+  return decodedText;
+}
 
 class AttendanceTable extends React.Component {
   constructor(props) {
@@ -24,8 +34,12 @@ class AttendanceTable extends React.Component {
       location: props.location,
       userAlreadyExists: null,
       showAllColumns: null,
-      signedIndemnityChecked: false
+      signedIndemnityChecked: false,
+      linkUser: null,
+      linkLoading: false,
+      linkResult: null
     };
+    this.linking = false;
   }
   componentDidMount() {
     window.addEventListener("resize", this.resize);
@@ -63,6 +77,41 @@ class AttendanceTable extends React.Component {
       });
     })
   }
+
+  openLink = user => {
+    this.linking = false;
+    this.setState({
+      linkUser: { id: user.id, name: user.firstname + " " + user.lastname },
+      linkResult: null,
+      linkLoading: false
+    });
+  };
+
+  closeLink = () => {
+    this.linking = false;
+    this.setState({ linkUser: null, linkResult: null, linkLoading: false });
+  };
+
+  handleLinkScan = decodedText => {
+    const { eventId, linkUser } = this.state;
+    if (this.linking || !linkUser) return;
+    this.linking = true;
+    const token = extractToken(decodedText);
+    this.setState({ linkLoading: true });
+    checkinService.linkBadge(eventId, linkUser.id, token).then(result => {
+      this.linking = false;
+      if (result.error) {
+        this.setState({ linkLoading: false, linkResult: { type: "error", message: result.error } });
+      } else {
+        this.setState({ linkLoading: false, linkResult: { type: "success", message: this.props.t("Blank badge linked to {{name}}. Hand them this badge.", { name: linkUser.name }) } });
+      }
+    });
+  };
+
+  retryLink = () => {
+    this.linking = false;
+    this.setState({ linkResult: null, linkLoading: false });
+  };
 
   onConfirm = () => {
     const { eventId, selectedUser, signedIndemnityChecked } = this.state;
@@ -178,6 +227,7 @@ class AttendanceTable extends React.Component {
   }
   
   render() {
+    const { t } = this.props;
     const {
       filteredList,
       loading,
@@ -203,24 +253,24 @@ class AttendanceTable extends React.Component {
     const columns = [
       {
         id: "user",
-        Header: <div className="text-left font-bold">Full-Name</div>,
+        Header: <div className="text-left font-bold">{t("Full-Name")}</div>,
         accessor: u => <div className="font-medium text-foreground">{u.firstname + " " + u.lastname}</div>,
         minWidth: 150,
         sort: "asc"
       },
       {
         id: "email",
-        Header: <div className="text-left font-bold">Email</div>,
+        Header: <div className="text-left font-bold">{t("Email")}</div>,
         accessor: u => u.email
       },
       {
         id: "confirm",
-        Header: <div className="text-left font-bold">Mark attendance</div>,
+        Header: <div className="text-left font-bold">{t("Mark attendance")}</div>,
         accessor: u => u.user_id,
         Cell: props => (
-          <div>
+          <div className="flex items-center gap-2">
             {props.original.checked_in && (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200/50">Checked In</span>
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200/50">{t("Checked In")}</span>
             )}
             {!props.original.checked_in && (
               <button
@@ -230,9 +280,17 @@ class AttendanceTable extends React.Component {
                 }}
                 disabled={confirming}
               >
-                Check-in
+                {t("Check-in")}
               </button>
             )}
+            <button
+              className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border border-border text-foreground hover:bg-slate-50 cursor-pointer"
+              onClick={() => {
+                this.openLink(props.original);
+              }}
+            >
+              {t("Link badge")}
+            </button>
           </div>
         )
       }
@@ -256,30 +314,30 @@ class AttendanceTable extends React.Component {
 
               {!selectedUser.confirmed && (
                 <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm font-semibold">
-                  UNPAID FEES - Please refer to special situations desk.  
+                  {t("UNPAID FEES - Please refer to special situations desk.")}
                 </div>
               )}
-              
+
               <div className="space-y-4">
                 <div className="flex justify-between items-center text-sm py-2 border-b border-border/50">
-                  <span className="text-muted-foreground font-semibold">Role:</span>
+                  <span className="text-muted-foreground font-semibold">{t("Role:")}</span>
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
                     {selectedUser.invitedguest_role}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center text-sm py-2 border-b border-border/50">
-                  <span className="text-muted-foreground font-semibold">Indemnity Form:</span>
+                  <span className="text-muted-foreground font-semibold">{t("Indemnity Form:")}</span>
                   {selectedUser.signed_indemnity_form ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200/50">Signed</span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200/50">{t("Signed")}</span>
                   ) : (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-error/10 text-error border border-error/20">Not Signed.</span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-error/10 text-error border border-error/20">{t("Not Signed.")}</span>
                   )}
                 </div>
 
                 {selectedUser.tags.length > 0 && (
                   <div className="flex justify-between items-start text-sm py-2 border-b border-border/50">
-                    <span className="text-muted-foreground font-semibold mt-0.5">Tags:</span>
+                    <span className="text-muted-foreground font-semibold mt-0.5">{t("Tags:")}</span>
                     <div className="flex flex-wrap gap-1 justify-end max-w-[70%]">
                       {selectedUser.tags.map((i) => (
                         <span key={i} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-muted-foreground border border-border">{i}</span>
@@ -297,7 +355,7 @@ class AttendanceTable extends React.Component {
                     checked={signedIndemnityChecked}
                     onChange={this.handleSignedIndemnityChanged}/>
                   <label htmlFor="confirm-indemnity-chk" className="text-sm text-muted-foreground cursor-pointer select-none">
-                    Have they signed a paper copy of the indemnity form?
+                    {t("Have they signed a paper copy of the indemnity form?")}
                   </label>
                 </div>
               )}
@@ -307,38 +365,95 @@ class AttendanceTable extends React.Component {
                   type="button" 
                   className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors border border-border text-muted-foreground hover:bg-slate-50 cursor-pointer bg-white"
                   onClick={this.handleContinue}>
-                  Cancel
+                  {t("Cancel")}
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm disabled:opacity-50 cursor-pointer"
-                  disabled={!(selectedUser.signed_indemnity_form || signedIndemnityChecked) || !selectedUser.confirmed} 
+                  disabled={!(selectedUser.signed_indemnity_form || signedIndemnityChecked) || !selectedUser.confirmed}
                   onClick={this.onConfirm}>
-                  Confirm
+                  {t("Confirm")}
                 </button>
               </div>
             </div>
           ) : <div></div>}
         </Modal>
-        
+
+        <Modal visible={!!this.state.linkUser}>
+          {this.state.linkUser ? (
+            <div className="p-6 space-y-4">
+              <h3 className="text-lg font-bold text-foreground">
+                {t("Link a blank badge to {{name}}", { name: this.state.linkUser.name })}
+              </h3>
+
+              {!this.state.linkResult && !this.state.linkLoading && (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    {t("Scan the QR code on a blank badge to assign it to this attendee. Their ticket QR will switch to this badge.")}
+                  </p>
+                  <QrScanner onScan={this.handleLinkScan} />
+                  <button
+                    className="w-full px-4 py-2.5 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-slate-50 cursor-pointer"
+                    onClick={this.closeLink}
+                  >
+                    {t("Cancel")}
+                  </button>
+                </>
+              )}
+
+              {this.state.linkLoading && (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              )}
+
+              {this.state.linkResult && (
+                <div className="space-y-3">
+                  <div className={
+                    this.state.linkResult.type === "success"
+                      ? "bg-green-50 text-green-700 border border-green-200 p-4 rounded-xl text-sm"
+                      : "bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm"
+                  }>
+                    {this.state.linkResult.message}
+                  </div>
+                  {this.state.linkResult.type === "error" && (
+                    <button
+                      className="w-full px-4 py-2.5 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-slate-50 cursor-pointer"
+                      onClick={this.retryLink}
+                    >
+                      {t("Scan a different badge")}
+                    </button>
+                  )}
+                  <button
+                    className="w-full px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 cursor-pointer"
+                    onClick={this.closeLink}
+                  >
+                    {t("Done")}
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : <div></div>}
+        </Modal>
+
 
         {confirmStatus && (
           <div className="bg-green-50 text-green-700 border border-green-200 p-4 rounded-xl text-sm w-full text-center mt-6">
-            Successfully checked-in {confirmUser.fullname}
+            {t("Successfully checked-in {{name}}", { name: confirmUser.fullname })}
           </div>
         )}
-        
+
         {confirmStatus !== null && !confirmStatus && (
           <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-6">
-            Failed to check-in {confirmUser.fullname} due to {confirmError}
+            {t("Failed to check-in {{name}} due to {{error}}", { name: confirmUser.fullname, error: confirmError })}
           </div>
         )}
-            
+
         <div className="bg-white rounded-2xl shadow-sm border border-border p-8 space-y-6" key="attendance-table">
-          <h1 className="font-heading text-2xl font-bold text-foreground mb-6">Check-in</h1>
+          <h1 className="font-heading text-2xl font-bold text-foreground mb-6">{t("Check-in")}</h1>
           <div className="mb-4">
             <FormTextBox
-              placeholder="Search Full-name or Email"
+              placeholder={t("Search Full-name or Email")}
               value={searchTerm}
               onChange={this.onSearchChange}
             />
@@ -356,7 +471,7 @@ class AttendanceTable extends React.Component {
 
             {(!originalAttendanceList || originalAttendanceList.length === 0) && (
               <div className="bg-green-50 text-green-800 border border-green-200 p-4 rounded-xl text-sm w-full text-center">
-                All attendances are confirmed.
+                {t("All attendances are confirmed.")}
               </div>
             )}
           </div>
@@ -365,4 +480,4 @@ class AttendanceTable extends React.Component {
     );
   }
 }
-export default AttendanceTable;
+export default withTranslation()(AttendanceTable);

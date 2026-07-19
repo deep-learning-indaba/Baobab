@@ -1,9 +1,11 @@
 import React, { Component } from 'react';
 import { withTranslation } from 'react-i18next';
 import { announcementService } from '../../services/eventApp/announcement.service';
+import { tagsService } from '../../services/tags/tags.service';
 import { formatInEventTz } from '../../utils/datetime';
 import MarkdownRenderer from '../../components/MarkdownRenderer';
 import TranslatableFieldGroup from '../formEditor/components/TranslatableFieldGroup';
+import FormSelect from '../../components/form/FormSelect';
 
 var TABS = { COMPOSE: 'compose', DASHBOARD: 'dashboard' };
 var DEFAULT_LANGUAGES = [{ code: 'en', description: 'English' }];
@@ -21,6 +23,8 @@ class AnnouncementsAdmin extends Component {
       expiryTime: '',
       critical: false,
       targetAudience: 'checked_in',
+      tagFilter: '',
+      tags: [],
       isSending: false,
       showConfirm: false,
       sendError: null,
@@ -37,6 +41,25 @@ class AnnouncementsAdmin extends Component {
     this.handleFieldChange = this.handleFieldChange.bind(this);
     this.handleTabChange = this.handleTabChange.bind(this);
     this.handleDelete = this.handleDelete.bind(this);
+    this.handleTagFilterChange = this.handleTagFilterChange.bind(this);
+  }
+
+  componentDidMount() {
+    this.loadTags();
+  }
+
+  loadTags() {
+    var self = this;
+    var event = this.props.event;
+    if (!event) return;
+    var language = (this.props.i18n && this.props.i18n.language || 'en').slice(0, 2);
+    tagsService.getTagList(event.id, language).then(function(result) {
+      self.setState({ tags: result.tags || [] });
+    });
+  }
+
+  handleTagFilterChange(id, option) {
+    this.setState({ tagFilter: option ? option.value : '' });
   }
 
   getLanguages() {
@@ -111,6 +134,7 @@ class AnnouncementsAdmin extends Component {
       expiry_at: expiryAt,
       critical: this.state.critical,
       target_audience: this.state.targetAudience,
+      tag_id: this.state.tagFilter ? parseInt(this.state.tagFilter, 10) : null,
     };
 
     self.setState({ isSending: true, showConfirm: false });
@@ -123,7 +147,7 @@ class AnnouncementsAdmin extends Component {
           sendSuccess: true,
           audienceCount: result.data && result.data.audience_count,
           title: {}, body: {},
-          expiryDate: '', expiryTime: '', critical: false, targetAudience: 'checked_in',
+          expiryDate: '', expiryTime: '', critical: false, targetAudience: 'checked_in', tagFilter: '',
         });
       }
     });
@@ -281,6 +305,23 @@ class AnnouncementsAdmin extends Component {
                   </span>
                 </label>
               </div>
+              {s.tags.length > 0 && (
+                <div>
+                  <FormSelect
+                    id="tag-filter"
+                    label={t('Filter by tag')}
+                    options={[{ value: '', label: t('No tag filter (all guests)') }].concat(
+                      s.tags.map(function(tag) { return { value: tag.id.toString(), label: tag.name }; })
+                    )}
+                    value={s.tagFilter}
+                    onChange={this.handleTagFilterChange}
+                    searchable={true}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t('Only send to guests whose offer or invited guest entry has this tag')}
+                  </p>
+                </div>
+              )}
             </div>
 
             <button
@@ -356,6 +397,14 @@ class AnnouncementsAdmin extends Component {
                 {s.targetAudience === 'guest_list'
                   ? t('This will notify all guests on the guest list (including those not yet checked in) via push notification and inbox.')
                   : t('This will notify all currently checked-in attendees via push notification and inbox.')}
+                {s.tagFilter && (function() {
+                  var selectedTag = s.tags.find(function(tag) { return tag.id.toString() === s.tagFilter; });
+                  return selectedTag ? (
+                    <span className="block mt-1">
+                      {t('Restricted to guests tagged "{{tag}}".', { tag: selectedTag.name })}
+                    </span>
+                  ) : null;
+                })()}
                 {s.critical && (
                   <span className="block mt-1 text-amber-700">{t('Critical: email will also be sent.')}</span>
                 )}

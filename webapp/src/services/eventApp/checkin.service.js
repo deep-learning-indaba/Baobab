@@ -9,6 +9,8 @@ export const checkinService = {
   checkin,
   getBadgeExport,
   markBadgesExported,
+  getBlankBadges,
+  linkBadge,
 };
 
 function getMyTicket(eventId) {
@@ -78,5 +80,35 @@ function getBadgeExport(eventId) {
     })
     .catch(function(error) {
       return { data: null, error: extractErrorMessage(error) };
+    });
+}
+
+function getBlankBadges(eventId, count) {
+  return axios
+    .get(baseUrl + '/api/v1/checkin/blank-badges?event_id=' + eventId + '&count=' + count, {
+      headers: authHeader(),
+    })
+    .then(function(response) {
+      return { data: response.data, error: '' };
+    })
+    .catch(function(error) {
+      return { data: null, error: extractErrorMessage(error) };
+    });
+}
+
+function linkBadge(eventId, userId, token) {
+  return axios
+    .post(baseUrl + '/api/v1/checkin/link-badge', { event_id: eventId, user_id: userId, token: token }, {
+      headers: authHeader(),
+    })
+    .then(function(response) {
+      return { data: response.data, error: '', statusCode: response.status };
+    })
+    .catch(function(error) {
+      return {
+        data: null,
+        error: extractErrorMessage(error),
+        statusCode: error.response && error.response.status,
+      };
     });
 }
