@@ -39,6 +39,8 @@ class EventStatsComponent extends Component {
     return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 tracking-wide">{this.props.t("Closed")}</span>
   }
 
+  pct = (num, denom) => (denom > 0 ? Math.round((num / denom) * 100) : 0);
+
   plotTimeSeries = (name, timeseries) => {
     if (!timeseries || timeseries.length === 0) {
       return <div></div>
@@ -183,6 +185,100 @@ class EventStatsComponent extends Component {
               <div className="flex-1">
                 <div className="text-xl font-bold text-foreground">{stats.num_registered_guests}</div>
                 <div className="text-xs font-semibold text-muted-foreground tracking-wider mt-1">{t("Registered Guests")}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* App Usage Stats */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 px-1">
+            <h3 className="font-semibold text-foreground text-sm tracking-wider">{t("App Usage")}</h3>
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-border p-6 flex flex-col items-center text-center h-full">
+            <div className="text-4xl font-heading font-bold text-primary mb-1">{stats.num_app_installs}</div>
+            <div className="text-sm font-semibold text-muted-foreground tracking-wider mb-6">{t("App Installs")}</div>
+
+            <div className="flex w-full justify-between gap-4 border-t border-border/50 pt-4 mt-auto">
+              <div className="flex-1">
+                <div className="text-xl font-bold text-foreground">{stats.num_notifications_enabled_people}</div>
+                <div className="text-xs font-semibold text-muted-foreground tracking-wider mt-1">{t("Notified (Pool)")}</div>
+              </div>
+              <div className="flex-1">
+                <div className="text-xl font-bold text-foreground">{stats.num_notifications_enabled_attendees}</div>
+                <div className="text-xs font-semibold text-muted-foreground tracking-wider mt-1">{t("Notified (Attendees)")}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Attendance Stats */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 px-1">
+            <h3 className="font-semibold text-foreground text-sm tracking-wider">{t("Attendance")}</h3>
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-border p-6 flex flex-col items-center text-center h-full">
+            <div className="text-4xl font-heading font-bold text-primary mb-1">{stats.num_checked_in}</div>
+            <div className="text-sm font-semibold text-muted-foreground tracking-wider mb-6">
+              {t("Checked In")} ({this.pct(stats.num_checked_in, stats.attendee_pool_size)}%)
+            </div>
+
+            <div className="flex w-full justify-between gap-4 border-t border-border/50 pt-4 mt-auto">
+              <div className="flex-1">
+                <div className="text-xl font-bold text-foreground">{stats.num_indemnity_signed}</div>
+                <div className="text-xs font-semibold text-muted-foreground tracking-wider mt-1">{t("Indemnity Signed")}</div>
+              </div>
+              <div className="flex-1">
+                <div className="text-xl font-bold text-foreground">{stats.attendee_pool_size}</div>
+                <div className="text-xs font-semibold text-muted-foreground tracking-wider mt-1">{t("Attendee Pool")}</div>
+              </div>
+            </div>
+            {stats.checkin_by_day && this.plotTimeSeries(
+              t("Checked In"),
+              stats.checkin_by_day.map(d => [d.day, d.count])
+            )}
+          </div>
+        </div>
+
+        {/* Discussion Stats */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 px-1">
+            <h3 className="font-semibold text-foreground text-sm tracking-wider">{t("Discussion")}</h3>
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-border p-6 flex flex-col items-center text-center h-full">
+            <div className="text-4xl font-heading font-bold text-primary mb-1">{stats.discussion_threads}</div>
+            <div className="text-sm font-semibold text-muted-foreground tracking-wider mb-6">{t("Threads")}</div>
+
+            <div className="flex w-full justify-between gap-4 border-t border-border/50 pt-4 mt-auto">
+              <div className="flex-1">
+                <div className="text-xl font-bold text-foreground">{stats.discussion_replies}</div>
+                <div className="text-xs font-semibold text-muted-foreground tracking-wider mt-1">{t("Replies")}</div>
+              </div>
+              <div className="flex-1">
+                <div className="text-xl font-bold text-foreground">{stats.discussion_participants}</div>
+                <div className="text-xs font-semibold text-muted-foreground tracking-wider mt-1">{t("Participants")}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Announcement Stats */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 px-1">
+            <h3 className="font-semibold text-foreground text-sm tracking-wider">{t("Announcements")}</h3>
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-border p-6 flex flex-col items-center text-center h-full">
+            <div className="text-4xl font-heading font-bold text-primary mb-1">{stats.announcements_sent}</div>
+            <div className="text-sm font-semibold text-muted-foreground tracking-wider mb-6">{t("Sent")}</div>
+
+            <div className="flex w-full justify-between gap-4 border-t border-border/50 pt-4 mt-auto">
+              <div className="flex-1">
+                <div className="text-xl font-bold text-foreground">{stats.announcements_delivered}</div>
+                <div className="text-xs font-semibold text-muted-foreground tracking-wider mt-1">{t("Delivered")}</div>
+              </div>
+              <div className="flex-1">
+                <div className="text-xl font-bold text-foreground">{stats.announcements_opened}</div>
+                <div className="text-xs font-semibold text-muted-foreground tracking-wider mt-1">{t("Opened")}</div>
               </div>
             </div>
           </div>

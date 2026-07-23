@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { registerPushSubscription } from '../utils/push';
+import { engagementService } from '../services/engagement';
 
 const DISMISSED_KEY = 'pwa-install-dismissed';
 const DISMISS_DURATION_DAYS = 10;
@@ -19,12 +20,17 @@ function isDismissed() {
 
 const InstallContext = createContext(null);
 
-export function InstallProvider({ children }) {
+export function InstallProvider({ children, event }) {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isIOS, setIsIOS] = useState(false);
   const [installed, setInstalled] = useState(false);
   const [dismissed, setDismissed] = useState(isDismissed);
   const [consentGiven, setConsentGiven] = useState(hasCookieConsent);
+
+  // The 'appinstalled' listener below is only attached once (empty dep
+  // array), so it closes over stale props — read the current event via ref.
+  const eventRef = useRef(event);
+  eventRef.current = event;
 
   useEffect(() => {
     const isStandalone =
@@ -47,6 +53,9 @@ export function InstallProvider({ children }) {
       // permission prompt is suppressed here it's harmless; the profile toggle
       // and the granted-on-load re-sync will still register the subscription.
       registerPushSubscription({ requestPermission: true });
+      if (eventRef.current) {
+        engagementService.logInstall(eventRef.current.id);
+      }
     };
     window.addEventListener('beforeinstallprompt', onPrompt);
     window.addEventListener('appinstalled', onInstalled);

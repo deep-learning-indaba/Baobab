@@ -308,6 +308,21 @@ class AttendanceApiTest(ApiTestCase):
 
         self.assertEqual(response.status_code, ATTENDANCE_ALREADY_CONFIRMED[1])
 
+    def test_manual_confirm_creates_checkin_record(self):
+        # The manual/no-ticket confirm path (used from the Event Attendance
+        # page) must write a Checkin row too, not just mark Attendance
+        # confirmed, so "already checked in" detection and the guest list's
+        # Checked In status agree with what the QR scan path produces.
+        self.seed_static_data()
+        header = self.get_auth_header_for('ra@ra.com')
+        params = {'user_id': 1, 'event_id': 1, 'indemnity_signed': True}
+
+        response = self.app.post('/api/v1/attendance', headers=header, data=params)
+
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(checkin_repository.is_checked_in(1, 1))
+        self.assertIn(1, checkin_repository.checked_in_user_ids(1))
+
     def setup_delete_attendance(self):
         attendance = Attendance(1, 1, 2)
         attendance_repository.add(attendance)
@@ -576,6 +591,82 @@ class CheckinAPITest(ApiTestCase):
         data = json.loads(response.data)
         self.assertTrue(data['badge_exported'])
 
+    def test_resolve_tags_empty_when_no_checkin_tags(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('volunteer@test.com')
+        response = self.app.get(
+            '/api/v1/checkin/resolve', headers=header,
+            query_string={'event_id': self.event_id, 't': self.token_str}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['tags'], [])
+
+    def test_resolve_includes_checkin_tags(self):
+        self.seed_static_data()
+        tag = Tag(self.event_id, "CHECKIN")
+        db.session.add(tag)
+        db.session.commit()
+        db.session.add(TagTranslation(tag.id, 'en', 'Yellow T-shirt'))
+        db.session.commit()
+        offer = attendance_repository.get_offer(self.event_id, self.guest_id)
+        db.session.add(OfferTag(offer.id, tag.id))
+        db.session.commit()
+
+        header = self.get_auth_header_for('volunteer@test.com')
+        response = self.app.get(
+            '/api/v1/checkin/resolve', headers=header,
+            query_string={'event_id': self.event_id, 't': self.token_str}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['tags'], ['Yellow T-shirt'])
+
+    def test_checkin_response_includes_checkin_tags(self):
+        self.seed_static_data()
+        tag = Tag(self.event_id, "CHECKIN")
+        db.session.add(tag)
+        db.session.commit()
+        db.session.add(TagTranslation(tag.id, 'en', 'Yellow T-shirt'))
+        db.session.commit()
+        offer = attendance_repository.get_offer(self.event_id, self.guest_id)
+        db.session.add(OfferTag(offer.id, tag.id))
+        db.session.commit()
+
+        header = self.get_auth_header_for('volunteer@test.com')
+        response = self.app.post(
+            '/api/v1/checkin', headers=header,
+            data={'event_id': self.event_id, 'token': self.token_str}
+        )
+        self.assertEqual(response.status_code, 201)
+        data = json.loads(response.data)
+        self.assertEqual(data['tags'], ['Yellow T-shirt'])
+
+    def test_already_checked_in_response_includes_checkin_tags(self):
+        self.seed_static_data()
+        tag = Tag(self.event_id, "CHECKIN")
+        db.session.add(tag)
+        db.session.commit()
+        db.session.add(TagTranslation(tag.id, 'en', 'Yellow T-shirt'))
+        db.session.commit()
+        offer = attendance_repository.get_offer(self.event_id, self.guest_id)
+        db.session.add(OfferTag(offer.id, tag.id))
+        db.session.commit()
+
+        header = self.get_auth_header_for('volunteer@test.com')
+        self.app.post(
+            '/api/v1/checkin', headers=header,
+            data={'event_id': self.event_id, 'token': self.token_str}
+        )
+        response = self.app.post(
+            '/api/v1/checkin', headers=header,
+            data={'event_id': self.event_id, 'token': self.token_str}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertTrue(data['already_checked_in'])
+        self.assertEqual(data['tags'], ['Yellow T-shirt'])
+
     def test_checkin_response_includes_badge_exported(self):
         self.seed_static_data()
         header = self.get_auth_header_for('volunteer@test.com')
@@ -682,6 +773,8 @@ class BadgeExportAPITest(ApiTestCase):
         self.admin = self.add_user('admin@test.com')
         self.guest = self.add_user('guest@test.com')
         self.guest_fullname = self.guest.full_name
+        self.guest_firstname = self.guest.firstname
+        self.guest_lastname = self.guest.lastname
         self.guest_id = self.guest.id
         self.event = self.add_event(
             {'en': 'Badge Event'}, {'en': 'Desc'},
@@ -711,6 +804,8 @@ class BadgeExportAPITest(ApiTestCase):
         data = json.loads(response.data)
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]['fullname'], self.guest_fullname)
+        self.assertEqual(data[0]['firstname'], self.guest_firstname)
+        self.assertEqual(data[0]['lastname'], self.guest_lastname)
         self.assertIn('token', data[0])
         self.assertIn('qr_url', data[0])
 

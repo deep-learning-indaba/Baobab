@@ -301,6 +301,12 @@ class AttendanceRepository():
                 .filter_by(event_id=event_id, user_id=user_id)
                 .first())
 
+    @staticmethod
+    def count_indemnity_signed(event_id):
+        return (db.session.query(Attendance)
+                .filter_by(event_id=event_id, indemnity_signed=True)
+                .count())
+
 
 class IndemnityRepository():
     @staticmethod
@@ -374,6 +380,15 @@ class CheckinRepository():
     @staticmethod
     def list_for_event(event_id):
         return db.session.query(Checkin).filter_by(event_id=event_id).all()
+
+    @staticmethod
+    def count_by_day(event_id):
+        rows = (db.session.query(Checkin.day, func.count(func.distinct(Checkin.user_id)))
+                .filter_by(event_id=event_id)
+                .group_by(Checkin.day)
+                .order_by(Checkin.day)
+                .all())
+        return [(day, count) for day, count in rows if day is not None]
 
     @staticmethod
     def delete_for_event_user(event_id, user_id):
