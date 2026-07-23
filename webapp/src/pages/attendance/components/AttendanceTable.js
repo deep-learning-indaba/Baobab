@@ -4,7 +4,7 @@ import ReactTable from "react-table";
 import { attendanceService } from "../../../services/attendance/attendance.service";
 import { checkinService } from "../../../services/eventApp/checkin.service";
 import FormTextBox from "../../../components/form/FormTextBox";
-import Modal from "../../../components/Modal";
+import Modal, { ConfirmModal } from "../../../components/Modal";
 import QrScanner from "../../../components/QrScanner";
 
 function extractToken(decodedText) {
@@ -28,16 +28,18 @@ class AttendanceTable extends React.Component {
       confirmStatus: null,
       confirmUser: null,
       confirmError: null,
-      undoResult: null,
       confirming: false,
-      undoing: false,
       location: props.location,
       userAlreadyExists: null,
       showAllColumns: null,
       signedIndemnityChecked: false,
       linkUser: null,
       linkLoading: false,
-      linkResult: null
+      linkResult: null,
+      showCheckedIn: false,
+      undoTarget: null,
+      undoLoading: false,
+      undoBanner: null
     };
     this.linking = false;
   }
@@ -58,12 +60,14 @@ class AttendanceTable extends React.Component {
     attendanceService
       .getAttendanceList(this.state.eventId)
       .then(result => {
-        this.setState({
-          loading: false,
-          originalAttendanceList: result.data,
-          error: result.error,
-          filteredList: result.data
-        });
+        this.setState(
+          {
+            loading: false,
+            originalAttendanceList: result.data,
+            error: result.error
+          },
+          () => this.filterList()
+        );
       });
   }
 
@@ -146,20 +150,37 @@ class AttendanceTable extends React.Component {
     this.setState({showDetailsModal: false, selectedUser: null});
   }
 
-  handleUndo = () => {
-    const { eventId, selectedUser } = this.state;
-    this.setState({ undoing: true }, () => {
-      attendanceService
-        .undoConfirmation(eventId, selectedUser.user_id)
-        .then(response => {
-          this.setState({
-            undoResult: {
-              undo: response.data,
-              undoError: response.error,
-              undoing: false
+  openUndo = user => {
+    this.setState({
+      undoTarget: { id: user.id, name: user.firstname + " " + user.lastname },
+      undoLoading: false,
+      undoBanner: null
+    });
+  };
+
+  closeUndo = () => {
+    this.setState({ undoTarget: null, undoLoading: false });
+  };
+
+  confirmUndo = () => {
+    const { eventId, undoTarget } = this.state;
+    this.setState({ undoLoading: true }, () => {
+      attendanceService.undoConfirmation(eventId, undoTarget.id).then(result => {
+        const success = !result.error;
+        this.setState(
+          {
+            undoTarget: null,
+            undoLoading: false,
+            undoBanner: {
+              type: success ? "success" : "error",
+              message: success
+                ? this.props.t("Checked-in status undone for {{name}}", { name: undoTarget.name })
+                : this.props.t("Failed to undo check-in for {{name}} due to {{error}}", { name: undoTarget.name, error: result.error })
             }
-          });
-        });
+          },
+          () => this.getAttendanceList()
+        );
+      });
     });
   };
 
@@ -170,7 +191,6 @@ class AttendanceTable extends React.Component {
         loading: false,
         confirmStatus: null,
         confirmError: null,
-        undoResult: null,
         signedIndemnityChecked: false,
         confirming: false
       });
@@ -187,13 +207,24 @@ class AttendanceTable extends React.Component {
   };
 
   filterList = () => {
-    let value = this.state.searchTerm;
-    let filteredList = this.state.originalAttendanceList.filter(
+    const { searchTerm, showCheckedIn, originalAttendanceList } = this.state;
+    const value = searchTerm || "";
+    let filteredList = (originalAttendanceList || []).filter(
       u =>
         (u.firstname + " " + u.lastname).toLowerCase().indexOf(value) > -1 ||
         u.email.toLowerCase().indexOf(value) > -1
     );
+    if (!showCheckedIn) {
+      filteredList = filteredList.filter(u => !u.checked_in);
+    }
     this.setState({ filteredList: filteredList });
+  };
+
+  onToggleShowCheckedIn = () => {
+    this.setState(
+      prevState => ({ showCheckedIn: !prevState.showCheckedIn }),
+      () => this.filterList()
+    );
   };
 
   styleFromRole = (role) => {
@@ -239,7 +270,11 @@ class AttendanceTable extends React.Component {
       selectedUser,
       originalAttendanceList,
       signedIndemnityChecked,
-      confirmUser
+      confirmUser,
+      showCheckedIn,
+      undoTarget,
+      undoLoading,
+      undoBanner
     } = this.state;
 
     if (loading) {
@@ -267,10 +302,21 @@ class AttendanceTable extends React.Component {
         id: "confirm",
         Header: <div className="text-left font-bold">{t("Mark attendance")}</div>,
         accessor: u => u.user_id,
+        minWidth: 300,
         Cell: props => (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {props.original.checked_in && (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200/50">{t("Checked In")}</span>
+              <>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200/50">{t("Checked In")}</span>
+                <button
+                  className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border border-border text-foreground hover:bg-slate-50 cursor-pointer"
+                  onClick={() => {
+                    this.openUndo(props.original);
+                  }}
+                >
+                  {t("Undo")}
+                </button>
+              </>
             )}
             {!props.original.checked_in && (
               <button
@@ -436,6 +482,33 @@ class AttendanceTable extends React.Component {
           ) : <div></div>}
         </Modal>
 
+        <ConfirmModal
+          visible={!!undoTarget}
+          onOK={this.confirmUndo}
+          onCancel={this.closeUndo}
+          okText={undoLoading ? t("Undoing...") : t("Yes, undo")}
+          cancelText={t("Cancel")}
+        >
+          <p>
+            {undoTarget &&
+              t(
+                "Are you sure you want to undo the check-in for {{name}}? This will remove their confirmed attendance and checked-in status.",
+                { name: undoTarget.name }
+              )}
+          </p>
+        </ConfirmModal>
+
+        {undoBanner && (
+          <div
+            className={
+              undoBanner.type === "success"
+                ? "bg-green-50 text-green-700 border border-green-200 p-4 rounded-xl text-sm w-full text-center mt-6"
+                : "bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm w-full text-center mt-6"
+            }
+          >
+            {undoBanner.message}
+          </div>
+        )}
 
         {confirmStatus && (
           <div className="bg-green-50 text-green-700 border border-green-200 p-4 rounded-xl text-sm w-full text-center mt-6">
@@ -451,12 +524,21 @@ class AttendanceTable extends React.Component {
 
         <div className="bg-white rounded-2xl shadow-sm border border-border p-8 space-y-6" key="attendance-table">
           <h1 className="font-heading text-2xl font-bold text-foreground mb-6">{t("Check-in")}</h1>
-          <div className="mb-4">
+          <div className="mb-4 space-y-3">
             <FormTextBox
               placeholder={t("Search Full-name or Email")}
               value={searchTerm}
               onChange={this.onSearchChange}
             />
+            <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className="rounded border-border text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                checked={showCheckedIn}
+                onChange={this.onToggleShowCheckedIn}
+              />
+              {t("Show attendees who are already checked-in")}
+            </label>
           </div>
           <div className="react-table">
             {filteredList && filteredList.length > 0 && (
@@ -474,6 +556,14 @@ class AttendanceTable extends React.Component {
                 {t("All attendances are confirmed.")}
               </div>
             )}
+
+            {originalAttendanceList &&
+              originalAttendanceList.length > 0 &&
+              (!filteredList || filteredList.length === 0) && (
+                <div className="bg-slate-50 text-muted-foreground border border-border p-4 rounded-xl text-sm w-full text-center">
+                  {t("No attendees match your search.")}
+                </div>
+              )}
           </div>
         </div>
       </div>

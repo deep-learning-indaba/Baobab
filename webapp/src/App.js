@@ -194,7 +194,7 @@ class AppComponent extends Component {
   render() {
     const t = this.props.t;
     return (
-      <InstallProvider>
+      <InstallProvider event={this.state.currentEvent}>
       <Router history={history}>
         <div className="notranslate app-shell" translate="no">
           <nav className="navbar navbar-expand-lg navbar-dark bg-dark">

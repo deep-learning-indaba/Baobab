@@ -55,6 +55,20 @@ _attendee_fields = {
     }
 
 
+def filter_checkin_tag_names(tags):
+    return [tag.tag.stringify_tag_name() for tag in tags if tag.tag.tag_type == TagType.CHECKIN]
+
+
+def get_checkin_tag_names(event_id, user_id):
+    invited_guest = attendance_repository.get_invited_guest(event_id, user_id)
+    if invited_guest:
+        tags = invited_guest.invited_guest_tags
+    else:
+        offer = attendance_repository.get_offer(event_id, user_id)
+        tags = offer.offer_tags if offer else []
+    return filter_checkin_tag_names(tags)
+
+
 class AttendanceUser():
     def __init__(self, user, attendance, is_invitedguest, invitedguest_role, confirmed, tags, registration=None):
         self.id = attendance.id if attendance is not None else None
@@ -67,8 +81,7 @@ class AttendanceUser():
         self.is_invitedguest = is_invitedguest
         self.invitedguest_role = invitedguest_role
         self.confirmed = confirmed
-        self.tags = [tag.tag.stringify_tag_name() for tag in tags
-            if tag.tag.tag_type == TagType.CHECKIN]
+        self.tags = filter_checkin_tag_names(tags)
         self.offer_metadata = [
             {'name': tag.tag.get_translation('en').name}
             for tag in tags
@@ -166,6 +179,17 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
         attendance.sign_indemnity()
         attendance.confirm()
         attendance_repository.save()
+
+        # Keep the Checkin table (which drives "already checked in" detection,
+        # the guest list's Checked In status, and badge-export bookkeeping) in
+        # sync with this manual/no-ticket confirmation, the same way the QR
+        # scan check-in path does.
+        if event.is_daily_checkin:
+            day = event_local_date(datetime.utcnow(), event.timezone)
+        else:
+            day = None
+        if not checkin_repository.is_checked_in(event_id, user_id, day):
+            checkin_repository.create(event_id, user_id, registration_user_id, 'manual', day)
 
         email_user(
             'attendance-confirmation',
@@ -432,6 +456,7 @@ class CheckinResolveAPI(restful.Resource):
             'has_indemnity_form': indemnity is not None,
             'already_checked_in': already_checked_in,
             'badge_exported': badge_exported,
+            'tags': get_checkin_tag_names(event_id, qr.user_id),
         }, 200
 
 
@@ -488,6 +513,7 @@ class CheckinAPI(restful.Resource):
                 'user_id': target_user_id,
                 'fullname': user.full_name,
                 'badge_exported': existing_attendance.badge_exported if existing_attendance else False,
+                'tags': get_checkin_tag_names(event_id, target_user_id),
             }, 200
 
         checkin = checkin_repository.create(event_id, target_user_id, by_user_id, method, day)
@@ -518,6 +544,7 @@ class CheckinAPI(restful.Resource):
             'fullname': user.full_name,
             'checked_in_at': checkin.checked_in_at.isoformat() + 'Z',
             'badge_exported': attendance.badge_exported,
+            'tags': get_checkin_tag_names(event_id, target_user_id),
         }, 201
 
 
