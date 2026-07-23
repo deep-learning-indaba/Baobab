@@ -21,6 +21,10 @@ from app.registration.models import Registration
 from app.offer.models import Offer
 from app.forms.models import Form
 from app.attendance.repository import AttendanceRepository
+from app.attendance.models import Attendance, Checkin
+from app.announcements.models import Announcement, AnnouncementReceipt, PushSubscription
+from app.discussion.models import DiscussionSpace, DiscussionThread, DiscussionMessage
+from app.engagement.models import EngagementEvent
 
 class EventsAPITest(ApiTestCase):
 
@@ -289,6 +293,146 @@ class EventsStatsAPITest(ApiTestCase):
                                     'Authorization': self.test_user2['token']},
                                 query_string={'someparam': self.test_event.id})
         self.assertEqual(response.status_code, 400)
+
+
+class EventEngagementStatsAPITest(ApiTestCase):
+    """Covers the engagement/attendance/discussion/announcement fields added
+    to EventStatsAPI. Kept separate from EventsStatsAPITest (and free of any
+    submitted Response rows) because ResponseRepository.get_submitted_timeseries_by_event
+    errors on cast(submitted_timestamp, Date) against Postgres — a pre-existing
+    bug, unrelated to these fields, that only reproduces when a submitted
+    response actually exists for the event."""
+
+    def seed_static_data(self):
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
+        self.admin = self.add_user('admin@test.com')
+        self.guest1 = self.add_user('guest1@test.com', 'Guest', 'One')
+        self.guest2 = self.add_user('guest2@test.com', 'Guest', 'Two')
+
+        self.test_event = self.add_event({'en': 'Test Event'}, {'en': 'Event Description'},
+                                datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60),
+                                'KONNET', 1, 'abx@indaba.deeplearning', 'indaba.deeplearning',
+                                datetime.now(), datetime.now() + timedelta(days=30))
+        db.session.add(self.test_event)
+        db.session.commit()
+
+        db.session.add(EventRole('admin', self.admin.id, self.test_event.id))
+        db.session.commit()
+
+        # Attendee pool: guest1 is a confirmed, checked-in, indemnity-signed,
+        # notification-opted-in attendee; guest2 is merely invited.
+        db.session.add(InvitedGuest(user_id=self.guest1.id, event_id=self.test_event.id, role='Guest'))
+        db.session.add(InvitedGuest(user_id=self.guest2.id, event_id=self.test_event.id, role='Guest'))
+        db.session.commit()
+
+        attendance1 = Attendance(self.test_event.id, self.guest1.id, self.admin.id)
+        attendance1.confirm()
+        attendance1.sign_indemnity()
+        db.session.add(attendance1)
+        db.session.commit()
+
+        db.session.add(Checkin(event_id=self.test_event.id, user_id=self.guest1.id, day=None))
+        db.session.commit()
+
+        db.session.add(PushSubscription(
+            user_id=self.guest1.id, endpoint='https://push.example/guest1',
+            p256dh='key', auth='auth',
+        ))
+        db.session.commit()
+
+        db.session.add(EngagementEvent(
+            organisation_id=self.test_event.organisation_id, event_id=self.test_event.id,
+            user_id=self.guest1.id, event_type='app_installed',
+        ))
+        db.session.commit()
+
+        space = DiscussionSpace(event_id=self.test_event.id, created_by_user_id=self.guest1.id, name='General')
+        db.session.add(space)
+        db.session.commit()
+        thread = DiscussionThread(event_id=self.test_event.id, space_id=space.id,
+                                   created_by_user_id=self.guest1.id, subject='Hello')
+        db.session.add(thread)
+        db.session.commit()
+        root_message = DiscussionMessage(thread_id=thread.id, event_id=self.test_event.id,
+                                          user_id=self.guest1.id, body_markdown='root')
+        db.session.add(root_message)
+        db.session.commit()
+        reply_message = DiscussionMessage(thread_id=thread.id, event_id=self.test_event.id,
+                                           user_id=self.guest2.id, parent_message_id=root_message.id,
+                                           body_markdown='reply')
+        db.session.add(reply_message)
+        db.session.commit()
+
+        announcement = Announcement(event_id=self.test_event.id, created_by_user_id=self.admin.id,
+                                     sent_at=datetime.now())
+        db.session.add(announcement)
+        db.session.commit()
+        db.session.add(AnnouncementReceipt(announcement_id=announcement.id, user_id=self.guest1.id,
+                                            delivered_at=datetime.now(), opened_at=datetime.now()))
+        db.session.commit()
+
+        db.session.flush()
+
+        # Capture plain ids: the ORM objects above get detached once the test
+        # client makes a request (get_auth_header_for), since that goes through
+        # a separate request/session lifecycle.
+        self.test_event_id = self.test_event.id
+        self.admin_id = self.admin.id
+        self.guest1_id = self.guest1.id
+        self.guest2_id = self.guest2.id
+
+    def test_get_stats_includes_engagement_and_attendance_stats(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('admin@test.com')
+        response = self.app.get('/api/v1/eventstats', headers=header,
+                                query_string={'event_id': self.test_event_id})
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+
+        self.assertEqual(data['attendee_pool_size'], 2)
+        self.assertEqual(data['num_confirmed_attendees'], 1)
+        self.assertEqual(data['num_app_installs'], 1)
+        self.assertEqual(data['num_notifications_enabled_people'], 1)
+        self.assertEqual(data['num_notifications_enabled_attendees'], 1)
+        self.assertEqual(data['num_indemnity_signed'], 1)
+        self.assertFalse(data['is_daily_checkin'])
+        self.assertEqual(data['num_checked_in'], 1)
+        self.assertIsNone(data['checkin_by_day'])
+        self.assertEqual(data['discussion_threads'], 1)
+        self.assertEqual(data['discussion_replies'], 1)
+        self.assertEqual(data['discussion_participants'], 2)
+        self.assertEqual(data['announcements_sent'], 1)
+        self.assertEqual(data['announcements_delivered'], 1)
+        self.assertEqual(data['announcements_opened'], 1)
+
+    def test_get_stats_daily_checkin_breakdown(self):
+        self.seed_static_data()
+        daily_event = self.add_event({'en': 'Daily Event'}, {'en': 'Desc'},
+                                      datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60),
+                                      'DAILYEV', 1, 'abx@indaba.deeplearning', 'indaba.deeplearning',
+                                      datetime.now(), datetime.now() + timedelta(days=30))
+        daily_event.checkin_mode = 'daily'
+        db.session.add(daily_event)
+        db.session.commit()
+        daily_event_id = daily_event.id
+        db.session.add(EventRole('admin', self.admin_id, daily_event_id))
+        db.session.add(Checkin(event_id=daily_event_id, user_id=self.guest1_id, day=date(2025, 6, 1)))
+        db.session.add(Checkin(event_id=daily_event_id, user_id=self.guest2_id, day=date(2025, 6, 1)))
+        db.session.add(Checkin(event_id=daily_event_id, user_id=self.guest1_id, day=date(2025, 6, 2)))
+        db.session.commit()
+
+        header = self.get_auth_header_for('admin@test.com')
+        response = self.app.get('/api/v1/eventstats', headers=header,
+                                query_string={'event_id': daily_event_id})
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+
+        self.assertTrue(data['is_daily_checkin'])
+        self.assertEqual(data['num_checked_in'], 2)
+        self.assertEqual(data['checkin_by_day'], [
+            {'day': '2025-06-01', 'count': 2},
+            {'day': '2025-06-02', 'count': 1},
+        ])
 
 
 class RemindersAPITest(ApiTestCase):

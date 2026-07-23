@@ -27,6 +27,7 @@ from .programme import api as programme_api
 from .announcements import api as announcements_api
 from .connections import api as connections_api
 from .discussion import api as discussion_api
+from .engagement import api as engagement_api
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
 rest_api.add_resource(users_api.UserCommentAPI, '/api/v1/user-comment')
@@ -205,6 +206,7 @@ rest_api.add_resource(announcements_api.AnnouncementListAPI, '/api/v1/announceme
 rest_api.add_resource(announcements_api.AnnouncementDetailAPI, '/api/v1/announcement/<int:announcement_id>')
 rest_api.add_resource(announcements_api.PushSubscriptionAPI, '/api/v1/push-subscription')
 rest_api.add_resource(announcements_api.PushSubscriptionTestAPI, '/api/v1/push-subscription/test')
+rest_api.add_resource(engagement_api.EngagementInstallAPI, '/api/v1/engagement/install')
 # Connection routes — static paths before dynamic
 rest_api.add_resource(connections_api.ConnectionResolveAPI, '/api/v1/connection/resolve')
 rest_api.add_resource(connections_api.ConnectionRespondAPI, '/api/v1/connection/respond')

@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from app import db
-from app.announcements.models import Announcement, AnnouncementTranslation, AnnouncementReceipt
+from app.announcements.models import Announcement, AnnouncementTranslation, AnnouncementReceipt, PushSubscription
 
 
 class AnnouncementRepository:
@@ -121,3 +121,39 @@ class AnnouncementRepository:
                     AnnouncementReceipt.opened_at.isnot(None),
                 )
                 .count())
+
+    # ---------- Event-level stats ----------
+
+    @staticmethod
+    def count_sent(event_id):
+        return (db.session.query(Announcement)
+                .filter(Announcement.event_id == event_id, Announcement.sent_at.isnot(None))
+                .count())
+
+    @staticmethod
+    def count_delivered_for_event(event_id):
+        return (db.session.query(AnnouncementReceipt)
+                .join(Announcement, Announcement.id == AnnouncementReceipt.announcement_id)
+                .filter(Announcement.event_id == event_id)
+                .count())
+
+    @staticmethod
+    def count_opened_for_event(event_id):
+        return (db.session.query(AnnouncementReceipt)
+                .join(Announcement, Announcement.id == AnnouncementReceipt.announcement_id)
+                .filter(Announcement.event_id == event_id, AnnouncementReceipt.opened_at.isnot(None))
+                .count())
+
+
+class PushSubscriptionRepository:
+
+    @staticmethod
+    def subscribed_user_ids(user_ids):
+        """Distinct user IDs, from the given set, that have at least one push subscription."""
+        if not user_ids:
+            return set()
+        rows = (db.session.query(PushSubscription.user_id)
+                .filter(PushSubscription.user_id.in_(user_ids))
+                .distinct()
+                .all())
+        return {row[0] for row in rows}

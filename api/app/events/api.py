@@ -17,6 +17,10 @@ from app.responses.repository import ResponseRepository as response_repository
 from app.offer.repository import OfferRepository as offer_repository
 from app.registration.repository import RegistrationRepository as registration_repository
 from app.guestRegistrations.repository import GuestRegistrationRepository as guest_registration_repository
+from app.attendance.repository import AttendanceRepository, CheckinRepository
+from app.announcements.repository import AnnouncementRepository, PushSubscriptionRepository
+from app.discussion.repository import DiscussionRepository
+from app.engagement.repository import EngagementRepository
 
 from app import db, bcrypt, LOGGER
 import pytz
@@ -563,6 +567,37 @@ class EventStatsAPI(EventsMixin, restful.Resource):
             # guest_registration_timeseries = _process_timeseries(guest_registration_repository.timeseries_guest_registrations(event_id))
             # registration_timeseries = _combine_timeseries(registration_timeseries, guest_registration_timeseries)
 
+            # Event app usage: the attendee pool is everyone who accepted an offer or
+            # was invited as a guest; confirmed attendees are the subset who have
+            # actually confirmed via Attendance. Both are used to scope the
+            # notification opt-in numbers below.
+            attendee_user_ids = set(AttendanceRepository.get_all_guest_user_ids_for_event(event_id))
+            attendee_pool_size = len(attendee_user_ids)
+            confirmed_attendee_user_ids = {u.id for u in AttendanceRepository.get_confirmed_attendee_users(event_id)}
+            num_confirmed_attendees = len(confirmed_attendee_user_ids)
+
+            num_app_installs = EngagementRepository.count_distinct_users(event_id, 'app_installed')
+            num_notifications_enabled_people = len(PushSubscriptionRepository.subscribed_user_ids(attendee_user_ids))
+            num_notifications_enabled_attendees = len(
+                PushSubscriptionRepository.subscribed_user_ids(confirmed_attendee_user_ids))
+
+            num_indemnity_signed = AttendanceRepository.count_indemnity_signed(event_id)
+
+            is_daily_checkin = event.is_daily_checkin
+            num_checked_in = len(CheckinRepository.checked_in_user_ids(event_id))
+            checkin_by_day = (
+                [{'day': day.isoformat(), 'count': count} for day, count in CheckinRepository.count_by_day(event_id)]
+                if is_daily_checkin else None
+            )
+
+            discussion_threads = DiscussionRepository.count_threads_for_event(event_id)
+            discussion_replies = DiscussionRepository.count_replies_for_event(event_id)
+            discussion_participants = DiscussionRepository.count_active_participants_for_event(event_id)
+
+            announcements_sent = AnnouncementRepository.count_sent(event_id)
+            announcements_delivered = AnnouncementRepository.count_delivered_for_event(event_id)
+            announcements_opened = AnnouncementRepository.count_opened_for_event(event_id)
+
             return {
                 'num_responses': num_responses,
                 'num_submitted_responses': num_submitted_respones,
@@ -582,6 +617,21 @@ class EventStatsAPI(EventsMixin, restful.Resource):
                 'num_guests': num_guests,
                 'num_registered_guests': num_registered_guests,
                 # 'registration_timeseries': registration_timeseries
+                'attendee_pool_size': attendee_pool_size,
+                'num_confirmed_attendees': num_confirmed_attendees,
+                'num_app_installs': num_app_installs,
+                'num_notifications_enabled_people': num_notifications_enabled_people,
+                'num_notifications_enabled_attendees': num_notifications_enabled_attendees,
+                'num_indemnity_signed': num_indemnity_signed,
+                'is_daily_checkin': is_daily_checkin,
+                'num_checked_in': num_checked_in,
+                'checkin_by_day': checkin_by_day,
+                'discussion_threads': discussion_threads,
+                'discussion_replies': discussion_replies,
+                'discussion_participants': discussion_participants,
+                'announcements_sent': announcements_sent,
+                'announcements_delivered': announcements_delivered,
+                'announcements_opened': announcements_opened,
             }, 200
 
         except SQLAlchemyError as e:

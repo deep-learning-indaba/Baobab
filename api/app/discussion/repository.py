@@ -298,3 +298,30 @@ class DiscussionRepository:
     def set_report_status(report, status):
         report.status = status      # 'dismissed' | 'actioned'
         db.session.commit()
+
+    # ---------- Event-level stats ----------
+
+    @staticmethod
+    def count_threads_for_event(event_id):
+        return (db.session.query(func.count(DiscussionThread.id))
+                .filter(DiscussionThread.event_id == event_id)
+                .scalar())
+
+    @staticmethod
+    def count_replies_for_event(event_id):
+        return (db.session.query(func.count(DiscussionMessage.id))
+                .filter(
+                    DiscussionMessage.event_id == event_id,
+                    DiscussionMessage.parent_message_id.isnot(None),
+                    DiscussionMessage.is_deleted.is_(False),
+                )
+                .scalar())
+
+    @staticmethod
+    def count_active_participants_for_event(event_id):
+        return (db.session.query(func.count(func.distinct(DiscussionMessage.user_id)))
+                .filter(
+                    DiscussionMessage.event_id == event_id,
+                    DiscussionMessage.is_deleted.is_(False),
+                )
+                .scalar())
