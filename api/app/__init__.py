@@ -75,6 +75,12 @@ def appengine_lifecycle():
 def populate_organisation():
     if request.path.startswith('/_ah/'):
         return
+    if request.path == '/api/v1/file' and request.method == 'GET':
+        # File downloads are opened as direct top-level navigations (e.g. clicking
+        # a link opened in a new tab), not XHR/fetch calls from the webapp, so there's
+        # no reliable Origin header, and the link is rel="noreferrer" so there's no
+        # Referer either. The handler doesn't use g.organisation, so skip resolution.
+        return
     if is_from_stripe():
         signed_payload, expected_signature = get_signed_payload_and_signature()
         g.organisation = OrganisationResolver.resolve_from_stripe_signature(
