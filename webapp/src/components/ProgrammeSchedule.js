@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { formatTimeInEventTz } from '../utils/datetime';
+import MarkdownRenderer from './MarkdownRenderer';
 
 // ── Time helpers ──────────────────────────────────────────────────────────────
 
@@ -130,9 +131,11 @@ function SessionDetailModal(props) {
           linkSpeakers: props.linkSpeakers,
           expanded: true
         }),
-        session.description && React.createElement('p', {
-          className: 'text-sm text-foreground/80 whitespace-pre-line leading-relaxed'
-        }, session.description),
+        session.description && React.createElement('div', {
+          className: 'prose prose-sm max-w-none text-sm text-foreground/80 leading-relaxed'
+        },
+          React.createElement(MarkdownRenderer, { source: session.description })
+        ),
         (session.tracks || []).length > 0 && React.createElement('div', { className: 'flex flex-wrap gap-1.5' },
           (session.tracks || []).map(function(track) {
             return React.createElement('span', {

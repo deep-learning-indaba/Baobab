@@ -1050,3 +1050,88 @@ div.card-container  { margin: 0 auto; }
   justify-content: flex-end;
   gap: 0.75rem;
 }
+
+/* ── 21. Rendered Markdown (MarkdownRenderer) ─────────────────
+   Tailwind's preflight strips default browser styling from lists,
+   blockquotes, headings, etc., and the typography plugin isn't
+   installed, so ReactMarkdown output needs explicit rules here. */
+.markdown-container h1,
+.markdown-container h2,
+.markdown-container h3,
+.markdown-container h4,
+.markdown-container h5,
+.markdown-container h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 1em 0 0.5em;
+}
+.markdown-container h1 { font-size: 1.5em; }
+.markdown-container h2 { font-size: 1.3em; }
+.markdown-container h3 { font-size: 1.15em; }
+.markdown-container h4,
+.markdown-container h5,
+.markdown-container h6 { font-size: 1em; }
+
+.markdown-container > *:first-child { margin-top: 0; }
+.markdown-container > *:last-child { margin-bottom: 0; }
+
+.markdown-container p {
+  margin: 0.5em 0;
+}
+
+.markdown-container ul,
+.markdown-container ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+.markdown-container ul { list-style: disc; }
+.markdown-container ol { list-style: decimal; }
+.markdown-container li { margin: 0.25em 0; }
+.markdown-container li > ul,
+.markdown-container li > ol { margin: 0.25em 0; }
+
+.markdown-container blockquote {
+  margin: 0.5em 0;
+  padding-left: 1em;
+  border-left: 3px solid var(--clr-outline-variant);
+  color: var(--clr-on-surface-muted);
+}
+
+.markdown-container code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  background: var(--clr-surface-mid);
+  padding: 0.125em 0.35em;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.markdown-container pre {
+  margin: 0.5em 0;
+  padding: 0.75em 1em;
+  background: var(--clr-surface-mid);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+.markdown-container pre code {
+  background: none;
+  padding: 0;
+}
+
+.markdown-container hr {
+  margin: 1em 0;
+  border: none;
+  border-top: 1px solid var(--clr-outline-variant);
+}
+
+.markdown-container table {
+  border-collapse: collapse;
+  margin: 0.5em 0;
+  width: 100%;
+}
+.markdown-container th,
+.markdown-container td {
+  border: 1px solid var(--clr-outline-variant);
+  padding: 0.4em 0.6em;
+  text-align: left;
+}

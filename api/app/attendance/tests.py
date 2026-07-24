@@ -325,6 +325,7 @@ class AttendanceApiTest(ApiTestCase):
 
     def setup_delete_attendance(self):
         attendance = Attendance(1, 1, 2)
+        attendance.confirm()
         attendance_repository.add(attendance)
         attendance_repository.save()
 
@@ -339,7 +340,30 @@ class AttendanceApiTest(ApiTestCase):
 
         attendance = attendance_repository.get(1, 1)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(attendance, None)
+        self.assertIsNotNone(attendance)
+        self.assertFalse(attendance.confirmed)
+
+    def test_delete_attendance_preserves_badge_and_indemnity(self):
+        # Undo is meant to reverse a check-in, not erase the physical facts
+        # that a badge was already printed and a form already signed.
+        self.seed_static_data()
+        attendance = Attendance(1, 1, 2)
+        attendance.confirm()
+        attendance.sign_indemnity()
+        attendance.mark_badge_exported()
+        attendance_repository.add(attendance)
+        attendance_repository.save()
+
+        header = self.get_auth_header_for('ra@ra.com')
+        params = {'user_id': 1, 'event_id': 1}
+        response = self.app.delete(
+            '/api/v1/attendance', headers=header, data=params)
+
+        attendance = attendance_repository.get(1, 1)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(attendance.confirmed)
+        self.assertTrue(attendance.indemnity_signed)
+        self.assertTrue(attendance.badge_exported)
 
 
 class MyTicketAPITest(ApiTestCase):
@@ -763,7 +787,9 @@ class CheckinAPITest(ApiTestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertFalse(checkin_repository.is_checked_in(self.event_id, self.guest_id))
-        self.assertIsNone(attendance_repository.get(self.event_id, self.guest_id))
+        attendance = attendance_repository.get(self.event_id, self.guest_id)
+        self.assertIsNotNone(attendance)
+        self.assertFalse(attendance.confirmed)
 
 
 class BadgeExportAPITest(ApiTestCase):

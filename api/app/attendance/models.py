@@ -37,6 +37,9 @@ class Attendance(db.Model):
     def confirm(self):
         self.confirmed = True
 
+    def unconfirm(self):
+        self.confirmed = False
+
     def mark_badge_exported(self):
         self.badge_exported = True
         self.badge_exported_at = datetime.now()
