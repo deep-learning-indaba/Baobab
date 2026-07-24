@@ -222,10 +222,15 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
         if attendance is None:
             return ATTENDANCE_NOT_FOUND
 
-        # Undo the check-in: remove the canonical Checkin record(s) and the
-        # Attendance record so both stores stay consistent.
+        # Undo the check-in: remove the canonical Checkin record(s) and mark
+        # the attendance as unconfirmed. We deliberately keep the Attendance
+        # row itself rather than deleting it — badge_exported and
+        # indemnity_signed record physical facts (a badge was printed, a
+        # form was signed) that don't stop being true just because someone
+        # undoes a check-in.
         checkin_repository.delete_for_event_user(event_id, user_id)
-        attendance_repository.delete(attendance)
+        attendance.unconfirm()
+        attendance_repository.save()
 
         return 200
 
