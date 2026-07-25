@@ -4,6 +4,12 @@ import { programmeService } from '../../services/eventApp/programme.service';
 import { eventLocalDateKey, formatTimezoneLabel } from '../../utils/datetime';
 import ProgrammeSchedule from '../../components/ProgrammeSchedule';
 
+function formatDayLabel(dateStr) {
+  if (!dateStr) return '';
+  var d = new Date(dateStr + 'T12:00:00Z');
+  return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
 function DayButton(props) {
   return React.createElement('button', {
     onClick: props.onClick,
@@ -11,7 +17,10 @@ function DayButton(props) {
       (props.active
         ? 'bg-primary text-white'
         : 'bg-muted text-muted-foreground hover:bg-muted/80')
-  }, props.label);
+  },
+    React.createElement('span', { className: 'block' }, props.label),
+    React.createElement('span', { className: 'block text-xs opacity-75' }, props.dateLabel)
+  );
 }
 
 function FilterChip(props) {
@@ -39,6 +48,25 @@ class EventAppProgramme extends Component {
       searchQuery: '',
     };
     this.handleSearch = this.handleSearch.bind(this);
+    this.rootRef = React.createRef();
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.selectedDay !== this.state.selectedDay) {
+      // The scrollable ancestor is the page's overflow-y-auto content pane, not
+      // the window — walk up from this component's own root to find it.
+      var el = this.rootRef.current;
+      while (el && el !== document.body) {
+        el = el.parentElement;
+        if (!el) break;
+        var overflowY = window.getComputedStyle(el).overflowY;
+        if (overflowY === 'auto' || overflowY === 'scroll') {
+          el.scrollTop = 0;
+          return;
+        }
+      }
+      window.scrollTo({ top: 0 });
+    }
   }
 
   componentDidMount() {
@@ -134,7 +162,7 @@ class EventAppProgramme extends Component {
       );
     }
 
-    return React.createElement('div', { className: 'w-full' },
+    return React.createElement('div', { className: 'w-full', ref: this.rootRef },
 
       // Header + Search — opaque so the scrolling schedule never shows through
       React.createElement('div', { className: 'sticky top-0 z-20 bg-background pt-3 pb-2 border-b border-border/60 shadow-sm' },
@@ -170,10 +198,10 @@ class EventAppProgramme extends Component {
           className: 'flex gap-2 overflow-x-auto pb-1 hide-scrollbar'
         },
           state.days.map(function(day, i) {
-            var label = t('Day') + ' ' + (i + 1) + ' – ' + day;
             return React.createElement(DayButton, {
               key: day,
-              label: label,
+              label: t('Day') + ' ' + (i + 1),
+              dateLabel: formatDayLabel(day),
               active: state.selectedDay === day,
               onClick: function() { self.setState({ selectedDay: day }); }
             });

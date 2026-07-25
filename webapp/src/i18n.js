@@ -61,7 +61,8 @@ function i18nInit(organisation) {
     interpolation: {
       escapeValue: false, // not needed for react as it escapes by default
     },
-    keySeparator: false
+    keySeparator: false,
+    nsSeparator: false
   });
 
   return i18n;
