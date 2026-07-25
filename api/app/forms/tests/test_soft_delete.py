@@ -10,6 +10,8 @@ class TestFormSoftDelete(ApiTestCase):
         self.user = self.add_user('admin@example.com', 'Admin', 'User', password='password123')
         self.auth_headers = self.get_auth_header_for('admin@example.com', 'password123')
         self.event = self.add_event()
+        # Structure edits require event admin rights.
+        self.add_event_role('admin', self.user.id, self.event.id)
     
     def setUp(self):
         super(TestFormSoftDelete, self).setUp()

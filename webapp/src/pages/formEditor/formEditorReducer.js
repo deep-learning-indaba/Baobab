@@ -1,11 +1,14 @@
-import { 
-  createEmptySection, 
+import {
+  createEmptySection,
   createEmptyQuestion,
   createEmptyOption,
   duplicateSection,
   duplicateQuestion,
   moveItem,
-  generateClientId
+  generateClientId,
+  hasChoiceOptions,
+  settingsForType,
+  pruneDependencies
 } from './utils/stateUtils';
 import { FORM_ACTIONS } from './actionTypes';
 
@@ -16,7 +19,9 @@ export function formEditorReducer(state, action) {
         ...state,
         form: {
           ...state.form,
-          [action.key]: action.value
+          [action.key]: action.lang
+            ? { ...state.form[action.key], [action.lang]: action.value }
+            : action.value
         },
         ui: { ...state.ui, isDirty: true }
       };
@@ -61,20 +66,24 @@ export function formEditorReducer(state, action) {
     case FORM_ACTIONS.ADD_SECTION: {
       const newSection = createEmptySection(
         state.event.languages,
-        state.sections.length + 1,
-        'Untitled Section'
+        state.sections.length + 1
       );
       return {
         ...state,
         sections: [...state.sections, newSection],
-        ui: { ...state.ui, isDirty: true, expandedSections: new Set([...state.ui.expandedSections, newSection.id]) }
+        ui: { ...state.ui, isDirty: true }
       };
     }
 
     case FORM_ACTIONS.DELETE_SECTION: {
-      const sections = state.sections
-        .filter(s => s.id !== action.sectionId)
-        .map((s, index) => ({ ...s, order: index + 1 }));
+      const removed = state.sections.find(s => s.id === action.sectionId);
+      const removedQuestionIds = new Set((removed ? removed.questions : []).map(q => q.id));
+      const sections = pruneDependencies(
+        state.sections
+          .filter(s => s.id !== action.sectionId)
+          .map((s, index) => ({ ...s, order: index + 1 })),
+        removedQuestionIds
+      );
       return {
         ...state,
         sections,
@@ -112,17 +121,6 @@ export function formEditorReducer(state, action) {
       };
     }
 
-    case FORM_ACTIONS.REORDER_SECTIONS: {
-      const sections = action.sectionIds
-        .map(id => state.sections.find(s => s.id === id))
-        .filter(Boolean)
-        .map((s, index) => ({ ...s, order: index + 1 }));
-      return {
-        ...state,
-        sections,
-        ui: { ...state.ui, isDirty: true }
-      };
-    }
 
     case FORM_ACTIONS.UPDATE_SECTION_FIELD: {
       const sections = state.sections.map(s => {
@@ -197,15 +195,19 @@ export function formEditorReducer(state, action) {
     }
 
     case FORM_ACTIONS.DELETE_QUESTION: {
-      const sections = state.sections.map(s => {
-        if (s.id !== action.sectionId) return s;
-        
-        const questions = s.questions
-          .filter(q => q.id !== action.questionId)
-          .map((q, index) => ({ ...q, order: index + 1 }));
-        
-        return { ...s, questions };
-      });
+      const sections = pruneDependencies(
+        state.sections.map(s => {
+          if (s.id !== action.sectionId) return s;
+
+          const questions = s.questions
+            .filter(q => q.id !== action.questionId)
+            .map((q, index) => ({ ...q, order: index + 1 }));
+
+          return { ...s, questions };
+        }),
+        // Drop any dependency that referenced the question we just removed.
+        new Set([action.questionId])
+      );
 
       return {
         ...state,
@@ -256,24 +258,6 @@ export function formEditorReducer(state, action) {
       };
     }
 
-    case FORM_ACTIONS.REORDER_QUESTIONS: {
-      const sections = state.sections.map(s => {
-        if (s.id !== action.sectionId) return s;
-        
-        const questions = action.questionIds
-          .map(id => s.questions.find(q => q.id === id))
-          .filter(Boolean)
-          .map((q, index) => ({ ...q, order: index + 1 }));
-        
-        return { ...s, questions };
-      });
-
-      return {
-        ...state,
-        sections,
-        ui: { ...state.ui, isDirty: true }
-      };
-    }
 
     case FORM_ACTIONS.UPDATE_QUESTION_FIELD: {
       const sections = state.sections.map(s => {
@@ -311,22 +295,21 @@ export function formEditorReducer(state, action) {
         
         const questions = s.questions.map(q => {
           if (q.id !== action.questionId) return q;
-          
-          // Initialize settings based on question type
-          let settings = q.settings || {};
-          if (action.questionType === 'country') {
-            // Country type uses settings.countryOptions
-            settings = {
-              ...settings,
-              countryOptions: { regions: [], countries: [], excludeCountries: [] }
-            };
-          }
-          
+
+          // Options survive a move between choice types (combobox <-> radio <->
+          // checkboxes): they mean the same thing and rebuilding a long option
+          // list by hand after a type change is pure busywork. Moving to a
+          // non-choice type drops them, since they no longer apply.
+          const keepOptions =
+            hasChoiceOptions(action.questionType) && hasChoiceOptions(q.type);
+
           return {
             ...q,
             type: action.questionType,
-            options: [],
-            settings
+            options: keepOptions ? q.options : [],
+            // Carry over only the settings that still mean something for the
+            // new type, rather than leaving the old type's keys behind.
+            settings: settingsForType(action.questionType, q.settings || {})
           };
         });
         
@@ -490,43 +473,7 @@ export function formEditorReducer(state, action) {
       };
     }
 
-    case FORM_ACTIONS.REORDER_OPTIONS: {
-      const sections = state.sections.map(s => {
-        if (s.id !== action.sectionId) return s;
-        
-        const questions = s.questions.map(q => {
-          if (q.id !== action.questionId) return q;
-          
-          const options = action.optionIds
-            .map(id => q.options.find(opt => opt.id === id))
-            .filter(Boolean);
-          
-          return { ...q, options };
-        });
-        
-        return { ...s, questions };
-      });
 
-      return {
-        ...state,
-        sections,
-        ui: { ...state.ui, isDirty: true }
-      };
-    }
-
-    case FORM_ACTIONS.TOGGLE_SECTION_EXPANDED: {
-      const expandedSections = new Set(state.ui.expandedSections);
-      if (expandedSections.has(action.sectionId)) {
-        expandedSections.delete(action.sectionId);
-      } else {
-        expandedSections.add(action.sectionId);
-      }
-      
-      return {
-        ...state,
-        ui: { ...state.ui, expandedSections }
-      };
-    }
 
     case FORM_ACTIONS.SET_VALIDATION_ERRORS:
       return {

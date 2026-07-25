@@ -14,9 +14,13 @@ export function authHeader() {
 }
 
 export function extractErrorMessage(error) {
-  // Extract error message from error objects sent by the back-end
+  // Extract error message from error objects sent by the back-end.
+  // Most endpoints use the `message` key (see api/app/utils/errors.py), but
+  // some (forms/translation APIs) use `error` instead - fall back to that
+  // rather than silently returning undefined, which callers otherwise treat
+  // as "no error" and crash trying to use a response body that isn't there.
   return error.response && error.response.data
-    ? error.response.data.message
+    ? (error.response.data.message || error.response.data.error)
     : error.message;
 }
 

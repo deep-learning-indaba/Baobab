@@ -26,6 +26,29 @@ const LOGICAL_OPERATORS = [
   { value: 'NOT', label: 'NOT (negate condition)' }
 ];
 
+// Operators that compare against a single value. Offering a multi-select for
+// these would let an admin select several options for EQUALS when only the
+// first is ever compared.
+const SINGLE_VALUE_OPERATORS = [
+  'EQUALS', 'NOT_EQUALS', 'GREATER_THAN', 'LESS_THAN',
+  'GREATER_THAN_OR_EQUAL', 'LESS_THAN_OR_EQUAL',
+  'CONTAINS', 'STARTS_WITH', 'ENDS_WITH', 'REGEX'
+];
+
+// Types whose answer is a separator-joined list of selected values, so an
+// equality or membership test against a single option can never match.
+const MULTI_VALUE_TYPES = ['checkboxes'];
+
+/** Flatten a (possibly nested) expression down to its leaf conditions. */
+function collectLeafConditions(expression) {
+  if (!expression) return [];
+  if (expression.question_id !== undefined) return [expression];
+  if (Array.isArray(expression.conditions)) {
+    return expression.conditions.flatMap(collectLeafConditions);
+  }
+  return [];
+}
+
 const inputCls = "w-full px-3 py-2 border border-border rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-ring";
 const selectCls = "w-full px-3 py-2 border border-border rounded-md text-sm bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring";
 const selectSmCls = "px-2 py-1.5 border border-border rounded-md text-xs bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring min-w-[150px]";
@@ -108,45 +131,117 @@ const DependencyEditor = ({
   const hasOptions = (questionType) => ['combobox', 'checkboxes', 'radio', 'single-choice'].includes(questionType);
   const isCountryQuestion = (questionType) => questionType === 'country';
 
-  const renderValueInput = (questionId, currentValues, onChangeVal, placeholder, isBetween = false) => {
+  // Options come back from the API as { en: [...], fr: [...] } for a linked
+  // form, and as the editor's unified [{ value, labels }] for this form.
+  const optionListFor = (question) => {
+    const opts = question && question.options;
+    if (!opts) return [];
+    if (Array.isArray(opts)) {
+      return opts.map(o => ({
+        value: o.value,
+        label: o.labels ? (o.labels[Object.keys(o.labels)[0]] || o.value) : (o.label || o.value)
+      }));
+    }
+    const byLang = opts.en || Object.values(opts)[0] || [];
+    return Array.isArray(byLang)
+      ? byLang.map(o => ({ value: o.value, label: o.label || o.value }))
+      : [];
+  };
+
+  const renderValueInput = (questionId, currentValues, onChangeVal, placeholder, operator, isBetween = false) => {
     const selectedQuestion = getSelectedQuestion(questionId);
+    const allowsMultiple = !SINGLE_VALUE_OPERATORS.includes(operator) && !isBetween;
+
     if (!selectedQuestion || !selectedQuestion.type) {
       return <input type="text" value={currentValues} onChange={(e) => onChangeVal(e.target.value)} placeholder={placeholder} className={inputCls} />;
     }
+
+    const renderChoice = (choices, hint) => {
+      const selected = currentValues.split(',').map(v => v.trim()).filter(v => v);
+      if (allowsMultiple) {
+        return (
+          <div className="w-full">
+            <select
+              multiple
+              value={selected}
+              onChange={(e) => onChangeVal(Array.from(e.target.selectedOptions, o => o.value).join(', '))}
+              className={inputCls}
+              size={Math.min(5, choices.length)}
+            >
+              {choices.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+            </select>
+            <span className="text-xs text-muted-foreground italic mt-1 block">{hint}</span>
+          </div>
+        );
+      }
+      // Single-value operator: a single select, so the extra selections that
+      // would have been silently ignored can't be made in the first place.
+      return (
+        <select
+          value={selected[0] || ''}
+          onChange={(e) => onChangeVal(e.target.value)}
+          className={selectCls}
+        >
+          <option value="">{t('Select a value...')}</option>
+          {choices.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+        </select>
+      );
+    };
+
     if (isCountryQuestion(selectedQuestion.type)) {
-      const selectedCodes = currentValues.split(',').map(v => v.trim()).filter(v => v);
-      return (
-        <div className="w-full">
-          <select multiple value={selectedCodes} onChange={(e) => { const selected = Array.from(e.target.selectedOptions, o => o.value); onChangeVal(selected.join(', ')); }} className={inputCls} size={Math.min(5, ALL_COUNTRIES.length)}>
-            {ALL_COUNTRIES.map(country => <option key={country.code} value={country.code}>{country.name} ({country.code})</option>)}
-          </select>
-          <span className="text-xs text-muted-foreground italic mt-1 block">{t('Hold Ctrl/Cmd to select multiple countries')}</span>
-        </div>
+      return renderChoice(
+        ALL_COUNTRIES.map(c => ({ value: c.code, label: `${c.name} (${c.code})` })),
+        t('Hold Ctrl/Cmd to select multiple countries')
       );
     }
-    if (hasOptions(selectedQuestion.type) && selectedQuestion.options && selectedQuestion.options.length > 0) {
-      const selectedValues = currentValues.split(',').map(v => v.trim()).filter(v => v);
-      return (
-        <div className="w-full">
-          <select multiple value={selectedValues} onChange={(e) => { const selected = Array.from(e.target.selectedOptions, o => o.value); onChangeVal(selected.join(', ')); }} className={inputCls} size={Math.min(5, selectedQuestion.options.length)}>
-            {selectedQuestion.options.map(option => { const firstLang = Object.keys(option.labels)[0]; const label = option.labels[firstLang] || option.value; return <option key={option.id} value={option.value}>{label}</option>; })}
-          </select>
-          <span className="text-xs text-muted-foreground italic mt-1 block">{t('Hold Ctrl/Cmd to select multiple values')}</span>
-        </div>
-      );
+
+    const choices = hasOptions(selectedQuestion.type) ? optionListFor(selectedQuestion) : [];
+    if (choices.length > 0) {
+      return renderChoice(choices, t('Hold Ctrl/Cmd to select multiple values'));
     }
+
     return <input type="text" value={currentValues} onChange={(e) => onChangeVal(e.target.value)} placeholder={placeholder} className={inputCls} />;
   };
 
+  // Checkbox answers are stored as a joined list, so EQUALS/IN against one
+  // option never matches. Say so rather than letting the admin build a rule
+  // that silently never fires.
+  const multiValueWarning = (questionId, operator) => {
+    const q = getSelectedQuestion(questionId);
+    if (!q || !MULTI_VALUE_TYPES.includes(q.type)) return null;
+    if (!['EQUALS', 'NOT_EQUALS', 'IN', 'NOT_IN'].includes(operator)) return null;
+    return t('This question allows several answers at once. Use "Contains" to test for one of them.');
+  };
+
+  // Simple -> Advanced wraps the existing condition in an AND group rather than
+  // discarding it. Advanced -> Simple keeps the first leaf condition, confirming
+  // first if that would drop others - switching modes must not silently throw
+  // away whatever the admin has already built.
   const handleModeChange = (newMode) => {
-    setMode(newMode);
-    if (newMode === 'simple') {
-      const newExpression = { question_id: '', operator: 'EQUALS', values: [''] };
-      setExpression(newExpression); setRawValueInput(''); onChange(newExpression);
-    } else {
-      const newExpression = { operator: 'AND', conditions: [] };
-      setExpression(newExpression); onChange(newExpression);
+    if (newMode === mode) return;
+
+    if (newMode === 'advanced') {
+      const isLeaf = expression && expression.question_id !== undefined && expression.question_id !== '';
+      const newExpression = isLeaf
+        ? { operator: 'AND', conditions: [expression] }
+        : { operator: 'AND', conditions: [] };
+      setMode('advanced');
+      setExpression(newExpression);
+      onChange(newExpression);
+      return;
     }
+
+    const leaves = collectLeafConditions(expression);
+    if (leaves.length > 1 && !window.confirm(
+      t('Simple mode keeps only the first condition. Discard the others?')
+    )) {
+      return;
+    }
+    const kept = leaves[0] || { question_id: '', operator: 'EQUALS', values: [''] };
+    setMode('simple');
+    setExpression(kept);
+    setRawValueInput((kept.values || []).join(', '));
+    onChange(kept);
   };
 
   const handleSimpleChange = (field, value) => { const newExpression = { ...expression, [field]: value }; setExpression(newExpression); onChange(newExpression); };
@@ -234,7 +329,13 @@ const DependencyEditor = ({
             <label className="text-sm font-semibold text-foreground">
               {isBetween ? t('Values (min, max)') : t('Value(s)')}
             </label>
-            {renderValueInput(expression.question_id, rawValueInput, handleValuesChange, isBetween ? t('e.g., 18, 65') : t('e.g., yes, maybe (comma-separated)'), isBetween)}
+            {renderValueInput(expression.question_id, rawValueInput, handleValuesChange, isBetween ? t('e.g., 18, 65') : t('e.g., yes, maybe (comma-separated)'), expression.operator, isBetween)}
+            {multiValueWarning(expression.question_id, expression.operator) && (
+              <p className="text-warning text-xs flex items-center gap-1.5">
+                <i className="fas fa-exclamation-triangle"></i>
+                {multiValueWarning(expression.question_id, expression.operator)}
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -263,7 +364,13 @@ const DependencyEditor = ({
           </select>
           {needsValues && (
             <div className="flex-1 min-w-0">
-              {renderValueInput(condition.question_id, (condition.values || ['']).join(', '), (value) => updateConditionValues(path, value), isBetween ? t('min, max') : t('value(s)'), isBetween)}
+              {renderValueInput(condition.question_id, (condition.values || ['']).join(', '), (value) => updateConditionValues(path, value), isBetween ? t('min, max') : t('value(s)'), condition.operator, isBetween)}
+              {multiValueWarning(condition.question_id, condition.operator) && (
+                <p className="text-warning text-xs mt-1 flex items-center gap-1.5">
+                  <i className="fas fa-exclamation-triangle"></i>
+                  {multiValueWarning(condition.question_id, condition.operator)}
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -303,7 +410,17 @@ const DependencyEditor = ({
     </div>
   );
 
-  const handleClear = () => { setExpression(null); onChange(null); };
+  // Reset to an empty condition rather than null, so the panel offers a way to
+  // add a condition back without toggling modes. The dependency is only
+  // actually saved once a question is chosen (an empty question_id serialises
+  // to no dependency).
+  const handleClear = () => {
+    const fresh = { question_id: '', operator: 'EQUALS', values: [''] };
+    setMode('simple');
+    setExpression(fresh);
+    setRawValueInput('');
+    onChange(null);
+  };
 
   return (
     <div className="bg-surface border border-border rounded-lg p-5 mt-4">

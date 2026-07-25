@@ -22,33 +22,35 @@ class FormCheckbox extends React.Component {
           id={this.props.id + "-group"}
           errorText={this.props.errorText}
         >
-          <div className="rowC">
-          <MarkdownRenderer source={this.props.label}/>
+          {/* Checkbox beside its label, not a full-width `form-control` under a
+              separate label block - that styles a checkbox like a text input, so
+              it stretched and ended up floating in the middle of the row. */}
+          <div className="flex items-start gap-2 text-left">
+            <input
+              id={this.props.id}
+              className={`mt-0.5 w-4 h-4 shrink-0 cursor-pointer accent-primary${
+                this.shouldDisplayError() ? " outline outline-1 outline-error" : ""
+              }`}
+              type="checkbox"
+              placeholder={this.props.placeholder}
+              checked={this.props.value}
+              onChange={this.props.onChange}
+              disabled={this.props.disabled}
+              min={this.props.min || null}
+              ref={input => {
+                this.nameInput = input;
+              }}
+              tabIndex={this.props.tabIndex}
+              autoFocus={this.props.autoFocus}
+              required={this.props.required || null}
+            />
+            <label htmlFor={this.props.id} className="cursor-pointer m-0 leading-snug">
+              <MarkdownRenderer source={this.props.label} />
+            </label>
             {this.props.description ? (
               <FormToolTip description={this.props.description} />
-            ) : (
-              <div />
-            )}
+            ) : null}
           </div>
-          <input
-            id={this.props.id}
-            className={
-              this.shouldDisplayError()
-                ? "form-control is-invalid"
-                : "form-control"
-            }
-            type="checkbox"
-            placeholder={this.props.placeholder}
-            checked={this.props.value}
-            onChange={this.props.onChange}
-            min={this.props.min || null}
-            ref={input => {
-              this.nameInput = input;
-            }}
-            tabIndex={this.props.tabIndex}
-            autoFocus={this.props.autoFocus}
-            required={this.props.required || null}
-          />
         </FormGroup>
       </div>
     );

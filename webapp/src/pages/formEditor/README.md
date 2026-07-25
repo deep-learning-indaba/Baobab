@@ -10,7 +10,7 @@ A unified form editing UI component that supports all features available in the 
 - **Type-specific editors** - Specialized settings editors for files, numeric, text, references
 - **Full validation** - Client-side validation with detailed error messages
 - **Question types** - Support for all question types including renamed types (combobox, checkboxes)
-- **State management** - Robust reducer-based state management with undo capability
+- **State management** - Reducer-based state management
 
 ## Usage
 
@@ -139,19 +139,30 @@ Slide-out panel for form-level settings.
 The editor uses a reducer pattern with the following actions:
 
 - Form-level: `SET_FORM_SETTING`, `LOAD_FORM`, `SAVE_FORM_START/SUCCESS/ERROR`
-- Sections: `ADD_SECTION`, `DELETE_SECTION`, `DUPLICATE_SECTION`, `MOVE_SECTION`, `UPDATE_SECTION_FIELD`
-- Questions: `ADD_QUESTION`, `DELETE_QUESTION`, `DUPLICATE_QUESTION`, `MOVE_QUESTION`, `UPDATE_QUESTION_FIELD`
+- Sections: `ADD_SECTION`, `DELETE_SECTION`, `DUPLICATE_SECTION`, `MOVE_SECTION`, `UPDATE_SECTION_FIELD`, `SET_SECTION_DEPENDENCY`, `SET_SECTION_TAG_EXPRESSION`
+- Questions: `ADD_QUESTION`, `DELETE_QUESTION`, `DUPLICATE_QUESTION`, `MOVE_QUESTION`, `UPDATE_QUESTION_FIELD`, `SET_QUESTION_TYPE`, `SET_QUESTION_SETTINGS`, `SET_QUESTION_DEPENDENCY`, `SET_QUESTION_TAG_EXPRESSION`
 - Options: `ADD_OPTION`, `DELETE_OPTION`, `UPDATE_OPTION`
+- UI: `SET_VALIDATION_ERRORS`
+
+Deleting a question or section also strips any dependency expression that
+referenced it (`pruneDependencies` in `utils/stateUtils.js`) - a dangling
+reference would otherwise be saved and permanently hide the dependent question.
 
 ## Validation
 
 The editor validates:
-- Section names in all languages (required)
+- Form and section names in all languages (required)
 - Question headlines in all languages (required)
 - Question types (required)
 - Option values (required, unique)
 - Option labels in all languages (required)
-- Settings constraints (min ≤ max, valid file extensions)
+- Settings constraints (min ≤ max, valid file extensions) for settings that
+  apply to the question's current type
+- That any `validation_regex` compiles
+- That a `linked-form-question` has a question selected
+
+Errors are listed individually in the banner at the top of the editor, and
+required fields are highlighted once a save has been attempted.
 
 ## Question Types
 
@@ -166,15 +177,22 @@ The editor validates:
 - `single-choice` - Radio buttons
 - `combobox` - Dropdown select
 - `checkboxes` - Multiple checkboxes
-- `radio` - Radio buttons (for review scores)
+- `radio` - Radio buttons (for review scores, review forms only)
 - `single-checkbox` - Single checkbox
 - `file` - File upload
 - `multi-file` - Multiple file upload
 - `date` - Date picker
 - `numeric` - Number input
+- `country` - Country selector
 - `sub-heading` - Decorative heading
-- `reference` - Reference request
-- `information` - Information display (review only)
+- `linked-form-question` - Displays an answer from the linked form
+- `information` - Information display (review forms only)
+
+### Not offered
+- `reference` - the reference-request flow is still tied to the legacy response
+  model and has no implementation in `formRenderer`, so it is not offered for new
+  questions. Existing questions of this type keep it selectable so that editing
+  such a form doesn't silently change it.
 
 ## Settings vs Options
 
@@ -209,12 +227,12 @@ The editor validates:
 
 ## Styling
 
-The editor uses custom CSS with the following color scheme:
-- Primary: `#3b82f6` (blue)
-- Success: `#28a745` (green)
-- Danger: `#dc3545` (red)
-- Warning: `#f59e0b` (amber)
-- Background: `#f5f5f5` (light gray)
+Tailwind utilities against the design tokens in `webapp/src/App.css`
+(`--clr-primary`, `--clr-action`, `--clr-error`, ...). Don't hard-code colours.
+
+Note the root element carries `text-left`: an unscoped `.container-fluid`
+rule elsewhere in the app sets `text-align: -webkit-center`, and without the
+override every label in here renders centred over its left-aligned input.
 
 All components are responsive and work on mobile devices.
 
