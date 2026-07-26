@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { withTranslation } from "react-i18next";
 import { formResponseService } from "../../../services/formResponse";
+import { formServices } from "../../../services/form/form.service";
 
 class FormResponseListComponent extends Component {
   constructor(props) {
@@ -8,6 +9,7 @@ class FormResponseListComponent extends Component {
 
     this.state = {
       responses: [],
+      formName: '',
       loading: true,
       error: null,
       pagination: {
@@ -53,7 +55,10 @@ class FormResponseListComponent extends Component {
       ...this.state.filters
     };
 
-    const result = await formResponseService.getResponseListAdmin(eventId, formId, filters);
+    const [result] = await Promise.all([
+      formResponseService.getResponseListAdmin(eventId, formId, filters),
+      this.loadFormName(formId)
+    ]);
 
     if (result.error) {
       this.setState({ loading: false, error: result.error });
@@ -62,6 +67,17 @@ class FormResponseListComponent extends Component {
         responses: result.data.responses || [],
         pagination: result.data.pagination || this.state.pagination,
         loading: false
+      });
+    }
+  };
+
+  loadFormName = async (formId) => {
+    if (this.state.formName || !formId) return;
+    const result = await formServices.getFormStructure(formId, this.props.language || 'en');
+    if (result.form && result.form.name) {
+      const name = result.form.name;
+      this.setState({
+        formName: name[this.props.language] || name.en || Object.values(name)[0] || ''
       });
     }
   };
@@ -141,7 +157,14 @@ class FormResponseListComponent extends Component {
       <div className="w-full pt-6 text-left space-y-6">
         <div className="bg-white rounded-2xl shadow-sm border border-border p-8 space-y-6">
           <div className="flex items-center justify-between flex-wrap gap-3">
-            <h1 className="font-heading text-2xl font-bold text-foreground">{t("Response List")}</h1>
+            <div>
+              <h1 className="font-heading text-2xl font-bold text-foreground">{t("Response List")}</h1>
+              {/* Name the form: an event can have several, and the heading alone
+                  gave no clue which one you were looking at. */}
+              {this.state.formName && (
+                <p className="text-sm text-muted-foreground mt-0.5">{this.state.formName}</p>
+              )}
+            </div>
             {!this.props.formId && (
               <button onClick={this.handleBack}
                       className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">

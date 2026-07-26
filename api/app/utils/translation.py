@@ -52,9 +52,10 @@ class TranslationService:
             result = client.translate(
                 text,
                 target_language=target_language,
-                source_language=source_language
+                source_language=source_language,
+                format_='text'
             )
-            
+
             return {
                 'translated_text': result['translatedText'],
                 'detected_source_language': result.get('detectedSourceLanguage', source_language)
@@ -96,7 +97,8 @@ class TranslationService:
                 result = client.translate(
                     single_text,
                     target_language=target_lang,
-                    source_language=source_language
+                    source_language=source_language,
+                    format_='text'
                 )
                 translations[target_lang] = result['translatedText']
             except Exception as e:

@@ -15,6 +15,9 @@ class TestFormAPI(ApiTestCase):
         self.user = self.add_user('test@example.com', 'Test', 'User', password='password123')
         self.auth_headers = self.get_auth_header_for('test@example.com', 'password123')
         self.event = self.add_event()
+        # Form definition endpoints are event-admin only; this user authors the
+        # test forms, so give them the role they would need in reality.
+        self.add_event_role('admin', self.user.id, self.event.id)
 
     def _create_test_form(self):
         """Helper to create a test form with sections and questions"""

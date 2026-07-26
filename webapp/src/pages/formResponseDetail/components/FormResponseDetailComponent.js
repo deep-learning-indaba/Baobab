@@ -3,6 +3,9 @@ import { withTranslation } from "react-i18next";
 import { formResponseService } from "../../../services/formResponse";
 import { formServices } from "../../../services/form/form.service";
 import { getDownloadURL } from "../../../utils/files";
+import { formatAnswerForDisplay } from "../../formRenderer/utils/answerDisplay";
+
+const DISPLAY_ONLY_TYPES = ['information', 'sub-heading'];
 
 class FormResponseDetailComponent extends Component {
   constructor(props) {
@@ -48,8 +51,11 @@ class FormResponseDetailComponent extends Component {
       return;
     }
 
+    // include_inactive so answers to questions later removed from the form are
+    // still shown - this view walks the form's questions, so without it those
+    // answers would be invisible.
     const [formResult, responseResult] = await Promise.all([
-      formServices.getFormStructure(formId, this.props.language || 'en'),
+      formServices.getFormStructure(formId, this.props.language || 'en', true),
       formResponseService.getResponseDetailAdmin(eventId, formId, responseId)
     ]);
 
@@ -126,28 +132,11 @@ class FormResponseDetailComponent extends Component {
       return <span className="text-muted-foreground italic">{t('No files uploaded')}</span>;
     }
 
-    if (type === 'dropdown' || type === 'multi-choice') {
-      const options = this.getQuestionOptions(question, lang);
-      const match = options.find(o => o.value === value);
-      return <span>{match ? match.label : value}</span>;
-    }
-
-    if (type === 'checkboxes') {
-      try {
-        const selected = JSON.parse(value);
-        if (Array.isArray(selected)) {
-          const options = this.getQuestionOptions(question, lang);
-          const labels = selected.map(v => {
-            const opt = options.find(o => o.value === v);
-            return opt ? opt.label : v;
-          });
-          return <span>{labels.join(', ')}</span>;
-        }
-      } catch (_) {}
-    }
-
-    if (type === 'single-checkbox') {
-      return <span>{value === 'true' || value === true ? t('Yes') : t('No')}</span>;
+    // Shared with the response renderer's review page so both show the same
+    // thing: option labels rather than stored values, Yes/No for checkboxes.
+    const formatted = formatAnswerForDisplay(question, value, lang, t);
+    if (formatted !== null && formatted !== value) {
+      return <span>{formatted}</span>;
     }
 
     return <span className="whitespace-pre-wrap">{value}</span>;
@@ -179,7 +168,10 @@ class FormResponseDetailComponent extends Component {
       const sectionName = section.name
         ? (typeof section.name === 'string' ? section.name : section.name[lang] || section.name['en'] || '')
         : '';
-      const visibleQuestions = (section.questions || []).filter(q => q.type !== 'information');
+      // Display-only questions carry no answer, so listing them would just add
+      // "No answer provided." noise to a review page.
+      const visibleQuestions = (section.questions || [])
+        .filter(q => !DISPLAY_ONLY_TYPES.includes(q.type));
       if (visibleQuestions.length === 0) return null;
 
       return (
@@ -190,9 +182,20 @@ class FormResponseDetailComponent extends Component {
           {visibleQuestions.map(q => {
             const questionText = this.getQuestionText(q, lang);
             const answer = answersByQuestionId[q.id];
+            // A question that has since been removed from the form still has to
+            // show its answer, but should say so.
+            const isRemoved = q.is_active === false;
+            if (isRemoved && !answer) return null;
             return (
               <div key={q.id} className="space-y-1">
-                <p className="text-sm font-semibold text-foreground/90">{questionText}</p>
+                <p className="text-sm font-semibold text-foreground/90">
+                  {questionText}
+                  {isRemoved && (
+                    <span className="ml-2 text-xs font-normal text-muted-foreground italic">
+                      ({t('removed from form')})
+                    </span>
+                  )}
+                </p>
                 <div className="text-sm text-foreground pl-2">
                   {this.renderAnswerValue(answer, q)}
                 </div>
@@ -246,7 +249,11 @@ class FormResponseDetailComponent extends Component {
     }
 
     const formContent = (
-      <div className="bg-white rounded-2xl shadow-sm border border-border p-8 space-y-6">
+      // text-left: an unscoped `.container-fluid` rule elsewhere in the app sets
+      // `text-align: -webkit-center` globally, which would otherwise centre
+      // every question and answer on this page - unreadable for long prose
+      // answers.
+      <div className="bg-white rounded-2xl shadow-sm border border-border p-8 space-y-6 text-left">
         <div className="flex items-center gap-3 flex-wrap">
           <button
             onClick={this.handleBack}

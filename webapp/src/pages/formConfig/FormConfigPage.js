@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { withTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { formConfigService } from "../../services/formConfig/formConfig.service";
 import FormTypeCard from "./components/FormTypeCard";
 import GenericFormsList from "./components/GenericFormsList";
@@ -23,6 +24,8 @@ class FormConfigPage extends Component {
     loadConfig = () => {
         var event = this.props.event;
         if (!event) {
+            // Don't sit on a spinner forever when the event prop is not ready.
+            this.setState({ isLoading: false, error: this.props.t('Event information not available') });
             return;
         }
         this.setState({ isLoading: true, error: null });
@@ -157,12 +160,12 @@ class FormConfigPage extends Component {
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{stage.num_reviews_required}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{stage.completed_count} / {stage.total_count}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                                                    <a
-                                                        href={"/" + eventKey + "/forms/" + stage.form_id + "/edit"}
+                                                    <Link
+                                                        to={"/" + eventKey + "/forms/" + stage.form_id + "/edit"}
                                                         className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold border border-primary text-primary hover:bg-primary/10 transition-colors"
                                                     >
                                                         {t('Edit')}
-                                                    </a>
+                                                    </Link>
                                                 </td>
                                             </tr>
                                         );

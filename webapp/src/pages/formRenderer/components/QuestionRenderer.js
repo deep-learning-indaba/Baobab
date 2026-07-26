@@ -11,6 +11,7 @@ import FormMultiFile from '../../../components/form/FormMultiFile';
 import FormCountry from '../../../components/form/FormCountry';
 import MarkdownRenderer from '../../../components/MarkdownRenderer';
 import { fileService } from '../../../services/file/file.service';
+import { countWords } from '../utils/validation';
 
 const QuestionRenderer = ({
   question,
@@ -40,6 +41,7 @@ const QuestionRenderer = ({
   const headline = getTranslatedField('headline');
   const description = getTranslatedField('description');
   const placeholder = getTranslatedField('placeholder');
+  const settings = question.settings || {};
 
   const getOptions = () => {
     const optionsData = question.options;
@@ -61,6 +63,12 @@ const QuestionRenderer = ({
   };
 
   const handleUploadFile = useCallback((file) => {
+    // Enforce the configured size limit before spending an upload on it.
+    const maxMb = (question.settings || {}).max_file_size_mb;
+    if (maxMb && file && file.size > Number(maxMb) * 1024 * 1024) {
+      setUploadError(t('This file is larger than the {{max}} MB limit', { max: maxMb }));
+      return Promise.resolve(null);
+    }
     setUploading(true);
     setUploadError('');
     return fileService.uploadFile(file, (progressEvent) => {
@@ -72,10 +80,10 @@ const QuestionRenderer = ({
       setUploading(false);
       return response.fileId;
     }).catch(err => {
-      setUploadError(err.message || 'Upload failed');
+      setUploadError(err.message || t('Upload failed'));
       setUploading(false);
     });
-  }, [question, onChange]);
+  }, [question, onChange, t]);
 
   const handleChange = useCallback((event) => {
     onChange(question, event && event.target ? event.target.value : event);
@@ -89,29 +97,26 @@ const QuestionRenderer = ({
     onChange(question, selected ? selected.value : '');
   }, [question, onChange]);
 
-  const handleCountryChange = useCallback((id, value) => {
-    onChange(question, value || '');
+  const handleCountryChange = useCallback((countryId, countryValue) => {
+    onChange(question, countryValue || '');
   }, [question, onChange]);
+
+  const infoPanel = (message) => (
+    <div className="px-4 py-3 bg-surface border border-border rounded-md flex items-center gap-2 text-muted-foreground text-sm">
+      <i className="fas fa-info-circle"></i>
+      <span>{message}</span>
+    </div>
+  );
 
   const renderLinkedQuestion = () => {
     if (!question.linked_question_id || !linkedResponse) {
-      return (
-        <div className="px-4 py-3 bg-surface border border-border rounded-md flex items-center gap-2 text-muted-foreground text-sm">
-          <i className="fas fa-info-circle"></i>
-          <span>{t('No linked response available')}</span>
-        </div>
-      );
+      return infoPanel(t('No linked response available'));
     }
 
     const linkedAnswer = linkedResponse.answers.find(ans => ans.question_id === question.linked_question_id);
 
     if (!linkedAnswer || !linkedAnswer.value) {
-      return (
-        <div className="px-4 py-3 bg-surface border border-border rounded-md flex items-center gap-2 text-muted-foreground text-sm">
-          <i className="fas fa-info-circle"></i>
-          <span>{t('No answer provided in linked form')}</span>
-        </div>
-      );
+      return infoPanel(t('No answer provided in linked form'));
     }
 
     return (
@@ -129,7 +134,6 @@ const QuestionRenderer = ({
 
   const renderControl = () => {
     const options = getOptions();
-    const settings = question.settings || {};
 
     switch (question.type) {
       case 'short-text':
@@ -141,46 +145,53 @@ const QuestionRenderer = ({
       case 'long_text':
         return (
           <FormTextArea id={id} name={id} placeholder={placeholder} onChange={handleChange}
-            value={value || ''} rows={5} showError={!!validationError} errorText={validationError} />
+            value={value || ''} rows={5} showError={!!validationError} errorText={validationError}
+            isDisabled={disabled} disabled={disabled} />
         );
       case 'markdown':
         return (
           <FormTextArea id={id} name={id} placeholder={placeholder || t('Markdown supported')} onChange={handleChange}
-            value={value || ''} rows={8} showError={!!validationError} errorText={validationError} />
+            value={value || ''} rows={8} showError={!!validationError} errorText={validationError}
+            isDisabled={disabled} disabled={disabled} />
         );
       case 'numeric':
       case 'numeric-text':
         return (
           <FormTextBox id={id} name={id} type="number" placeholder={placeholder} onChange={handleChange}
             value={value || ''} showError={!!validationError} errorText={validationError}
-            min={settings.min_value} isDisabled={disabled} />
+            min={settings.min_value} max={settings.max_value}
+            step={settings.decimal_places ? Math.pow(10, -settings.decimal_places) : undefined}
+            isDisabled={disabled} />
         );
       case 'combobox':
       case 'multi-choice':
         return (
           <FormSelect id={id} name={id} options={options} placeholder={placeholder || t('Select an option...')}
-            onChange={handleDropdownChange} defaultValue={value || null}
-            showError={!!validationError} errorText={validationError} searchable={options.length > 10} />
+            onChange={handleDropdownChange} defaultValue={value || null} value={value || null}
+            showError={!!validationError} errorText={validationError} searchable={options.length > 10}
+            disabled={disabled} isDisabled={disabled} />
         );
       case 'checkboxes':
       case 'multi-checkbox':
         return (
           <FormMultiCheckbox id={id} name={id} placeholder={placeholder} options={options}
             defaultValue={value || ''} onChange={(v) => onChange(question, v)}
-            showError={!!validationError} errorText={validationError} />
+            showError={!!validationError} errorText={validationError} disabled={disabled} />
         );
       case 'radio':
       case 'single-choice':
         return (
           <FormRadio id={id} name={id} options={options} value={value || ''}
             onChange={(e) => onChange(question, e.target.value)}
-            showError={!!validationError} errorText={validationError} />
+            showError={!!validationError} errorText={validationError} disabled={disabled} />
         );
       case 'single-checkbox':
+        // The label comes from the description, so don't also render the
+        // description block above the control (it would appear twice).
         return (
-          <FormCheckbox id={id} name={id} label={description || placeholder} placeholder={placeholder}
+          <FormCheckbox id={id} name={id} label={description || headline} placeholder={placeholder}
             onChange={handleCheckChange} value={value === 'true' || value === true}
-            showError={!!validationError} errorText={validationError} />
+            showError={!!validationError} errorText={validationError} disabled={disabled} />
         );
       case 'date':
         return (
@@ -192,19 +203,20 @@ const QuestionRenderer = ({
           <FormFileUpload id={id} name={id} value={value} showError={!!validationError || !!uploadError}
             errorText={validationError || uploadError} uploading={uploading}
             uploadPercentComplete={uploadPercentComplete} uploadFile={handleUploadFile} uploaded={uploaded}
+            disabled={disabled}
             options={settings.accepted_extensions ? { accept: settings.accepted_extensions.join(',') } : null} />
         );
       case 'multi-file':
         return (
           <FormMultiFile id={id} name={id} value={value} onChange={handleChange}
             uploadFile={handleUploadFile} errorText={validationError || uploadError}
-            placeholder={placeholder} options={settings} />
+            placeholder={placeholder} options={settings} disabled={disabled} />
         );
       case 'country':
         return (
           <FormCountry id={id} name={id} value={value || ''} placeholder={placeholder || t('Select a country...')}
             onChange={handleCountryChange} options={settings.countryOptions || {}}
-            showError={!!validationError} errorText={validationError} />
+            showError={!!validationError} errorText={validationError} disabled={disabled} isDisabled={disabled} />
         );
       case 'information':
       case 'sub-heading':
@@ -216,15 +228,51 @@ const QuestionRenderer = ({
       case 'linked-form-question':
         return renderLinkedQuestion();
       default:
-        return <p className="text-error">{t('Unknown question type')}: {question.type}</p>;
+        // Never show respondents a raw type name in red. An unrecognised type is
+        // a form-configuration problem, not something they can act on.
+        console.warn(`FormRenderer: no control for question type "${question.type}"`);
+        return infoPanel(t('This question cannot be displayed. Please contact the organisers.'));
     }
   };
 
   const isDisplayOnly = ['information', 'sub-heading'].includes(question.type);
-  const shouldShowDescription = description && !isDisplayOnly;
+  // single-checkbox renders the description as its own label, so suppress the
+  // separate description block for it.
+  const shouldShowDescription = description && !isDisplayOnly && question.type !== 'single-checkbox';
+
+  // Surface configured limits up front rather than only after a failed submit.
+  const limitHints = [];
+  if (['short-text', 'long-text', 'markdown'].includes(question.type)) {
+    const { min_words: minWords, max_words: maxWords } = settings;
+    if (minWords && maxWords) limitHints.push(t('Between {{min}} and {{max}} words', { min: minWords, max: maxWords }));
+    else if (maxWords) limitHints.push(t('At most {{max}} words', { max: maxWords }));
+    else if (minWords) limitHints.push(t('At least {{min}} words', { min: minWords }));
+    if (minWords || maxWords) {
+      limitHints.push(t('{{count}} words so far', { count: countWords(value) }));
+    }
+  }
+  if (question.type === 'numeric') {
+    const { min_value: minValue, max_value: maxValue } = settings;
+    if (minValue !== undefined && minValue !== null && maxValue !== undefined && maxValue !== null) {
+      limitHints.push(t('Between {{min}} and {{max}}', { min: minValue, max: maxValue }));
+    } else if (maxValue !== undefined && maxValue !== null) {
+      limitHints.push(t('At most {{max}}', { max: maxValue }));
+    } else if (minValue !== undefined && minValue !== null) {
+      limitHints.push(t('At least {{min}}', { min: minValue }));
+    }
+  }
+  if (settings.accepted_extensions && settings.accepted_extensions.length > 0) {
+    limitHints.push(t('Accepted file types: {{types}}', { types: settings.accepted_extensions.join(', ') }));
+  }
+  if (settings.max_file_size_mb) {
+    limitHints.push(t('Maximum {{max}} MB', { max: settings.max_file_size_mb }));
+  }
 
   return (
-    <div className={`p-4 bg-surface rounded-md transition-colors text-left hover:bg-surface-low${validationError ? ' bg-error-container/10 border-l-[3px] border-error' : ''}`}>
+    <div
+      id={`question-block-${question.id}`}
+      className={`p-4 bg-surface rounded-md transition-colors text-left hover:bg-surface-low${validationError ? ' bg-error-container/10 border-l-[3px] border-error' : ''}`}
+    >
       {headline && (
         <div className={isDisplayOnly ? 'mb-2' : 'mb-3'}>
           {isDisplayOnly ? (
@@ -247,6 +295,9 @@ const QuestionRenderer = ({
       <div className="mt-2">
         {renderControl()}
       </div>
+      {limitHints.length > 0 && (
+        <p className="text-xs text-muted-foreground mt-2">{limitHints.join(' · ')}</p>
+      )}
     </div>
   );
 };

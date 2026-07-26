@@ -85,12 +85,11 @@ const FormPage = (props) => {
     setView('form');
   };
 
-  // Handle editing existing response
+  // Open a response for viewing/editing. Read-only-ness (see
+  // isCurrentResponseReadOnly below) is a derived flag rather than a refusal
+  // here, so a submitted response in multiple-response mode can still be
+  // opened - editable if the form allows it, read-only otherwise.
   const handleEditResponse = (response) => {
-    if (response.is_submitted) {
-      setError(t('Cannot edit a submitted response'));
-      return;
-    }
     setCurrentResponse(response);
     setView('form');
   };
@@ -198,6 +197,16 @@ const FormPage = (props) => {
     }
   };
 
+  const formAllowsEdits = !!form && form.allow_edits !== false;
+  // A submitted response is read-only when the form forbids post-submission
+  // edits; otherwise it stays editable.
+  const isCurrentResponseReadOnly = !!(
+    currentResponse && currentResponse.is_submitted && !formAllowsEdits
+  );
+  const formName = form && form.name
+    ? (form.name[i18n.language] || form.name.en || Object.values(form.name)[0] || '')
+    : '';
+
   // Handle cancel
   const handleCancel = () => {
     if (form && form.multiple_responses && responses.length > 0) {
@@ -218,7 +227,7 @@ const FormPage = (props) => {
       <div className="w-full max-w-4xl mx-auto space-y-6">
         <div className="text-center mb-8">
           <h1 className="font-heading text-2xl font-bold text-foreground mb-2">
-            {form.name && form.name[i18n.language] ? form.name[i18n.language] : t('Form Responses')}
+            {formName || t('Form Responses')}
           </h1>
           <p className="text-muted-foreground text-sm">
             {t('You have {{count}} response(s) for this form', { count: responses.length })}
@@ -303,10 +312,9 @@ const FormPage = (props) => {
                     <button
                       className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-colors bg-surface-high text-foreground hover:bg-surface-high/80 border border-border w-full md:w-auto"
                       onClick={() => handleEditResponse(response)}
-                      disabled
                     >
-                      <i className="fas fa-eye"></i>
-                      {t('View')}
+                      <i className={formAllowsEdits ? 'fas fa-edit' : 'fas fa-eye'}></i>
+                      {formAllowsEdits ? t('Edit') : t('View')}
                     </button>
                   )}
                 </div>
@@ -325,7 +333,7 @@ const FormPage = (props) => {
 
   // Render success message
   const renderSuccess = () => {
-    const allowEdits = form && form.allow_edits !== false;
+    const allowEdits = formAllowsEdits;
     return (
       <div className="w-full max-w-lg mx-auto flex items-center justify-center min-h-[400px] py-12">
         <div className="bg-white rounded-2xl shadow-sm border border-green-200 p-8 text-center space-y-6">
@@ -417,7 +425,10 @@ const FormPage = (props) => {
           onSave={handleSave}
           onCancel={handleCancel}
           showConfirmation={true}
-          autoSaveInterval={30000}
+          // Only autosave drafts - autosaving an already-submitted response would
+          // silently turn it back into a draft.
+          autoSaveInterval={currentResponse && currentResponse.is_submitted ? 0 : 30000}
+          readOnly={isCurrentResponseReadOnly}
         />
       )}
     </div>

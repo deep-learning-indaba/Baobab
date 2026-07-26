@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import TranslatableFieldGroup from './TranslatableFieldGroup';
 import QuestionCard from './QuestionCard';
 import DependencyEditor from './DependencyEditor';
 import VisibilityExpressionEditor from './VisibilityExpressionEditor';
 import { FORM_ACTIONS } from '../actionTypes';
 
-const SectionCard = ({
+const SectionCard = memo(({
   section,
   sectionIndex,
   totalSections,
@@ -15,7 +15,9 @@ const SectionCard = ({
   includeReviewTypes = false,
   allQuestions = [],
   linkedFormId = null,
-  autoTranslateEnabled = true
+  autoTranslateEnabled = true,
+  showErrors = false,
+  eventId = null
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [showKey, setShowKey] = useState(!!section.key);
@@ -53,6 +55,23 @@ const SectionCard = ({
   const handleAddQuestion = () =>
     dispatch({ type: FORM_ACTIONS.ADD_QUESTION, sectionId: section.id });
 
+  // Switching a toggle off clears the value rather than only hiding its editor,
+  // so a hidden dependency or tag rule can no longer keep applying invisibly.
+  const toggleDependency = () => {
+    if (showDependency) handleDependencyChange(null);
+    setShowDependency(!showDependency);
+  };
+
+  const toggleTagExpression = () => {
+    if (showTagExpression) handleTagExpressionChange(null);
+    setShowTagExpression(!showTagExpression);
+  };
+
+  const toggleKey = () => {
+    if (showKey) handleFieldChange('key', null, '');
+    setShowKey(!showKey);
+  };
+
   const isFirst = sectionIndex === 0;
   const isLast = sectionIndex === totalSections - 1;
 
@@ -63,9 +82,12 @@ const SectionCard = ({
         ? 'border-primary text-primary bg-primary/5'
         : 'border-border text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/5'
     }`;
+  // `fas fa-square` is a solid square and reads as already-ticked; use the
+  // regular (outline) variant for the off state.
+  const toggleIcon = (active) => (active ? 'fas fa-check-square' : 'far fa-square');
 
   return (
-    <div className="bg-white border-2 border-border rounded-xl mb-8 shadow-sm">
+    <div className="bg-white border-2 border-border rounded-xl mb-8 shadow-sm text-left">
       {/* Section header */}
       <div className="flex justify-between items-center px-6 py-4 bg-gradient-to-r from-surface to-surface-low border-b border-border rounded-t-xl">
         <div className="flex items-center gap-4">
@@ -114,6 +136,7 @@ const SectionCard = ({
             onChange={(lang, value) => handleFieldChange('name', lang, value)}
             required={true}
             autoTranslateEnabled={autoTranslateEnabled}
+            showErrors={showErrors}
           />
           <TranslatableFieldGroup
             label={t('Section Description')}
@@ -127,16 +150,16 @@ const SectionCard = ({
 
           {/* Toggle row */}
           <div className="flex gap-3 mt-4 pt-4 border-t border-border flex-wrap">
-            <button type="button" className={toggleBtn(showDependency)} onClick={() => setShowDependency(!showDependency)}>
-              <i className={`fas ${showDependency ? 'fa-check-square' : 'fa-square'}`}></i>
+            <button type="button" className={toggleBtn(showDependency)} onClick={toggleDependency}>
+              <i className={toggleIcon(showDependency)}></i>
               {t('Add Dependency')}
             </button>
-            <button type="button" className={toggleBtn(showTagExpression)} onClick={() => setShowTagExpression(!showTagExpression)}>
-              <i className={`fas ${showTagExpression ? 'fa-check-square' : 'fa-square'}`}></i>
+            <button type="button" className={toggleBtn(showTagExpression)} onClick={toggleTagExpression}>
+              <i className={toggleIcon(showTagExpression)}></i>
               {t('Add Tag Visibility')}
             </button>
-            <button type="button" className={toggleBtn(showKey)} onClick={() => setShowKey(!showKey)}>
-              <i className={`fas ${showKey ? 'fa-check-square' : 'fa-square'}`}></i>
+            <button type="button" className={toggleBtn(showKey)} onClick={toggleKey}>
+              <i className={toggleIcon(showKey)}></i>
               {t('Add Key')}
             </button>
           </div>
@@ -157,6 +180,8 @@ const SectionCard = ({
             <VisibilityExpressionEditor
               expression={section.tag_expression}
               onChange={handleTagExpressionChange}
+              scope="section"
+              eventId={eventId}
             />
           )}
 
@@ -177,15 +202,17 @@ const SectionCard = ({
 
           {/* Questions */}
           <div className="mt-8">
-            <h3 className="text-base font-semibold text-foreground mb-4 pb-2 border-b-2 border-border">
+            <h3 className="text-base font-semibold text-foreground mb-4 pb-2 border-b-2 border-border text-left">
               {t('Questions')}
             </h3>
-            {section.questions.map((question) => (
+            {section.questions.map((question, index) => (
               <QuestionCard
                 key={question.id}
                 question={question}
                 sectionId={section.id}
                 sectionOrder={section.order}
+                questionIndex={index}
+                totalQuestions={section.questions.length}
                 languages={languages}
                 dispatch={dispatch}
                 t={t}
@@ -193,6 +220,8 @@ const SectionCard = ({
                 allQuestions={allQuestions}
                 linkedFormId={linkedFormId}
                 autoTranslateEnabled={autoTranslateEnabled}
+                showErrors={showErrors}
+                eventId={eventId}
               />
             ))}
 
@@ -209,6 +238,6 @@ const SectionCard = ({
       )}
     </div>
   );
-};
+});
 
 export default SectionCard;

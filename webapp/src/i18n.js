@@ -57,11 +57,11 @@ function i18nInit(organisation) {
   .use(initReactI18next)
   .init({
     fallbackLng: 'en',
-    debug: true,
     interpolation: {
       escapeValue: false, // not needed for react as it escapes by default
     },
-    keySeparator: false
+    keySeparator: false,
+    nsSeparator: false
   });
 
   return i18n;

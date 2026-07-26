@@ -10,8 +10,10 @@ A modern, generic form renderer component for the Baobab application. This compo
 - **Page-Per-Section Mode** - Renders each section on a separate page with navigation
 - **Single Page Mode** - Renders all sections on one page
 - **Draft Saving** - Save responses as drafts before final submission
-- **Auto-Save** - Optional automatic draft saving at configurable intervals
-- **Confirmation Page** - Review answers before final submission
+- **Auto-Save** - Optional automatic draft saving; debounced, and never runs on a
+  response that has already been submitted
+- **Confirmation Page** - Review answers before final submission, in both
+  page-per-section and single-page mode
 - **i18n Support** - Full internationalization with translated content
 - **Responsive Design** - Works on desktop and mobile devices
 
@@ -121,7 +123,9 @@ const formData = {
 | `readOnly` | boolean | No | false | Disable all inputs |
 | `linkedResponse` | object | No | null | Linked form response (for review forms) |
 | `showConfirmation` | boolean | No | true | Show confirmation page before submit |
-| `autoSaveInterval` | number | No | 0 | Auto-save interval in ms (0 = disabled) |
+| `autoSaveInterval` | number | No | 0 | Idle delay in ms before a draft is auto-saved (0 = disabled) |
+| `userTags` | string[] | No | [] | The user's tag names, for tag-based visibility |
+| `isPreview` | boolean | No | false | Preview mode: allows viewing a closed form |
 
 ## Form Data Structure
 
@@ -201,8 +205,11 @@ The component expects form data in the format returned by the generic forms API:
 | `file` | FormFileUpload | Single file upload |
 | `multi-file` | FormMultiFile | Multiple file upload |
 | `country` | FormCountry | Country selector with flags |
+| `linked-form-question` | Display only | Shows the answer from the linked form |
 | `information` | Display only | Information/heading display |
 | `sub-heading` | Display only | Sub-heading display |
+
+`reference` is deliberately not implemented here - see the form editor README.
 
 ## Dependency Expressions
 
@@ -244,27 +251,29 @@ The renderer supports complex dependency expressions for conditional visibility:
 
 The renderer validates answers based on:
 
-1. **Required fields** - Checks if required questions have answers
-2. **Regex validation** - Validates against `validation_regex` if provided
-3. **Option validation** - Ensures selected values are valid options
+1. **Required fields** - Checks if required questions have answers. An unticked
+   `single-checkbox` stores the string `'false'`, which counts as *no answer* -
+   see `isBlankAnswer` in `utils/validation.js`.
+2. **Numeric bounds** - `settings.min_value` / `settings.max_value`
+3. **Word limits** - `settings.min_words` / `settings.max_words`
+4. **Regex validation** - `validation_regex` must match the answer *in full*
+   (the check is anchored, matching the server's `re.fullmatch`)
+5. **Option validation** - Ensures selected values are valid options
+
+Display-only types (`information`, `sub-heading`, `linked-form-question`) are
+never validated - they render no input, so they can't be answered.
+
+Every rule here is also enforced server-side on submit
+(`FormAnswer.validate` in `api/app/forms/models.py`); keep the two in step.
 
 ## Styling
 
-The component uses modern CSS with:
+Tailwind utilities against the design tokens in `webapp/src/App.css`. Don't
+hard-code colours.
 
-- **Primary color**: `#3b82f6` (blue)
-- **Success color**: `#10b981` (green)
-- **Error color**: `#ef4444` (red)
-- **Warning color**: `#f59e0b` (amber)
-
-Custom styling can be applied by overriding CSS classes:
-
-- `.form-renderer` - Main container
-- `.form-header` - Form title area
-- `.form-progress` - Progress indicator
-- `.form-navigation` - Navigation buttons
-- `.section-renderer` - Section container
-- `.question-renderer` - Question container
+The root, section and question wrappers all carry `text-left`: an unscoped
+`.container-fluid` rule elsewhere in the app sets
+`text-align: -webkit-center`, which would otherwise centre everything.
 
 ## Dependencies
 
