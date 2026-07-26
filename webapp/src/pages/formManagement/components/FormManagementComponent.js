@@ -18,9 +18,18 @@ class FormManagementComponent extends Component {
   }
 
   loadForms = () => {
+    const eventId = this.props.event ? this.props.event.id : null;
+    if (!eventId) {
+      this.setState({ loading: false, error: this.props.t
+        ? this.props.t('Event information not available')
+        : 'Event information not available' });
+      return;
+    }
     this.setState({ loading: true, error: null });
 
-    formServices.getFormList()
+    // Scoped to this event - an unscoped call would return every form in the
+    // system and present them as this event's forms.
+    formServices.getFormList(eventId)
       .then(response => {
         if (response.error) {
           this.setState({

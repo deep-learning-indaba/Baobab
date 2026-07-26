@@ -1,4 +1,4 @@
-import React, { useReducer, useEffect, useState } from 'react';
+import React, { useReducer, useEffect, useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formEditorReducer } from './formEditorReducer';
 import { FORM_ACTIONS } from './actionTypes';
@@ -24,6 +24,9 @@ const FormEditor = ({
   const [saveError, setSaveError] = useState(null);
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
   const [autoTranslateEnabled, setAutoTranslateEnabled] = useState(true);
+  // Set once the user has tried to save, so required-field styling and the
+  // error list only appear after an actual attempt rather than on a blank form.
+  const [showErrors, setShowErrors] = useState(false);
 
   const initialState = {
     form: {
@@ -38,9 +41,14 @@ const FormEditor = ({
       linked_form_id: undefined,
       settings: { page_per_section: false }
     },
-    sections: initialData ? initialData.sections : [createEmptySection(languages, 1, t('Untitled Section'))],
+    // Start empty when editing: initialData is still in raw API shape here (its
+    // options are per-language objects, not the editor's unified array), and the
+    // LOAD_FORM effect below replaces this with the transformed version. Seeding
+    // the untransformed sections directly would render one frame against a shape
+    // the option and dependency editors can't read.
+    sections: initialData ? [] : [createEmptySection(languages, 1)],
     event: { id: eventId, languages },
-    ui: { isDirty: false, isSaving: false, expandedSections: new Set(), validationErrors: [] }
+    ui: { isDirty: false, isSaving: false, validationErrors: [] }
   };
 
   const [state, dispatch] = useReducer(formEditorReducer, initialState);
@@ -57,19 +65,34 @@ const FormEditor = ({
   const handleFormSettingChange = (key, value) =>
     dispatch({ type: FORM_ACTIONS.SET_FORM_SETTING, key, value });
 
-  const handleFormNameChange = (langCode, value) =>
-    dispatch({ type: FORM_ACTIONS.SET_FORM_SETTING, key: 'name', value: { ...state.form.name, [langCode]: value } });
+  // Stabilized with useCallback: passed as the `onChange` prop into a
+  // React.memo'd TranslatableFieldGroup, so a fresh function reference on
+  // every FormEditor render (e.g. from editing an unrelated section) would
+  // otherwise defeat that memoization and re-render the form name/description
+  // fields regardless of whether they actually changed.
+  const handleFormNameChange = useCallback((langCode, value) =>
+    dispatch({ type: FORM_ACTIONS.SET_FORM_SETTING, key: 'name', lang: langCode, value }), []);
 
-  const handleFormDescriptionChange = (langCode, value) =>
-    dispatch({ type: FORM_ACTIONS.SET_FORM_SETTING, key: 'description', value: { ...state.form.description, [langCode]: value } });
+  const handleFormDescriptionChange = useCallback((langCode, value) =>
+    dispatch({ type: FORM_ACTIONS.SET_FORM_SETTING, key: 'description', lang: langCode, value }), []);
 
   const handleSave = async () => {
     setSaveError(null);
-    const validationErrors = validateForm(state.sections, languages, state.form.name);
+    const validationErrors = validateForm(state.sections, languages, state.form.name, t);
     if (hasValidationErrors(validationErrors)) {
+      setShowErrors(true);
       dispatch({ type: FORM_ACTIONS.SET_VALIDATION_ERRORS, errors: validationErrors });
+      // Bring the summary into view - it sits above the fold on a long form, so
+      // clicking Save otherwise looked like nothing happened.
+      window.requestAnimationFrame(() => {
+        const summary = document.getElementById('form-editor-validation-summary');
+        if (summary && summary.scrollIntoView) {
+          summary.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
       return;
     }
+    setShowErrors(false);
     dispatch({ type: FORM_ACTIONS.SAVE_FORM_START });
     try {
       const payload = transformToApiPayload(state.sections, languages);
@@ -116,13 +139,26 @@ const FormEditor = ({
 
   const validationErrorsCount = state.ui.validationErrors.filter(e => e.severity === 'error').length;
 
-  const allQuestions = state.sections.flatMap(section =>
+  // `state.sections` gets a brand-new array reference on every dispatch
+  // (reducer cases use .map()/spread), even ones that don't touch questions
+  // at all - so memoizing allQuestions on [state.sections] directly would
+  // still recompute (and hand every SectionCard/QuestionCard a new prop
+  // reference, defeating their React.memo) on every keystroke anywhere in
+  // the form. Depend on a content signature instead - a primitive string
+  // compares by value, so allQuestions only actually changes identity when
+  // something a dependency dropdown cares about (headline/type/options)
+  // really did change, not on every unrelated edit.
+  const questionsSignature = state.sections
+    .map(s => s.questions.map(q => `${q.id}:${q.order}:${JSON.stringify(q.headline)}:${q.type}:${JSON.stringify(q.options)}`).join(','))
+    .join('|');
+
+  const allQuestions = useMemo(() => state.sections.flatMap(section =>
     section.questions.map(q => ({
       id: q.id, order: q.order, headline: q.headline,
       sectionId: section.id, sectionOrder: section.order,
       type: q.type, options: q.options || []
     }))
-  );
+  ), [questionsSignature]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Shared button class fragments
   const btnPrimary = "inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary-container transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
@@ -130,7 +166,10 @@ const FormEditor = ({
   const btnPreview = "inline-flex items-center gap-2 px-5 py-2.5 bg-action text-white rounded-md text-sm font-medium hover:opacity-90 transition-opacity";
 
   return (
-    <div className="bg-surface">
+    // text-left because an unscoped `.container-fluid { text-align: -webkit-center }`
+    // rule leaks in from ViewProfile.css/ProfileList.css and centres every label
+    // in here. FormRenderer already guards against it the same way.
+    <div className="bg-surface text-left">
       {/* Toolbar */}
       <div className="bg-white border-b border-border px-8 py-4 flex justify-between items-center sticky top-[-2rem] z-[100] shadow-sm">
         <div className="flex items-center gap-4">
@@ -187,9 +226,23 @@ const FormEditor = ({
         </div>
       )}
       {validationErrorsCount > 0 && (
-        <div className="flex items-center gap-3 px-8 py-3 font-medium bg-warning-bg text-warning border-b border-warning/20">
-          <i className="fas fa-exclamation-circle"></i>
-          {t('{{count}} validation error(s) found. Please fix them before saving.', { count: validationErrorsCount })}
+        <div
+          id="form-editor-validation-summary"
+          className="px-8 py-3 bg-warning-bg text-warning border-b border-warning/20"
+        >
+          <div className="flex items-center gap-3 font-medium">
+            <i className="fas fa-exclamation-circle"></i>
+            {t('{{count}} validation error(s) found. Please fix them before saving.', { count: validationErrorsCount })}
+          </div>
+          {/* List the individual problems. A bare count left the admin hunting
+              for which of a hundred fields the editor was unhappy about. */}
+          <ul className="mt-2 ml-8 list-disc text-sm space-y-0.5 max-h-48 overflow-y-auto">
+            {state.ui.validationErrors
+              .filter(e => e.severity === 'error')
+              .map((e) => (
+                <li key={e.path}>{e.message}</li>
+              ))}
+          </ul>
         </div>
       )}
 
@@ -204,6 +257,7 @@ const FormEditor = ({
           required={true}
           autoTranslateEnabled={autoTranslateEnabled}
           placeholder={t('Enter form name')}
+          showErrors={showErrors}
         />
         <TranslatableFieldGroup
           label={t('Form Description')}
@@ -233,6 +287,8 @@ const FormEditor = ({
               allQuestions={allQuestions}
               linkedFormId={state.form.linked_form_id}
               autoTranslateEnabled={autoTranslateEnabled}
+              showErrors={showErrors}
+              eventId={eventId}
             />
           ))}
 
@@ -253,6 +309,7 @@ const FormEditor = ({
           onChange={handleFormSettingChange}
           onClose={() => setShowSettings(false)}
           t={t}
+          eventId={eventId}
         />
       )}
 

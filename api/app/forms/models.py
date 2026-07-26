@@ -204,6 +204,49 @@ class ValidationError(str, enum.Enum):
     REQUIRED = 'required'
     INVALID_OPTION = 'invalid_option'
     VALIDATION_REGEX_FAILED = 'validation_regex_failed'
+    BELOW_MIN_VALUE = 'below_min_value'
+    ABOVE_MAX_VALUE = 'above_max_value'
+    NOT_A_NUMBER = 'not_a_number'
+    TOO_FEW_WORDS = 'too_few_words'
+    TOO_MANY_WORDS = 'too_many_words'
+
+
+# Multi-value answers (checkboxes, multi-select) are stored as a single Text
+# column with values joined by this separator.
+MULTI_VALUE_SEPARATOR = ' ; '
+
+# Types whose stored value is a boolean-ish string rather than free text.
+BOOLEAN_QUESTION_TYPES = ('single-checkbox',)
+
+# Types that render no input at all, so they can never carry an answer and
+# must never be treated as required.
+DISPLAY_ONLY_QUESTION_TYPES = ('information', 'sub-heading', 'linked-form-question')
+
+
+def answer_is_blank(question_type, value):
+    """Whether `value` counts as "no answer given" for a question of this type.
+
+    A single-checkbox stores the literal string 'false' when the respondent
+    leaves it unticked. Treating that as an answer let required consent
+    checkboxes ("I agree to the terms") pass validation while unticked.
+    """
+    if value is None:
+        return True
+    if not isinstance(value, str):
+        return False
+    stripped = value.strip()
+    if stripped == '':
+        return True
+    if question_type in BOOLEAN_QUESTION_TYPES:
+        return stripped.lower() in ('false', '0', 'no')
+    return False
+
+
+def count_words(text):
+    """Number of whitespace-separated words in `text`."""
+    if not text:
+        return 0
+    return len(text.split())
 
 
 class Form(db.Model):
@@ -642,31 +685,76 @@ class FormAnswer(db.Model):
         self.updated_on = datetime.now()
         self.version = 1
     
+    def is_blank(self) -> bool:
+        """Whether this answer carries no actual response."""
+        question_type = self.question.type if self.question else None
+        return answer_is_blank(question_type, self.value)
+
     def validate(self, language: str) -> Tuple[bool, Optional[ValidationError]]:
         """Validate answer against question rules."""
         question = self.question
+        settings = question.settings or {}
         translation = question.get_translation(language)
-        
+
+        if question.type in DISPLAY_ONLY_QUESTION_TYPES:
+            return True, None
+
         # Required check
-        if question.is_required and not self.value:
+        if question.is_required and self.is_blank():
             return False, ValidationError.REQUIRED
+
+        # Nothing further to check on an empty optional answer
+        if self.is_blank():
+            return True, None
+
+        # Numeric bounds - these are configurable per question in the editor,
+        # so they have to be enforced somewhere other than the browser.
+        if question.type in ('numeric', 'numeric-text'):
+            try:
+                numeric_value = float(self.value)
+            except (TypeError, ValueError):
+                return False, ValidationError.NOT_A_NUMBER
+            min_value = settings.get('min_value')
+            max_value = settings.get('max_value')
+            if min_value is not None and numeric_value < float(min_value):
+                return False, ValidationError.BELOW_MIN_VALUE
+            if max_value is not None and numeric_value > float(max_value):
+                return False, ValidationError.ABOVE_MAX_VALUE
+
+        # Word count bounds for prose questions
+        if question.type in ('long-text', 'markdown', 'short-text'):
+            min_words = settings.get('min_words')
+            max_words = settings.get('max_words')
+            if min_words is not None or max_words is not None:
+                words = count_words(self.value)
+                if min_words is not None and words < int(min_words):
+                    return False, ValidationError.TOO_FEW_WORDS
+                if max_words is not None and words > int(max_words):
+                    return False, ValidationError.TOO_MANY_WORDS
 
         if not translation:
             LOGGER.warning(f"No translation found for question {question.id} in language {language}")
             return True, None
-        
-        # Regex validation
-        if translation.validation_regex and self.value:
-            if not re.match(translation.validation_regex, self.value):
-                return False, ValidationError.VALIDATION_REGEX_FAILED
-        
-        # Option validation for multi-choice
+
+        # Regex validation. fullmatch (not match) so a pattern without anchors
+        # behaves the way the browser's RegExp-with-anchors check does, instead
+        # of the server accepting a prefix match the client rejected.
+        if translation.validation_regex:
+            try:
+                if not re.fullmatch(translation.validation_regex, self.value):
+                    return False, ValidationError.VALIDATION_REGEX_FAILED
+            except re.error as e:
+                LOGGER.warning(
+                    f"Invalid validation_regex on question {question.id}: {e}"
+                )
+
+        # Option validation for choice questions
         if translation.options:
             valid_values = [opt['value'] for opt in translation.options]
-            values = self.value.split(' ; ')
+            values = self.value.split(MULTI_VALUE_SEPARATOR)
             if not all(v.strip() in valid_values for v in values):
                 return False, ValidationError.INVALID_OPTION
-        
+
         return True, None
 
 

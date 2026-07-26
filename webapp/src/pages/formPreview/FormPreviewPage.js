@@ -25,15 +25,26 @@ const FormPreviewPage = (props) => {
     setError(null);
 
     try {
+      // The editor drops a draft snapshot here when you click Preview. Consume it
+      // (remove it immediately) rather than leaving it in localStorage - left in
+      // place, it would persist indefinitely, so any later visit to this URL, in
+      // any session, long after the form was saved, would show that stale
+      // snapshot instead of fetching the live form.
       const draftKey = `baobab_form_draft_preview_${formId}`;
       const draftJson = localStorage.getItem(draftKey);
-
       if (draftJson) {
-        const draft = JSON.parse(draftJson);
-        setForm(draft.form);
-        setHasUnsavedChanges(draft.isDirty);
-        setLoading(false);
-        return;
+        localStorage.removeItem(draftKey);
+        try {
+          const draft = JSON.parse(draftJson);
+          if (draft && draft.form) {
+            setForm(draft.form);
+            setHasUnsavedChanges(!!draft.isDirty);
+            setLoading(false);
+            return;
+          }
+        } catch (parseError) {
+          console.warn('Discarding unreadable form preview draft', parseError);
+        }
       }
 
       const formResult = await formServices.getFormStructure(formId, i18n.language);
@@ -86,10 +97,22 @@ const FormPreviewPage = (props) => {
     });
   };
 
-  // Handle cancel
-  const handleCancel = () => {
+  // window.close() only works for a tab this script opened (the editor's
+  // Preview button); it is a no-op when the URL is navigated to directly, so
+  // fall back to browser history in that case.
+  const handleExit = () => {
     window.close();
+    setTimeout(() => {
+      if (!window.closed) {
+        if (window.history.length > 1) window.history.back();
+        else if (props.event && props.event.key) {
+          window.location.assign(`/${props.event.key}/formConfig`);
+        }
+      }
+    }, 150);
   };
+
+  const handleCancel = handleExit;
 
   // Handle restart preview
   const handleRestart = () => {
@@ -106,7 +129,7 @@ const FormPreviewPage = (props) => {
           <span>{t('Preview Mode')}</span>
         </div>
         <div className="form-preview-loading">
-          <div className="spinner-border" role="status">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" role="status">
             <span className="sr-only">{t('Loading...')}</span>
           </div>
           <p>{t('Loading form preview...')}</p>
@@ -129,8 +152,8 @@ const FormPreviewPage = (props) => {
             <h3>{t('Error')}</h3>
             <p>{error}</p>
             <button
-              className="btn btn-primary"
-              onClick={() => window.close()}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary-container transition-colors"
+              onClick={handleExit}
             >
               {t('Go Back')}
             </button>
@@ -166,15 +189,15 @@ const FormPreviewPage = (props) => {
 
             <div className="success-actions">
               <button
-                className="btn btn-primary"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary-container transition-colors"
                 onClick={handleRestart}
               >
                 <i className="fas fa-redo"></i>
                 {t('Preview Again')}
               </button>
               <button
-                className="btn btn-outline-secondary"
-                onClick={() => window.close()}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-border text-foreground rounded-md text-sm font-medium hover:bg-surface-low transition-colors"
+                onClick={handleExit}
               >
                 <i className="fas fa-times"></i>
                 {t('Exit Preview')}
@@ -204,8 +227,8 @@ const FormPreviewPage = (props) => {
           )}
         </div>
         <button
-          className="btn btn-sm btn-outline-light"
-          onClick={handleCancel}
+          className="inline-flex items-center gap-2 px-3 py-1.5 border border-white/60 text-white rounded-md text-sm font-medium hover:bg-white/15 transition-colors"
+          onClick={handleExit}
         >
           <i className="fas fa-times"></i>
           {t('Exit Preview')}

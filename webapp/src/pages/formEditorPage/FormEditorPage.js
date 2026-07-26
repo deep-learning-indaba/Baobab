@@ -7,21 +7,27 @@ import Loading from '../../components/Loading';
 
 const FormEditorPage = (props) => {
   const { t } = useTranslation();
-  const formId = props.match && props.match.params ? props.match.params.formId : null;
+  const routeFormId = props.match && props.match.params ? props.match.params.formId : null;
   const eventId = props.event ? props.event.id : null;
   const languages = props.organisation ? props.organisation.languages || [] : [];
 
-  const [loading, setLoading] = useState(!!formId);
+  const [loading, setLoading] = useState(!!routeFormId);
   const [error, setError] = useState(null);
   const [initialData, setInitialData] = useState(null);
   const [redirectTo, setRedirectTo] = useState(null);
+  // Id of a form created during this editing session. The route param stays null
+  // on /forms/new, so without tracking this every subsequent save POSTed another
+  // form: the first save created the form, and the second created an empty
+  // orphan and then failed because it sent the first form's section ids.
+  const [createdFormId, setCreatedFormId] = useState(null);
+  const formId = routeFormId || createdFormId;
 
   const loadForm = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const result = await formServices.getFormStructure(formId, 'en', false);
+      const result = await formServices.getFormStructure(routeFormId, 'en', false);
 
       if (result.error) {
         setError(result.error);
@@ -36,13 +42,13 @@ const FormEditorPage = (props) => {
       setError(err.message || t('Failed to load form'));
       setLoading(false);
     }
-  }, [formId, t]);
+  }, [routeFormId, t]);
 
   useEffect(() => {
-    if (formId) {
+    if (routeFormId) {
       loadForm();
     }
-  }, [formId, loadForm]);
+  }, [routeFormId, loadForm]);
 
   const handleSave = async (formData) => {
     try {
@@ -52,9 +58,11 @@ const FormEditorPage = (props) => {
         result = await formServices.updateFormStructure(formId, formData, 'en');
       } else {
         const createResult = await formServices.createForm({
+          event_id: eventId,
           is_open: formData.is_open,
           is_active: formData.is_active,
           multiple_responses: formData.multiple_responses,
+          allow_edits: formData.allow_edits,
           settings: formData.settings
         });
 
@@ -63,6 +71,9 @@ const FormEditorPage = (props) => {
         }
 
         const newFormId = createResult.form.id;
+        // Remember it immediately, so a save that fails after this point does
+        // not leave us creating yet another form on the next attempt.
+        setCreatedFormId(newFormId);
         result = await formServices.updateFormStructure(newFormId, formData, 'en');
       }
 

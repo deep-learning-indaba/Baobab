@@ -62,12 +62,12 @@ class FormTypeCard extends Component {
 
                             {/* Legacy system with existing form: link to legacy editor */}
                             {hasLegacyForm && legacyEditUrl && (
-                                <a
-                                    href={legacyEditUrl}
+                                <Link
+                                    to={legacyEditUrl}
                                     className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold border border-amber-500 text-amber-700 hover:bg-amber-50 transition-colors"
                                 >
                                     {t('Edit Legacy Form')}
-                                </a>
+                                </Link>
                             )}
 
                             {/* No form yet: offer to create new-system form */}
@@ -81,14 +81,16 @@ class FormTypeCard extends Component {
                                 </button>
                             )}
 
-                            {/* No form yet and legacy editor available: revert option */}
-                            {isNoForm && legacyEditUrl && (
-                                <a
-                                    href={legacyEditUrl}
+                            {/* Offer the legacy editor when a new-system form
+                                exists, i.e. when there is actually something to
+                                move away from. */}
+                            {isNew && legacyEditUrl && (
+                                <Link
+                                    to={legacyEditUrl}
                                     className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-300 text-slate-500 hover:bg-slate-50 transition-colors"
                                 >
-                                    {t('Revert to Legacy')}
-                                </a>
+                                    {t('Use Legacy Editor')}
+                                </Link>
                             )}
                         </div>
                     </div>
@@ -124,7 +126,7 @@ class FormTypeCard extends Component {
                         </p>
                     )}
 
-                    {isNoForm && !legacyEditUrl && (
+                    {isNoForm && (
                         <p className="text-xs text-muted-foreground">
                             {t('No form configured yet.')}
                         </p>

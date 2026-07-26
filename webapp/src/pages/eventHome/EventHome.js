@@ -1,6 +1,6 @@
 import EventNav from '../../components/EventNav';
 import React, { Component } from "react";
-import { Link, Route } from "react-router-dom";
+import { Link, Route, Switch } from "react-router-dom";
 import { eventService } from "../../services/events/events.service";
 import { announcementService } from "../../services/eventApp/announcement.service";
 import Application from "../applicationForm";
@@ -692,32 +692,56 @@ class EventHome extends Component {
           path={`${match.path}/formConfig`}
           render={(props) => <FormConfigPage {...props} event={event} user={this.props.user} eventKey={this.state.eventKey}/>}
         />
-        <Route
-          exact
-          path={`${match.path}/forms/new`}
-          render={(props) => (
-            <FormEditorPage
-              {...props}
-              eventKey={this.state.eventKey}
-              event={event}
-              organisation={this.props.organisation}
-              user={this.props.user}
-            />
-          )}
-        />
-        <Route
-          exact
-          path={`${match.path}/forms/:formId/edit`}
-          render={(props) => (
-            <FormEditorPage
-              {...props}
-              eventKey={this.state.eventKey}
-              event={event}
-              organisation={this.props.organisation}
-              user={this.props.user}
-            />
-          )}
-        />
+        <Switch>
+          <Route
+            exact
+            path={`${match.path}/forms/new`}
+            render={(props) => (
+              <FormEditorPage
+                {...props}
+                eventKey={this.state.eventKey}
+                event={event}
+                organisation={this.props.organisation}
+                user={this.props.user}
+              />
+            )}
+          />
+          <Route
+            exact
+            path={`${match.path}/forms/:formId/edit`}
+            render={(props) => (
+              <FormEditorPage
+                {...props}
+                eventKey={this.state.eventKey}
+                event={event}
+                organisation={this.props.organisation}
+                user={this.props.user}
+              />
+            )}
+          />
+          <Route
+            exact
+            path={`${match.path}/forms/:formId/preview`}
+            render={(props) => (
+              <FormPreviewPage
+                {...props}
+                event={event}
+                user={this.props.user}
+              />
+            )}
+          />
+          <Route
+            exact
+            path={`${match.path}/forms/:formId`}
+            render={(props) => (
+              <FormPage
+                {...props}
+                event={event}
+                user={this.props.user}
+              />
+            )}
+          />
+        </Switch>
         <Route
           exact
           path={`${match.path}/form-responses/:formId/:responseId`}
@@ -746,28 +770,6 @@ class EventHome extends Component {
           path={`${match.path}/form-responses/:formId`}
           render={(props) => (
             <FormResponseList
-              {...props}
-              event={event}
-              user={this.props.user}
-            />
-          )}
-        />
-        <Route
-          exact
-          path={`${match.path}/forms/:formId/preview`}
-          render={(props) => (
-            <FormPreviewPage
-              {...props}
-              event={event}
-              user={this.props.user}
-            />
-          )}
-        />
-        <Route
-          exact
-          path={`${match.path}/forms/:formId`}
-          render={(props) => (
-            <FormPage
               {...props}
               event={event}
               user={this.props.user}

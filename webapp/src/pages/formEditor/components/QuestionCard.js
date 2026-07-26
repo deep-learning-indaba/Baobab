@@ -1,98 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, memo } from 'react';
 import TranslatableFieldGroup from './TranslatableFieldGroup';
 import QuestionTypeSelector from './QuestionTypeSelector';
 import OptionsEditor from './OptionsEditor';
 import QuestionSettingsEditor from './QuestionSettingsEditor';
 import CountryEditor from './CountryEditor';
 import DependencyEditor from './DependencyEditor';
+import VisibilityExpressionEditor from './VisibilityExpressionEditor';
 import LinkedQuestionSelector from './LinkedQuestionSelector';
 import { FORM_ACTIONS } from '../actionTypes';
+import {
+  hasChoiceOptions,
+  hasPlaceholder as typeHasPlaceholder,
+  hasValidation as typeHasValidation,
+  hasTypeSettings,
+  isDisplayOnly
+} from '../utils/stateUtils';
 
-const QuestionCard = ({
+const QuestionCard = memo(({
   question,
   sectionId,
   sectionOrder,
+  questionIndex,
+  totalQuestions,
   languages,
   dispatch,
   t,
   includeReviewTypes = false,
   allQuestions = [],
   linkedFormId = null,
-  autoTranslateEnabled = true
+  autoTranslateEnabled = true,
+  showErrors = false,
+  eventId = null
 }) => {
   const [showKey, setShowKey] = useState(!!question.key);
   const [showValidation, setShowValidation] = useState(
     !!question.validation_regex && Object.values(question.validation_regex).some(v => v)
   );
   const [showDependency, setShowDependency] = useState(!!question.dependency_expression);
-  const [validationMode, setValidationMode] = useState('simple');
-  const [wordLimitMin, setWordLimitMin] = useState({});
-  const [wordLimitMax, setWordLimitMax] = useState({});
-
-  useEffect(() => {
-    if (!question.validation_regex) return;
-    const newMin = {};
-    const newMax = {};
-    let hasSimplePattern = false;
-    languages.forEach(lang => {
-      const regex = question.validation_regex[lang.code];
-      if (regex) {
-        const matchBoth = regex.match(/\{(\d+),(\d+)\}/);
-        const matchMinOnly = regex.match(/\{(\d+),\}/);
-        const matchMaxOnly = regex.match(/\{0,(\d+)\}/);
-        if (matchBoth) { newMin[lang.code] = parseInt(matchBoth[1]); newMax[lang.code] = parseInt(matchBoth[2]); hasSimplePattern = true; }
-        else if (matchMinOnly) { newMin[lang.code] = parseInt(matchMinOnly[1]); newMax[lang.code] = ''; hasSimplePattern = true; }
-        else if (matchMaxOnly) { newMin[lang.code] = ''; newMax[lang.code] = parseInt(matchMaxOnly[1]); hasSimplePattern = true; }
-      }
-    });
-    if (hasSimplePattern) { setValidationMode('simple'); setWordLimitMin(newMin); setWordLimitMax(newMax); }
-    else if (Object.values(question.validation_regex).some(v => v)) { setValidationMode('regex'); }
-  }, [languages, question.validation_regex]);
-
-  const generateWordLimitRegex = (min, max) => {
-    if (!min && !max) return '';
-    if (min && max) return `^(\\b\\w+\\b[\\s]*){${min},${max}}$`;
-    if (max) return `^(\\b\\w+\\b[\\s]*){0,${max}}$`;
-    if (min) return `^(\\b\\w+\\b[\\s]*){${min},}$`;
-    return '';
-  };
-
-  const getValidationText = (min, max) => {
-    if (max && !min) return t('You may enter no more than {{max}} words', { max });
-    if (!max && min) return t('You must enter at least {{min}} words', { min });
-    if (max && min) return t('You must enter between {{min}} and {{max}} words', { min, max });
-    return '';
-  };
+  const [showTagExpression, setShowTagExpression] = useState(!!question.tag_expression);
 
   const handleFieldChange = (field, lang, value) =>
     dispatch({ type: FORM_ACTIONS.UPDATE_QUESTION_FIELD, sectionId, questionId: question.id, field, lang, value });
-
-  const handleValidationModeChange = (option) => {
-    setValidationMode(option.value);
-    if (option.value === 'simple') {
-      languages.forEach(lang => {
-        const min = wordLimitMin[lang.code] || '';
-        const max = wordLimitMax[lang.code] || '';
-        handleFieldChange('validation_regex', lang.code, generateWordLimitRegex(min, max));
-        handleFieldChange('validation_text', lang.code, getValidationText(min, max));
-      });
-    }
-  };
-
-  const handleWordLimitChange = (lang, field, value) => {
-    const numValue = value ? parseInt(value) : '';
-    if (field === 'min') {
-      setWordLimitMin({ ...wordLimitMin, [lang]: numValue });
-      const max = wordLimitMax[lang] || '';
-      handleFieldChange('validation_regex', lang, generateWordLimitRegex(numValue, max));
-      handleFieldChange('validation_text', lang, getValidationText(numValue, max));
-    } else {
-      setWordLimitMax({ ...wordLimitMax, [lang]: numValue });
-      const min = wordLimitMin[lang] || '';
-      handleFieldChange('validation_regex', lang, generateWordLimitRegex(min, numValue));
-      handleFieldChange('validation_text', lang, getValidationText(min, numValue));
-    }
-  };
 
   const handleTypeChange = (type) =>
     dispatch({ type: FORM_ACTIONS.SET_QUESTION_TYPE, sectionId, questionId: question.id, questionType: type });
@@ -105,6 +53,9 @@ const QuestionCard = ({
 
   const handleDependencyChange = (dependencyExpression) =>
     dispatch({ type: FORM_ACTIONS.SET_QUESTION_DEPENDENCY, sectionId, questionId: question.id, dependencyExpression });
+
+  const handleTagExpressionChange = (tagExpression) =>
+    dispatch({ type: FORM_ACTIONS.SET_QUESTION_TAG_EXPRESSION, sectionId, questionId: question.id, tagExpression });
 
   const handleAddOption = (optionData) =>
     dispatch({ type: FORM_ACTIONS.ADD_OPTION, sectionId, questionId: question.id, optionData });
@@ -133,33 +84,69 @@ const QuestionCard = ({
   const handleMoveDown = () =>
     dispatch({ type: FORM_ACTIONS.MOVE_QUESTION, sectionId, questionId: question.id, direction: 'down' });
 
-  const hasOptions = question.type && ['combobox', 'checkboxes', 'radio', 'single-choice'].includes(question.type);
-  const hasPlaceholder = question.type && ['short-text', 'long-text', 'numeric', 'combobox', 'multi-file', 'country'].includes(question.type);
-  const hasSettings = question.type && ['file', 'multi-file', 'numeric', 'reference', 'long-text', 'markdown'].includes(question.type);
+  // Unchecking one of these toggles clears the underlying value rather than just
+  // hiding its editor - otherwise a hidden regex or dependency stays saved and
+  // enforced, so turning "Add Validation" off wouldn't stop the form rejecting
+  // answers against a rule the admin can no longer see.
+  const toggleValidation = () => {
+    if (showValidation) {
+      languages.forEach(lang => {
+        handleFieldChange('validation_regex', lang.code, '');
+        handleFieldChange('validation_text', lang.code, '');
+      });
+    }
+    setShowValidation(!showValidation);
+  };
+
+  const toggleDependency = () => {
+    if (showDependency) handleDependencyChange(null);
+    setShowDependency(!showDependency);
+  };
+
+  const toggleTagExpression = () => {
+    if (showTagExpression) handleTagExpressionChange(null);
+    setShowTagExpression(!showTagExpression);
+  };
+
+  const toggleKey = () => {
+    if (showKey) handleFieldChange('key', null, '');
+    setShowKey(!showKey);
+  };
+
+  const showOptions = hasChoiceOptions(question.type);
+  const showPlaceholder = typeHasPlaceholder(question.type);
+  const showSettings = hasTypeSettings(question.type);
   const hasCountrySettings = question.type === 'country';
   const hasLinkedQuestion = question.type === 'linked-form-question';
-  const canHaveValidation = question.type && ['short-text', 'long-text', 'markdown'].includes(question.type);
+  const canHaveValidation = typeHasValidation(question.type);
+  const displayOnly = isDisplayOnly(question.type);
 
-  const iconBtn = "p-1.5 rounded text-muted-foreground hover:bg-surface-low hover:text-foreground transition-colors border-none bg-transparent cursor-pointer text-sm";
+  const isFirst = questionIndex === 0;
+  const isLast = questionIndex === totalQuestions - 1;
+
+  const iconBtn = "p-1.5 rounded text-muted-foreground hover:bg-surface-low hover:text-foreground transition-colors border-none bg-transparent cursor-pointer text-sm disabled:opacity-40 disabled:cursor-not-allowed";
   const toggleBtn = (active) =>
     `inline-flex items-center gap-2 px-3 py-2 rounded-md border text-sm cursor-pointer transition-colors ${
       active
         ? 'border-primary text-primary bg-primary/5'
         : 'border-border text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/5'
     }`;
+  // `far` (regular) for the unchecked box: `fas fa-square` is a *solid* square,
+  // which reads as an already-ticked control.
+  const toggleIcon = (active) => (active ? 'fas fa-check-square' : 'far fa-square');
 
   return (
-    <div className="bg-white border border-border rounded-lg mb-4 shadow-sm hover:shadow-card transition-shadow">
+    <div className="bg-white border border-border rounded-lg mb-4 shadow-sm hover:shadow-card transition-shadow text-left">
       {/* Question header */}
       <div className="flex justify-between items-center px-4 py-3 border-b border-border bg-surface rounded-t-lg">
         <span className="font-semibold text-action bg-action/10 px-3 py-0.5 rounded-full text-sm">
           Q{question.order}
         </span>
         <div className="flex gap-1">
-          <button type="button" className={iconBtn} onClick={handleMoveUp} title={t('Move up')}>
+          <button type="button" className={iconBtn} onClick={handleMoveUp} disabled={isFirst} title={t('Move up')}>
             <i className="fas fa-chevron-up"></i>
           </button>
-          <button type="button" className={iconBtn} onClick={handleMoveDown} title={t('Move down')}>
+          <button type="button" className={iconBtn} onClick={handleMoveDown} disabled={isLast} title={t('Move down')}>
             <i className="fas fa-chevron-down"></i>
           </button>
           <button type="button" className={iconBtn} onClick={handleDuplicate} title={t('Duplicate')}>
@@ -186,9 +173,10 @@ const QuestionCard = ({
               t={t}
               includeReviewTypes={includeReviewTypes}
               linkedFormId={linkedFormId}
+              hasError={showErrors && !question.type}
             />
           </div>
-          {question.type !== 'sub-heading' && question.type !== 'information' && (
+          {!displayOnly && (
             <label className="flex items-center gap-2 cursor-pointer whitespace-nowrap select-none text-sm font-medium text-foreground">
               <input
                 type="checkbox"
@@ -201,6 +189,10 @@ const QuestionCard = ({
           )}
         </div>
 
+        {showErrors && !question.type && (
+          <p className="text-error text-xs mb-4">{t('Choose a question type')}</p>
+        )}
+
         {question.type && question.type !== 'information' && (
           <TranslatableFieldGroup
             label={t('Question Headline')}
@@ -210,6 +202,7 @@ const QuestionCard = ({
             onChange={(lang, value) => handleFieldChange('headline', lang, value)}
             required={true}
             autoTranslateEnabled={autoTranslateEnabled}
+            showErrors={showErrors}
           />
         )}
 
@@ -223,7 +216,7 @@ const QuestionCard = ({
           multiline={true}
         />
 
-        {hasPlaceholder && (
+        {showPlaceholder && (
           <TranslatableFieldGroup
             label={t('Placeholder')}
             fieldName="placeholder"
@@ -234,7 +227,7 @@ const QuestionCard = ({
           />
         )}
 
-        {hasOptions && (
+        {showOptions && (
           <OptionsEditor
             options={question.options}
             languages={languages}
@@ -243,16 +236,22 @@ const QuestionCard = ({
             onUpdateValue={handleUpdateOptionValue}
             onUpdateLabel={handleUpdateOptionLabel}
             t={t}
+            autoTranslateEnabled={autoTranslateEnabled}
           />
         )}
 
-        {hasSettings && (
+        {showOptions && showErrors && (!question.options || question.options.length === 0) && (
+          <p className="text-error text-xs mb-4">{t('Add at least one option')}</p>
+        )}
+
+        {showSettings && (
           <QuestionSettingsEditor
             type={question.type}
             settings={question.settings}
             onChange={handleSettingsChange}
             languages={languages}
             t={t}
+            includeReviewTypes={includeReviewTypes}
           />
         )}
 
@@ -298,17 +297,21 @@ const QuestionCard = ({
         {/* Toggle row */}
         <div className="flex gap-3 mt-4 pt-4 border-t border-border flex-wrap">
           {canHaveValidation && (
-            <button type="button" className={toggleBtn(showValidation)} onClick={() => setShowValidation(!showValidation)}>
-              <i className={`fas ${showValidation ? 'fa-check-square' : 'fa-square'}`}></i>
-              {t('Add Validation')}
+            <button type="button" className={toggleBtn(showValidation)} onClick={toggleValidation}>
+              <i className={toggleIcon(showValidation)}></i>
+              {t('Add Pattern Validation')}
             </button>
           )}
-          <button type="button" className={toggleBtn(showDependency)} onClick={() => setShowDependency(!showDependency)}>
-            <i className={`fas ${showDependency ? 'fa-check-square' : 'fa-square'}`}></i>
+          <button type="button" className={toggleBtn(showDependency)} onClick={toggleDependency}>
+            <i className={toggleIcon(showDependency)}></i>
             {t('Add Dependency')}
           </button>
-          <button type="button" className={toggleBtn(showKey)} onClick={() => setShowKey(!showKey)}>
-            <i className={`fas ${showKey ? 'fa-check-square' : 'fa-square'}`}></i>
+          <button type="button" className={toggleBtn(showTagExpression)} onClick={toggleTagExpression}>
+            <i className={toggleIcon(showTagExpression)}></i>
+            {t('Add Tag Visibility')}
+          </button>
+          <button type="button" className={toggleBtn(showKey)} onClick={toggleKey}>
+            <i className={toggleIcon(showKey)}></i>
             {t('Add Key')}
           </button>
         </div>
@@ -341,89 +344,42 @@ const QuestionCard = ({
           />
         )}
 
+        {showTagExpression && (
+          <VisibilityExpressionEditor
+            expression={question.tag_expression}
+            onChange={handleTagExpressionChange}
+            scope="question"
+            eventId={eventId}
+          />
+        )}
+
         {showValidation && canHaveValidation && (
           <div className="mt-4 p-4 bg-warning-bg border border-warning/30 rounded-md">
-            <h4 className="text-warning font-semibold text-sm mb-3">{t('Validation')}</h4>
-
-            {/* Segmented control */}
-            <div className="inline-flex bg-surface-mid rounded-lg p-1 gap-0 mb-4">
-              {[
-                { value: 'simple', label: t('Word Limit') },
-                { value: 'regex', label: t('Regular Expression') }
-              ].map(opt => (
-                <label key={opt.value} className="relative cursor-pointer">
-                  <input
-                    type="radio"
-                    name={`validation-mode-${question.id}`}
-                    value={opt.value}
-                    checked={validationMode === opt.value}
-                    onChange={() => handleValidationModeChange({ value: opt.value })}
-                    className="sr-only peer"
-                  />
-                  <span className="block px-4 py-1.5 text-sm font-medium text-muted-foreground rounded-md transition-all peer-checked:bg-white peer-checked:text-foreground peer-checked:shadow-sm">
-                    {opt.label}
-                  </span>
-                </label>
-              ))}
-            </div>
-
-            {validationMode === 'simple' ? (
-              <div className="flex flex-col gap-3">
-                {languages.map(lang => (
-                  <div key={lang.code} className="p-3 border border-border rounded-md bg-white">
-                    <label className="block font-semibold text-foreground text-sm mb-2">{lang.description}</label>
-                    <div className="flex gap-4">
-                      <div className="flex-1">
-                        <label className="block text-xs text-muted-foreground mb-1">{t('Min Words')}</label>
-                        <input
-                          type="number"
-                          min="0"
-                          value={wordLimitMin[lang.code] || ''}
-                          onChange={(e) => handleWordLimitChange(lang.code, 'min', e.target.value)}
-                          placeholder="0"
-                          className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <label className="block text-xs text-muted-foreground mb-1">{t('Max Words')}</label>
-                        <input
-                          type="number"
-                          min="0"
-                          value={wordLimitMax[lang.code] || ''}
-                          onChange={(e) => handleWordLimitChange(lang.code, 'max', e.target.value)}
-                          placeholder="∞"
-                          className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <>
-                <TranslatableFieldGroup
-                  label={t('Validation Regex')}
-                  fieldName="validation_regex"
-                  values={question.validation_regex}
-                  languages={languages}
-                  onChange={(lang, value) => handleFieldChange('validation_regex', lang, value)}
-                  autoTranslateEnabled={autoTranslateEnabled}
-                />
-                <TranslatableFieldGroup
-                  label={t('Validation Error Message')}
-                  fieldName="validation_text"
-                  values={question.validation_text}
-                  languages={languages}
-                  onChange={(lang, value) => handleFieldChange('validation_text', lang, value)}
-                  autoTranslateEnabled={autoTranslateEnabled}
-                />
-              </>
-            )}
+            <h4 className="text-warning font-semibold text-sm mb-1">{t('Pattern Validation')}</h4>
+            <p className="text-xs text-muted-foreground mb-3">
+              {t('The answer must match this regular expression in full. For word limits use Length Settings above instead.')}
+            </p>
+            <TranslatableFieldGroup
+              label={t('Validation Regex')}
+              fieldName="validation_regex"
+              values={question.validation_regex}
+              languages={languages}
+              onChange={(lang, value) => handleFieldChange('validation_regex', lang, value)}
+              autoTranslateEnabled={false}
+            />
+            <TranslatableFieldGroup
+              label={t('Validation Error Message')}
+              fieldName="validation_text"
+              values={question.validation_text}
+              languages={languages}
+              onChange={(lang, value) => handleFieldChange('validation_text', lang, value)}
+              autoTranslateEnabled={autoTranslateEnabled}
+            />
           </div>
         )}
       </div>
     </div>
   );
-};
+});
 
 export default QuestionCard;

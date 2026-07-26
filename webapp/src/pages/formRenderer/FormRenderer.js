@@ -3,8 +3,29 @@ import { useTranslation } from 'react-i18next';
 import SectionRenderer from './components/SectionRenderer';
 import MarkdownRenderer from '../../components/MarkdownRenderer';
 import { evaluateDependency, buildAnswersDict } from './utils/dependencyEvaluator';
-import { validateAllAnswers, hasErrors, getErrorCount } from './utils/validation';
+import { validateAllAnswers, hasErrors, getErrorCount, firstErrorQuestionId } from './utils/validation';
 import { evaluateVisibilityExpression } from './utils/visibilityEvaluator';
+import { formatAnswerForDisplay } from './utils/answerDisplay';
+
+// The submit endpoint reports failures as codes (see ValidationError in
+// app/forms/models.py) - map them to real messages rather than passing the
+// code straight to t(), which would show applicants raw strings like
+// "validation_regex_failed".
+const SERVER_ERROR_MESSAGES = {
+  required: 'This field is required',
+  invalid_option: 'Invalid option selected',
+  validation_regex_failed: 'Invalid format',
+  below_min_value: 'The value is below the allowed minimum',
+  above_max_value: 'The value is above the allowed maximum',
+  not_a_number: 'Enter a number',
+  too_few_words: 'The answer is too short',
+  too_many_words: 'The answer is too long'
+};
+
+function translateServerValidationError(code, t) {
+  const key = SERVER_ERROR_MESSAGES[String(code || '').toLowerCase()];
+  return key ? t(key) : t('This answer is not valid');
+}
 
 const FormRenderer = ({
   form,
@@ -33,6 +54,9 @@ const FormRenderer = ({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showConfirmationPage, setShowConfirmationPage] = useState(false);
   const [showEditWarning, setShowEditWarning] = useState(false);
+  // Set once the user has accepted that submission is final, so the warning is
+  // shown once rather than on every attempt.
+  const [editWarningAcknowledged, setEditWarningAcknowledged] = useState(false);
 
   const settings = (form && form.settings) || {};
   const pagePerSection = settings.page_per_section || false;
@@ -64,19 +88,40 @@ const FormRenderer = ({
   }, [response]);
 
   useEffect(() => {
+    // Never autosave a response that has already been submitted - a timer
+    // firing here would silently turn a completed submission back into a draft.
+    if (isResponseSubmitted) return undefined;
     if (autoSaveInterval > 0 && isDirty && onSave && !isReadOnly) {
       const doSave = async () => {
         if (isSaving) return;
         setIsSaving(true);
         try {
           const result = await onSave({ answers, is_submitted: false });
-          if (result.success) { setIsDirty(false); setSaveSuccess(true); setTimeout(() => setSaveSuccess(false), 3000); }
+          if (result && result.success) {
+            setIsDirty(false);
+            setSaveSuccess(true);
+            setTimeout(() => setSaveSuccess(false), 3000);
+          } else if (result && result.error) {
+            // Don't fail silently and keep retrying forever with no sign.
+            setSubmitError(result.error);
+          }
         } finally { setIsSaving(false); }
       };
       const timer = setTimeout(doSave, autoSaveInterval);
       return () => clearTimeout(timer);
     }
-  }, [answers, autoSaveInterval, isDirty, onSave, isReadOnly, isSaving]);
+    return undefined;
+  }, [answers, autoSaveInterval, isDirty, onSave, isReadOnly, isSaving, isResponseSubmitted]);
+
+  // Warn before discarding unsaved changes on navigation, same as the editor -
+  // without it, a half-finished application could be lost to an accidental
+  // navigation away.
+  useEffect(() => {
+    if (!isDirty || isReadOnly) return undefined;
+    const handleBeforeUnload = (e) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty, isReadOnly]);
 
   const isSectionVisible = useCallback((section) => {
     if (section.dependency_expression && !evaluateDependency(section.dependency_expression, answersDict)) return false;
@@ -92,7 +137,22 @@ const FormRenderer = ({
   }, [answersDict, isSectionVisible, userTags]);
 
   const visibleSections = useMemo(() => sections.filter(isSectionVisible), [sections, isSectionVisible]);
-  const currentSection = pagePerSection ? visibleSections[currentSectionIndex] : null;
+
+  // Answering a question can hide the section you are standing on. Without
+  // clamping, currentSectionIndex would point past the end of visibleSections,
+  // currentSection would come back undefined, and the page-per-section branch
+  // would fall through and dump the whole form onto one page.
+  useEffect(() => {
+    if (!pagePerSection) return;
+    if (visibleSections.length === 0) return;
+    if (currentSectionIndex > visibleSections.length - 1) {
+      setCurrentSectionIndex(visibleSections.length - 1);
+    }
+  }, [pagePerSection, visibleSections.length, currentSectionIndex]);
+
+  const currentSection = pagePerSection
+    ? (visibleSections[currentSectionIndex] || visibleSections[visibleSections.length - 1] || null)
+    : null;
 
   const handleAnswerChange = useCallback((question, value) => {
     setAnswers(prevAnswers => {
@@ -115,7 +175,10 @@ const FormRenderer = ({
   const validate = useCallback((checkRequired = true) => {
     const sectionsToValidate = pagePerSection && currentSection ? [currentSection] : visibleSections;
     const errors = validateAllAnswers(sectionsToValidate, answers, answersDict, language, t,
-      (q, s) => isQuestionVisible(q, s || sectionsToValidate.find(sec => sec.questions && sec.questions.some(sq => sq.id === q.id)))
+      (q, sec) => isQuestionVisible(
+        q,
+        sec || sectionsToValidate.find(s => s.questions && s.questions.some(sq => sq.id === q.id))
+      )
     );
     setValidationErrors(errors);
     setHasValidated(true);
@@ -128,8 +191,8 @@ const FormRenderer = ({
     setSubmitError(null);
     try {
       const result = await onSave({ answers, is_submitted: false });
-      if (result.success) { setIsDirty(false); setSaveSuccess(true); setTimeout(() => setSaveSuccess(false), 3000); }
-      else setSubmitError(result.error || t('Failed to save'));
+      if (result && result.success) { setIsDirty(false); setSaveSuccess(true); setTimeout(() => setSaveSuccess(false), 3000); }
+      else setSubmitError((result && result.error) || t('Failed to save'));
     } catch (error) {
       setSubmitError(error.message || t('Failed to save'));
     } finally { setIsSaving(false); }
@@ -148,51 +211,32 @@ const FormRenderer = ({
 
   const handlePreviousSection = useCallback(() => {
     if (showConfirmationPage) setShowConfirmationPage(false);
-    else if (currentSectionIndex > 0) setCurrentSectionIndex(prev => prev - 1);
+    else if (pagePerSection && currentSectionIndex > 0) setCurrentSectionIndex(prev => prev - 1);
     window.scrollTo(0, 0);
-  }, [currentSectionIndex, showConfirmationPage]);
+  }, [currentSectionIndex, pagePerSection, showConfirmationPage]);
 
-  const handleSubmit = useCallback(async (event) => {
-    if (event) event.preventDefault();
-    if (isSubmitting || isReadOnly) return;
-    if (!allowEdits && !isResponseSubmitted) { setShowEditWarning(true); return; }
+  const visibilityFor = useCallback(
+    (q, sec) => isQuestionVisible(
+      q,
+      sec || visibleSections.find(s => s.questions && s.questions.some(sq => sq.id === q.id))
+    ),
+    [isQuestionVisible, visibleSections]
+  );
 
-    const errors = validateAllAnswers(visibleSections, answers, answersDict, language, t,
-      (q, s) => isQuestionVisible(q, s || visibleSections.find(sec => sec.questions && sec.questions.some(sq => sq.id === q.id)))
-    );
-    setValidationErrors(errors);
-    setHasValidated(true);
+  const scrollToFirstError = useCallback((errors) => {
+    const questionId = firstErrorQuestionId(visibleSections, errors);
+    if (!questionId) return;
+    const el = document.getElementById(`question-block-${questionId}`);
+    if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [visibleSections]);
 
-    if (hasErrors(errors)) {
-      if (pagePerSection) {
-        const idx = visibleSections.findIndex(sec => sec.questions && sec.questions.some(q => errors[q.id]));
-        if (idx >= 0) { setCurrentSectionIndex(idx); setShowConfirmationPage(false); }
-      }
-      return;
-    }
-
-    setIsSubmitting(true);
-    setSubmitError(null);
-    try {
-      const result = await onSubmit({ answers, is_submitted: true });
-      if (!result.success) {
-        setSubmitError(result.error || t('Failed to submit'));
-        if (result.validationErrors) {
-          const serverErrors = {};
-          result.validationErrors.forEach(err => { serverErrors[err.question_id] = t(err.error); });
-          setValidationErrors(serverErrors);
-        }
-      }
-    } catch (error) {
-      setSubmitError(error.message || t('Failed to submit'));
-    } finally { setIsSubmitting(false); }
-  }, [allowEdits, answers, answersDict, isQuestionVisible, isResponseSubmitted, isSubmitting, language, onSubmit, pagePerSection, isReadOnly, t, visibleSections]);
-
-  const handleConfirmSubmit = useCallback(async () => {
-    setShowEditWarning(false);
-    const errors = validateAllAnswers(visibleSections, answers, answersDict, language, t,
-      (q, s) => isQuestionVisible(q, s || visibleSections.find(sec => sec.questions && sec.questions.some(sq => sq.id === q.id)))
-    );
+  /**
+   * The single submit path, shared by the direct-submit and
+   * confirm-then-submit flows so both handle server errors identically
+   * (checking both `validationErrors` and `errors` keys - see below).
+   */
+  const doSubmit = useCallback(async () => {
+    const errors = validateAllAnswers(visibleSections, answers, answersDict, language, t, visibilityFor);
     setValidationErrors(errors);
     setHasValidated(true);
 
@@ -202,6 +246,9 @@ const FormRenderer = ({
         const idx = visibleSections.findIndex(sec => sec.questions && sec.questions.some(q => errors[q.id]));
         if (idx >= 0) { setCurrentSectionIndex(idx); setShowConfirmationPage(false); }
       }
+      // Point the user at the first problem instead of leaving them at the
+      // bottom of the form wondering why nothing happened.
+      window.requestAnimationFrame(() => scrollToFirstError(errors));
       return;
     }
 
@@ -209,15 +256,66 @@ const FormRenderer = ({
     setSubmitError(null);
     try {
       const result = await onSubmit({ answers, is_submitted: true });
-      if (result && !result.success && result.errors && Array.isArray(result.errors)) {
-        const serverErrors = {};
-        result.errors.forEach(err => { serverErrors[err.question_id] = t(err.error); });
-        setValidationErrors(serverErrors);
+      if (!result || result.success) {
+        setIsDirty(false);
+        return;
+      }
+      setSubmitError(result.error || t('Failed to submit'));
+      // Accept either key so a server-side validation failure is always shown.
+      const serverErrors = result.validationErrors || result.errors;
+      if (Array.isArray(serverErrors)) {
+        const mapped = {};
+        serverErrors.forEach(err => {
+          mapped[err.question_id] = translateServerValidationError(err.error, t);
+        });
+        setValidationErrors(mapped);
+        window.requestAnimationFrame(() => scrollToFirstError(mapped));
       }
     } catch (error) {
       setSubmitError(error.message || t('Failed to submit'));
-    } finally { setIsSubmitting(false); }
-  }, [answers, answersDict, isQuestionVisible, language, onSubmit, pagePerSection, t, visibleSections]);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [answers, answersDict, language, onSubmit, pagePerSection, scrollToFirstError, t, visibilityFor, visibleSections]);
+
+  const handleSubmit = useCallback(async (event) => {
+    if (event) event.preventDefault();
+    if (isSubmitting || isReadOnly) return;
+
+    // Order matters: validate, then let the user review their answers, and only
+    // then warn that submission is final - warning first would let the
+    // "I understand" button submit immediately, skipping the review step.
+    const errors = validateAllAnswers(visibleSections, answers, answersDict, language, t, visibilityFor);
+    setValidationErrors(errors);
+    setHasValidated(true);
+    if (hasErrors(errors)) {
+      window.requestAnimationFrame(() => scrollToFirstError(errors));
+      return;
+    }
+
+    // Single-page forms get the same review step as page-per-section ones,
+    // controlled by the same `showConfirmation` prop.
+    if (showConfirmation && !showConfirmationPage) {
+      setShowConfirmationPage(true);
+      window.scrollTo(0, 0);
+      return;
+    }
+
+    if (!allowEdits && !isResponseSubmitted && !editWarningAcknowledged) {
+      setShowEditWarning(true);
+      return;
+    }
+
+    await doSubmit();
+  }, [allowEdits, answers, answersDict, doSubmit, editWarningAcknowledged, isResponseSubmitted,
+      isSubmitting, isReadOnly, language, scrollToFirstError, showConfirmation,
+      showConfirmationPage, t, visibilityFor, visibleSections]);
+
+  const handleConfirmSubmit = useCallback(async () => {
+    setShowEditWarning(false);
+    setEditWarningAcknowledged(true);
+    await doSubmit();
+  }, [doSubmit]);
 
   // Shared button styles
   const btnPrimary = "inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white rounded-md font-medium hover:bg-primary-container transition-colors disabled:opacity-60 disabled:cursor-not-allowed";
@@ -260,7 +358,9 @@ const FormRenderer = ({
                     const headline = typeof question.headline === 'object'
                       ? question.headline[language] || question.headline['en'] || Object.values(question.headline)[0]
                       : question.headline;
-                    const val = answersDict[question.id];
+                    // Render the label, not the stored option value, so the review
+                    // page shows e.g. "Pea" rather than the raw stored value "p".
+                    const val = formatAnswerForDisplay(question, answersDict[question.id], language, t);
                     const error = validationErrors[question.id];
                     return (
                       <div key={question.id} className={`p-4 bg-white border rounded-md${error ? ' border-error bg-error-container/10' : ' border-border'}`}>
@@ -311,7 +411,7 @@ const FormRenderer = ({
   };
 
   const renderFormContent = () => {
-    if (showConfirmationPage && pagePerSection) return renderConfirmationPage();
+    if (showConfirmationPage) return renderConfirmationPage();
     if (pagePerSection && currentSection) {
       return (
         <SectionRenderer section={currentSection} answers={answers} answersDict={answersDict}
@@ -332,7 +432,7 @@ const FormRenderer = ({
   };
 
   const renderNavigation = () => {
-    if (showConfirmationPage && pagePerSection) return null;
+    if (showConfirmationPage) return null;
     return (
       <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-border mt-8 gap-4">
         <div className="flex gap-3 w-full md:w-auto justify-center md:justify-start">

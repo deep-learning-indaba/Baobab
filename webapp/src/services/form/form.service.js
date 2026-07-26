@@ -13,17 +13,18 @@ export const formServices = {
     updateFormStructure
 }
 
-function getFormList(filters = {}) {
+// event_id is required: the endpoint is event-admin scoped, and a request
+// without it would return every form in the system.
+function getFormList(eventId, filters = {}) {
     const params = new URLSearchParams();
-    
+    params.append('event_id', eventId);
+
     if (filters.language) params.append('language', filters.language);
     if (filters.is_active !== undefined) params.append('is_active', filters.is_active);
     if (filters.is_open !== undefined) params.append('is_open', filters.is_open);
     if (filters.created_by) params.append('created_by', filters.created_by);
     
-    const queryString = params.toString() ? `?${params.toString()}` : '';
-    
-    return axios.get(baseUrl + "/api/v1/forms" + queryString, {
+    return axios.get(baseUrl + `/api/v1/forms?${params.toString()}`, {
         headers: authHeader()
     })
     .then(function(response) {
@@ -63,7 +64,10 @@ function getForm(formId, language = 'en') {
 }
 
 function createForm(formData) {
-    return axios.post(baseUrl + "/api/v1/forms", formData, {
+    // event_id also goes on the query string: the endpoint resolves the caller's
+    // admin rights from it before the handler runs.
+    const params = new URLSearchParams({ event_id: formData.event_id });
+    return axios.post(baseUrl + `/api/v1/forms?${params.toString()}`, formData, {
         headers: authHeader()
     })
     .then(function(response) {

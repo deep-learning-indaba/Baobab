@@ -8,12 +8,14 @@ from flask import g, request
 from app.forms.models import (
     Form, FormResponse, FormAnswer, FormSection, FormQuestion,
     FormTranslation, FormSectionTranslation, FormQuestionTranslation,
-    DependencyEvaluator, FormResponseTag
+    DependencyEvaluator, FormResponseTag, ValidationError,
+    DISPLAY_ONLY_QUESTION_TYPES
 )
 from app.forms.visibility import VisibilityEvaluator
 from app.forms.mixins import (
     uses_new_form, get_form_by_type,
-    apply_form_type_defaults, validate_form_type_constraints
+    apply_form_type_defaults, validate_form_type_constraints,
+    form_admin_required, verify_form_event, is_admin_of_form
 )
 from app.utils.auth import auth_required, event_admin_required
 from app.utils import errors
@@ -39,26 +41,45 @@ def serialize_form(form, language='en', include_inactive=False):
         include_inactive: If True, include inactive sections/questions (for admin audit)
     """
     sections_data = []
-    
+
+    # Section and question translations are lazy='dynamic' relationships, so
+    # iterating them per row issues a query each. Fetch them all up front in
+    # two queries and group in memory - this endpoint is on the hot path for
+    # both the editor and every respondent loading the form.
+    section_ids = [s.id for s in form.sections]
+    question_ids = [q.id for s in form.sections for q in s.questions]
+
+    section_translations_by_section = {}
+    if section_ids:
+        for translation in db.session.query(FormSectionTranslation).filter(
+            FormSectionTranslation.form_section_id.in_(section_ids)
+        ).all():
+            section_translations_by_section.setdefault(
+                translation.form_section_id, {}
+            )[translation.language] = translation
+
+    question_translations_by_question = {}
+    if question_ids:
+        for translation in db.session.query(FormQuestionTranslation).filter(
+            FormQuestionTranslation.form_question_id.in_(question_ids)
+        ).all():
+            question_translations_by_question.setdefault(
+                translation.form_question_id, {}
+            )[translation.language] = translation
+
     for section in form.sections:
         if not include_inactive and not section.is_active:
             continue
-            
-        # Get all translations for this section
-        section_translations_dict = {}
-        for translation in section.translations:
-            section_translations_dict[translation.language] = translation
-        
+
+        section_translations_dict = section_translations_by_section.get(section.id, {})
+
         questions_data = []
         for question in section.questions:
             if not include_inactive and not question.is_active:
                 continue
-            
-            # Get all translations for this question
-            question_translations_dict = {}
-            for translation in question.translations:
-                question_translations_dict[translation.language] = translation
-            
+
+            question_translations_dict = question_translations_by_question.get(question.id, {})
+
             # Build i18n objects for all translatable fields
             headline_i18n = {}
             description_i18n = {}
@@ -152,6 +173,88 @@ def serialize_form(form, language='en', include_inactive=False):
     }
 
 
+def _error(message, status):
+    """Build an error response carrying both conventional keys.
+
+    Most of the API returns errors under `message` (see app/utils/errors.py)
+    while the forms endpoints grew up returning `error`, so clients had to
+    guess. Emitting both keeps existing consumers working and lets generic
+    error handling find a message.
+    """
+    return {'error': message, 'message': message}, status
+
+
+def serialize_form_summary(form):
+    """Serialize a form without its sections or questions.
+
+    For list views and form pickers. serialize_form walks every section and
+    question and their (lazy='dynamic') translations, so using it for a list
+    means a query per section and per question, per form.
+    """
+    name_i18n = {}
+    description_i18n = {}
+    for translation in form.translations:
+        name_i18n[translation.language] = translation.name
+        description_i18n[translation.language] = translation.description
+
+    return {
+        'id': form.id,
+        'event_id': form.event_id,
+        'form_type': form.form_type,
+        'stage': form.stage,
+        'name': name_i18n,
+        'description': description_i18n,
+        'is_active': form.is_active,
+        'is_open': form.is_open,
+        'multiple_responses': form.multiple_responses,
+        'allow_edits': form.allow_edits,
+        'settings': form.settings,
+        'linked_form_id': form.linked_form_id,
+        'created_at': form.created_at.isoformat() if form.created_at else None,
+        'updated_at': form.updated_at.isoformat() if form.updated_at else None,
+    }
+
+
+def _get_question_ids_for_form(form_id):
+    """Set of active question ids belonging to a form."""
+    return {
+        row[0]
+        for row in db.session.query(FormQuestion.id).filter(
+            FormQuestion.form_id == form_id,
+            FormQuestion.is_active == True  # noqa: E712
+        ).all()
+    }
+
+
+def _get_response_for_event(response_id, form_id, event_id):
+    """Load a FormResponse, checking it belongs to a form owned by event_id.
+
+    event_admin_required only proves the caller administers event_id, so admin
+    response endpoints must confirm the form they are addressing is actually
+    that event's - see verify_form_event.
+    """
+    return (
+        db.session.query(FormResponse)
+        .join(Form, FormResponse.form_id == Form.id)
+        .filter(
+            FormResponse.id == response_id,
+            FormResponse.form_id == form_id,
+            Form.event_id == event_id,
+        )
+        .first()
+    )
+
+
+def _linked_form_is_in_event(linked_form_id, event_id):
+    """Whether linked_form_id names a form belonging to event_id.
+
+    Linking across events would leak one event's responses into another's
+    review/prepopulation flows.
+    """
+    linked = db.session.query(Form).filter_by(id=linked_form_id).first()
+    return linked is not None and linked.event_id == event_id
+
+
 def serialize_response(response):
     """Serialize a form response with answers"""
     answers_data = []
@@ -218,62 +321,56 @@ def serialize_response_with_linked(response):
 
 class FormListAPI(restful.Resource):
     """Form list and creation operations"""
-    
-    @auth_required
-    def get(self):
-        """Get list of forms"""
+
+    # Scoped to a single event and restricted to that event's admins: this
+    # returns full form definitions, so an unscoped list would hand every
+    # form in the system to any authenticated user.
+    @event_admin_required
+    def get(self, event_id):
+        """Get list of forms for an event (admin only)"""
         try:
-            user_id = g.current_user['id']
             language = request.args.get('language', 'en')
-            
-            # Build query
-            query = db.session.query(Form)
-            
+
+            query = db.session.query(Form).filter_by(event_id=event_id)
+
             # Filter by active status if specified
             is_active = request.args.get('is_active')
             if is_active is not None:
                 query = query.filter_by(is_active=is_active.lower() == 'true')
-            
+
             # Filter by open status if specified
             is_open = request.args.get('is_open')
             if is_open is not None:
                 query = query.filter_by(is_open=is_open.lower() == 'true')
-            
-            # Filter by event_id
-            event_id = request.args.get('event_id')
-            if event_id:
-                query = query.filter_by(event_id=int(event_id))
-            
+
             # Filter by created_by if specified (admin feature)
             created_by = request.args.get('created_by')
             if created_by:
                 query = query.filter_by(created_by_user_id=created_by)
-            
+
             forms = query.order_by(Form.created_at.desc()).all()
-            
-            # Serialize forms
-            forms_data = []
-            for form in forms:
-                forms_data.append(serialize_form(form, language))
-            
+
+            # Summary only - the full structure of every form is a lot of
+            # payload for what callers use this for (form pickers and lists),
+            # and building it triggers a query per section and per question.
+            forms_data = [serialize_form_summary(form) for form in forms]
+
             return forms_data, 200
-            
+
         except Exception as e:
             LOGGER.error(f"Error getting forms list: {str(e)}")
             LOGGER.error(traceback.format_exc())
             return errors.DB_NOT_AVAILABLE
-    
-    @auth_required
-    def post(self):
+
+    @event_admin_required
+    def post(self, event_id):
         """Create a new empty form (use FormStructureAPI to add sections/questions)"""
         try:
             args = request.get_json()
             user_id = g.current_user['id']
-            
-            event_id = args.get('event_id')
-            if not event_id:
-                return {'error': 'event_id is required'}, 400
-            
+
+            # event_id comes from event_admin_required, which has verified the
+            # caller administers it - never trust a body-supplied event_id.
             form_type = args.get('form_type')
             stage = args.get('stage')
 
@@ -281,7 +378,11 @@ class FormListAPI(restful.Resource):
             if form_type:
                 constraint_error = validate_form_type_constraints(event_id, form_type)
                 if constraint_error:
-                    return {'error': constraint_error}, 400
+                    return _error(constraint_error, 400)
+
+            linked_form_id = args.get('linked_form_id')
+            if linked_form_id and not _linked_form_is_in_event(linked_form_id, event_id):
+                return _error('Linked form must belong to the same event', 400)
 
             # Create empty form
             form = Form(
@@ -289,7 +390,7 @@ class FormListAPI(restful.Resource):
                 created_by_user_id=user_id,
                 is_open=args.get('is_open', False),
                 is_active=args.get('is_active', True),
-                linked_form_id=args.get('linked_form_id'),
+                linked_form_id=linked_form_id,
                 multiple_responses=args.get('multiple_responses', False),
                 settings=args.get('settings'),
                 form_type=form_type,
@@ -314,39 +415,27 @@ class FormListAPI(restful.Resource):
 
 class FormAPI(restful.Resource):
     """Generic form operations - used by all form types"""
-    
-    @auth_required
-    def get(self, form_id):
-        """Get form definition"""
+
+    # Admin-only: returns the full authoring view of the form. Applicants read
+    # forms through FormStructureAPI.get, which applies visibility rules.
+    @form_admin_required
+    def get(self, form_id, form):
+        """Get form definition (admin only)"""
         try:
-            form = db.session.query(Form).filter_by(id=form_id).first()
-            if not form:
-                return errors.FORM_NOT_FOUND
-            
-            # Check visibility if expression exists
-            if form.visibility_expression:
-                user_id = g.current_user['id']
-                if not VisibilityEvaluator.check_form_visibility(form, user_id, form.event_id):
-                    return {'error': 'You do not have permission to access this form'}, 403
-            
             language = request.args.get('language', 'en')
             return serialize_form(form, language), 200
-            
+
         except Exception as e:
             LOGGER.error(f"Error getting form {form_id}: {str(e)}")
             LOGGER.error(traceback.format_exc())
             return errors.DB_NOT_AVAILABLE
-    
-    @auth_required
-    def put(self, form_id):
-        """Update form definition"""
+
+    @form_admin_required
+    def put(self, form_id, form):
+        """Update form definition (admin only)"""
         try:
-            form = db.session.query(Form).filter_by(id=form_id).first()
-            if not form:
-                return errors.FORM_NOT_FOUND
-            
             args = request.get_json()
-            
+
             # Update form properties
             if 'is_open' in args:
                 form.is_open = args['is_open']
@@ -357,10 +446,14 @@ class FormAPI(restful.Resource):
             if 'visibility_expression' in args:
                 form.visibility_expression = args['visibility_expression']
             if 'linked_form_id' in args:
+                if args['linked_form_id'] and not _linked_form_is_in_event(
+                    args['linked_form_id'], form.event_id
+                ):
+                    return _error('Linked form must belong to the same event', 400)
                 form.linked_form_id = args['linked_form_id']
             if 'settings' in args:
                 form.settings = args['settings']
-            
+
             # Update form name and description translations
             if 'name' in args and args['name']:
                 for lang, name_text in args['name'].items():
@@ -396,20 +489,16 @@ class FormAPI(restful.Resource):
             db.session.rollback()
             return errors.DB_NOT_AVAILABLE
     
-    @auth_required
-    def delete(self, form_id):
-        """Soft delete form"""
+    @form_admin_required
+    def delete(self, form_id, form):
+        """Soft delete form (admin only)"""
         try:
-            form = db.session.query(Form).filter_by(id=form_id).first()
-            if not form:
-                return errors.FORM_NOT_FOUND
-            
             form.is_active = False
             form.updated_at = datetime.now()
             db.session.commit()
-            
+
             return {}, 204
-            
+
         except Exception as e:
             LOGGER.error(f"Error deleting form {form_id}: {str(e)}")
             LOGGER.error(traceback.format_exc())
@@ -433,6 +522,8 @@ def _remap_dependency_expression(expression, id_map):
 class FormStructureAPI(restful.Resource):
     """Manage form structure - sections and questions"""
     
+    # Readable by applicants as well as admins - this is the endpoint the form
+    # renderer loads. Non-admins only get active forms they are allowed to see.
     @auth_required
     def get(self, form_id):
         """Get form structure with version info"""
@@ -441,27 +532,35 @@ class FormStructureAPI(restful.Resource):
             form = db.session.query(Form).filter_by(id=form_id).first()
             if not form:
                 return errors.FORM_NOT_FOUND
-            
+
+            is_admin = is_admin_of_form(form)
+            if not is_admin:
+                if not form.is_active:
+                    return errors.FORM_NOT_FOUND
+                if not VisibilityEvaluator.check_form_visibility(
+                    form, g.current_user['id'], form.event_id
+                ):
+                    return errors.FORBIDDEN
+
             language = request.args.get('language', 'en')
-            # Optionally include inactive items for admin audit
-            include_inactive = request.args.get('include_inactive', 'false').lower() == 'true'
+            # Inactive (soft-deleted) sections and questions are an admin audit
+            # concern - never expose them to respondents.
+            include_inactive = (
+                is_admin and request.args.get('include_inactive', 'false').lower() == 'true'
+            )
             return serialize_form(form, language, include_inactive=include_inactive), 200
-            
+
         except Exception as e:
             LOGGER.error(f"Error getting form structure {form_id}: {str(e)}")
             LOGGER.error(traceback.format_exc())
             return errors.DB_NOT_AVAILABLE
-    
-    @auth_required
-    def put(self, form_id):
-        """Update form structure (sections and questions) with soft delete support"""
+
+    @form_admin_required
+    def put(self, form_id, form):
+        """Update form structure (sections and questions) with soft delete support (admin only)"""
         try:
-            form = db.session.query(Form).filter_by(id=form_id).first()
-            if not form:
-                return errors.FORM_NOT_FOUND
-            
             args = request.get_json()
-            
+
             # Update form name and description translations if provided
             if 'name' in args and args['name']:
                 for lang, name_text in args['name'].items():
@@ -530,18 +629,20 @@ class FormStructureAPI(restful.Resource):
                     question.version += 1
                     question.updated_at = datetime.now()
                     LOGGER.info(f"Soft deleting question {question.id}")
-            
+
+            # Index this form's existing sections and questions once, rather
+            # than issuing a lookup query per incoming section and question.
+            existing_sections = {s.id: s for s in form.sections}
+            existing_questions = {q.id: q for q in form.questions}
+
             # Process sections
             for section_data in sections_data:
                 if 'id' in section_data:
-                    # Update existing section
-                    section = db.session.query(FormSection).filter_by(
-                        id=section_data['id'],
-                        form_id=form_id
-                    ).first()
-                    
+                    # Update existing section (scoped to this form)
+                    section = existing_sections.get(section_data['id'])
+
                     if not section:
-                        return {'error': f"Section {section_data['id']} not found"}, 404
+                        return _error(f"Section {section_data['id']} not found", 404)
                     
                     # Reactivate if it was previously soft deleted
                     if not section.is_active and section_data.get('is_active', True):
@@ -549,15 +650,26 @@ class FormStructureAPI(restful.Resource):
                         section.version += 1
                     
                     section.order = section_data.get('order', section.order)
-                    section.key = section_data.get('key', section.key)
-                    section.dependency_expression = section_data.get('dependency_expression', section.dependency_expression)
+                    # `key in data` rather than `.get(key, current)`: the editor
+                    # signals "cleared" by sending null/empty, and .get()'s
+                    # default swallowed that and kept the stale value, making
+                    # keys, dependencies and tag rules impossible to remove.
+                    if 'key' in section_data:
+                        section.key = section_data['key'] or None
+                    if 'dependency_expression' in section_data:
+                        section.dependency_expression = section_data['dependency_expression']
+                    if 'tag_expression' in section_data:
+                        section.tag_expression = section_data['tag_expression']
                     section.updated_at = datetime.now()
                     if section_data.get('dependency_expression'):
                         sections_needing_dep_remap.append((section, section_data['dependency_expression']))
 
                     # Update translations
+                    section_translations = {
+                        t.language: t for t in section.translations.all()
+                    }
                     for lang, name in section_data.get('name', {}).items():
-                        trans = section.translations.filter_by(language=lang).first()
+                        trans = section_translations.get(lang)
                         if trans:
                             trans.name = name
                             trans.description = section_data.get('description', {}).get(lang, trans.description)
@@ -574,8 +686,9 @@ class FormStructureAPI(restful.Resource):
                     section = FormSection(
                         form_id=form_id,
                         order=section_data['order'],
-                        key=section_data.get('key'),
-                        dependency_expression=section_data.get('dependency_expression')
+                        key=section_data.get('key') or None,
+                        dependency_expression=section_data.get('dependency_expression'),
+                        tag_expression=section_data.get('tag_expression')
                     )
                     db.session.add(section)
                     db.session.flush()
@@ -595,14 +708,11 @@ class FormStructureAPI(restful.Resource):
                 # Process questions in this section
                 for question_data in section_data.get('questions', []):
                     if 'id' in question_data:
-                        # Update existing question
-                        question = db.session.query(FormQuestion).filter_by(
-                            id=question_data['id'],
-                            form_id=form_id
-                        ).first()
-                        
+                        # Update existing question (scoped to this form)
+                        question = existing_questions.get(question_data['id'])
+
                         if not question:
-                            return {'error': f"Question {question_data['id']} not found"}, 404
+                            return _error(f"Question {question_data['id']} not found", 404)
                         
                         # Reactivate if it was previously soft deleted
                         if not question.is_active and question_data.get('is_active', True):
@@ -613,24 +723,41 @@ class FormStructureAPI(restful.Resource):
                         question.order = question_data.get('order', question.order)
                         question.type = question_data.get('type', question.type)
                         question.is_required = question_data.get('is_required', question.is_required)
-                        question.key = question_data.get('key', question.key)
-                        question.settings = question_data.get('settings', question.settings)
-                        question.dependency_expression = question_data.get('dependency_expression', question.dependency_expression)
-                        question.linked_question_id = question_data.get('linked_question_id', question.linked_question_id)
+                        # See the section branch above: presence-checked so the
+                        # editor can clear these, not just overwrite them.
+                        if 'key' in question_data:
+                            question.key = question_data['key'] or None
+                        if 'settings' in question_data:
+                            question.settings = question_data['settings']
+                        if 'dependency_expression' in question_data:
+                            question.dependency_expression = question_data['dependency_expression']
+                        if 'tag_expression' in question_data:
+                            question.tag_expression = question_data['tag_expression']
+                        if 'linked_question_id' in question_data:
+                            question.linked_question_id = question_data['linked_question_id']
                         question.updated_at = datetime.now()
                         if question_data.get('dependency_expression'):
                             questions_needing_dep_remap.append((question, question_data['dependency_expression']))
 
-                        # Update translations
+                        # Update translations. `options` is presence-checked for
+                        # the same reason: changing a question away from a choice
+                        # type sends no options, and defaulting to the stored
+                        # value left orphaned options behind that then failed
+                        # every free-text answer as an invalid option.
+                        has_options_key = 'options' in question_data
+                        question_translations = {
+                            t.language: t for t in question.translations.all()
+                        }
                         for lang, headline in question_data.get('headline', {}).items():
-                            trans = question.translations.filter_by(language=lang).first()
+                            trans = question_translations.get(lang)
                             if trans:
                                 trans.headline = headline
                                 trans.description = question_data.get('description', {}).get(lang, trans.description)
                                 trans.placeholder = question_data.get('placeholder', {}).get(lang, trans.placeholder)
                                 trans.validation_regex = question_data.get('validation_regex', {}).get(lang, trans.validation_regex)
                                 trans.validation_text = question_data.get('validation_text', {}).get(lang, trans.validation_text)
-                                trans.options = question_data.get('options', {}).get(lang, trans.options)
+                                if has_options_key:
+                                    trans.options = (question_data['options'] or {}).get(lang)
                             else:
                                 trans = FormQuestionTranslation(
                                     form_question_id=question.id,
@@ -651,9 +778,10 @@ class FormStructureAPI(restful.Resource):
                             order=question_data['order'],
                             question_type=question_data['type'],
                             is_required=question_data.get('is_required', True),
-                            key=question_data.get('key'),
+                            key=question_data.get('key') or None,
                             settings=question_data.get('settings'),
                             dependency_expression=question_data.get('dependency_expression'),
+                            tag_expression=question_data.get('tag_expression'),
                             linked_question_id=question_data.get('linked_question_id')
                         )
                         db.session.add(question)
@@ -717,7 +845,7 @@ class FormResponseAPI(restful.Resource):
             # Check visibility if expression exists
             if form.visibility_expression:
                 if not VisibilityEvaluator.check_form_visibility(form, user_id, form.event_id):
-                    return {'error': 'You do not have permission to access this form'}, 403
+                    return _error('You do not have permission to access this form', 403)
             
             linked_response_id = args.get('linked_response_id')
 
@@ -760,20 +888,30 @@ class FormResponseAPI(restful.Resource):
             )
             db.session.add(response)
             db.session.flush()
-            
+
             # Add answers
             if 'answers' in args:
+                valid_question_ids = _get_question_ids_for_form(form_id)
                 for answer_data in args['answers']:
                     question_id = answer_data['question_id']
                     value = answer_data['value']
-                    
+
+                    # Only accept answers to this form's own active questions -
+                    # the FK alone would happily let a caller write answers
+                    # against another form's questions.
+                    if question_id not in valid_question_ids:
+                        return {
+                            'error': 'Invalid question',
+                            'message': f'Question {question_id} does not belong to this form'
+                        }, 400
+
                     new_answer = FormAnswer(
                         response_id=response.id,
                         question_id=question_id,
                         value=value
                     )
                     db.session.add(new_answer)
-            
+
             db.session.commit()
             return serialize_response(response), 201
             
@@ -799,7 +937,7 @@ class FormResponseAPI(restful.Resource):
             response_id = args.get('response_id')
             
             if not response_id:
-                return {'error': 'response_id is required'}, 400
+                return _error('response_id is required', 400)
             
             # Find the response
             response = db.session.query(FormResponse).filter_by(
@@ -809,34 +947,44 @@ class FormResponseAPI(restful.Resource):
             ).first()
             
             if not response:
-                return {'error': 'Response not found'}, 404
+                return _error('Response not found', 404)
             
             # Check visibility if expression exists
             if response.form.visibility_expression:
                 if not VisibilityEvaluator.check_form_visibility(response.form, user_id, response.form.event_id):
-                    return {'error': 'You do not have permission to access this form'}, 403
+                    return _error('You do not have permission to access this form', 403)
             
             # Cannot update submitted response unless the form allows edits
             if response.is_submitted and not response.form.allow_edits:
-                return {'error': 'Cannot update a submitted response'}, 400
-            # If re-editing a submitted response, reset submission state
-            if response.is_submitted and response.form.allow_edits:
-                response.is_submitted = False
-                response.submitted_timestamp = None
-            
+                return _error('Cannot update a submitted response', 400)
+
+            # A submitted response stays submitted while it is edited. Silently
+            # flipping is_submitted back to False here meant that saving a
+            # draft - or the renderer's periodic autosave firing on its own -
+            # turned an applicant's completed submission into a draft that
+            # would be excluded from review, with nothing telling them so.
+            # Withdrawal is the explicit way to retract a submission.
+
             # Update answers
             if 'answers' in args:
+                valid_question_ids = _get_question_ids_for_form(form_id)
                 for answer_data in args['answers']:
                     question_id = answer_data['question_id']
                     value = answer_data['value']
-                    
+
+                    if question_id not in valid_question_ids:
+                        return {
+                            'error': 'Invalid question',
+                            'message': f'Question {question_id} does not belong to this form'
+                        }, 400
+
                     # Find existing answer
                     existing_answer = db.session.query(FormAnswer).filter_by(
                         response_id=response.id,
                         question_id=question_id,
                         is_active=True
                     ).first()
-                    
+
                     if existing_answer:
                         # Update existing
                         existing_answer.value = value
@@ -849,7 +997,7 @@ class FormResponseAPI(restful.Resource):
                             value=value
                         )
                         db.session.add(new_answer)
-            
+
             db.session.commit()
             return serialize_response(response), 200
             
@@ -872,7 +1020,7 @@ class FormResponseAPI(restful.Resource):
             # Check visibility if expression exists
             if form.visibility_expression:
                 if not VisibilityEvaluator.check_form_visibility(form, user_id, form.event_id):
-                    return {'error': 'You do not have permission to access this form'}, 403
+                    return _error('You do not have permission to access this form', 403)
             
             if form.multiple_responses:
                 # Return all responses for this user
@@ -929,7 +1077,13 @@ class FormResponseSubmitAPI(restful.Resource):
             form = db.session.query(Form).filter_by(id=form_id).first()
             if not form:
                 return {'message': 'Form not found'}, 404
-            
+
+            if not form.is_open:
+                return errors.APPLICATIONS_CLOSED
+
+            if response.is_submitted and not form.allow_edits:
+                return _error('This response has already been submitted', 400)
+
             # Server-side validation (backup to client validation)
             # Build answers dictionary for dependency evaluation
             answers_dict = {}
@@ -942,8 +1096,15 @@ class FormResponseSubmitAPI(restful.Resource):
             user_tags = VisibilityEvaluator.get_user_tags_for_event(user_id, form.event_id)
             
             validation_errors = []
-            answered_question_ids = {answer.question_id for answer in response.answers if answer.is_active}
-            
+            # A blank answer row is not an answer. Without this an unticked
+            # required checkbox (stored as the string 'false') and a cleared
+            # text field both satisfied the required check just by having a row.
+            answered_question_ids = {
+                answer.question_id
+                for answer in response.answers
+                if answer.is_active and not answer.is_blank()
+            }
+
             # Only validate answers for active and visible questions
             for section in form.sections:
                 if not section.is_active:
@@ -988,12 +1149,17 @@ class FormResponseSubmitAPI(restful.Resource):
                     
                     if not question_visible:
                         continue
-                    
+
+                    # Display-only questions render no input, so they can never
+                    # be answered and must not be treated as required.
+                    if question.type in DISPLAY_ONLY_QUESTION_TYPES:
+                        continue
+
                     # Check if required question is missing an answer
                     if question.is_required and question.id not in answered_question_ids:
                         validation_errors.append({
                             'question_id': question.id,
-                            'error': 'REQUIRED'
+                            'error': ValidationError.REQUIRED.value
                         })
             
             # Validate existing answers (only for visible questions)
@@ -1107,11 +1273,13 @@ class FormResponseListAdminAPI(restful.Resource):
     def get(self, form_id, event_id):
         """Get paginated list of all responses for a form (admin only)"""
         try:
-            # Verify form exists
+            # Verify form exists and belongs to the event the caller administers
             form = db.session.query(Form).filter_by(id=form_id).first()
             if not form:
                 return errors.FORM_NOT_FOUND
-            
+            if not verify_form_event(form, event_id):
+                return errors.FORBIDDEN
+
             # Parse pagination parameters
             try:
                 page = int(request.args.get('page', 1))
@@ -1202,11 +1370,13 @@ class FormResponseDetailAdminAPI(restful.Resource):
     def get(self, form_id, response_id, event_id):
         """Get detailed response including answers and linked response (admin only)"""
         try:
-            # Verify form exists
+            # Verify form exists and belongs to the event the caller administers
             form = db.session.query(Form).filter_by(id=form_id).first()
             if not form:
                 return errors.FORM_NOT_FOUND
-            
+            if not verify_form_event(form, event_id):
+                return errors.FORBIDDEN
+
             # Get response with user information
             result = db.session.query(FormResponse, AppUser).join(
                 AppUser, FormResponse.user_id == AppUser.id
@@ -1216,7 +1386,7 @@ class FormResponseDetailAdminAPI(restful.Resource):
             ).first()
             
             if not result:
-                return {'error': 'Response not found'}, 404
+                return _error('Response not found', 404)
             
             response, user = result
             
@@ -1403,8 +1573,10 @@ class FormReviewAssignmentAPI(restful.Resource):
     def get(self, form_id, event_id):
         """Return per-reviewer allocation and completion counts, with reviewer tags."""
         try:
+            # event_id is scoped into the lookup so an admin of another event
+            # cannot address this event's review form.
             review_form = db.session.query(Form).filter_by(
-                id=form_id, form_type='review'
+                id=form_id, form_type='review', event_id=event_id
             ).first()
             if not review_form:
                 return errors.FORM_NOT_FOUND
@@ -1475,14 +1647,16 @@ class FormReviewAssignmentAPI(restful.Resource):
             num_reviews = args.get('num_reviews', 0)
             tag_ids = args.get('tag_ids') or []
 
+            # event_id is scoped into the lookup so an admin of another event
+            # cannot address this event's review form.
             review_form = db.session.query(Form).filter_by(
-                id=form_id, form_type='review'
+                id=form_id, form_type='review', event_id=event_id
             ).first()
             if not review_form:
                 return errors.FORM_NOT_FOUND
 
             if not review_form.linked_form_id:
-                return {'error': 'Review form has no linked application form'}, 400
+                return _error('Review form has no linked application form', 400)
 
             reviewer = user_repository.get_by_email(reviewer_user_email, g.organisation.id)
             if reviewer is None:
@@ -1554,6 +1728,13 @@ class FormReviewAssignmentAPI(restful.Resource):
                 if r.id not in fully_assigned_ids and r.id not in already_assigned_ids
             ]
 
+            # Clamp: a negative num_reviews made random.sample raise, which the
+            # blanket handler then reported as a database error.
+            try:
+                num_reviews = max(0, int(num_reviews))
+            except (TypeError, ValueError):
+                return _error('num_reviews must be a number', 400)
+
             to_assign = random.sample(eligible_ids, min(len(eligible_ids), num_reviews))
 
             for app_response_id in to_assign:
@@ -1598,8 +1779,10 @@ class FormReviewAssignmentAPI(restful.Resource):
             num_reviews = args.get('num_reviews', 0)
             tag_ids = args.get('tag_ids') or []
 
+            # event_id is scoped into the lookup so an admin of another event
+            # cannot address this event's review form.
             review_form = db.session.query(Form).filter_by(
-                id=form_id, form_type='review'
+                id=form_id, form_type='review', event_id=event_id
             ).first()
             if not review_form:
                 return errors.FORM_NOT_FOUND
@@ -1633,12 +1816,21 @@ class FormReviewAssignmentAPI(restful.Resource):
                     return all(t in resp_tag_ids for t in tag_ids)
                 unstarted = [r for r in unstarted if _has_all_tags(r)]
 
+            # Guard before the loop: a post-increment check here would delete one
+            # assignment even when num_reviews is 0.
+            try:
+                num_reviews = int(num_reviews)
+            except (TypeError, ValueError):
+                return _error('num_reviews must be a number', 400)
+            if num_reviews <= 0:
+                return {'num_deleted': 0}, 200
+
             counter = 0
             for response in unstarted:
-                db.session.delete(response)
-                counter += 1
                 if counter >= num_reviews:
                     break
+                db.session.delete(response)
+                counter += 1
 
             db.session.commit()
             return {'num_deleted': counter}, 200
@@ -1660,11 +1852,9 @@ class FormResponseTagAPI(restful.Resource):
             args = request.get_json()
             tag_id = args.get('tag_id')
             if not tag_id:
-                return {'error': 'tag_id is required'}, 400
+                return _error('tag_id is required', 400)
 
-            form_response = db.session.query(FormResponse).filter_by(
-                id=response_id, form_id=form_id
-            ).first()
+            form_response = _get_response_for_event(response_id, form_id, event_id)
             if not form_response:
                 return errors.OBJECT_NOT_FOUND
 
@@ -1678,7 +1868,7 @@ class FormResponseTagAPI(restful.Resource):
                 form_response_id=response_id, tag_id=tag_id
             ).first()
             if existing:
-                return {'error': 'Tag already applied to this response'}, 400
+                return _error('Tag already applied to this response', 400)
 
             frt = FormResponseTag(form_response_id=response_id, tag_id=tag_id)
             db.session.add(frt)
@@ -1706,7 +1896,10 @@ class FormResponseTagAPI(restful.Resource):
             args = request.get_json()
             tag_id = args.get('tag_id')
             if not tag_id:
-                return {'error': 'tag_id is required'}, 400
+                return _error('tag_id is required', 400)
+
+            if not _get_response_for_event(response_id, form_id, event_id):
+                return errors.OBJECT_NOT_FOUND
 
             frt = db.session.query(FormResponseTag).filter_by(
                 form_response_id=response_id, tag_id=tag_id
@@ -1731,11 +1924,9 @@ class FormResponseAdminUpdateAPI(restful.Resource):
     @event_admin_required
     def patch(self, form_id, response_id, event_id):
         try:
-            response = db.session.query(FormResponse).filter_by(
-                id=response_id, form_id=form_id
-            ).first()
+            response = _get_response_for_event(response_id, form_id, event_id)
             if not response:
-                return {'error': 'Response not found'}, 404
+                return _error('Response not found', 404)
 
             args = request.get_json() or {}
 
@@ -1818,17 +2009,17 @@ class FormResponseReviewsAdminAPI(restful.Resource):
             args = request.get_json() or {}
             reviewer_email = args.get('reviewer_email', '').strip()
             if not reviewer_email:
-                return {'error': 'reviewer_email is required'}, 400
+                return _error('reviewer_email is required', 400)
 
             reviewer = db.session.query(AppUser).filter(
                 db.func.lower(AppUser.email) == reviewer_email.lower()
             ).first()
             if not reviewer:
-                return {'error': 'No user found with that email address'}, 404
+                return _error('No user found with that email address', 404)
 
             review_form = self._get_review_form(form_id, event_id)
             if not review_form:
-                return {'error': 'No review form is configured for this event'}, 404
+                return _error('No review form is configured for this event', 404)
 
             existing = db.session.query(FormResponse).filter_by(
                 form_id=review_form.id,
@@ -1836,7 +2027,7 @@ class FormResponseReviewsAdminAPI(restful.Resource):
                 linked_response_id=response_id
             ).first()
             if existing and not existing.is_withdrawn:
-                return {'error': 'This reviewer is already assigned'}, 400
+                return _error('This reviewer is already assigned', 400)
 
             review_response = FormResponse(
                 form_id=review_form.id,
@@ -1871,7 +2062,7 @@ class FormResponseReviewsAdminAPI(restful.Resource):
             args = request.get_json() or {}
             reviewer_user_id = args.get('reviewer_user_id')
             if not reviewer_user_id:
-                return {'error': 'reviewer_user_id is required'}, 400
+                return _error('reviewer_user_id is required', 400)
 
             review_form = self._get_review_form(form_id, event_id)
             if not review_form:
@@ -1886,7 +2077,7 @@ class FormResponseReviewsAdminAPI(restful.Resource):
                 return errors.OBJECT_NOT_FOUND
 
             if review_response.is_submitted:
-                return {'error': 'Cannot remove a reviewer who has already submitted their review'}, 400
+                return _error('Cannot remove a reviewer who has already submitted their review', 400)
 
             db.session.delete(review_response)
             db.session.commit()
@@ -1905,8 +2096,10 @@ class FormReviewSummaryAPI(restful.Resource):
     @event_admin_required
     def get(self, form_id, event_id):
         try:
+            # event_id is scoped into the lookup so an admin of another event
+            # cannot address this event's review form.
             review_form = db.session.query(Form).filter_by(
-                id=form_id, form_type='review'
+                id=form_id, form_type='review', event_id=event_id
             ).first()
             if not review_form:
                 return errors.FORM_NOT_FOUND

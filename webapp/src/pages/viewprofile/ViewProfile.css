@@ -24,7 +24,11 @@
     width: 70%;
 }
 
-.container-fluid {
+/* Scoped to this page's own container. CSS imported by a component is global, so
+   as an unscoped `.container-fluid` rule this centred the text of every page in
+   the app - which is why the form editor and the response detail view had
+   centred labels floating above left-aligned inputs. */
+.container-fluid .user-profile-container {
     text-align: -webkit-center;
 }
 

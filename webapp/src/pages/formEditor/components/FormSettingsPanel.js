@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import VisibilityExpressionEditor from './VisibilityExpressionEditor';
 import { formServices } from '../../../services/form/form.service';
 
-const FormSettingsPanel = ({ form, onChange, onClose, t }) => {
+const FormSettingsPanel = ({ form, onChange, onClose, t, eventId }) => {
   const [availableForms, setAvailableForms] = useState([]);
   const [loadingForms, setLoadingForms] = useState(false);
 
@@ -10,7 +10,10 @@ const FormSettingsPanel = ({ form, onChange, onClose, t }) => {
     const fetchAvailableForms = async () => {
       setLoadingForms(true);
       try {
-        const response = await formServices.getFormList({ is_active: true });
+        // Scoped to this event - an unscoped list would offer every form in the
+        // system as a link target, leaking other events' form names and
+        // allowing links across events.
+        const response = await formServices.getFormList(eventId, { is_active: true });
         if (response.forms) {
           setAvailableForms(response.forms.filter(f => f.id !== form.id));
         }
@@ -20,8 +23,8 @@ const FormSettingsPanel = ({ form, onChange, onClose, t }) => {
         setLoadingForms(false);
       }
     };
-    fetchAvailableForms();
-  }, [form.id]);
+    if (eventId) fetchAvailableForms();
+  }, [form.id, eventId]);
 
   const handleChange = (field, value) => onChange(field, value);
   const handleSettingsChange = (settingKey, value) =>
@@ -93,6 +96,8 @@ const FormSettingsPanel = ({ form, onChange, onClose, t }) => {
             <VisibilityExpressionEditor
               expression={form.visibility_expression}
               onChange={(value) => handleChange('visibility_expression', value)}
+              scope="form"
+              eventId={eventId}
             />
           </section>
 

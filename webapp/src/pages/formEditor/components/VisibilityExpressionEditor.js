@@ -1,9 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { tagsService } from '../../../services/tags/tags.service';
 
-const VisibilityExpressionEditor = ({ expression, onChange }) => {
+// Tags that Baobab derives from a user's state rather than from the event's tag
+// list, so they will never appear in the tag picker but are valid to reference.
+const AUTOMATIC_TAGS = ['invited_guest', 'selected_attendee'];
+
+const VisibilityExpressionEditor = ({ expression, onChange, scope = 'form', eventId = null }) => {
   const { t } = useTranslation();
   const [showEditor, setShowEditor] = useState(false);
+  const [availableTags, setAvailableTags] = useState([]);
+
+  // Offer the event's real tag names - free text would let a single typo produce
+  // a rule that silently matches nobody, with nothing indicating why.
+  useEffect(() => {
+    if (!eventId) return;
+    let cancelled = false;
+    tagsService.getTagList(eventId, 'en').then(result => {
+      if (cancelled || !result.tags) return;
+      const names = result.tags
+        .map(tag => (typeof tag.name === 'object' ? tag.name.en || Object.values(tag.name)[0] : tag.name))
+        .filter(Boolean);
+      setAvailableTags(names);
+    });
+    return () => { cancelled = true; };
+  }, [eventId]);
+
+  const tagChoices = [...AUTOMATIC_TAGS, ...availableTags.filter(n => !AUTOMATIC_TAGS.includes(n))];
+
+  // Copy adapts to where this editor is embedded (form/section/question),
+  // rather than always saying "Form Visibility" / "this form".
+  const scopeCopy = {
+    form: {
+      title: t('Form Visibility'),
+      help: t('Control who can see this form based on tags'),
+      empty: t('No visibility restrictions set. The form will be visible to all users.')
+    },
+    section: {
+      title: t('Section Visibility'),
+      help: t('Control who can see this section based on tags'),
+      empty: t('No visibility restrictions set. The section will be visible to all users.')
+    },
+    question: {
+      title: t('Question Visibility'),
+      help: t('Control who can see this question based on tags'),
+      empty: t('No visibility restrictions set. The question will be visible to all users.')
+    }
+  }[scope] || {};
 
   const createSimpleCondition = () => ({ tag: '' });
   const createLogicalExpression = (operator) => ({ operator, conditions: [createSimpleCondition()] });
@@ -69,13 +112,27 @@ const VisibilityExpressionEditor = ({ expression, onChange }) => {
 
     return (
       <div key={path} className="flex gap-2 items-center my-2">
-        <input
-          type="text"
-          value={condition.tag || ''}
-          onChange={(e) => updateCondition(path, { ...condition, tag: e.target.value })}
-          placeholder={t('Enter tag name (e.g., invited_guest, selected_attendee)')}
-          className="flex-1 px-3 py-2 border border-border rounded-md text-sm font-mono bg-white focus:outline-none focus:ring-2 focus:ring-ring"
-        />
+        <div className="flex-1">
+          <input
+            type="text"
+            list={`visibility-tags-${scope}`}
+            value={condition.tag || ''}
+            onChange={(e) => updateCondition(path, { ...condition, tag: e.target.value })}
+            placeholder={t('Enter tag name (e.g., invited_guest, selected_attendee)')}
+            className={`w-full px-3 py-2 border rounded-md text-sm font-mono bg-white focus:outline-none focus:ring-2 focus:ring-ring ${
+              condition.tag && tagChoices.length > 0 && !tagChoices.includes(condition.tag)
+                ? 'border-warning' : 'border-border'
+            }`}
+          />
+          <datalist id={`visibility-tags-${scope}`}>
+            {tagChoices.map(name => <option key={name} value={name} />)}
+          </datalist>
+          {condition.tag && tagChoices.length > 0 && !tagChoices.includes(condition.tag) && (
+            <span className="block text-warning text-xs mt-1">
+              {t('No tag with this name exists for this event - nobody will match it.')}
+            </span>
+          )}
+        </div>
         <button
           type="button"
           onClick={() => convertToLogical(path, 'AND')}
@@ -168,10 +225,8 @@ const VisibilityExpressionEditor = ({ expression, onChange }) => {
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
         <label className="flex flex-col gap-1">
-          <span className="font-semibold text-foreground text-sm">{t('Form Visibility')}</span>
-          <span className="text-sm text-muted-foreground font-normal">
-            {t('Control who can see this form based on tags (e.g., invited_guest, selected_attendee)')}
-          </span>
+          <span className="font-semibold text-foreground text-sm">{scopeCopy.title}</span>
+          <span className="text-sm text-muted-foreground font-normal">{scopeCopy.help}</span>
         </label>
         <div className="flex gap-2 flex-shrink-0 ml-4">
           {hasExpression && (
@@ -210,7 +265,7 @@ const VisibilityExpressionEditor = ({ expression, onChange }) => {
               renderConditionEditor(expression, '', null)
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                <p className="mb-4">{t('No visibility restrictions set. The form will be visible to all users.')}</p>
+                <p className="mb-4">{scopeCopy.empty}</p>
                 <button
                   type="button"
                   onClick={() => onChange(createSimpleCondition())}
