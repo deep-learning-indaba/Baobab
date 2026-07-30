@@ -238,6 +238,12 @@ jobs:
       - name: Deploy backend to App Engine staging service
         run: gcloud app deploy app.generated.yaml --quiet --promote --stop-previous-version --version=v1
 
+      # Deployed separately from the service: the version and promotion flags
+      # above don't apply to config files. Runs after the service so the task
+      # endpoint exists before cron starts calling it.
+      - name: Deploy cron configuration
+        run: gcloud app deploy cron.yaml --quiet
+
   frontend:
     name: Build and deploy staging frontend
     runs-on: ubuntu-latest
