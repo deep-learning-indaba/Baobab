@@ -23,6 +23,18 @@ SMTP_SENDER_NAME = os.getenv('SMTP_SENDER_NAME', None)
 SMTP_SENDER_EMAIL = os.getenv('SMTP_SENDER_EMAIL', None)
 SMTP_HOST = os.getenv('SMTP_HOST', None)
 SMTP_PORT = os.getenv('SMTP_PORT', None)
+# Messages per second a shared SMTP connection will send. SES rejects anything
+# above the account's quota, so this must stay under it.
+SMTP_MAX_SEND_RATE = float(os.getenv('SMTP_MAX_SEND_RATE', 10))
+
+# Outbox worker tuning. The worker occupies a gunicorn worker for as long as it
+# runs, and there are only a handful of those, so the budget is set to well under
+# the cron interval to leave capacity for user traffic — not to the largest value
+# the gunicorn timeout would allow. The batch is then sized to what the budget can
+# usually drain at SMTP_MAX_SEND_RATE, so finishing is the normal case and
+# releasing the remainder is the exception.
+OUTBOX_BATCH_SIZE = int(os.getenv('OUTBOX_BATCH_SIZE', 250))
+OUTBOX_TIME_BUDGET_SECONDS = float(os.getenv('OUTBOX_TIME_BUDGET_SECONDS', 30))
 
 GCP_CREDENTIALS_DICT = {
     'type': 'service_account',

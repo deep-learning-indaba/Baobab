@@ -13,6 +13,12 @@ class Announcement(db.Model):
     send_at = db.Column(db.DateTime(), nullable=True)
     expiry_at = db.Column(db.DateTime(), nullable=True)
 
+    # Who the announcement was addressed to, recorded so that a resend can reach
+    # the same audience. Null on announcements sent before these were captured.
+    critical = db.Column(db.Boolean(), nullable=True)
+    target_audience = db.Column(db.String(16), nullable=True)
+    tag_id = db.Column(db.Integer(), db.ForeignKey('tag.id'), nullable=True)
+
 
 class AnnouncementTranslation(db.Model):
     __tablename__ = 'announcement_translation'

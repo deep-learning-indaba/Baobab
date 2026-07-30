@@ -9,6 +9,7 @@ export var announcementService = {
   listAdmin: listAdmin,
   getAnnouncement: getAnnouncement,
   create: create,
+  resend: resend,
   remove: remove,
   subscribePush: subscribePush,
   unsubscribePush: unsubscribePush,
@@ -52,6 +53,14 @@ function getAnnouncement(eventId, announcementId, language) {
 function create(payload) {
   return axios
     .post(baseUrl + '/api/v1/announcement', payload, { headers: authHeader() })
+    .then(function(r) { return { data: r.data, error: '' }; })
+    .catch(function(e) { return { data: null, error: extractErrorMessage(e) }; });
+}
+
+function resend(announcementId, eventId, options) {
+  var payload = Object.assign({ event_id: eventId }, options || {});
+  return axios
+    .post(baseUrl + '/api/v1/announcement/' + announcementId + '/resend', payload, { headers: authHeader() })
     .then(function(r) { return { data: r.data, error: '' }; })
     .catch(function(e) { return { data: null, error: extractErrorMessage(e) }; });
 }

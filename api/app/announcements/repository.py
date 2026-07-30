@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from sqlalchemy import func
+
 from app import db
 from app.announcements.models import Announcement, AnnouncementTranslation, AnnouncementReceipt, PushSubscription
 
@@ -30,12 +32,16 @@ class AnnouncementRepository:
         return db.session.query(Announcement).get(announcement_id)
 
     @staticmethod
-    def create(event_id, user_id, expiry_at, translations):
+    def create(event_id, user_id, expiry_at, translations, critical=None,
+               target_audience=None, tag_id=None):
         ann = Announcement(
             event_id=event_id,
             created_by_user_id=user_id,
             sent_at=datetime.utcnow(),
             expiry_at=expiry_at,
+            critical=critical,
+            target_audience=target_audience,
+            tag_id=tag_id,
         )
         db.session.add(ann)
         db.session.flush()
@@ -106,6 +112,23 @@ class AnnouncementRepository:
                 .join(Announcement, Announcement.id == AnnouncementReceipt.announcement_id)
                 .filter(Announcement.event_id == event_id, AnnouncementReceipt.user_id == user_id)
                 .all())
+
+    @staticmethod
+    def receipt_counts_for_event(event_id):
+        """{announcement_id: {'delivered': n, 'opened': n}} for a whole event.
+
+        One query for the event, so the admin dashboard doesn't fan out into two
+        counts per announcement.
+        """
+        rows = (db.session.query(
+                    AnnouncementReceipt.announcement_id,
+                    func.count(AnnouncementReceipt.id),
+                    func.count(AnnouncementReceipt.opened_at))
+                .join(Announcement, Announcement.id == AnnouncementReceipt.announcement_id)
+                .filter(Announcement.event_id == event_id)
+                .group_by(AnnouncementReceipt.announcement_id)
+                .all())
+        return {row[0]: {'delivered': row[1], 'opened': row[2]} for row in rows}
 
     @staticmethod
     def count_delivered(announcement_id):

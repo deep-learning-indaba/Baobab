@@ -116,6 +116,9 @@ importers:
       rehype-katex:
         specifier: ^6.0.2
         version: 6.0.3
+      remark-breaks:
+        specifier: ^3.0.3
+        version: 3.0.3
       remark-gfm:
         specifier: ^3.0.0
         version: 3.0.1
@@ -2371,6 +2374,9 @@ packages:
   mdast-util-math@2.0.2:
     resolution: {integrity: sha512-8gmkKVp9v6+Tgjtq6SYx9kGPpTf6FVYRa53/DLh479aldR9AyP48qeVOgNZ5X7QUK7nOy4yw7vg6mbiGcs9jWQ==}
 
+  mdast-util-newline-to-break@1.0.0:
+    resolution: {integrity: sha512-491LcYv3gbGhhCrLoeALncQmega2xPh+m3gbsIhVsOX4sw85+ShLFPvPyibxc1Swx/6GtzxgVodq+cGa/47ULg==}
+
   mdast-util-phrasing@3.0.1:
     resolution: {integrity: sha512-WmI1gTXUBJo4/ZmSk79Wcb2HcjPJBzM1nlI/OUWA8yk2X9ik3ffNbBGsU+09BFmXaL1IBb9fiuvq6/KMiNycSg==}
 
@@ -2967,6 +2973,9 @@ packages:
 
   rehype-katex@6.0.3:
     resolution: {integrity: sha512-ByZlRwRUcWegNbF70CVRm2h/7xy7jQ3R9LaY4VVSvjnoVWwWVhNL60DiZsBpC5tSzYQOCvDbzncIpIjPZWodZA==}
+
+  remark-breaks@3.0.3:
+    resolution: {integrity: sha512-C7VkvcUp1TPUc2eAYzsPdaUh8Xj4FSbQnYA5A9f80diApLZscTDeG7efiWP65W8hV2sEy3JuGVU0i6qr5D8Hug==}
 
   remark-gfm@3.0.1:
     resolution: {integrity: sha512-lEFDoi2PICJyNrACFOfDD3JlLkuSbOa5Wd8EPt06HUdptv8Gn0bxYTdbU/XXQ3swAPkEaGxxPN9cbnMHvVu1Ig==}
@@ -6050,6 +6059,11 @@ snapshots:
       longest-streak: 3.1.0
       mdast-util-to-markdown: 1.5.0
 
+  mdast-util-newline-to-break@1.0.0:
+    dependencies:
+      '@types/mdast': 3.0.15
+      mdast-util-find-and-replace: 2.2.2
+
   mdast-util-phrasing@3.0.1:
     dependencies:
       '@types/mdast': 3.0.15
@@ -6850,6 +6864,12 @@ snapshots:
       hast-util-to-text: 3.1.2
       katex: 0.16.45
       unist-util-visit: 4.1.2
+
+  remark-breaks@3.0.3:
+    dependencies:
+      '@types/mdast': 3.0.15
+      mdast-util-newline-to-break: 1.0.0
+      unified: 10.1.2
 
   remark-gfm@3.0.1:
     dependencies:

@@ -75,6 +75,11 @@ def appengine_lifecycle():
 def populate_organisation():
     if request.path.startswith('/_ah/'):
         return
+    if request.path.startswith('/api/v1/tasks/'):
+        # Scheduled tasks are invoked by App Engine cron, which sends no Origin
+        # or Referer, and resolve_from_domain rejects an empty domain. Task
+        # handlers carry the organisation on the work they process instead.
+        return
     if request.path == '/api/v1/file' and request.method == 'GET':
         # File downloads are opened as direct top-level navigations (e.g. clicking
         # a link opened in a new tab), not XHR/fetch calls from the webapp, so there's
@@ -138,6 +143,7 @@ from .connections.models import Connection, ConnectionReport
 from .programme.models import Session, SessionTranslation, Speaker, SessionSpeaker, SessionTag
 from .announcements.models import Announcement, AnnouncementTranslation, AnnouncementReceipt, PushSubscription
 from .engagement.models import EngagementEvent
+from .outbox.models import OutboxMessage
 # Define login and registration forms (for flask-login)
 class LoginForm(form.Form):
     email = fields.TextField(validators=[validators.required()])
@@ -261,4 +267,5 @@ admin.add_view(BaobabModelView(Speaker, db.session))
 admin.add_view(BaobabModelView(Announcement, db.session))
 admin.add_view(BaobabModelView(PushSubscription, db.session))
 admin.add_view(BaobabModelView(EngagementEvent, db.session))
+admin.add_view(BaobabModelView(OutboxMessage, db.session))
 

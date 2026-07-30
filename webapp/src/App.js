@@ -95,7 +95,7 @@ class LanguageSelectorComponent extends Component {
               aria-expanded={this.state.isOpen}
             >
               <i className="fas fa-globe menu-icon" />{" "}
-              {this.props.i18n.language}
+              <span className="lang-code-text">{this.props.i18n.language}</span>
             </button>
             {this.state.isOpen && (
               <div className="dropdown-menu show" aria-labelledby="userDropdown">
@@ -120,7 +120,6 @@ class AppComponent extends Component {
 
     this.state = {
       user: JSON.parse(localStorage.getItem("user")),
-      collapsed: true,
       eventKey: null,
       currentEvent: null,
       error: null
@@ -180,10 +179,6 @@ class AppComponent extends Component {
 
   }
 
-  toggleMenu = () => {
-    this.setState({ collapsed: !this.state.collapsed });
-  };
-
   setEvent = (eventKey, event) => {
     this.setState({
       eventKey: eventKey,
@@ -215,36 +210,18 @@ class AppComponent extends Component {
                 className="d-inline-block align-top brand-image"
                 alt=""
               />
-              {this.props.organisation && this.props.organisation.system_name}
+              <span className="brand-name-text">
+                {this.props.organisation && this.props.organisation.system_name}
+              </span>
             </a>
-            <div
-              className={
-                "collapse navbar-collapse" +
-                (this.state.collapsed ? " collapsed" : "")
-              }
-              id="navbarNav"
-            >
+            <div className="navbar-collapse">
               <ul className="navbar-nav mr-auto"></ul>
               <LanguageSelector organisation={this.props.organisation} />
               <UserDropdown
                 logout={this.handleLogout}
                 user={this.state.user}
-                onClick={this.toggleMenu}
               />
             </div>
-            <div>
-              <ul className="navbar-nav mr-auto"></ul>
-            </div>
-            <button
-              className="navbar-toggler"
-              type="button"
-              onClick={this.toggleMenu}
-              aria-controls="navbarNav"
-              aria-expanded={!this.state.collapsed}
-              aria-label="Toggle navigation"
-            >
-              <span className="navbar-toggler-icon" />
-            </button>
           </nav>
           <div className="Body">
             <div className="container-fluid">
