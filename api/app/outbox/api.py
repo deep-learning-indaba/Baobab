@@ -16,17 +16,28 @@ def is_scheduler_request():
 
 
 class OutboxWorkerAPI(restful.Resource):
-    """POST /api/v1/tasks/outbox — deliver queued emails and push notifications.
+    """GET|POST /api/v1/tasks/outbox — deliver queued emails and push notifications.
 
     Driven every minute by App Engine cron (api/cron.yaml). Each run is bounded
     by a time budget, so a backlog drains over several runs instead of one long
     request.
+
+    GET is what actually runs in production: cron.yaml has no field for a method
+    and the scheduler always issues GET, so the worker has to answer it despite
+    the request not being read-only. POST is accepted as well, for invoking a run
+    by hand.
     """
 
-    def post(self):
+    def _run(self):
         if not is_scheduler_request():
             return errors.FORBIDDEN
 
         summary = deliver_pending()
         LOGGER.info('Outbox run complete: %s', summary)
         return summary, 200
+
+    def get(self):
+        return self._run()
+
+    def post(self):
+        return self._run()

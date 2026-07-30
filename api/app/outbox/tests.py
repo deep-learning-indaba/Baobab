@@ -347,18 +347,17 @@ class OutboxPushDeliveryTest(OutboxTestCase):
 
 class OutboxWorkerApiTest(OutboxTestCase):
 
-    def test_worker_rejects_requests_without_the_cron_header(self):
-        response = self.app.post('/api/v1/tasks/outbox')
+    def test_worker_answers_GET_because_that_is_what_cron_sends(self):
+        """cron.yaml cannot specify a method and the scheduler always issues GET.
+        Accepting only POST returns 405 and the queue silently never drains."""
+        self._message(source_id=1)
 
-        self.assertEqual(response.status_code, 403)
+        response = self.app.get('/api/v1/tasks/outbox', headers=CRON_HEADER)
 
-    def test_worker_rejects_a_forged_cron_header_value(self):
-        response = self.app.post('/api/v1/tasks/outbox',
-                                 headers={'X-Appengine-Cron': 'yes-please'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.data)['sent'], 1)
 
-        self.assertEqual(response.status_code, 403)
-
-    def test_worker_delivers_the_queue(self):
+    def test_worker_answers_POST_for_a_manual_run(self):
         self._message(source_id=1)
 
         response = self.app.post('/api/v1/tasks/outbox', headers=CRON_HEADER)
@@ -368,9 +367,19 @@ class OutboxWorkerApiTest(OutboxTestCase):
         self.assertEqual(summary['claimed'], 1)
         self.assertEqual(summary['sent'], 1)
 
+    def test_worker_rejects_requests_without_the_cron_header(self):
+        for method in (self.app.get, self.app.post):
+            self.assertEqual(method('/api/v1/tasks/outbox').status_code, 403)
+
+    def test_worker_rejects_a_forged_cron_header_value(self):
+        for method in (self.app.get, self.app.post):
+            response = method('/api/v1/tasks/outbox',
+                              headers={'X-Appengine-Cron': 'yes-please'})
+            self.assertEqual(response.status_code, 403)
+
     def test_worker_needs_no_organisation_on_the_request(self):
         """Cron sends no Origin or Referer; resolving one would 400 the request."""
-        response = self.app.post('/api/v1/tasks/outbox', headers=CRON_HEADER,
-                                 environ_overrides={'HTTP_ORIGIN': '', 'HTTP_REFERER': ''})
+        response = self.app.get('/api/v1/tasks/outbox', headers=CRON_HEADER,
+                                environ_overrides={'HTTP_ORIGIN': '', 'HTTP_REFERER': ''})
 
         self.assertEqual(response.status_code, 200)
