@@ -4,12 +4,15 @@ from datetime import datetime, timedelta
 from unittest.mock import patch, MagicMock
 
 from app import db
+from app.announcements.api import _enqueue
 from app.announcements.models import Announcement, AnnouncementTranslation, AnnouncementReceipt, PushSubscription
 from app.announcements.repository import AnnouncementRepository
 from app.attendance.models import Checkin
-from app.events.models import EventRole
+from app.events.models import Event, EventRole
 from app.invitedGuest.models import InvitedGuest, InvitedGuestTag
 from app.offer.models import OfferTag
+from app.outbox.models import OutboxChannel, OutboxMessage, OutboxStatus
+from app.users.models import AppUser
 from app.utils.testing import ApiTestCase
 
 
@@ -664,6 +667,345 @@ class AnnouncementApiTest(ApiTestCase):
         self.assertEqual(data[0]['title'], 'Stats Test')
         self.assertEqual(data[0]['delivered_count'], 2)
         self.assertEqual(data[0]['opened_count'], 0)
+
+
+class AnnouncementQueueingTest(ApiTestCase):
+    """Sending an announcement must queue delivery, never perform it inline."""
+
+    def setUp(self):
+        super().setUp()
+        event = self.add_event(key='QUEUE2025')
+        self.event_id = event.id
+
+        comms = self.add_user('comms@test.com')
+        self.add_event_role('comms-officer', comms.id, self.event_id)
+
+        self.attendee1_id = self.add_user('a1@test.com').id
+        self.attendee2_id = self.add_user('a2@test.com').id
+        for user_id in (self.attendee1_id, self.attendee2_id):
+            _invited_guest(self.event_id, user_id)
+            _checkin(self.event_id, user_id)
+
+        # Authenticating issues a request, which tears down the session and
+        # detaches everything above, so it has to come last.
+        self.comms_header = self.get_auth_header_for('comms@test.com')
+
+    def _send(self, critical=False, translations=None, **extra):
+        payload = {
+            'event_id': self.event_id,
+            'translations': translations or [
+                {'language': 'en', 'title': 'Fire drill', 'body_markdown': 'Please leave.'},
+            ],
+            'critical': critical,
+        }
+        payload.update(extra)
+        response = self.app.post(
+            '/api/v1/announcement',
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=self.comms_header,
+        )
+        return response, json.loads(response.data)
+
+    def _messages(self, channel=None):
+        query = db.session.query(OutboxMessage).filter(OutboxMessage.source_type == 'announcement')
+        if channel:
+            query = query.filter(OutboxMessage.channel == channel)
+        return query.all()
+
+    @patch('app.utils.emailer.smtplib.SMTP')
+    def test_sending_opens_no_smtp_connection(self, mock_smtp):
+        response, _ = self._send(critical=True)
+
+        self.assertEqual(response.status_code, 201)
+        mock_smtp.assert_not_called()
+
+    def test_a_critical_announcement_queues_email_and_push_per_recipient(self):
+        _, data = self._send(critical=True)
+
+        self.assertEqual(data['audience_count'], 2)
+        self.assertEqual(data['queued_count'], 4)
+        self.assertEqual(len(self._messages(OutboxChannel.EMAIL)), 2)
+        self.assertEqual(len(self._messages(OutboxChannel.PUSH)), 2)
+
+    def test_a_non_critical_announcement_queues_push_only(self):
+        _, data = self._send(critical=False)
+
+        self.assertEqual(data['queued_count'], 2)
+        self.assertEqual(self._messages(OutboxChannel.EMAIL), [])
+        self.assertEqual(len(self._messages(OutboxChannel.PUSH)), 2)
+
+    def test_queued_messages_start_pending_and_addressed(self):
+        self._send(critical=True)
+
+        recipients = sorted(m.recipient for m in self._messages(OutboxChannel.EMAIL))
+        self.assertEqual(recipients, ['a1@test.com', 'a2@test.com'])
+        for message in self._messages(OutboxChannel.EMAIL):
+            self.assertEqual(message.status, OutboxStatus.PENDING)
+            self.assertEqual(message.event_id, self.event_id)
+            self.assertEqual(message.sender_email, 'contact@org.com')
+
+    def test_queued_push_carries_a_usable_payload(self):
+        """Bulk insert must round-trip the JSON payload, or push delivers nothing."""
+        _, data = self._send()
+
+        payload = self._messages(OutboxChannel.PUSH)[0].payload
+        self.assertEqual(payload['title'], 'Fire drill')
+        self.assertEqual(payload['body'], 'Please leave.')
+        self.assertEqual(payload['url'],
+                         '/QUEUE2025/event-app/announcements/{}'.format(data['id']))
+        self.assertEqual(payload['tag'], 'ann-{}'.format(data['id']))
+
+    def test_the_inbox_is_populated_before_anything_is_delivered(self):
+        """Receipts are the inbox, so they can't wait on the worker."""
+        _, data = self._send(critical=True)
+
+        receipts = (db.session.query(AnnouncementReceipt)
+                    .filter_by(announcement_id=data['id']).all())
+        self.assertEqual(len(receipts), 2)
+        self.assertTrue(all(r.delivered_at is not None for r in receipts))
+
+    def test_each_recipient_is_queued_their_own_language(self):
+        db.session.query(AppUser).filter_by(id=self.attendee1_id).update(
+            {'user_primaryLanguage': 'fr'})
+        db.session.commit()
+
+        self._send(critical=True, translations=[
+            {'language': 'en', 'title': 'Hello', 'body_markdown': 'Hello body'},
+            {'language': 'fr', 'title': 'Bonjour', 'body_markdown': 'Corps Bonjour'},
+        ])
+
+        subjects = {m.recipient: m.subject for m in self._messages(OutboxChannel.EMAIL)}
+        self.assertEqual(subjects['a1@test.com'], 'Bonjour')
+        self.assertEqual(subjects['a2@test.com'], 'Hello')
+
+    def test_resending_the_same_announcement_does_not_duplicate_messages(self):
+        _, data = self._send(critical=True)
+        ann = AnnouncementRepository.get_by_id(data['id'])
+        event = db.session.query(Event).get(self.event_id)
+
+        queued = _enqueue(ann, event, critical=True, target_audience='checked_in')[1]
+
+        self.assertEqual(queued, 0)
+        self.assertEqual(len(self._messages()), 4)
+
+    def test_deleting_an_announcement_unqueues_its_messages(self):
+        _, data = self._send(critical=True)
+
+        response = self.app.delete(
+            '/api/v1/announcement/{}?event_id={}'.format(data['id'], self.event_id),
+            headers=self.comms_header,
+        )
+
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(self._messages(), [])
+
+    def test_admin_dashboard_reports_queue_progress(self):
+        self._send(critical=True)
+
+        response = self.app.get(
+            '/api/v1/announcement/admin?event_id={}'.format(self.event_id),
+            headers=self.comms_header,
+        )
+        announcement = json.loads(response.data)[0]
+
+        self.assertEqual(announcement['email_delivery'], {'queued': 2, 'sent': 0, 'skipped': 0, 'failed': 0})
+        self.assertEqual(announcement['push_delivery'], {'queued': 2, 'sent': 0, 'skipped': 0, 'failed': 0})
+
+    @patch('app.utils.emailer.DEBUG', False)
+    @patch('app.utils.emailer.smtplib.SMTP')
+    def test_the_worker_delivers_what_sending_queued(self, mock_smtp):
+        self._send(critical=True)
+
+        response = self.app.post('/api/v1/tasks/outbox', headers={'X-Appengine-Cron': 'true'})
+
+        summary = json.loads(response.data)
+        self.assertEqual(summary['sent'], 2)      # two emails
+        self.assertEqual(summary['skipped'], 2)   # two pushes, no subscriptions registered
+        self.assertEqual(mock_smtp.call_count, 1)
+
+        admin = self.app.get(
+            '/api/v1/announcement/admin?event_id={}'.format(self.event_id),
+            headers=self.comms_header,
+        )
+        announcement = json.loads(admin.data)[0]
+        self.assertEqual(announcement['email_delivery']['sent'], 2)
+        self.assertEqual(announcement['email_delivery']['queued'], 0)
+
+    # --- Resend ---
+
+    def _resend(self, announcement_id, **extra):
+        payload = {'event_id': self.event_id}
+        payload.update(extra)
+        response = self.app.post(
+            '/api/v1/announcement/{}/resend'.format(announcement_id),
+            data=json.dumps(payload),
+            content_type='application/json',
+            headers=self.comms_header,
+        )
+        return response, json.loads(response.data)
+
+    def _set_status(self, channel, status, recipient=None):
+        query = (db.session.query(OutboxMessage)
+                 .filter(OutboxMessage.channel == channel))
+        if recipient:
+            query = query.filter(OutboxMessage.recipient == recipient)
+        for message in query.all():
+            message.status = status
+            message.attempts = 3
+            message.last_error = 'boom'
+        db.session.commit()
+
+    def test_resend_queues_nothing_when_everything_is_already_in_flight(self):
+        _, data = self._send(critical=True)
+
+        response, result = self._resend(data['id'])
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(result['queued_count'], 0)
+        self.assertEqual(result['retried_count'], 0)
+        self.assertEqual(len(self._messages()), 4)
+
+    def test_resend_never_re_sends_to_someone_already_delivered(self):
+        """The safety property: pressing resend can't duplicate a delivered email."""
+        _, data = self._send(critical=True)
+        self._set_status(OutboxChannel.EMAIL, OutboxStatus.SENT)
+
+        _, result = self._resend(data['id'])
+
+        self.assertEqual(result['queued_count'], 0)
+        self.assertEqual(result['retried_count'], 0)
+        emails = self._messages(OutboxChannel.EMAIL)
+        self.assertEqual(len(emails), 2)
+        self.assertTrue(all(m.status == OutboxStatus.SENT for m in emails))
+
+    def test_resend_retries_failed_messages(self):
+        _, data = self._send(critical=True)
+        self._set_status(OutboxChannel.EMAIL, OutboxStatus.SENT, recipient='a1@test.com')
+        self._set_status(OutboxChannel.EMAIL, OutboxStatus.FAILED, recipient='a2@test.com')
+
+        _, result = self._resend(data['id'])
+
+        self.assertEqual(result['retried_count'], 1)
+        by_recipient = {m.recipient: m for m in self._messages(OutboxChannel.EMAIL)}
+        self.assertEqual(by_recipient['a1@test.com'].status, OutboxStatus.SENT)
+        retried = by_recipient['a2@test.com']
+        self.assertEqual(retried.status, OutboxStatus.PENDING)
+        self.assertEqual(retried.attempts, 0)
+        self.assertIsNone(retried.last_error)
+
+    def test_resend_retries_push_that_had_no_device(self):
+        _, data = self._send()
+        self._set_status(OutboxChannel.PUSH, OutboxStatus.SKIPPED)
+
+        _, result = self._resend(data['id'])
+
+        self.assertEqual(result['retried_count'], 2)
+        self.assertTrue(all(m.status == OutboxStatus.PENDING
+                            for m in self._messages(OutboxChannel.PUSH)))
+
+    def test_resend_reaches_guests_who_joined_after_the_original_send(self):
+        _, data = self._send(critical=True, target_audience='guest_list')
+        latecomer = self.add_user('late@test.com')
+        _invited_guest(self.event_id, latecomer.id)
+
+        _, result = self._resend(data['id'])
+
+        self.assertEqual(result['audience_count'], 3)
+        self.assertEqual(result['queued_count'], 2)  # one email + one push
+        recipients = sorted(m.recipient for m in self._messages(OutboxChannel.EMAIL))
+        self.assertEqual(recipients, ['a1@test.com', 'a2@test.com', 'late@test.com'])
+
+    def test_resend_reuses_the_audience_recorded_on_the_announcement(self):
+        """A checked-in-only send must not silently widen to the guest list."""
+        not_checked_in = self.add_user('a3@test.com')
+        _invited_guest(self.event_id, not_checked_in.id)
+        _, data = self._send(critical=True, target_audience='checked_in')
+
+        _, result = self._resend(data['id'])
+
+        self.assertEqual(result['audience_count'], 2)
+        self.assertEqual(result['queued_count'], 0)
+
+    def test_resend_can_widen_the_audience_to_the_guest_list(self):
+        not_checked_in = self.add_user('a3@test.com')
+        _invited_guest(self.event_id, not_checked_in.id)
+        _, data = self._send(critical=True, target_audience='checked_in')
+
+        _, result = self._resend(data['id'], target_audience='guest_list')
+
+        self.assertEqual(result['audience_count'], 3)
+        self.assertEqual(result['queued_count'], 2)
+
+    def test_resend_of_a_legacy_announcement_infers_critical_from_its_email(self):
+        """Announcements predating the stored flag still resend as they were sent."""
+        _, data = self._send(critical=True)
+        db.session.query(Announcement).filter_by(id=data['id']).update(
+            {'critical': None, 'target_audience': None})
+        db.session.commit()
+        # Simulate a send that was cut short: drop one guest's messages entirely.
+        (db.session.query(OutboxMessage)
+         .filter(OutboxMessage.recipient == 'a2@test.com').delete(synchronize_session=False))
+        (db.session.query(OutboxMessage)
+         .filter(OutboxMessage.user_id == self.attendee2_id,
+                 OutboxMessage.channel == OutboxChannel.PUSH).delete(synchronize_session=False))
+        db.session.commit()
+
+        _, result = self._resend(data['id'])
+
+        self.assertEqual(result['queued_count'], 2)
+        recipients = sorted(m.recipient for m in self._messages(OutboxChannel.EMAIL))
+        self.assertEqual(recipients, ['a1@test.com', 'a2@test.com'])
+
+    def test_resend_of_a_legacy_non_critical_announcement_stays_push_only(self):
+        _, data = self._send(critical=False)
+        db.session.query(Announcement).filter_by(id=data['id']).update({'critical': None})
+        db.session.commit()
+
+        self._resend(data['id'])
+
+        self.assertEqual(self._messages(OutboxChannel.EMAIL), [])
+
+    def test_resend_requires_a_comms_officer(self):
+        _, data = self._send()
+        outsider_header = self.get_auth_header_for('a1@test.com')
+
+        response = self.app.post(
+            '/api/v1/announcement/{}/resend'.format(data['id']),
+            data=json.dumps({'event_id': self.event_id}),
+            content_type='application/json',
+            headers=outsider_header,
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_resend_of_an_unknown_announcement_is_a_404(self):
+        response, _ = self._resend(9999)
+
+        self.assertEqual(response.status_code, 404)
+
+    @patch('app.utils.emailer.DEBUG', False)
+    @patch('app.utils.emailer.smtplib.SMTP')
+    def test_resent_messages_are_actually_delivered_by_the_worker(self, mock_smtp):
+        _, data = self._send(critical=True)
+        self._set_status(OutboxChannel.EMAIL, OutboxStatus.FAILED)
+        self._resend(data['id'])
+
+        self.app.post('/api/v1/tasks/outbox', headers={'X-Appengine-Cron': 'true'})
+
+        self.assertEqual(mock_smtp.return_value.sendmail.call_count, 2)
+        self.assertTrue(all(m.status == OutboxStatus.SENT
+                            for m in self._messages(OutboxChannel.EMAIL)))
+
+    def test_a_guest_list_send_reaches_guests_who_never_checked_in(self):
+        not_checked_in = self.add_user('a3@test.com')
+        _invited_guest(self.event_id, not_checked_in.id)
+
+        _, data = self._send(critical=True, target_audience='guest_list')
+
+        self.assertEqual(data['audience_count'], 3)
+        recipients = sorted(m.recipient for m in self._messages(OutboxChannel.EMAIL))
+        self.assertEqual(recipients, ['a1@test.com', 'a2@test.com', 'a3@test.com'])
 
 
 if __name__ == '__main__':

@@ -9,8 +9,11 @@ from app.announcements.models import PushSubscription
 LOGGER = Logger().get_logger()
 
 
-def push_to_user(user_id, payload):
+def push_to_user(user_id, payload, commit=True):
     """Send a Web Push to all subscriptions for user_id. Best-effort; prunes dead subscriptions.
+
+    Pass commit=False when pushing to many users in one pass, so that pruned
+    subscriptions are flushed once by the caller rather than once per user.
 
     Returns a diagnostics dict:
       {'subscriptions': n, 'sent': n, 'failed': n, 'errors': [str, ...]}
@@ -54,5 +57,6 @@ def push_to_user(user_id, payload):
             result['failed'] += 1
             result['errors'].append('sub {}: {}'.format(sub.id, str(e)[:200]))
             LOGGER.warning('push error for sub %s: %s', sub.id, e, exc_info=True)
-    db.session.commit()
+    if commit:
+        db.session.commit()
     return result

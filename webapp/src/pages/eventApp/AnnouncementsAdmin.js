@@ -10,6 +10,18 @@ import FormSelect from '../../components/form/FormSelect';
 var TABS = { COMPOSE: 'compose', DASHBOARD: 'dashboard' };
 var DEFAULT_LANGUAGES = [{ code: 'en', description: 'English' }];
 
+// The outbox worker runs once a minute, so refresh often enough to feel live
+// without hammering the API while an organiser watches a send go out.
+var QUEUE_POLL_INTERVAL_MS = 15000;
+
+function totalQueued(announcements) {
+  return announcements.reduce(function(total, ann) {
+    return total
+      + ((ann.email_delivery && ann.email_delivery.queued) || 0)
+      + ((ann.push_delivery && ann.push_delivery.queued) || 0);
+  }, 0);
+}
+
 class AnnouncementsAdmin extends Component {
   constructor(props) {
     super(props);
@@ -30,22 +42,45 @@ class AnnouncementsAdmin extends Component {
       sendError: null,
       sendSuccess: null,
       audienceCount: null,
+      queuedCount: null,
 
       // Dashboard
       adminList: [],
       isLoadingAdmin: false,
       adminError: null,
+      resendTarget: null,
+      resendToGuestList: false,
+      resendingId: null,
+      resendResult: null,
     };
     this.handleSend = this.handleSend.bind(this);
     this.handleConfirmSend = this.handleConfirmSend.bind(this);
     this.handleFieldChange = this.handleFieldChange.bind(this);
     this.handleTabChange = this.handleTabChange.bind(this);
     this.handleDelete = this.handleDelete.bind(this);
+    this.handleConfirmResend = this.handleConfirmResend.bind(this);
     this.handleTagFilterChange = this.handleTagFilterChange.bind(this);
+    this.loadAdmin = this.loadAdmin.bind(this);
+    this.queuePoll = null;
   }
 
   componentDidMount() {
     this.loadTags();
+  }
+
+  componentWillUnmount() {
+    this.stopPollingQueue();
+  }
+
+  startPollingQueue() {
+    if (this.queuePoll) return;
+    this.queuePoll = setInterval(this.loadAdmin, QUEUE_POLL_INTERVAL_MS);
+  }
+
+  stopPollingQueue() {
+    if (!this.queuePoll) return;
+    clearInterval(this.queuePoll);
+    this.queuePoll = null;
   }
 
   loadTags() {
@@ -72,7 +107,11 @@ class AnnouncementsAdmin extends Component {
 
   handleTabChange(tab) {
     this.setState({ tab: tab });
-    if (tab === TABS.DASHBOARD) this.loadAdmin();
+    if (tab === TABS.DASHBOARD) {
+      this.loadAdmin();
+    } else {
+      this.stopPollingQueue();
+    }
   }
 
   loadAdmin() {
@@ -82,11 +121,18 @@ class AnnouncementsAdmin extends Component {
     var language = (this.props.i18n && this.props.i18n.language || 'en').slice(0, 2);
     self.setState({ isLoadingAdmin: true, adminError: null });
     announcementService.listAdmin(event.id, language).then(function(result) {
+      var adminList = result.error ? [] : (result.data || []);
       self.setState({
         isLoadingAdmin: false,
-        adminList: result.error ? [] : (result.data || []),
+        adminList: adminList,
         adminError: result.error || null,
       });
+      // Only poll while there is something in flight to watch.
+      if (!result.error && totalQueued(adminList) > 0) {
+        self.startPollingQueue();
+      } else {
+        self.stopPollingQueue();
+      }
     });
   }
 
@@ -146,6 +192,7 @@ class AnnouncementsAdmin extends Component {
           isSending: false,
           sendSuccess: true,
           audienceCount: result.data && result.data.audience_count,
+          queuedCount: result.data && result.data.queued_count,
           title: {}, body: {},
           expiryDate: '', expiryTime: '', critical: false, targetAudience: 'checked_in', tagFilter: '',
         });
@@ -166,6 +213,58 @@ class AnnouncementsAdmin extends Component {
         return { adminList: prev.adminList.filter(function(a) { return a.id !== id; }) };
       });
     });
+  }
+
+  handleConfirmResend() {
+    var self = this;
+    var event = this.props.event;
+    var announcement = this.state.resendTarget;
+    if (!event || !announcement) return;
+
+    var options = this.state.resendToGuestList ? { target_audience: 'guest_list' } : {};
+    self.setState({ resendingId: announcement.id, resendTarget: null, adminError: null });
+
+    announcementService.resend(announcement.id, event.id, options).then(function(result) {
+      if (result.error) {
+        self.setState({ resendingId: null, adminError: result.error });
+        return;
+      }
+      self.setState({
+        resendingId: null,
+        resendResult: {
+          id: announcement.id,
+          queued: result.data.queued_count,
+          retried: result.data.retried_count,
+        },
+      });
+      self.loadAdmin();
+    });
+  }
+
+  renderDeliveryLine(label, delivery, skippedLabel) {
+    var t = this.props.t;
+    if (!delivery) return null;
+    var total = delivery.sent + delivery.queued + delivery.skipped + delivery.failed;
+    if (total === 0) return null;
+
+    return (
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <span className="font-medium text-foreground/70 w-12">{label}</span>
+        <span>{t('{{count}} sent', { count: delivery.sent })}</span>
+        {delivery.queued > 0 && (
+          <span className="text-action">
+            <i className="fas fa-circle-notch fa-spin mr-1" style={{ fontSize: 10 }} />
+            {t('{{count}} queued', { count: delivery.queued })}
+          </span>
+        )}
+        {delivery.skipped > 0 && (
+          <span className="text-muted-foreground/70">{delivery.skipped} {skippedLabel}</span>
+        )}
+        {delivery.failed > 0 && (
+          <span className="text-error">{t('{{count}} failed', { count: delivery.failed })}</span>
+        )}
+      </div>
+    );
   }
 
   render() {
@@ -204,11 +303,16 @@ class AnnouncementsAdmin extends Component {
           <div className="space-y-5">
             {s.sendSuccess && (
               <div className="bg-green-50 border border-green-200 text-green-800 rounded-xl p-4 text-sm">
-                {t('Announcement sent to {{count}} attendees.', { count: s.audienceCount || 0 })}
+                <p>{t('Announcement sent to {{count}} attendees.', { count: s.audienceCount || 0 })}</p>
+                {s.queuedCount > 0 && (
+                  <p className="mt-1 text-green-700/80 text-xs">
+                    {t('It is in their inbox now. {{count}} notifications are queued and will go out over the next few minutes — track progress on the Dashboard tab.', { count: s.queuedCount })}
+                  </p>
+                )}
               </div>
             )}
             {s.sendError && (
-              <div className="bg-red-50 border border-red-200 text-destructive rounded-xl p-4 text-sm">{s.sendError}</div>
+              <div className="bg-red-50 border border-red-200 text-error rounded-xl p-4 text-sm">{s.sendError}</div>
             )}
 
             <div className="bg-white rounded-2xl border border-border p-5 space-y-4">
@@ -341,7 +445,7 @@ class AnnouncementsAdmin extends Component {
               <p className="text-center text-muted-foreground py-8">{t('Loading')}</p>
             )}
             {s.adminError && (
-              <p className="text-center text-destructive py-4">{s.adminError}</p>
+              <p className="text-center text-error py-4">{s.adminError}</p>
             )}
             {!s.isLoadingAdmin && !s.adminError && s.adminList.length === 0 && (
               <p className="text-center text-muted-foreground py-8">{t('No announcements sent yet.')}</p>
@@ -361,13 +465,26 @@ class AnnouncementsAdmin extends Component {
                         )}
                       </p>
                     </div>
-                    <button
-                      onClick={function() { this.handleDelete(ann.id); }.bind(this)}
-                      className="text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
-                      title={t('Delete')}
-                    >
-                      <i className="fas fa-trash-alt" style={{ fontSize: 15 }} />
-                    </button>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <button
+                        onClick={function() { this.setState({ resendTarget: ann, resendToGuestList: false, resendResult: null }); }.bind(this)}
+                        disabled={s.resendingId === ann.id}
+                        className="text-muted-foreground hover:text-action transition-colors disabled:opacity-50"
+                        title={t('Resend')}
+                      >
+                        <i
+                          className={s.resendingId === ann.id ? 'fas fa-circle-notch fa-spin' : 'fas fa-redo'}
+                          style={{ fontSize: 14 }}
+                        />
+                      </button>
+                      <button
+                        onClick={function() { this.handleDelete(ann.id); }.bind(this)}
+                        className="text-muted-foreground hover:text-error transition-colors"
+                        title={t('Delete')}
+                      >
+                        <i className="fas fa-trash-alt" style={{ fontSize: 15 }} />
+                      </button>
+                    </div>
                   </div>
                   <div className="flex gap-4 text-xs text-muted-foreground">
                     <span>
@@ -382,9 +499,68 @@ class AnnouncementsAdmin extends Component {
                       </span>
                     )}
                   </div>
+                  {this.renderDeliveryLine(t('Email'), ann.email_delivery, t('no address'))}
+                  {this.renderDeliveryLine(t('Push'), ann.push_delivery, t('no device'))}
+                  {s.resendResult && s.resendResult.id === ann.id && (
+                    <p className="text-xs text-action pt-1">
+                      {s.resendResult.queued === 0 && s.resendResult.retried === 0
+                        ? t('Nothing to resend — everyone in the audience has already been reached.')
+                        : t('Resent: {{queued}} newly queued, {{retried}} retried.', {
+                            queued: s.resendResult.queued,
+                            retried: s.resendResult.retried,
+                          })}
+                    </p>
+                  )}
                 </div>
               );
             }, this)}
+          </div>
+        )}
+
+        {/* Resend confirmation modal */}
+        {s.resendTarget && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4 space-y-4">
+              <h2 className="text-lg font-bold text-foreground">{t('Resend announcement')}</h2>
+              <p className="text-sm text-foreground/80">
+                {t('This retries anything that failed and reaches anyone in the audience who was missed.')}
+                <span className="block mt-1 text-muted-foreground">
+                  {t('Nobody who already received it will get it twice.')}
+                </span>
+              </p>
+              {s.resendTarget.target_audience !== 'guest_list' && (
+                <label className="flex items-start gap-2 text-sm text-foreground/80">
+                  <input
+                    type="checkbox"
+                    checked={s.resendToGuestList}
+                    onChange={function(e) { this.setState({ resendToGuestList: e.target.checked }); }.bind(this)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    {t('Send to the full guest list')}
+                    <span className="block text-xs text-muted-foreground mt-0.5">
+                      {s.resendTarget.target_audience === 'checked_in'
+                        ? t('The original went to checked-in guests only.')
+                        : t('Otherwise only checked-in guests are included.')}
+                    </span>
+                  </span>
+                </label>
+              )}
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={function() { this.setState({ resendTarget: null }); }.bind(this)}
+                  className="px-4 py-2 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted/50 transition-colors"
+                >
+                  {t('Cancel')}
+                </button>
+                <button
+                  onClick={this.handleConfirmResend}
+                  className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary-container transition-colors"
+                >
+                  {t('Resend')}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -408,6 +584,9 @@ class AnnouncementsAdmin extends Component {
                 {s.critical && (
                   <span className="block mt-1 text-amber-700">{t('Critical: email will also be sent.')}</span>
                 )}
+                <span className="block mt-1 text-muted-foreground">
+                  {t('It appears in inboxes immediately; notifications go out over the following few minutes.')}
+                </span>
               </p>
               <div className="flex gap-3 justify-end">
                 <button
