@@ -182,6 +182,15 @@ code {
 
 .navbar-brand-main {
   letter-spacing: -0.01em;
+  min-width: 0;
+}
+
+.navbar-brand-main .brand-name-text {
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .navbar-brand-main.uppercase {
@@ -199,11 +208,6 @@ code {
 
 .navbar-dark .navbar-nav .nav-link:hover {
   color: var(--clr-on-primary) !important;
-}
-
-.navbar-dark .navbar-toggler {
-  border-color: rgba(255, 255, 255, 0.3);
-  padding: 0.375rem 0.625rem;
 }
 
 /* ── 4. Event Sub-Navigation ───────────────────────────────── */
@@ -842,34 +846,30 @@ div.card-container  { margin: 0 auto; }
   }
 }
 
-/* ── 20. Navbar Responsive Collapse (replaces Bootstrap JS) ─── */
-.navbar-toggler { display: none; }
-
-/* Always reset visibility so Tailwind's "collapse" utility (visibility:collapse) doesn't hide navbar contents */
-.collapse.navbar-collapse {
-  visibility: visible !important;
+/* ── 20. Navbar: language + user controls, right-aligned ─────── */
+.navbar-collapse {
+  display: flex;
+  flex-grow: 1;
+  align-items: center;
 }
 
-@media (min-width: 992px) {
-  .collapse.navbar-collapse {
-    display: flex !important;
-    flex-basis: auto;
-    flex-grow: 1;
-    align-items: center;
-  }
-}
-
-@media (max-width: 991.98px) {
-  .navbar-toggler { display: block; }
-
-  .collapse.navbar-collapse {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    width: 100%;
+@media (max-width: 767.98px) {
+  .navbar.navbar-dark {
+    padding: 0 1rem;
   }
 
-  .collapse.navbar-collapse.collapsed {
+  .navbar-brand-main .brand-name-text {
+    max-width: 45vw;
+  }
+
+  .language-navbar {
+    padding-right: 0.5rem;
+    margin-right: 0.5rem;
+  }
+
+  .language-navbar .lang-code-text,
+  .user-name-text,
+  .user-chevron-icon {
     display: none;
   }
 }

@@ -39,7 +39,6 @@ class UserDropdown extends Component {
 
   handleLogout = () => {
     this.setState({ isOpen: false });
-    this.props.onClick();
     userService.logout();
     if (this.props.logout) {
       this.props.logout();
@@ -64,8 +63,8 @@ class UserDropdown extends Component {
             <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
               <i className="fas fa-user" style={{ fontSize: 14 }} />
             </div>
-            <span>{this.state.user.firstname} {this.state.user.lastname}</span>
-            <i className="fas fa-chevron-down" style={{ fontSize: 11 }} />
+            <span className="user-name-text">{this.state.user.firstname} {this.state.user.lastname}</span>
+            <i className="fas fa-chevron-down user-chevron-icon" style={{ fontSize: 11 }} />
           </button>
 
           {this.state.isOpen && (
@@ -73,10 +72,7 @@ class UserDropdown extends Component {
               <a
                 href="/profile"
                 className="block px-4 py-2 text-sm text-foreground hover:bg-surface-low transition-colors"
-                onClick={(e) => {
-                  this.setState({ isOpen: false });
-                  this.props.onClick(e);
-                }}
+                onClick={() => this.setState({ isOpen: false })}
               >
                 {t("Profile")}
               </a>
@@ -97,7 +93,6 @@ class UserDropdown extends Component {
           <NavLink
             to="/login"
             className="text-sm font-semibold text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors border border-white/20"
-            onClick={this.props.onClick}
           >
             {t("Sign In")}
           </NavLink>

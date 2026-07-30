@@ -43,6 +43,7 @@
     "react-table": "^6.11.5",
     "react-tooltip": "^3.9.2",
     "rehype-katex": "^6.0.2",
+    "remark-breaks": "^3.0.3",
     "remark-gfm": "^3.0.0",
     "remark-math": "^5.1.1",
     "stackdriver-errors-js": "^0.5.0",

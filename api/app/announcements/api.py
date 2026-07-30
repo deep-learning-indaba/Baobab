@@ -1,3 +1,4 @@
+import html
 from datetime import datetime
 
 import markdown as md_lib
@@ -8,14 +9,21 @@ from flask_restful import reqparse
 from app import db, LOGGER
 from app.utils.auth import auth_required
 from app.utils import errors
+from app.utils.emailer import resolve_sender
 from app.utils.push import push_to_user
-from app.utils.emailer import send_mail
 from app.announcements.models import Announcement, AnnouncementTranslation, AnnouncementReceipt, PushSubscription
 from app.announcements.repository import AnnouncementRepository
 from app.attendance.repository import AttendanceRepository, CheckinRepository
+from app.outbox.models import OutboxChannel, OutboxMessage, OutboxStatus
+from app.outbox.repository import OutboxRepository
 from app.tags.repository import TagRepository as tag_repository
+from app.users.models import AppUser
 from app.users.repository import UserRepository as user_repository
 from app.events.repository import EventRepository as event_repository
+
+
+#: Identifies announcement messages in the outbox.
+OUTBOX_SOURCE_TYPE = 'announcement'
 
 
 def _is_comms_officer(user_id, event_id):
@@ -30,15 +38,26 @@ def _primary_language(event):
     return languages[0]['code'] if languages else 'en'
 
 
-def _resolve_translation(ann, language):
+def _translations_for(ann):
+    """All translations of an announcement, ordered so the first is the fallback."""
+    return (db.session.query(AnnouncementTranslation)
+            .filter_by(announcement_id=ann.id)
+            .order_by(AnnouncementTranslation.id)
+            .all())
+
+
+def _pick_translation(translations, language):
     """Return (title, body_markdown) for the given language, falling back to
     whichever translation exists rather than assuming English was provided."""
-    translations = db.session.query(AnnouncementTranslation).filter_by(announcement_id=ann.id).all()
     by_lang = {t.language: t for t in translations}
     t = by_lang.get(language) or (translations[0] if translations else None)
     if t:
         return t.title, t.body_markdown
     return '', ''
+
+
+def _resolve_translation(ann, language):
+    return _pick_translation(_translations_for(ann), language)
 
 
 def _serialize_announcement(ann, receipt=None, language='en'):
@@ -55,20 +74,38 @@ def _serialize_announcement(ann, receipt=None, language='en'):
     }
 
 
+def _was_sent_as_critical(announcement_id):
+    """Whether an announcement was emailed, judged from what it queued.
+
+    Only needed for announcements sent before the flag was stored on the row.
+    """
+    return db.session.query(
+        db.session.query(OutboxMessage)
+        .filter(OutboxMessage.source_type == OUTBOX_SOURCE_TYPE,
+                OutboxMessage.source_id == announcement_id,
+                OutboxMessage.channel == OutboxChannel.EMAIL)
+        .exists()
+    ).scalar()
+
+
+def _delivery_summary(status_counts):
+    """Flatten per-status outbox counts into what the admin dashboard reports.
+
+    'pending' covers messages awaiting a first attempt and ones backing off after
+    a failure, since from an organiser's point of view both are still in flight.
+    """
+    return {
+        'queued': status_counts.get(OutboxStatus.PENDING, 0) + status_counts.get(OutboxStatus.SENDING, 0),
+        'sent': status_counts.get(OutboxStatus.SENT, 0),
+        'skipped': status_counts.get(OutboxStatus.SKIPPED, 0),
+        'failed': status_counts.get(OutboxStatus.FAILED, 0),
+    }
+
+
 VALID_AUDIENCES = ('checked_in', 'guest_list')
 
 
-def _dispatch(ann, event, critical, target_audience='checked_in', tag_id=None):
-    """Create receipts and send push (+ email if critical) to the target audience.
-
-    target_audience:
-      'checked_in' — only users who have physically checked in (default)
-      'guest_list' — all confirmed guests (accepted offer or invited guest)
-
-    tag_id, if given, further restricts the audience to guests whose Offer or
-    InvitedGuest entry carries that tag (e.g. only guests with an
-    accommodation or travel tag).
-    """
+def _audience_user_ids(event, target_audience, tag_id):
     if target_audience == 'guest_list':
         user_ids = AttendanceRepository.get_all_guest_user_ids_for_event(event.id)
     else:
@@ -78,51 +115,123 @@ def _dispatch(ann, event, critical, target_audience='checked_in', tag_id=None):
         tagged_user_ids = AttendanceRepository.get_user_ids_with_tag(event.id, tag_id)
         user_ids = [uid for uid in user_ids if uid in tagged_user_ids]
 
+    # An accepted offer and an invited guest entry can both name the same person.
+    return list(dict.fromkeys(user_ids))
+
+
+def _enqueue(ann, event, critical, target_audience='checked_in', tag_id=None):
+    """Put the announcement in the target audience's inboxes and queue push (+
+    email if critical) for the outbox worker to deliver.
+
+    Nothing is transmitted here. A guest list runs to several thousand people,
+    and a per-recipient SMTP session or Web Push call takes far longer than a
+    request is allowed to run, so the request only writes rows.
+
+    target_audience:
+      'checked_in' — only users who have physically checked in (default)
+      'guest_list' — all confirmed guests (accepted offer or invited guest)
+
+    tag_id, if given, further restricts the audience to guests whose Offer or
+    InvitedGuest entry carries that tag (e.g. only guests with an
+    accommodation or travel tag).
+
+    Returns (audience_count, queued_count).
+    """
+    user_ids = _audience_user_ids(event, target_audience, tag_id)
+    if not user_ids:
+        return 0, 0
+
+    users = db.session.query(AppUser).filter(AppUser.id.in_(user_ids)).all()
+    if not users:
+        return 0, 0
+
+    organisation = event.organisation
+    # Resolved now, while the organisation is in scope, because the worker that
+    # sends these has no organisation to fall back on.
+    sender_name, sender_email = resolve_sender(organisation.name, organisation.email_from)
+    default_language = _primary_language(event)
+    translations = _translations_for(ann)
+    push_url = '/{}/event-app/announcements/{}'.format(event.key, ann.id)
     now = datetime.utcnow()
 
-    for uid in user_ids:
-        existing = AnnouncementRepository.get_receipt(ann.id, uid)
-        if existing:
-            continue
+    already_receipted = {row[0] for row in (
+        db.session.query(AnnouncementReceipt.user_id)
+        .filter(AnnouncementReceipt.announcement_id == ann.id)
+        .all())}
 
-        AnnouncementRepository.create_receipt(ann.id, uid, delivered_at=now, channel='inbox')
-        db.session.flush()
+    # Rendering per language rather than per user: an event has a handful of
+    # languages and thousands of guests.
+    rendered = {}
 
-        user = user_repository.get_by_id(uid)
-        if not user:
-            continue
-
-        language = (user.user_primaryLanguage or _primary_language(event))[:2]
-        title, body = _resolve_translation(ann, language)
-
-        # Web Push — best-effort
-        try:
-            event_key = event.key
-            push_url = '/{}/event-app/announcements/{}'.format(event_key, ann.id)
-            push_to_user(uid, {
+    def render(language):
+        if language not in rendered:
+            title, body = _pick_translation(translations, language)
+            rendered[language] = {
                 'title': title,
-                'body': body[:120] + ('...' if len(body) > 120 else ''),
+                'body': body,
+                # The title is free text, so it has to be escaped before going into
+                # the heading; markdown already escapes what it renders.
+                'body_html': '<h2>{}</h2>{}'.format(html.escape(title), md_lib.markdown(body)),
+                'push_body': body[:120] + ('...' if len(body) > 120 else ''),
+            }
+        return rendered[language]
+
+    receipts = []
+    messages = []
+    for user in users:
+        if user.id not in already_receipted:
+            receipts.append({
+                'announcement_id': ann.id,
+                'user_id': user.id,
+                'delivered_at': now,
+                'channel': 'inbox',
+            })
+
+        content = render((user.user_primaryLanguage or default_language)[:2])
+
+        common = {
+            'organisation_id': organisation.id,
+            'event_id': event.id,
+            'user_id': user.id,
+            'source_type': OUTBOX_SOURCE_TYPE,
+            'source_id': ann.id,
+            'status': OutboxStatus.PENDING,
+            'attempts': 0,
+            'created_at': now,
+            'scheduled_at': now,
+            'subject': content['title'],
+        }
+
+        messages.append(dict(
+            common,
+            channel=OutboxChannel.PUSH,
+            body_text=content['push_body'],
+            payload={
+                'title': content['title'],
+                'body': content['push_body'],
                 'url': push_url,
                 'tag': 'ann-{}'.format(ann.id),
-            })
-        except Exception as e:
-            LOGGER.warning('Web push failed for user %s (announcement %s): %s', uid, ann.id, e, exc_info=True)
+            },
+        ))
 
-        # Email backstop — critical only
         if critical and user.email:
-            try:
-                body_html = md_lib.markdown(body)
-                send_mail(
-                    recipient=user.email,
-                    subject=title,
-                    body_html='<h2>{}</h2>{}'.format(title, body_html),
-                    body_text='{}\n\n{}'.format(title, body),
-                )
-            except Exception as e:
-                LOGGER.error('Email failed for user %s (announcement %s): %s', uid, ann.id, e, exc_info=True)
+            messages.append(dict(
+                common,
+                channel=OutboxChannel.EMAIL,
+                recipient=user.email,
+                body_text='{}\n\n{}'.format(content['title'], content['body']),
+                body_html=content['body_html'],
+                sender_name=sender_name,
+                sender_email=sender_email,
+            ))
+
+    if receipts:
+        db.session.bulk_insert_mappings(AnnouncementReceipt, receipts)
+    queued = OutboxRepository.enqueue_many(messages, OUTBOX_SOURCE_TYPE, ann.id)
 
     db.session.commit()
-    return len(user_ids)
+    LOGGER.info('Announcement %s queued %s messages for %s recipients', ann.id, queued, len(users))
+    return len(users), queued
 
 
 class AnnouncementListAPI(restful.Resource):
@@ -196,12 +305,82 @@ class AnnouncementListAPI(restful.Resource):
             if not tag or tag.event_id != event_id:
                 return errors.TAG_NOT_FOUND
 
-        ann = AnnouncementRepository.create(event_id, g.current_user['id'], expiry_at, translations)
-
         critical = bool(body.get('critical', False))
-        audience = _dispatch(ann, event, critical, target_audience, tag_id)
 
-        return {'id': ann.id, 'audience_count': audience}, 201
+        ann = AnnouncementRepository.create(
+            event_id, g.current_user['id'], expiry_at, translations,
+            critical=critical, target_audience=target_audience, tag_id=tag_id)
+
+        audience, queued = _enqueue(ann, event, critical, target_audience, tag_id)
+
+        return {'id': ann.id, 'audience_count': audience, 'queued_count': queued}, 201
+
+
+class AnnouncementResendAPI(restful.Resource):
+    """POST /api/v1/announcement/<id>/resend — re-reach an announcement's audience.
+
+    Two things an organiser means by "resend", both done here:
+      * anyone in the audience who was never queued — because a send was cut
+        short, or because they joined the guest list afterwards — is queued now
+      * messages that failed, or that had no device to push to, are tried again
+
+    Nobody who already received a message is queued a second time: enqueueing
+    skips recipients that already have a row for this announcement, and retrying
+    deliberately excludes 'sent'. So this is safe to press more than once.
+
+    The audience defaults to the one recorded when the announcement was sent, and
+    can be widened via target_audience/tag_id/critical in the body — useful for
+    following a checked-in-only announcement with one to the full guest list.
+    """
+
+    @auth_required
+    def post(self, announcement_id):
+        body = request.get_json() or {}
+
+        event_id = body.get('event_id')
+        if not event_id:
+            return errors.MISSING_FIELDS
+
+        if not _is_comms_officer(g.current_user['id'], event_id):
+            return errors.FORBIDDEN
+
+        event = event_repository.get_by_id(event_id)
+        if not event:
+            return errors.EVENT_NOT_FOUND
+
+        ann = AnnouncementRepository.get_by_id(announcement_id)
+        if not ann or ann.event_id != event_id:
+            return {'message': 'Announcement not found'}, 404
+
+        target_audience = body.get('target_audience') or ann.target_audience or 'checked_in'
+        if target_audience not in VALID_AUDIENCES:
+            return errors.MISSING_FIELDS
+
+        tag_id = body.get('tag_id', ann.tag_id)
+        if tag_id is not None:
+            tag = tag_repository.get_by_id(tag_id)
+            if not tag or tag.event_id != event_id:
+                return errors.TAG_NOT_FOUND
+
+        if 'critical' in body:
+            critical = bool(body['critical'])
+        elif ann.critical is not None:
+            critical = ann.critical
+        else:
+            # Sent before the flag was recorded: an email row in the outbox is the
+            # only remaining evidence that it went out as critical.
+            critical = _was_sent_as_critical(ann.id)
+
+        retried = OutboxRepository.retry_terminal(OUTBOX_SOURCE_TYPE, ann.id)
+        audience, queued = _enqueue(ann, event, critical, target_audience, tag_id)
+
+        LOGGER.info('Announcement %s resent: %s newly queued, %s retried', ann.id, queued, retried)
+        return {
+            'id': ann.id,
+            'audience_count': audience,
+            'queued_count': queued,
+            'retried_count': retried,
+        }, 200
 
 
 class AnnouncementActiveAPI(restful.Resource):
@@ -234,11 +413,22 @@ class AnnouncementAdminAPI(restful.Resource):
             return errors.FORBIDDEN
 
         announcements = AnnouncementRepository.list_all_for_event(event_id)
+        receipt_counts = AnnouncementRepository.receipt_counts_for_event(event_id)
+        delivery = OutboxRepository.status_counts(
+            OUTBOX_SOURCE_TYPE, [ann.id for ann in announcements])
+
         result = []
         for ann in announcements:
+            counts = receipt_counts.get(ann.id, {})
             s = _serialize_announcement(ann, None, language)
-            s['delivered_count'] = AnnouncementRepository.count_delivered(ann.id)
-            s['opened_count'] = AnnouncementRepository.count_opened(ann.id)
+            s['delivered_count'] = counts.get('delivered', 0)
+            s['opened_count'] = counts.get('opened', 0)
+            s['email_delivery'] = _delivery_summary(
+                delivery.get(ann.id, {}).get(OutboxChannel.EMAIL, {}))
+            s['push_delivery'] = _delivery_summary(
+                delivery.get(ann.id, {}).get(OutboxChannel.PUSH, {}))
+            s['critical'] = ann.critical
+            s['target_audience'] = ann.target_audience
             result.append(s)
         return result
 
@@ -285,6 +475,9 @@ class AnnouncementDetailAPI(restful.Resource):
         if not ann or ann.event_id != event_id:
             return {'message': 'Announcement not found'}, 404
 
+        # Drop anything still queued: deleting an announcement should stop it
+        # going out, not just hide it from the dashboard.
+        OutboxRepository.delete_for_source(OUTBOX_SOURCE_TYPE, ann.id)
         AnnouncementRepository.delete(ann)
         return {}, 204
 

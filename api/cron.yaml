@@ -1,0 +1,13 @@
+# App Engine cron. Cron config is per-project, not per-service, so a deploy of
+# this file replaces every job in the project — both services' jobs must stay
+# listed here regardless of which workflow deploys it.
+cron:
+  - description: "Deliver queued emails and push notifications (production)"
+    url: /api/v1/tasks/outbox
+    target: prod-api
+    schedule: every 1 minutes
+
+  - description: "Deliver queued emails and push notifications (staging)"
+    url: /api/v1/tasks/outbox
+    target: staging-api
+    schedule: every 1 minutes
