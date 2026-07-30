@@ -817,7 +817,7 @@ class AnnouncementQueueingTest(ApiTestCase):
     def test_the_worker_delivers_what_sending_queued(self, mock_smtp):
         self._send(critical=True)
 
-        response = self.app.post('/api/v1/tasks/outbox', headers={'X-Appengine-Cron': 'true'})
+        response = self.app.get('/api/v1/tasks/outbox', headers={'X-Appengine-Cron': 'true'})
 
         summary = json.loads(response.data)
         self.assertEqual(summary['sent'], 2)      # two emails
@@ -991,7 +991,7 @@ class AnnouncementQueueingTest(ApiTestCase):
         self._set_status(OutboxChannel.EMAIL, OutboxStatus.FAILED)
         self._resend(data['id'])
 
-        self.app.post('/api/v1/tasks/outbox', headers={'X-Appengine-Cron': 'true'})
+        self.app.get('/api/v1/tasks/outbox', headers={'X-Appengine-Cron': 'true'})
 
         self.assertEqual(mock_smtp.return_value.sendmail.call_count, 2)
         self.assertTrue(all(m.status == OutboxStatus.SENT
