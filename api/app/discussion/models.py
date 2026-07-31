@@ -2,6 +2,11 @@ from datetime import datetime
 
 from app import db
 
+# Subject text backfilled onto threads created before subjects were required.
+# Threads carrying this placeholder are treated as subject-less for the
+# purposes of hiding an emptied-out thread (see DiscussionRepository).
+NO_SUBJECT_PLACEHOLDER = '(no subject)'
+
 
 class DiscussionSpace(db.Model):
     """A hierarchical grouping of threads (e.g. "Introductions", "Ideathon").
@@ -31,7 +36,7 @@ class DiscussionThread(db.Model):
     event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
     space_id = db.Column(db.Integer(), db.ForeignKey('discussion_space.id'), nullable=False)
     created_by_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
-    subject = db.Column(db.String(200), nullable=True)
+    subject = db.Column(db.String(200), nullable=False)
     is_pinned = db.Column(db.Boolean(), nullable=False, default=False)
     created_at = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow)
     # last_activity_at drives board ordering; bumped on every new reply.
