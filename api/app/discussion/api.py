@@ -290,7 +290,7 @@ class DiscussionThreadListAPI(restful.Resource):
         space_id = body.get('space_id')
         body_markdown = (body.get('body_markdown') or '').strip()
         subject = (body.get('subject') or '').strip()
-        if not event_id or not space_id or not body_markdown:
+        if not event_id or not space_id or not body_markdown or not subject:
             return errors.MISSING_FIELDS
         if len(subject) > MAX_SUBJECT_LEN or len(body_markdown) > MAX_BODY_LEN:
             return errors.MISSING_FIELDS

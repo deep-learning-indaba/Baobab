@@ -17,9 +17,21 @@ class AttendanceRepository():
                          .first()
 
     @staticmethod
+    def get_or_create(event_id, user_id, updated_by_user_id):
+        # Every flow that records an attendance fact (indemnity, badge export,
+        # check-in) must go through here rather than constructing an Attendance
+        # directly, so the facts accumulate on one row instead of racing to
+        # create their own. Caller commits.
+        attendance = AttendanceRepository.get(event_id, user_id)
+        if attendance is None:
+            attendance = Attendance(event_id, user_id, updated_by_user_id)
+            db.session.add(attendance)
+        return attendance
+
+    @staticmethod
     def add(attendance):
         db.session.add(attendance)
-    
+
     @staticmethod
     def save():
         db.session.commit()
@@ -36,10 +48,7 @@ class AttendanceRepository():
         # created purely to hold the flag — nothing treats row-existence as
         # confirmation, so this is safe.
         for user_id in user_ids:
-            attendance = AttendanceRepository.get(event_id, user_id)
-            if attendance is None:
-                attendance = Attendance(event_id, user_id, updated_by_user_id)
-                db.session.add(attendance)
+            attendance = AttendanceRepository.get_or_create(event_id, user_id, updated_by_user_id)
             attendance.mark_badge_exported()
         db.session.commit()
 

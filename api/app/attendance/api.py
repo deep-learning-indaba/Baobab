@@ -4,7 +4,6 @@ from flask import g
 import flask_restful as restful
 from flask_restful import reqparse, fields, marshal
 from app.attendance.mixins import AttendanceMixin
-from app.attendance.models import Attendance
 from app.tags.models import TagType
 from app.attendance.repository import AttendanceRepository as attendance_repository
 from app.attendance.repository import IndemnityRepository as indemnity_repository
@@ -173,9 +172,7 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
         if attendance and attendance.confirmed:
             return ATTENDANCE_ALREADY_CONFIRMED
         
-        if not attendance:
-            attendance = Attendance(event_id, user_id, registration_user_id)
-            attendance_repository.add(attendance)
+        attendance = attendance_repository.get_or_create(event_id, user_id, registration_user_id)
         attendance.sign_indemnity()
         attendance.confirm()
         attendance_repository.save()
@@ -282,11 +279,10 @@ class IndemnityAPI(restful.Resource):
 
         event = event_repository.get_by_id(event_id)
         user = user_repository.get_by_id(current_user_id)
-        attendance = Attendance(event_id, current_user_id, current_user_id)
+        attendance = attendance_repository.get_or_create(event_id, current_user_id, current_user_id)
         attendance.sign_indemnity()
-        LOGGER.info(f"Created attendance and signed")
-        
-        attendance_repository.add(attendance)
+        LOGGER.info(f"Signed indemnity on attendance record")
+
         attendance_repository.save()
         LOGGER.info(f"Saved")
 
@@ -523,10 +519,7 @@ class CheckinAPI(restful.Resource):
 
         checkin = checkin_repository.create(event_id, target_user_id, by_user_id, method, day)
 
-        attendance = attendance_repository.get(event_id, target_user_id)
-        if attendance is None:
-            attendance = Attendance(event_id, target_user_id, current_user_id)
-            attendance_repository.add(attendance)
+        attendance = attendance_repository.get_or_create(event_id, target_user_id, current_user_id)
         if args['indemnity_signed']:
             attendance.sign_indemnity()
         is_first_checkin = not attendance.confirmed

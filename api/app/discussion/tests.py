@@ -4,7 +4,8 @@ from unittest.mock import patch
 
 from app import db
 from app.discussion.models import (
-    DiscussionThread, DiscussionMessage, DiscussionSubscription, DiscussionReport, DiscussionSpace)
+    DiscussionThread, DiscussionMessage, DiscussionSubscription, DiscussionReport, DiscussionSpace,
+    NO_SUBJECT_PLACEHOLDER)
 from app.discussion.repository import DiscussionRepository
 from app.invitedGuest.models import InvitedGuest
 from app.utils.testing import ApiTestCase
@@ -513,6 +514,85 @@ class DiscussionApiTest(ApiTestCase):
 
         resp = self._create_thread(self.g1_header, space_id=space_id)
         self.assertEqual(resp.status_code, 404)
+
+    # ---------- Subject required ----------
+
+    def test_thread_requires_subject(self):
+        resp = self._create_thread(self.g1_header, subject='')
+        self.assertEqual(resp.status_code, 400)
+
+        resp = self._create_thread(self.g1_header, subject='   ')
+        self.assertEqual(resp.status_code, 400)
+
+    # ---------- Emptied-out threads are hidden from the board ----------
+
+    def _create_legacy_no_subject_thread(self, user_id, space_id=None):
+        """Simulate a thread created before subjects were required."""
+        thread, root = DiscussionRepository.create_thread(
+            self.event_id, (space_id or self.space_id), user_id, NO_SUBJECT_PLACEHOLDER, 'hello')
+        return thread.id, root.id
+
+    def _board_ids(self, header, space_id=None):
+        resp = self.app.get(
+            '/api/v1/discussion/thread?event_id={}&space_id={}'.format(
+                self.event_id, (space_id or self.space_id)),
+            headers=header)
+        return [t['id'] for t in json.loads(resp.data)]
+
+    def test_emptied_out_thread_hidden_after_author_deletes_root(self):
+        thread_id, message_id = self._create_legacy_no_subject_thread(self.g1_id)
+        self.assertIn(thread_id, self._board_ids(self.g1_header))
+
+        self.app.delete(
+            '/api/v1/discussion/message/{}?event_id={}'.format(message_id, self.event_id),
+            headers=self.g1_header)
+
+        self.assertNotIn(thread_id, self._board_ids(self.g1_header))
+
+    def test_emptied_out_thread_hidden_after_moderator_deletes_root(self):
+        thread_id, message_id = self._create_legacy_no_subject_thread(self.g1_id)
+
+        self.app.delete(
+            '/api/v1/discussion/message/{}?event_id={}'.format(message_id, self.event_id),
+            headers=self.mod_header)
+
+        self.assertNotIn(thread_id, self._board_ids(self.g1_header))
+
+    def test_thread_with_subject_stays_visible_after_root_deleted(self):
+        thread_id, message_id = self._create_thread_ids(self.g1_header)  # created with subject='Hi'
+
+        self.app.delete(
+            '/api/v1/discussion/message/{}?event_id={}'.format(message_id, self.event_id),
+            headers=self.g1_header)
+
+        self.assertIn(thread_id, self._board_ids(self.g1_header))
+
+    @patch('app.discussion.api.push_to_user')
+    def test_emptied_out_thread_stays_visible_if_reply_remains(self, mock_push):
+        thread_id, message_id = self._create_legacy_no_subject_thread(self.g1_id)
+        self._reply(self.g2_header, thread_id)
+
+        self.app.delete(
+            '/api/v1/discussion/message/{}?event_id={}'.format(message_id, self.event_id),
+            headers=self.g1_header)
+
+        self.assertIn(thread_id, self._board_ids(self.g1_header))
+
+    @patch('app.discussion.api.push_to_user')
+    def test_emptied_out_thread_hidden_once_last_reply_also_deleted(self, mock_push):
+        thread_id, message_id = self._create_legacy_no_subject_thread(self.g1_id)
+        reply_resp = self._reply(self.g2_header, thread_id)
+        reply_id = json.loads(reply_resp.data)['message_id']
+
+        self.app.delete(
+            '/api/v1/discussion/message/{}?event_id={}'.format(message_id, self.event_id),
+            headers=self.g1_header)
+        self.assertIn(thread_id, self._board_ids(self.g1_header))  # reply still present
+
+        self.app.delete(
+            '/api/v1/discussion/message/{}?event_id={}'.format(reply_id, self.event_id),
+            headers=self.g2_header)
+        self.assertNotIn(thread_id, self._board_ids(self.g1_header))
 
     # ---------- Spaces: archive vs hard-delete ----------
 
