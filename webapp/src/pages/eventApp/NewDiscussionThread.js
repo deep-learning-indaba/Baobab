@@ -25,7 +25,7 @@ function NewDiscussionThread(props) {
   }, [eventId, spaceId]);
 
   function handlePost() {
-    if (!body.trim() || !eventId || !spaceId) return;
+    if (!subject.trim() || !body.trim() || !eventId || !spaceId) return;
     setPosting(true);
     setError(null);
     discussionService.createThread(eventId, spaceId, subject.trim(), body.trim()).then(function (r) {
@@ -49,11 +49,12 @@ function NewDiscussionThread(props) {
 
       <div className="bg-white rounded-2xl border border-border shadow-sm p-5 space-y-4">
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1">{t('Subject (optional)')}</label>
+          <label className="block text-sm font-medium text-foreground mb-1">{t('Subject')}</label>
           <input
             className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
             value={subject}
             maxLength={MAX_SUBJECT_LEN}
+            required
             onChange={function (e) { setSubject(e.target.value); }}
           />
         </div>
@@ -70,7 +71,7 @@ function NewDiscussionThread(props) {
         <div className="flex justify-end">
           <button
             onClick={handlePost}
-            disabled={posting || !body.trim()}
+            disabled={posting || !subject.trim() || !body.trim()}
             className="bg-primary text-primary-foreground text-sm font-semibold px-5 py-2 rounded-full disabled:opacity-50"
           >
             {posting ? t('Sending...') : t('Post')}

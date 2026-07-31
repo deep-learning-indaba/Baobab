@@ -1,11 +1,11 @@
 from datetime import datetime, timedelta
 
-from sqlalchemy import func
+from sqlalchemy import and_, exists, func, not_, or_
 
 from app import db
 from app.discussion.models import (
     DiscussionThread, DiscussionMessage, DiscussionSubscription, DiscussionReport, DiscussionRead,
-    DiscussionSpace,
+    DiscussionSpace, NO_SUBJECT_PLACEHOLDER,
 )
 
 
@@ -78,11 +78,35 @@ class DiscussionRepository:
     # ---------- Threads ----------
 
     @staticmethod
+    def _is_emptied_out_thread_clause():
+        """A thread whose root post was deleted, never had a subject, and has
+        no surviving (non-deleted) replies. Nothing remains worth showing on
+        the board, so listing queries exclude threads matching this clause.
+        """
+        root_deleted = exists().where(and_(
+            DiscussionMessage.thread_id == DiscussionThread.id,
+            DiscussionMessage.parent_message_id.is_(None),
+            DiscussionMessage.is_deleted.is_(True),
+        ))
+        has_active_reply = exists().where(and_(
+            DiscussionMessage.thread_id == DiscussionThread.id,
+            DiscussionMessage.parent_message_id.isnot(None),
+            DiscussionMessage.is_deleted.is_(False),
+        ))
+        no_subject = or_(
+            DiscussionThread.subject.is_(None),
+            DiscussionThread.subject == '',
+            DiscussionThread.subject == NO_SUBJECT_PLACEHOLDER,
+        )
+        return and_(root_deleted, no_subject, not_(has_active_reply))
+
+    @staticmethod
     def list_threads(event_id, space_id):
         """Board view: pinned first, then most-recent-activity first."""
         return (db.session.query(DiscussionThread)
                 .filter(DiscussionThread.event_id == event_id,
                         DiscussionThread.space_id == space_id)
+                .filter(not_(DiscussionRepository._is_emptied_out_thread_clause()))
                 .order_by(DiscussionThread.is_pinned.desc(),
                           DiscussionThread.last_activity_at.desc())
                 .all())
@@ -97,7 +121,7 @@ class DiscussionRepository:
         now = datetime.utcnow()
         thread = DiscussionThread(
             event_id=event_id, space_id=space_id, created_by_user_id=user_id,
-            subject=(subject or None), created_at=now, last_activity_at=now,
+            subject=subject, created_at=now, last_activity_at=now,
         )
         db.session.add(thread)
         db.session.flush()  # need thread.id
@@ -239,6 +263,7 @@ class DiscussionRepository:
                 .filter(DiscussionThread.event_id == event_id,
                         DiscussionSubscription.user_id == user_id,
                         DiscussionSubscription.subscribed.is_(True))
+                .filter(not_(DiscussionRepository._is_emptied_out_thread_clause()))
                 .order_by(DiscussionThread.last_activity_at.desc())
                 .all())
 

@@ -366,6 +366,105 @@ class AttendanceApiTest(ApiTestCase):
         self.assertTrue(attendance.badge_exported)
 
 
+class IndemnitySigningTest(AttendanceApiTest):
+
+    def seed_static_data(self):
+        super(IndemnitySigningTest, self).seed_static_data()
+        # The base fixture leaves the offer unanswered; these flows all gate on
+        # the user being a confirmed guest.
+        offer = db.session.query(Offer).filter_by(event_id=1, user_id=1).first()
+        offer.candidate_response = True
+        db.session.add(EventIndemnity(
+            event_id=1, indemnity_form='I, {attendee_name}, agree.'))
+        self.add_email_template('indemnity-signed')
+        db.session.commit()
+
+    def _attendance_rows(self, event_id, user_id):
+        return (db.session.query(Attendance)
+                .filter_by(event_id=event_id, user_id=user_id)
+                .all())
+
+    def test_signing_indemnity_after_badge_export_updates_same_row(self):
+        # Badge export creates an attendance row to hold badge_exported. Signing
+        # the indemnity afterwards must land on that row, or check-in reads one
+        # row for the badge and another for the signature.
+        self.seed_static_data()
+        attendance_repository.mark_exported(1, [1], 2)
+
+        header = self.get_auth_header_for('attendee@mail.com')
+        response = self.app.post(
+            '/api/v1/indemnity', headers=header, data={'event_id': 1})
+
+        self.assertEqual(response.status_code, 201)
+        rows = self._attendance_rows(1, 1)
+        self.assertEqual(len(rows), 1)
+        self.assertTrue(rows[0].indemnity_signed)
+        self.assertTrue(rows[0].badge_exported)
+
+    def test_badge_export_after_signing_indemnity_updates_same_row(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('attendee@mail.com')
+        self.app.post('/api/v1/indemnity', headers=header, data={'event_id': 1})
+
+        attendance_repository.mark_exported(1, [1], 2)
+
+        rows = self._attendance_rows(1, 1)
+        self.assertEqual(len(rows), 1)
+        self.assertTrue(rows[0].indemnity_signed)
+        self.assertTrue(rows[0].badge_exported)
+
+    def test_signing_indemnity_twice_does_not_duplicate(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('attendee@mail.com')
+        self.app.post('/api/v1/indemnity', headers=header, data={'event_id': 1})
+        self.app.post('/api/v1/indemnity', headers=header, data={'event_id': 1})
+
+        self.assertEqual(len(self._attendance_rows(1, 1)), 1)
+
+    def test_checkin_after_badge_export_keeps_badge_exported(self):
+        # The confusing signal at check-in: the console reports badge_exported
+        # off the attendance row the check-in touches.
+        self.seed_static_data()
+        attendance_repository.mark_exported(1, [1], 2)
+
+        header = self.get_auth_header_for('attendee@mail.com')
+        self.app.post('/api/v1/indemnity', headers=header, data={'event_id': 1})
+
+        volunteer_header = self.get_auth_header_for('ra@ra.com')
+        response = self.app.post(
+            '/api/v1/checkin', headers=volunteer_header,
+            data={'event_id': 1, 'user_id': 1})
+
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(json.loads(response.data)['badge_exported'])
+        self.assertEqual(len(self._attendance_rows(1, 1)), 1)
+
+    def test_indemnity_date_reflects_signature_not_badge_export(self):
+        # `timestamp` is shown to the attendee as the date they signed, so
+        # reusing a row created earlier by badge export must restamp it.
+        self.seed_static_data()
+        attendance_repository.mark_exported(1, [1], 2)
+        export_time = attendance_repository.get(1, 1).timestamp
+
+        header = self.get_auth_header_for('attendee@mail.com')
+        self.app.post('/api/v1/indemnity', headers=header, data={'event_id': 1})
+
+        self.assertGreaterEqual(
+            attendance_repository.get(1, 1).timestamp, export_time)
+
+    def test_indemnity_get_reports_signed_for_badge_exported_attendee(self):
+        self.seed_static_data()
+        attendance_repository.mark_exported(1, [1], 2)
+
+        header = self.get_auth_header_for('attendee@mail.com')
+        self.app.post('/api/v1/indemnity', headers=header, data={'event_id': 1})
+        response = self.app.get(
+            '/api/v1/indemnity', headers=header, query_string={'event_id': 1})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(json.loads(response.data)['signed'])
+
+
 class MyTicketAPITest(ApiTestCase):
 
     def seed_static_data(self):

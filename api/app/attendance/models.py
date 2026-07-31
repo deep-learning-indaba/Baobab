@@ -14,6 +14,14 @@ class Attendance(db.Model):
     badge_exported = db.Column(db.Boolean(), nullable=False, server_default='false', default=False)
     badge_exported_at = db.Column(db.DateTime(), nullable=True)
 
+    # One row per attendee per event: it accumulates independent facts (indemnity
+    # signed, badge exported, checked in) written by different flows. A second
+    # row would split those facts and each reader would see only whichever half
+    # its lookup happened to return.
+    __table_args__ = (
+        db.UniqueConstraint('event_id', 'user_id', name='uq_attendance_event_user'),
+    )
+
     event = db.relationship('Event', foreign_keys=[event_id])
     user = db.relationship('AppUser', foreign_keys=[user_id])
     updated_by_user = db.relationship('AppUser', foreign_keys=[updated_by_user_id])
@@ -32,6 +40,11 @@ class Attendance(db.Model):
         self.badge_exported_at = None
 
     def sign_indemnity(self):
+        # `timestamp` is surfaced to the attendee as the date they signed, so it
+        # has to move to the moment of signature: the row may already exist from
+        # an earlier badge export, in which case it still holds the export time.
+        if not self.indemnity_signed:
+            self.timestamp = datetime.now()
         self.indemnity_signed = True
 
     def confirm(self):
