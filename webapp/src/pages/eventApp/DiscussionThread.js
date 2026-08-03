@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { discussionService } from '../../services/eventApp/discussion.service';
 import { formatInEventTz } from '../../utils/datetime';
 import MarkdownRenderer from '../../components/MarkdownRenderer';
+import ImageUploadButton from '../../components/ImageUploadButton';
 
 function MessageCard(props) {
   var msg = props.msg, t = props.t, timezone = props.timezone;
@@ -94,23 +95,28 @@ function MessageCard(props) {
             value={draft}
             onChange={function (e) { setDraft(e.target.value); }}
           />
-          <div className="flex gap-2 justify-end">
-            <button
-              onClick={function () { setEditing(false); setDraft(msg.body_markdown || ''); }}
-              className="px-3 py-1.5 rounded-lg border border-border text-sm text-foreground hover:bg-muted/50"
-            >
-              {t('Cancel')}
-            </button>
-            <button
-              onClick={function () {
-                if (!draft.trim()) return;
-                onEdit(msg.id, draft.trim());
-                setEditing(false);
-              }}
-              className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary-container"
-            >
-              {t('Post')}
-            </button>
+          <div className="flex items-center justify-between">
+            <ImageUploadButton
+              onUpload={function (markdown) { setDraft(function (prev) { return prev + (prev && !prev.endsWith('\n') ? '\n' : '') + markdown; }); }}
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={function () { setEditing(false); setDraft(msg.body_markdown || ''); }}
+                className="px-3 py-1.5 rounded-lg border border-border text-sm text-foreground hover:bg-muted/50"
+              >
+                {t('Cancel')}
+              </button>
+              <button
+                onClick={function () {
+                  if (!draft.trim()) return;
+                  onEdit(msg.id, draft.trim());
+                  setEditing(false);
+                }}
+                className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary-container"
+              >
+                {t('Post')}
+              </button>
+            </div>
           </div>
         </div>
       ) : (
@@ -237,7 +243,11 @@ function DiscussionThread(props) {
           value={replyBody}
           onChange={function (e) { setReplyBody(e.target.value); }}
         />
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between">
+          <ImageUploadButton
+            disabled={sending}
+            onUpload={function (markdown) { setReplyBody(function (prev) { return prev + (prev && !prev.endsWith('\n') ? '\n' : '') + markdown; }); }}
+          />
           <button
             onClick={handleReply}
             disabled={sending || !replyBody.trim()}
