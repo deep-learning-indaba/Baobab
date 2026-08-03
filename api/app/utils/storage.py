@@ -58,8 +58,8 @@ def _create_real_storage_client():
 
 
 def _get_bucket_name():
-    # return 'LocalBucket' if GCP_CREDENTIALS_DICT['private_key'] == 'dummy' else GCP_BUCKET_NAME
-    return GCP_BUCKET_NAME
+    # GCS bucket names must be lowercase.
+    return 'local-bucket' if GCP_CREDENTIALS_DICT['private_key'] == 'dummy' else GCP_BUCKET_NAME
 
 def _get_storage_bucket(storage_client, bucket_name):
     return storage_client.get_bucket(bucket_name or _get_bucket_name())
@@ -67,6 +67,9 @@ def _get_storage_bucket(storage_client, bucket_name):
 
 def get_storage_bucket(bucket_name=None):
     LOGGER.debug('Setting GCP storage client')
-    storage_client = _create_real_storage_client()
+    if GCP_CREDENTIALS_DICT['private_key'] == 'dummy':
+        storage_client = _create_dummy_storage_client()
+    else:
+        storage_client = _create_real_storage_client()
 
     return _get_storage_bucket(storage_client, bucket_name)

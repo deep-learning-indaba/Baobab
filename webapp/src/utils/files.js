@@ -24,6 +24,17 @@ export function getDownloadURL(value, bucketName) {
 }
 
 /**
+ * Build a URL that renders an uploaded file inline (e.g. in an <img> tag)
+ * rather than forcing a download.
+ * @param   {String} fileId  The file_id returned by the upload endpoint
+ * @returns {String}
+ */
+export function getInlineFileURL(fileId) {
+  const baseUrl = process.env.REACT_APP_API_URL;
+  return baseUrl + "/api/v1/file?filename=" + encodeURIComponent(fileId) + "&disposition=inline";
+}
+
+/**
  * Export CSV string as file.
  * @param {String} csv       String to be saved as CSV
  * @param {String} filename  Exported file's name

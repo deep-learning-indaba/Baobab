@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { discussionService } from '../../services/eventApp/discussion.service';
+import ImageUploadButton from '../../components/ImageUploadButton';
 
 var MAX_SUBJECT_LEN = 200;
 
@@ -66,6 +67,12 @@ function NewDiscussionThread(props) {
             value={body}
             onChange={function (e) { setBody(e.target.value); }}
           />
+          <div className="mt-2">
+            <ImageUploadButton
+              disabled={posting}
+              onUpload={function (markdown) { setBody(function (prev) { return prev + (prev && !prev.endsWith('\n') ? '\n' : '') + markdown; }); }}
+            />
+          </div>
         </div>
         {error && <p className="text-sm text-destructive">{error}</p>}
         <div className="flex justify-end">

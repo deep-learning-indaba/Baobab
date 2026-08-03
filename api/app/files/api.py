@@ -22,17 +22,36 @@ class FileUploadAPI(FileUploadMixin, restful.Resource):
         req_parser.add_argument('filename', type=str, required=True)
         req_parser.add_argument('rename', type=str, required=False)
         req_parser.add_argument('bucket', type=str, required=False)
+        req_parser.add_argument('disposition', type=str, required=False, choices=('inline', 'attachment'))
         args = req_parser.parse_args()
 
         LOGGER.info("Downloading file: {}, from bucket".format(args['filename'], args['bucket']))
         bucket = storage.get_storage_bucket(args['bucket'])
 
+        disposition = args['disposition']
+        content_type = None
+        if disposition != 'attachment':
+            # Fetch the stored content-type both to decide disposition when the
+            # caller didn't say (auto: images inline, everything else attachment)
+            # and to serve it as the response mimetype - the blob name itself has
+            # no extension, so Flask can't guess it from the filename. Use a
+            # throwaway Blob for this: reload() populates media_link from
+            # whatever the storage backend reports, and download_to_filename()
+            # then prefers that over the configured endpoint, which breaks
+            # downloads against the local storage emulator.
+            meta_blob = bucket.blob(args['filename'])
+            meta_blob.reload()
+            content_type = meta_blob.content_type
+            if not disposition:
+                disposition = 'inline' if (content_type or '').startswith('image/') else 'attachment'
+
         blob = bucket.blob(args['filename'])
         with tempfile.NamedTemporaryFile() as temp:
             blob.download_to_filename(temp.name)
             return send_file(
-                temp.name, 
-                as_attachment=True, 
+                temp.name,
+                mimetype=content_type if disposition == 'inline' else None,
+                as_attachment=(disposition == 'attachment'),
                 attachment_filename=args['rename'] or args['filename'])
 
 
