@@ -47,6 +47,13 @@ GCP_CREDENTIALS_DICT = {
 GCP_PROJECT_NAME = os.getenv('GCP_PROJECT_NAME', None)
 GCP_BUCKET_NAME = os.getenv('GCP_BUCKET_NAME', None)
 GCP_API_KEY = os.getenv('GCP_API_KEY', None)
+# Dedicated switch for routing storage.py at the local fake-gcs-server in
+# docker-compose, instead of real GCS. Deliberately separate from the GCP_*
+# credential values: those can legitimately be unset placeholders in a real,
+# deployed environment too (real GCS auth there comes from the platform's
+# Application Default Credentials, not these env vars), so they aren't a
+# reliable signal for "this is local dev".
+USE_LOCAL_STORAGE_EMULATOR = os.getenv('USE_LOCAL_STORAGE_EMULATOR', 'false').lower() == 'true'
 FILE_SIZE_LIMIT = int(os.getenv('FILE_SIZE_LIMIT', None))
 
 BOABAB_HOST = os.getenv('BOABAB_HOST', None)

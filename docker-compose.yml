@@ -41,6 +41,7 @@ services:
       FILE_SIZE_LIMIT: 52428800
       BOABAB_HOST: http://localhost:8080
       GCP_API_KEY: dummy
+      USE_LOCAL_STORAGE_EMULATOR: "true"
 
   webapp:
     build: ./webapp

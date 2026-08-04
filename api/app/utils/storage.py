@@ -4,7 +4,7 @@ from google.cloud import storage
 from google.oauth2 import service_account
 from google.auth.credentials import AnonymousCredentials
 from google.api_core.client_options import ClientOptions
-from config import GCP_CREDENTIALS_DICT, GCP_PROJECT_NAME, GCP_BUCKET_NAME
+from config import GCP_PROJECT_NAME, GCP_BUCKET_NAME, USE_LOCAL_STORAGE_EMULATOR
 
 import requests
 import urllib3
@@ -59,7 +59,7 @@ def _create_real_storage_client():
 
 def _get_bucket_name():
     # GCS bucket names must be lowercase.
-    return 'local-bucket' if GCP_CREDENTIALS_DICT['private_key'] == 'dummy' else GCP_BUCKET_NAME
+    return 'local-bucket' if USE_LOCAL_STORAGE_EMULATOR else GCP_BUCKET_NAME
 
 def _get_storage_bucket(storage_client, bucket_name):
     return storage_client.get_bucket(bucket_name or _get_bucket_name())
@@ -67,7 +67,7 @@ def _get_storage_bucket(storage_client, bucket_name):
 
 def get_storage_bucket(bucket_name=None):
     LOGGER.debug('Setting GCP storage client')
-    if GCP_CREDENTIALS_DICT['private_key'] == 'dummy':
+    if USE_LOCAL_STORAGE_EMULATOR:
         storage_client = _create_dummy_storage_client()
     else:
         storage_client = _create_real_storage_client()
