@@ -10,16 +10,11 @@ var SKIP_COMPRESSION_BYTES = 1.5 * 1024 * 1024;
 // Re-encoding via <canvas> only ever captures a single frame, so animated
 // formats must be left untouched rather than "compressed" into a still image.
 var UNCOMPRESSIBLE_TYPES = ['image/gif', 'image/svg+xml'];
-
-function loadImage(file) {
-  return new Promise(function (resolve, reject) {
-    var url = URL.createObjectURL(file);
-    var img = new Image();
-    img.onload = function () { resolve({ img: img, url: url }); };
-    img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('Could not read image')); };
-    img.src = url;
-  });
-}
+// Formats browsers commonly can't decode at all (e.g. HEIC straight off an
+// iPhone camera). createImageBitmap() rejects fairly reliably for these, but
+// this timeout is the real backstop: it guarantees resizeIfNeeded() always
+// settles and the upload button never gets stuck spinning.
+var RESIZE_TIMEOUT_MS = 8000;
 
 function renameExtension(name, ext) {
   return (name || 'image').replace(/\.[^./\\]+$/, '') + '.' + ext;
@@ -29,27 +24,27 @@ function renameExtension(name, ext) {
  * Downscale and re-encode an image client-side before upload, so a multi-MB,
  * several-thousand-pixel-wide phone photo doesn't get shipped and stored at
  * full size for what's typically a small inline thread image. Falls back to
- * the original file whenever resizing isn't applicable or something goes wrong.
+ * the original file whenever resizing isn't applicable, isn't supported, or
+ * fails or stalls for any reason - it must never block the upload.
  */
 function resizeIfNeeded(file) {
-  if (UNCOMPRESSIBLE_TYPES.indexOf(file.type) !== -1) {
+  if (UNCOMPRESSIBLE_TYPES.indexOf(file.type) !== -1 || typeof createImageBitmap !== 'function') {
     return Promise.resolve(file);
   }
 
-  return loadImage(file).then(function (loaded) {
-    var img = loaded.img;
-    var withinBounds = img.width <= MAX_DIMENSION && img.height <= MAX_DIMENSION;
+  var resized = createImageBitmap(file).then(function (bitmap) {
+    var withinBounds = bitmap.width <= MAX_DIMENSION && bitmap.height <= MAX_DIMENSION;
     if (withinBounds && file.size <= SKIP_COMPRESSION_BYTES) {
-      URL.revokeObjectURL(loaded.url);
+      bitmap.close();
       return file;
     }
 
-    var scale = Math.min(1, MAX_DIMENSION / Math.max(img.width, img.height));
+    var scale = Math.min(1, MAX_DIMENSION / Math.max(bitmap.width, bitmap.height));
     var canvas = document.createElement('canvas');
-    canvas.width = Math.round(img.width * scale);
-    canvas.height = Math.round(img.height * scale);
-    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-    URL.revokeObjectURL(loaded.url);
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
 
     var outputType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
     return new Promise(function (resolve) {
@@ -62,6 +57,12 @@ function resizeIfNeeded(file) {
   }).catch(function () {
     return file;
   });
+
+  var timeout = new Promise(function (resolve) {
+    setTimeout(function () { resolve(file); }, RESIZE_TIMEOUT_MS);
+  });
+
+  return Promise.race([resized, timeout]);
 }
 
 /**
@@ -97,6 +98,9 @@ function ImageUploadButton(props) {
         return;
       }
       onUpload('![' + file.name + '](' + getInlineFileURL(response.fileId) + ')\n');
+    }).catch(function () {
+      setUploading(false);
+      setError(t('Image upload failed.'));
     });
   }
 
