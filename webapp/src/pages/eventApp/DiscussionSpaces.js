@@ -4,6 +4,7 @@ import { discussionService } from '../../services/eventApp/discussion.service';
 import { isCommsOfficer } from '../../utils/user';
 import Modal, { ConfirmModal } from '../../components/Modal';
 import DiscussionThreadListItem from './DiscussionThreadListItem';
+import { stripMarkdown } from '../../utils/markdown';
 
 var TABS = { SPACES: 'spaces', SUBSCRIPTIONS: 'subscriptions' };
 
@@ -204,7 +205,7 @@ function DiscussionSpaces(props) {
                     >
                       <div className="flex items-center gap-2">
                         {space.has_unread && <span className="w-2.5 h-2.5 rounded-full bg-primary flex-shrink-0" />}
-                        <p className="text-sm font-bold text-foreground truncate">{space.name}</p>
+                        <p className="text-sm font-bold text-foreground truncate">{stripMarkdown(space.name)}</p>
                         {space.is_archived && (
                           <span className="text-xs font-semibold text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full">
                             {t('Archived')}
@@ -212,7 +213,7 @@ function DiscussionSpaces(props) {
                         )}
                       </div>
                       {space.description && (
-                        <p className="text-sm text-foreground/60 mt-1 line-clamp-2">{space.description}</p>
+                        <p className="text-sm text-foreground/60 mt-1 line-clamp-2">{stripMarkdown(space.description)}</p>
                       )}
                       <p className="text-xs text-muted-foreground mt-1">
                         {t('{{count}} threads', { count: space.thread_count })}

@@ -24,6 +24,23 @@ export function getDownloadURL(value, bucketName) {
 }
 
 /**
+ * Build a URL to a just-uploaded file (referenced by its bare file_id, not
+ * the {filename, rename} JSON shape getDownloadURL() expects).
+ * @param   {String} fileId       The file_id returned by the upload endpoint
+ * @param   {String} disposition  'inline' (default, e.g. for an <img> tag) or 'attachment' to force a download
+ * @param   {String} rename       (Optional) original filename to save the download as, e.g. "report.pdf"
+ * @returns {String}
+ */
+export function getFileURL(fileId, disposition, rename) {
+  const baseUrl = process.env.REACT_APP_API_URL;
+  let url = baseUrl + "/api/v1/file?filename=" + encodeURIComponent(fileId) + "&disposition=" + (disposition || "inline");
+  if (rename) {
+    url += "&rename=" + encodeURIComponent(rename);
+  }
+  return url;
+}
+
+/**
  * Export CSV string as file.
  * @param {String} csv       String to be saved as CSV
  * @param {String} filename  Exported file's name

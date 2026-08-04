@@ -3,6 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { discussionService } from '../../services/eventApp/discussion.service';
 import { formatInEventTz } from '../../utils/datetime';
 import MarkdownRenderer from '../../components/MarkdownRenderer';
+import Attachments from '../../components/Attachments';
+import LightboxImage from '../../components/LightboxImage';
+import { extractAttachments, buildBodyMarkdown } from '../../utils/attachments';
+
+var MESSAGE_COMPONENTS = { img: LightboxImage };
 
 function MessageCard(props) {
   var msg = props.msg, t = props.t, timezone = props.timezone;
@@ -11,7 +16,16 @@ function MessageCard(props) {
 
   var [menuOpen, setMenuOpen] = useState(false);
   var [editing, setEditing] = useState(false);
-  var [draft, setDraft] = useState(msg.body_markdown || '');
+  var [draftText, setDraftText] = useState('');
+  var [draftAttachments, setDraftAttachments] = useState([]);
+
+  function startEditing() {
+    var parsed = extractAttachments(msg.body_markdown);
+    setDraftText(parsed.text);
+    setDraftAttachments(parsed.attachments);
+    setEditing(true);
+    setMenuOpen(false);
+  }
 
   if (msg.is_deleted) {
     return (
@@ -48,7 +62,7 @@ function MessageCard(props) {
               <div className="absolute right-0 top-6 z-10 bg-white border border-border rounded-xl shadow-lg py-1 min-w-[140px]">
                 {msg.can_edit && (
                   <button
-                    onClick={function () { setEditing(true); setMenuOpen(false); }}
+                    onClick={startEditing}
                     className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-muted/40"
                   >
                     {t('Edit')}
@@ -91,31 +105,34 @@ function MessageCard(props) {
           <textarea
             className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
             rows={4}
-            value={draft}
-            onChange={function (e) { setDraft(e.target.value); }}
+            value={draftText}
+            onChange={function (e) { setDraftText(e.target.value); }}
           />
-          <div className="flex gap-2 justify-end">
-            <button
-              onClick={function () { setEditing(false); setDraft(msg.body_markdown || ''); }}
-              className="px-3 py-1.5 rounded-lg border border-border text-sm text-foreground hover:bg-muted/50"
-            >
-              {t('Cancel')}
-            </button>
-            <button
-              onClick={function () {
-                if (!draft.trim()) return;
-                onEdit(msg.id, draft.trim());
-                setEditing(false);
-              }}
-              className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary-container"
-            >
-              {t('Post')}
-            </button>
+          <Attachments attachments={draftAttachments} onChange={setDraftAttachments} />
+          <div className="flex justify-end">
+            <div className="flex gap-2">
+              <button
+                onClick={function () { setEditing(false); }}
+                className="px-3 py-1.5 rounded-lg border border-border text-sm text-foreground hover:bg-muted/50"
+              >
+                {t('Cancel')}
+              </button>
+              <button
+                onClick={function () {
+                  if (!draftText.trim() && draftAttachments.length === 0) return;
+                  onEdit(msg.id, buildBodyMarkdown(draftText, draftAttachments));
+                  setEditing(false);
+                }}
+                className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary-container"
+              >
+                {t('Post')}
+              </button>
+            </div>
           </div>
         </div>
       ) : (
         <div className="prose prose-sm max-w-none text-foreground mt-2">
-          <MarkdownRenderer source={msg.body_markdown} />
+          <MarkdownRenderer source={msg.body_markdown} components={MESSAGE_COMPONENTS} />
         </div>
       )}
     </div>
@@ -134,6 +151,7 @@ function DiscussionThread(props) {
   var [loading, setLoading] = useState(true);
   var [error, setError] = useState(null);
   var [replyBody, setReplyBody] = useState('');
+  var [replyAttachments, setReplyAttachments] = useState([]);
   var [sending, setSending] = useState(false);
   var [reportedIds, setReportedIds] = useState({});
   var [subToggling, setSubToggling] = useState(false);
@@ -152,11 +170,11 @@ function DiscussionThread(props) {
   if (!thread) return null;
 
   function handleReply() {
-    if (!replyBody.trim()) return;
+    if (!replyBody.trim() && replyAttachments.length === 0) return;
     setSending(true);
-    discussionService.reply(eventId, threadId, replyBody.trim()).then(function (r) {
+    discussionService.reply(eventId, threadId, buildBodyMarkdown(replyBody, replyAttachments)).then(function (r) {
       setSending(false);
-      if (!r.error) { setReplyBody(''); load(); }
+      if (!r.error) { setReplyBody(''); setReplyAttachments([]); load(); }
     });
   }
 
@@ -237,10 +255,15 @@ function DiscussionThread(props) {
           value={replyBody}
           onChange={function (e) { setReplyBody(e.target.value); }}
         />
-        <div className="flex justify-end">
+        <div className="flex items-end justify-between">
+          <Attachments
+            attachments={replyAttachments}
+            onChange={setReplyAttachments}
+            disabled={sending}
+          />
           <button
             onClick={handleReply}
-            disabled={sending || !replyBody.trim()}
+            disabled={sending || (!replyBody.trim() && replyAttachments.length === 0)}
             className="bg-primary text-primary-foreground text-sm font-semibold px-4 py-2 rounded-full disabled:opacity-50"
           >
             {sending ? t('Sending...') : t('Send')}

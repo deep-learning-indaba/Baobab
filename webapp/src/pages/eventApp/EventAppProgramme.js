@@ -91,12 +91,14 @@ class EventAppProgramme extends Component {
         }
       });
       var days = Object.keys(daySet).sort();
+      var todayKey = eventLocalDateKey(new Date(), timezone);
+      var defaultDay = days.indexOf(todayKey) !== -1 ? todayKey : (days.length > 0 ? days[0] : null);
       self.setState({
         sessions: sessions,
         sessionTypes: sessionTypes,
         tracks: tracks,
         days: days,
-        selectedDay: days.length > 0 ? days[0] : null,
+        selectedDay: defaultDay,
         isLoading: false,
       });
     }).catch(function(err) {

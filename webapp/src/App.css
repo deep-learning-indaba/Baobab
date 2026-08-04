@@ -1124,6 +1124,21 @@ div.card-container  { margin: 0 auto; }
   border-top: 1px solid var(--clr-outline-variant);
 }
 
+.markdown-container img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 0.5em 0;
+}
+
+/* Higher specificity than ".markdown-container img" above so it wins regardless of source order. */
+.markdown-container img.discussion-thumb {
+  max-width: 200px;
+  max-height: 200px;
+  object-fit: cover;
+  cursor: zoom-in;
+}
+
 .markdown-container table {
   border-collapse: collapse;
   margin: 0.5em 0;
