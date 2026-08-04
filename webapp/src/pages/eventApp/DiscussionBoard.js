@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { discussionService } from '../../services/eventApp/discussion.service';
 import DiscussionThreadListItem from './DiscussionThreadListItem';
+import MarkdownRenderer from '../../components/MarkdownRenderer';
 
 function DiscussionBoard(props) {
   var event = props.event, history = props.history;
@@ -45,9 +46,13 @@ function DiscussionBoard(props) {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-2xl font-bold text-foreground">{space ? space.name : t('Discussion')}</h1>
+          <h1 className="font-heading text-2xl font-bold text-foreground">
+            {space ? <MarkdownRenderer source={space.name} inline /> : t('Discussion')}
+          </h1>
           {space && space.description && (
-            <p className="text-sm text-muted-foreground mt-1">{space.description}</p>
+            <div className="text-sm text-muted-foreground mt-1">
+              <MarkdownRenderer source={space.description} />
+            </div>
           )}
         </div>
         {space && !space.is_archived && (
