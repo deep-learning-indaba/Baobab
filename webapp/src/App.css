@@ -1131,6 +1131,14 @@ div.card-container  { margin: 0 auto; }
   margin: 0.5em 0;
 }
 
+/* Higher specificity than ".markdown-container img" above so it wins regardless of source order. */
+.markdown-container img.discussion-thumb {
+  max-width: 200px;
+  max-height: 200px;
+  object-fit: cover;
+  cursor: zoom-in;
+}
+
 .markdown-container table {
   border-collapse: collapse;
   margin: 0.5em 0;

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { discussionService } from '../../services/eventApp/discussion.service';
-import ImageUploadButton from '../../components/ImageUploadButton';
+import Attachments from '../../components/Attachments';
+import { buildBodyMarkdown } from '../../utils/attachments';
 
 var MAX_SUBJECT_LEN = 200;
 
@@ -14,6 +15,7 @@ function NewDiscussionThread(props) {
 
   var [subject, setSubject] = useState('');
   var [body, setBody] = useState('');
+  var [attachments, setAttachments] = useState([]);
   var [posting, setPosting] = useState(false);
   var [error, setError] = useState(null);
   var [spaceName, setSpaceName] = useState(null);
@@ -26,10 +28,10 @@ function NewDiscussionThread(props) {
   }, [eventId, spaceId]);
 
   function handlePost() {
-    if (!subject.trim() || !body.trim() || !eventId || !spaceId) return;
+    if (!subject.trim() || (!body.trim() && attachments.length === 0) || !eventId || !spaceId) return;
     setPosting(true);
     setError(null);
-    discussionService.createThread(eventId, spaceId, subject.trim(), body.trim()).then(function (r) {
+    discussionService.createThread(eventId, spaceId, subject.trim(), buildBodyMarkdown(body, attachments)).then(function (r) {
       setPosting(false);
       if (r.error) { setError(r.error); return; }
       history.push('/' + eventKey + '/event-app/discussion/' + r.data.thread_id);
@@ -68,9 +70,10 @@ function NewDiscussionThread(props) {
             onChange={function (e) { setBody(e.target.value); }}
           />
           <div className="mt-2">
-            <ImageUploadButton
+            <Attachments
+              attachments={attachments}
+              onChange={setAttachments}
               disabled={posting}
-              onUpload={function (markdown) { setBody(function (prev) { return prev + (prev && !prev.endsWith('\n') ? '\n' : '') + markdown; }); }}
             />
           </div>
         </div>
@@ -78,7 +81,7 @@ function NewDiscussionThread(props) {
         <div className="flex justify-end">
           <button
             onClick={handlePost}
-            disabled={posting || !subject.trim() || !body.trim()}
+            disabled={posting || !subject.trim() || (!body.trim() && attachments.length === 0)}
             className="bg-primary text-primary-foreground text-sm font-semibold px-5 py-2 rounded-full disabled:opacity-50"
           >
             {posting ? t('Sending...') : t('Post')}
