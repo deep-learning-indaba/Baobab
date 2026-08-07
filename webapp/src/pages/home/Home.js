@@ -432,28 +432,41 @@ class Home extends Component {
 
                 {pastEventsExpanded && (
                   <Card className="p-0 overflow-hidden">
-                    {attended.map((e, i) => (
-                      <div
-                        key={e.key}
-                        className={cn(
-                          'flex items-center justify-between gap-4 px-5 py-4 hover:bg-surface-low transition-colors',
-                          i < attended.length - 1 && 'border-b border-border/50'
-                        )}
-                      >
-                        <div className="flex flex-col min-w-0">
-                          <NavLink
-                            to={`/${e.key}`}
-                            className="text-sm font-medium text-foreground hover:text-primary transition-colors truncate"
-                          >
-                            {e.description}
-                          </NavLink>
-                          {e.end_date && (
-                            <span className="text-xs text-muted-foreground mt-0.5">{e.end_date}</span>
+                    {attended.map((e, i) => {
+                      const surveyPending = e.survey_form_id && e.is_survey_time
+                        && e.status && e.status.survey_status !== 'Submitted';
+                      return (
+                        <div
+                          key={e.key}
+                          className={cn(
+                            'flex items-center justify-between gap-4 px-5 py-4 hover:bg-surface-low transition-colors',
+                            i < attended.length - 1 && 'border-b border-border/50'
+                          )}
+                        >
+                          <div className="flex flex-col min-w-0">
+                            <NavLink
+                              to={`/${e.key}`}
+                              className="text-sm font-medium text-foreground hover:text-primary transition-colors truncate"
+                            >
+                              {e.description}
+                            </NavLink>
+                            {e.end_date && (
+                              <span className="text-xs text-muted-foreground mt-0.5">{e.end_date}</span>
+                            )}
+                          </div>
+                          {surveyPending ? (
+                            <NavLink
+                              to={`/${e.key}/forms/${e.survey_form_id}`}
+                              className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                            >
+                              {t('Fill in Survey')}
+                            </NavLink>
+                          ) : (
+                            <Badge variant="secondary" className="shrink-0">{t('Attended')}</Badge>
                           )}
                         </div>
-                        <Badge variant="secondary" className="shrink-0">{t('Attended')}</Badge>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </Card>
                 )}
               </section>

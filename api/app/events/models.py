@@ -1,6 +1,8 @@
 
 from datetime import datetime
 
+import pytz
+
 from app import db
 from enum import Enum
 
@@ -55,8 +57,13 @@ class Event(db.Model):
     image = db.Column(db.String(255), nullable=True)
     timezone = db.Column(db.String(64), nullable=False, server_default='UTC')
     checkin_mode = db.Column(db.String(16), nullable=False, server_default='per_event')
+    survey_form_id = db.Column(db.Integer(), db.ForeignKey(
+        'form.id', name='event_survey_form_id_fkey', use_alter=True, ondelete='SET NULL'
+    ), nullable=True)
+    survey_open = db.Column(db.DateTime(), nullable=True)
 
     organisation = db.relationship('Organisation', foreign_keys=[organisation_id])
+    survey_form = db.relationship('Form', foreign_keys=[survey_form_id])
     application_forms = db.relationship('ApplicationForm')
     email_templates = db.relationship('EmailTemplate')
     event_roles = db.relationship('EventRole')
@@ -89,7 +96,8 @@ class Event(db.Model):
         contact_email=None,
         image=None,
         timezone='UTC',
-        checkin_mode='per_event'
+        checkin_mode='per_event',
+        survey_form_id=None
     ):
         self.start_date = start_date
         self.end_date = None if event_type == EventType.JOURNAL else end_date
@@ -115,12 +123,19 @@ class Event(db.Model):
         self.image = image
         self.timezone = timezone
         self.checkin_mode = checkin_mode
+        self.survey_form_id = survey_form_id
         self.event_fees = []
 
         self.add_event_translations(names, descriptions)
 
     def set_miniconf_url(self, new_miniconf_url):
         self.miniconf_url = new_miniconf_url
+
+    def set_survey_form_id(self, new_survey_form_id):
+        self.survey_form_id = new_survey_form_id
+
+    def set_survey_open(self, new_survey_open):
+        self.survey_open = new_survey_open
 
     def set_start_date(self, new_start_date):
         self.start_date = new_start_date
@@ -317,6 +332,16 @@ class Event(db.Model):
     @property
     def is_event_opening(self):
         return check_opening(self.start_date)
+
+    @property
+    def is_survey_time(self):
+        """True once the admin-configured survey_open moment (event-local time) has passed."""
+        if self.survey_open is None:
+            return False
+        tz = pytz.timezone(self.timezone or 'UTC')
+        threshold_local = tz.localize(self.survey_open)
+        threshold_utc = threshold_local.astimezone(pytz.utc).replace(tzinfo=None)
+        return datetime.utcnow() >= threshold_utc
 
     @property
     def is_daily_checkin(self):

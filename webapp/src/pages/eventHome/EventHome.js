@@ -237,6 +237,24 @@ class EventInfo extends Component {
           </div>
         )}
 
+        {/* Post-event survey prompt */}
+        {isConfirmedGuest && event.survey_form_id && event.is_survey_time && event.status
+          && event.status.survey_status !== 'Submitted' && (
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <p className="text-sm font-bold text-foreground">{t('Thank you for attending!')}</p>
+              <p className="text-sm text-muted-foreground mt-0.5">{t('We would love to hear your feedback on the event.')}</p>
+            </div>
+            <Link
+              to={`/${eventKey}/forms/${event.survey_form_id}`}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm shrink-0"
+            >
+              {t('Fill in Survey')}
+              <i className="fas fa-arrow-right text-xs" />
+            </Link>
+          </div>
+        )}
+
         {/* Notifications prompt — mobile only, hidden once enabled */}
         {isConfirmedGuest && <NotificationBanner />}
 
