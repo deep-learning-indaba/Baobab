@@ -63,7 +63,8 @@ def status_info(status):
         'registration_status': status.registration_status,
         'offer_status': status.offer_status,
         'outcome_status': status.outcome_status,
-        'is_event_attendee': status.is_event_attendee
+        'is_event_attendee': status.is_event_attendee,
+        'survey_status': status.survey_status
     }
 
 def event_info(user_id, event, status, language):
@@ -112,7 +113,9 @@ def event_info(user_id, event, status, language):
         'application_form_id': new_app_form.id if new_app_form else None,
         'review_form_id': new_review_form.id if new_review_form else None,
         'timezone': event.timezone,
-        'checkin_mode': event.checkin_mode
+        'checkin_mode': event.checkin_mode,
+        'survey_form_id': event.survey_form_id,
+        'is_survey_time': event.is_survey_time
     }
 
 

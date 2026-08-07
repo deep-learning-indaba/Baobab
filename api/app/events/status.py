@@ -11,23 +11,25 @@ from app import db
 
 class EventStatus():
     """Represents the status of a user at an event."""
-    def __init__(self, 
-                 invited_guest=None, 
+    def __init__(self,
+                 invited_guest=None,
                  application_status=None,
                  outcome_status=None,
-                 offer_status=None, 
-                 registration_status=None):
+                 offer_status=None,
+                 registration_status=None,
+                 survey_status=None):
         if invited_guest is None and registration_status is not None and offer_status is None:
             raise ValueError('Non-invited guest must have an offer to have a registration status')
-        
+
         if invited_guest is None and outcome_status is not None and application_status is None:
             raise ValueError('User must have applied to have an outcome')
 
-        self.invited_guest=invited_guest 
+        self.invited_guest=invited_guest
         self.application_status = application_status
         self.registration_status=registration_status
         self.offer_status=offer_status
         self.outcome_status=outcome_status
+        self.survey_status=survey_status
 
     @property
     def is_event_attendee(self):
@@ -43,14 +45,34 @@ def _get_registration_status(registration):
         return 'Not Confirmed'
 
 
+def _get_survey_status(event_id, user_id):
+    event = db.session.query(Event).get(event_id)
+    if event is None or event.survey_form_id is None:
+        return None
+
+    form_response = db.session.query(FormResponse).filter_by(
+        form_id=event.survey_form_id, user_id=user_id
+    ).order_by(FormResponse.id.desc()).first()
+
+    if form_response is None:
+        return 'Not Submitted'
+    elif form_response.is_submitted:
+        return 'Submitted'
+    else:
+        return 'Not Submitted'
+
+
 def get_event_status(event_id, user_id):
+    survey_status = _get_survey_status(event_id, user_id)
+
     invited_guest = invited_guest_repository.get_for_event_and_user(event_id, user_id)
     if invited_guest:
         registration = invited_guest_repository.get_registration_for_event_and_user(event_id, user_id)
         # If they're an invited guest, we don't bother with whether they applied or not
-        return EventStatus(invited_guest=invited_guest.role, 
-                           registration_status=_get_registration_status(registration))
-    
+        return EventStatus(invited_guest=invited_guest.role,
+                           registration_status=_get_registration_status(registration),
+                           survey_status=survey_status)
+
     # Prefer new FormResponse system if the event has a form_type='application' form
     app_form = db.session.query(GenericForm).filter_by(
         event_id=event_id, form_type='application'
@@ -104,4 +126,5 @@ def get_event_status(event_id, user_id):
     return EventStatus(application_status=application_status,
                        outcome_status=outcome_status,
                        offer_status=offer_status,
-                       registration_status=registration_status)
+                       registration_status=registration_status,
+                       survey_status=survey_status)

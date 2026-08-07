@@ -1547,17 +1547,56 @@ class EventFormConfigAPI(restful.Resource):
                     'response_count': response_count
                 })
 
+            # --- Survey ---
+            event = event_repository.get_by_id(event_id)
+            survey_data = None
+            if event and event.survey_form_id:
+                survey_form = db.session.query(Form).filter_by(id=event.survey_form_id).first()
+                if survey_form:
+                    name_trans = survey_form.get_translation('en')
+                    survey_data = {
+                        'form_id': survey_form.id,
+                        'form_name': name_trans.name if name_trans else None
+                    }
+
             return {
                 'application': application_data,
                 'review': review_data,
                 'registration': registration_data,
-                'generic_forms': generic_forms_data
+                'generic_forms': generic_forms_data,
+                'survey': survey_data
             }, 200
 
         except Exception as e:
             LOGGER.error(f"Error getting form config for event {event_id}: {str(e)}")
             LOGGER.error(traceback.format_exc())
             return errors.DB_NOT_AVAILABLE
+
+
+class EventSurveyFormAPI(restful.Resource):
+    """Assigns an existing Form as an event's post-event survey."""
+
+    @event_admin_required
+    def put(self, event_id):
+        from flask_restful import reqparse as rp
+        req_parser = rp.RequestParser()
+        req_parser.add_argument('form_id', type=int, required=False)
+        args = req_parser.parse_args()
+
+        event = event_repository.get_by_id(event_id)
+        if not event:
+            return errors.EVENT_NOT_FOUND
+
+        form_id = args['form_id']
+        if form_id is not None:
+            form = db.session.query(Form).filter_by(id=form_id, event_id=event_id).first()
+            if not form:
+                return errors.FORM_NOT_FOUND_BY_ID
+
+        event.set_survey_form_id(form_id)
+        db.session.commit()
+
+        return {'survey_form_id': event.survey_form_id}, 200
 
 
 class FormReviewAssignmentAPI(restful.Resource):

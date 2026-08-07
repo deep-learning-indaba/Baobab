@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { formConfigService } from "../../services/formConfig/formConfig.service";
 import FormTypeCard from "./components/FormTypeCard";
 import GenericFormsList from "./components/GenericFormsList";
+import SurveyFormConfig from "./components/SurveyFormConfig";
 
 class FormConfigPage extends Component {
     constructor(props) {
@@ -182,6 +183,12 @@ class FormConfigPage extends Component {
                         eventKey={eventKey}
                     />
                 </div>
+
+                <SurveyFormConfig
+                    eventId={this.props.event && this.props.event.id}
+                    surveyFormId={config && config.survey && config.survey.form_id}
+                    onSaved={this.loadConfig}
+                />
             </div>
         );
     }
