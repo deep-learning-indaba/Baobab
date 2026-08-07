@@ -115,6 +115,7 @@ def event_info(user_id, event, status, language):
         'timezone': event.timezone,
         'checkin_mode': event.checkin_mode,
         'survey_form_id': event.survey_form_id,
+        'survey_open': event.survey_open.strftime('%Y-%m-%dT%H:%M:%S') if event.survey_open is not None else None,
         'is_survey_time': event.is_survey_time
     }
 

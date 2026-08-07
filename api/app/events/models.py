@@ -1,5 +1,5 @@
 
-from datetime import datetime, time
+from datetime import datetime
 
 import pytz
 
@@ -60,6 +60,7 @@ class Event(db.Model):
     survey_form_id = db.Column(db.Integer(), db.ForeignKey(
         'form.id', name='event_survey_form_id_fkey', use_alter=True, ondelete='SET NULL'
     ), nullable=True)
+    survey_open = db.Column(db.DateTime(), nullable=True)
 
     organisation = db.relationship('Organisation', foreign_keys=[organisation_id])
     survey_form = db.relationship('Form', foreign_keys=[survey_form_id])
@@ -132,6 +133,9 @@ class Event(db.Model):
 
     def set_survey_form_id(self, new_survey_form_id):
         self.survey_form_id = new_survey_form_id
+
+    def set_survey_open(self, new_survey_open):
+        self.survey_open = new_survey_open
 
     def set_start_date(self, new_start_date):
         self.start_date = new_start_date
@@ -331,11 +335,11 @@ class Event(db.Model):
 
     @property
     def is_survey_time(self):
-        """True from 5PM local time on the event's last day onwards (including after the event has fully passed)."""
-        if self.end_date is None:
+        """True once the admin-configured survey_open moment (event-local time) has passed."""
+        if self.survey_open is None:
             return False
         tz = pytz.timezone(self.timezone or 'UTC')
-        threshold_local = tz.localize(datetime.combine(self.end_date.date(), time(17, 0)))
+        threshold_local = tz.localize(self.survey_open)
         threshold_utc = threshold_local.astimezone(pytz.utc).replace(tzinfo=None)
         return datetime.utcnow() >= threshold_utc
 

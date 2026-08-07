@@ -1812,7 +1812,7 @@ class EventResourceLinkAPITest(ApiTestCase):
 
 
 class EventSurveyTimeTest(ApiTestCase):
-    """Tests for Event.is_survey_time: from 5PM local time on the last day onwards."""
+    """Tests for Event.is_survey_time: true once the admin-configured survey_open moment (event-local) has passed."""
 
     def seed_static_data(self):
         self.event = self.add_event(
@@ -1820,58 +1820,58 @@ class EventSurveyTimeTest(ApiTestCase):
             end_date=datetime(2026, 1, 10)
         )
 
-    def test_false_without_end_date(self):
+    def test_false_without_survey_open(self):
         self.seed_static_data()
-        self.event.end_date = None
-        db.session.commit()
         self.assertFalse(self.event.is_survey_time)
 
-    def test_false_before_5pm_on_last_day_utc(self):
+    def test_false_before_survey_open_utc(self):
         self.seed_static_data()
         self.event.timezone = 'UTC'
+        self.event.survey_open = datetime(2026, 1, 10, 17, 0)
         db.session.commit()
         with mock.patch('app.events.models.datetime') as mock_dt:
-            mock_dt.combine = datetime.combine
             mock_dt.utcnow.return_value = datetime(2026, 1, 10, 16, 59)
             self.assertFalse(self.event.is_survey_time)
 
-    def test_true_at_5pm_on_last_day_utc(self):
+    def test_true_at_survey_open_utc(self):
         self.seed_static_data()
         self.event.timezone = 'UTC'
+        self.event.survey_open = datetime(2026, 1, 10, 17, 0)
         db.session.commit()
         with mock.patch('app.events.models.datetime') as mock_dt:
-            mock_dt.combine = datetime.combine
             mock_dt.utcnow.return_value = datetime(2026, 1, 10, 17, 0)
             self.assertTrue(self.event.is_survey_time)
 
     def test_threshold_shifts_with_event_timezone(self):
-        """5PM in Africa/Johannesburg (UTC+2, no DST) is 15:00 UTC."""
+        """A survey_open of 17:00 in Africa/Johannesburg (UTC+2, no DST) is 15:00 UTC."""
         self.seed_static_data()
         self.event.timezone = 'Africa/Johannesburg'
+        self.event.survey_open = datetime(2026, 1, 10, 17, 0)
         db.session.commit()
         with mock.patch('app.events.models.datetime') as mock_dt:
-            mock_dt.combine = datetime.combine
             mock_dt.utcnow.return_value = datetime(2026, 1, 10, 14, 59)
             self.assertFalse(self.event.is_survey_time)
             mock_dt.utcnow.return_value = datetime(2026, 1, 10, 15, 0)
             self.assertTrue(self.event.is_survey_time)
 
-    def test_false_before_last_day(self):
+    def test_true_long_after_survey_open(self):
         self.seed_static_data()
         self.event.timezone = 'UTC'
+        self.event.survey_open = datetime(2026, 1, 10, 17, 0)
         db.session.commit()
         with mock.patch('app.events.models.datetime') as mock_dt:
-            mock_dt.combine = datetime.combine
-            mock_dt.utcnow.return_value = datetime(2026, 1, 5, 23, 0)
-            self.assertFalse(self.event.is_survey_time)
+            mock_dt.utcnow.return_value = datetime(2026, 1, 20, 9, 0)
+            self.assertTrue(self.event.is_survey_time)
 
-    def test_true_after_event_has_fully_passed(self):
+    def test_independent_of_end_date(self):
+        """is_survey_time depends only on survey_open, not on end_date."""
         self.seed_static_data()
         self.event.timezone = 'UTC'
+        self.event.end_date = None
+        self.event.survey_open = datetime(2026, 1, 10, 17, 0)
         db.session.commit()
         with mock.patch('app.events.models.datetime') as mock_dt:
-            mock_dt.combine = datetime.combine
-            mock_dt.utcnow.return_value = datetime(2026, 1, 12, 9, 0)
+            mock_dt.utcnow.return_value = datetime(2026, 1, 10, 17, 0)
             self.assertTrue(self.event.is_survey_time)
 
 
@@ -1963,8 +1963,10 @@ class EventSurveyFormAPITest(ApiTestCase):
         self.event = db.session.merge(self.event)
         self.other_event = db.session.merge(self.other_event)
 
-    def _assign_survey_form(self, form_id, event_id=None, headers=None):
+    def _assign_survey_form(self, form_id, event_id=None, headers=None, survey_open=None):
         payload = {'event_id': event_id if event_id is not None else self.event.id, 'form_id': form_id}
+        if survey_open is not None:
+            payload['survey_open'] = survey_open
         return self.app.put(
             '/api/v1/event-survey-form',
             data=json.dumps(payload),
@@ -2026,3 +2028,58 @@ class EventSurveyFormAPITest(ApiTestCase):
 
         event = db.session.query(Event).filter_by(id=self.event.id).first()
         self.assertIsNone(event.survey_form_id)
+
+    def test_assigns_survey_open_with_form(self):
+        self.seed_static_data()
+        form = Form(event_id=self.event.id, created_by_user_id=self.admin.id)
+        db.session.add(form)
+        db.session.commit()
+        form_id = form.id
+
+        response = self._assign_survey_form(form_id, survey_open='2026-08-10T17:00:00')
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['survey_open'], '2026-08-10T17:00:00')
+
+        event = db.session.query(Event).filter_by(id=self.event.id).first()
+        self.assertEqual(event.survey_open, datetime(2026, 8, 10, 17, 0, 0))
+
+        by_key = self._get_event_by_key()
+        by_key_data = json.loads(by_key.data)
+        self.assertEqual(by_key_data['survey_open'], '2026-08-10T17:00:00')
+
+    def test_accepts_survey_open_without_seconds(self):
+        """The frontend's <input type=datetime-local> sends minute precision."""
+        self.seed_static_data()
+        form = Form(event_id=self.event.id, created_by_user_id=self.admin.id)
+        db.session.add(form)
+        db.session.commit()
+
+        response = self._assign_survey_form(form.id, survey_open='2026-08-10T17:00')
+        self.assertEqual(response.status_code, 200)
+
+        event = db.session.query(Event).filter_by(id=self.event.id).first()
+        self.assertEqual(event.survey_open, datetime(2026, 8, 10, 17, 0, 0))
+
+    def test_rejects_invalid_survey_open_format(self):
+        self.seed_static_data()
+        form = Form(event_id=self.event.id, created_by_user_id=self.admin.id)
+        db.session.add(form)
+        db.session.commit()
+
+        response = self._assign_survey_form(form.id, survey_open='not-a-date')
+        self.assertEqual(response.status_code, 400)
+
+    def test_can_clear_survey_open(self):
+        self.seed_static_data()
+        form = Form(event_id=self.event.id, created_by_user_id=self.admin.id)
+        db.session.add(form)
+        db.session.commit()
+        form_id = form.id
+
+        self._assign_survey_form(form_id, survey_open='2026-08-10T17:00:00')
+        response = self._assign_survey_form(form_id, survey_open='')
+        self.assertEqual(response.status_code, 200)
+
+        event = db.session.query(Event).filter_by(id=self.event.id).first()
+        self.assertIsNone(event.survey_open)

@@ -186,7 +186,9 @@ class FormConfigPage extends Component {
 
                 <SurveyFormConfig
                     eventId={this.props.event && this.props.event.id}
+                    eventTimezone={this.props.event && this.props.event.timezone}
                     surveyFormId={config && config.survey && config.survey.form_id}
+                    surveyOpen={config && config.survey && config.survey.survey_open}
                     onSaved={this.loadConfig}
                 />
             </div>

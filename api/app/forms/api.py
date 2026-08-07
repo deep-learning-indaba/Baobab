@@ -3,6 +3,7 @@ import traceback
 import random
 
 import flask_restful as restful
+from flask_restful import reqparse
 from flask import g, request
 
 from app.forms.models import (
@@ -1550,14 +1551,18 @@ class EventFormConfigAPI(restful.Resource):
             # --- Survey ---
             event = event_repository.get_by_id(event_id)
             survey_data = None
-            if event and event.survey_form_id:
-                survey_form = db.session.query(Form).filter_by(id=event.survey_form_id).first()
-                if survey_form:
-                    name_trans = survey_form.get_translation('en')
-                    survey_data = {
-                        'form_id': survey_form.id,
-                        'form_name': name_trans.name if name_trans else None
-                    }
+            if event and (event.survey_form_id or event.survey_open):
+                survey_form_name = None
+                if event.survey_form_id:
+                    survey_form = db.session.query(Form).filter_by(id=event.survey_form_id).first()
+                    if survey_form:
+                        name_trans = survey_form.get_translation('en')
+                        survey_form_name = name_trans.name if name_trans else None
+                survey_data = {
+                    'form_id': event.survey_form_id,
+                    'form_name': survey_form_name,
+                    'survey_open': event.survey_open.strftime('%Y-%m-%dT%H:%M:%S') if event.survey_open is not None else None
+                }
 
             return {
                 'application': application_data,
@@ -1574,13 +1579,13 @@ class EventFormConfigAPI(restful.Resource):
 
 
 class EventSurveyFormAPI(restful.Resource):
-    """Assigns an existing Form as an event's post-event survey."""
+    """Assigns an existing Form as an event's post-event survey, and when it opens."""
 
     @event_admin_required
     def put(self, event_id):
-        from flask_restful import reqparse as rp
-        req_parser = rp.RequestParser()
+        req_parser = reqparse.RequestParser()
         req_parser.add_argument('form_id', type=int, required=False)
+        req_parser.add_argument('survey_open', type=str, required=False)
         args = req_parser.parse_args()
 
         event = event_repository.get_by_id(event_id)
@@ -1593,10 +1598,24 @@ class EventSurveyFormAPI(restful.Resource):
             if not form:
                 return errors.FORM_NOT_FOUND_BY_ID
 
+        survey_open = None
+        if args['survey_open']:
+            try:
+                survey_open = datetime.strptime(args['survey_open'], '%Y-%m-%dT%H:%M:%S')
+            except ValueError:
+                try:
+                    survey_open = datetime.strptime(args['survey_open'], '%Y-%m-%dT%H:%M')
+                except ValueError:
+                    return errors.INVALID_SURVEY_OPEN
+
         event.set_survey_form_id(form_id)
+        event.set_survey_open(survey_open)
         db.session.commit()
 
-        return {'survey_form_id': event.survey_form_id}, 200
+        return {
+            'survey_form_id': event.survey_form_id,
+            'survey_open': event.survey_open.strftime('%Y-%m-%dT%H:%M:%S') if event.survey_open is not None else None
+        }, 200
 
 
 class FormReviewAssignmentAPI(restful.Resource):

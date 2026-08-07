@@ -29,8 +29,8 @@ function getFormConfig(eventId) {
     });
 }
 
-function assignSurveyForm(eventId, formId) {
-    return axios.put(baseUrl + '/api/v1/event-survey-form', { event_id: eventId, form_id: formId }, {
+function assignSurveyForm(eventId, formId, surveyOpen) {
+    return axios.put(baseUrl + '/api/v1/event-survey-form', { event_id: eventId, form_id: formId, survey_open: surveyOpen }, {
         headers: authHeader()
     })
     .then(function(response) {
