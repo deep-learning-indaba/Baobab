@@ -5,7 +5,8 @@ const baseUrl = process.env.REACT_APP_API_URL;
 
 export const formConfigService = {
     getFormConfig,
-    createTypedForm
+    createTypedForm,
+    assignSurveyForm
 }
 
 function getFormConfig(eventId) {
@@ -22,6 +23,26 @@ function getFormConfig(eventId) {
     .catch(function(error) {
         return {
             config: null,
+            error: extractErrorMessage(error),
+            statusCode: error.response && error.response.status
+        };
+    });
+}
+
+function assignSurveyForm(eventId, formId, surveyOpen) {
+    return axios.put(baseUrl + '/api/v1/event-survey-form', { event_id: eventId, form_id: formId, survey_open: surveyOpen }, {
+        headers: authHeader()
+    })
+    .then(function(response) {
+        return {
+            data: response.data,
+            error: "",
+            statusCode: response.status
+        };
+    })
+    .catch(function(error) {
+        return {
+            data: null,
             error: extractErrorMessage(error),
             statusCode: error.response && error.response.status
         };
