@@ -113,6 +113,12 @@ def set_cors_headers(response):
     response.headers['Access-Control-Allow-Origin'] = origin
     response.headers['Access-Control-Allow-Credentials'] = 'true'
     response.headers.add('Vary', 'Origin')
+    # Browsers hide all response headers from cross-origin JS except this
+    # allow-listed set. File-download endpoints fetched via axios (rather
+    # than a plain <a href> navigation, needed here so the Authorization
+    # header goes along) need Content-Disposition exposed to read the
+    # server-supplied filename off the response.
+    response.headers['Access-Control-Expose-Headers'] = 'Content-Disposition'
     if request.method == 'OPTIONS':
         response.headers['Access-Control-Allow-Methods'] = CORS_ALLOWED_METHODS
         requested_headers = request.environ.get('HTTP_ACCESS_CONTROL_REQUEST_HEADERS')

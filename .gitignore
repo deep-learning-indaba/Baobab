@@ -148,3 +148,6 @@ integration-tests/cypress/plugins/
 
 # Temporary Docs
 # /docs/temp/
+
+# Local-only secrets override (never commit - see docker-compose.override.yml)
+docker-compose.override.yml

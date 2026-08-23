@@ -8,8 +8,38 @@ from app.tags.models import Tag
 
 
 class VisibilityEvaluator:
-    """Evaluates form visibility expressions against user tags"""
-    
+    """Evaluates form visibility expressions against user tags.
+
+    Also used, via the optional `context` argument, for document eligibility and
+    variant-selection rules (app/documents/eligibility.py) - one expression
+    language for all three, so admins learn a single rule builder.
+    """
+
+    @staticmethod
+    def get_user_tag_ids_for_event(user_id, event_id):
+        """Like get_user_tags_for_event, but tag ids rather than translated names.
+
+        Expressions built by an admin UI should reference tags by id: matching on
+        the English translated name (as the `tag` leaf below does) means renaming
+        a tag silently breaks every expression that names it.
+        """
+        tag_ids = set()
+
+        offer = db.session.query(Offer).filter_by(user_id=user_id, event_id=event_id).first()
+        if offer:
+            for offer_tag in offer.offer_tags:
+                if offer_tag.tag and offer_tag.tag.active:
+                    tag_ids.add(offer_tag.tag_id)
+
+        invited_guest = db.session.query(InvitedGuest).filter_by(
+            user_id=user_id, event_id=event_id).first()
+        if invited_guest:
+            for guest_tag in invited_guest.invited_guest_tags:
+                if guest_tag.tag and guest_tag.tag.active:
+                    tag_ids.add(guest_tag.tag_id)
+
+        return tag_ids
+
     @staticmethod
     def get_user_tags_for_event(user_id, event_id):
         """
@@ -64,21 +94,30 @@ class VisibilityEvaluator:
         return user_tags
     
     @staticmethod
-    def evaluate(expression, user_tags):
+    def evaluate(expression, user_tags, context=None):
         """
         Evaluate a visibility expression against user tags.
-        
+
         Args:
             expression: The visibility expression (JSON structure)
             user_tags: Set of tag names (strings) that the user has
-        
+            context: Optional EligibilityContext supplying tag ids and the
+                `attended` / `form_submitted` leaves (app/documents/eligibility.py).
+                Forms visibility never passes this, so those leaves evaluate to
+                False for form dependencies - unchanged behaviour for existing
+                callers.
+
         Returns:
             bool: True if the user should see the form, False otherwise
-        
+
         Example expressions:
             # Simple tag check
             {"tag": "invited_guest"}
-            
+
+            # Tag by id - preferred for anything built by an admin UI, since it
+            # survives the tag being renamed
+            {"tag_id": 12}
+
             # Complex expression with AND
             {
                 "operator": "AND",
@@ -87,7 +126,7 @@ class VisibilityEvaluator:
                     {"tag": "workshop_participant"}
                 ]
             }
-            
+
             # Expression with OR
             {
                 "operator": "OR",
@@ -96,8 +135,8 @@ class VisibilityEvaluator:
                     {"tag": "selected_attendee"}
                 ]
             }
-            
-            # Expression with NOT
+
+            # Expression with NOT - exactly one condition
             {
                 "operator": "NOT",
                 "conditions": [
@@ -107,38 +146,46 @@ class VisibilityEvaluator:
         """
         if not expression:
             return True
-        
+
         operator = expression.get('operator')
-        
+
         # Handle logical operators (AND, OR, NOT)
         if operator in ['AND', 'OR', 'NOT']:
-            return VisibilityEvaluator._evaluate_logical(expression, user_tags)
-        
-        # Handle leaf condition (simple tag check)
-        tag = expression.get('tag')
-        if tag:
-            return tag in user_tags
-        
+            return VisibilityEvaluator._evaluate_logical(expression, user_tags, context)
+
+        if 'tag' in expression:
+            return expression.get('tag') in user_tags
+
+        if 'tag_id' in expression:
+            return context is not None and expression.get('tag_id') in context.tag_ids
+
+        if 'attended' in expression:
+            return context is not None and context.attended == bool(expression.get('attended'))
+
+        if 'form_submitted' in expression:
+            return (context is not None
+                    and expression.get('form_submitted') in context.submitted_form_ids)
+
         return False
-    
+
     @staticmethod
-    def _evaluate_logical(expression, user_tags):
+    def _evaluate_logical(expression, user_tags, context=None):
         """Evaluate logical operators (AND, OR, NOT)"""
         operator = expression.get('operator')
         conditions = expression.get('conditions', [])
-        
+
         if operator == 'AND':
-            return all(VisibilityEvaluator.evaluate(cond, user_tags) for cond in conditions)
-        
+            return all(VisibilityEvaluator.evaluate(cond, user_tags, context) for cond in conditions)
+
         elif operator == 'OR':
-            return any(VisibilityEvaluator.evaluate(cond, user_tags) for cond in conditions)
-        
+            return any(VisibilityEvaluator.evaluate(cond, user_tags, context) for cond in conditions)
+
         elif operator == 'NOT':
             if len(conditions) != 1:
                 LOGGER.warning(f"NOT operator expects exactly 1 condition, got {len(conditions)}")
                 return False
-            return not VisibilityEvaluator.evaluate(conditions[0], user_tags)
-        
+            return not VisibilityEvaluator.evaluate(conditions[0], user_tags, context)
+
         return False
     
     @staticmethod

@@ -173,3 +173,16 @@ MISSING_FIELDS = ({'message': 'Required fields are missing.'}, 400)
 CANNOT_CONNECT_SELF = ({'message': 'You cannot connect with yourself.'}, 400)
 CONNECTION_BLOCKED = ({'message': 'Unable to send a request.'}, 403)
 CONNECTION_NOT_FOUND = ({'message': 'Connection not found.'}, 404)
+
+# Document generation
+DOCUMENT_TEMPLATE_NOT_FOUND = ({'message': 'No document template exists with that ID.'}, 404)
+DOCUMENT_TEMPLATE_KEY_IN_USE = ({'message': 'A document template with that key already exists for this event.'}, 409)
+DOCUMENT_VARIANT_NOT_FOUND = ({'message': 'No variant exists with that ID on this document template.'}, 404)
+DOCUMENT_SOURCE_NOT_SPECIFIED = ({'message': 'Could not find a Google Docs or Slides file id in that link.'}, 400)
+GENERATED_DOCUMENT_NOT_FOUND = ({'message': 'No generated document exists with that ID.'}, 404)
+DOCUMENT_NOT_YET_GENERATED = ({'message': 'This document has not finished generating.'}, 409)
+USER_EVENT_DATA_KEY_REQUIRED = ({'message': 'A key is required.'}, 400)
+
+# Form response export
+INVALID_EXPORT_FORMAT = ({'message': "Invalid export format. Must be 'csv' or 'sheets'."}, 400)
+EXPORT_GOOGLE_SHEETS_FAILED = ({'message': 'Failed to create the Google Sheet. Please try again.'}, 502)

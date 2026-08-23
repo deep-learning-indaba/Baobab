@@ -23,7 +23,10 @@ class FormResponseListComponent extends Component {
         is_withdrawn: '',
         email: '',
         name: ''
-      }
+      },
+      exporting: null,
+      exportError: null,
+      exportSheetUrl: null
     };
   }
 
@@ -117,6 +120,47 @@ class FormResponseListComponent extends Component {
     this.props.history.push(`/${eventKey}/form-responses/${formId}/${responseId}`);
   };
 
+  handleExportCsv = async () => {
+    const eventId = this.props.event ? this.props.event.id : null;
+    const formId = this.getFormId();
+    if (!eventId || !formId || this.state.exporting) return;
+
+    this.setState({ exporting: 'csv', exportError: null, exportSheetUrl: null });
+    const result = await formResponseService.exportResponsesCsv(eventId, formId, this.state.filters);
+
+    if (result.error) {
+      this.setState({ exporting: null, exportError: result.error });
+      return;
+    }
+
+    const url = window.URL.createObjectURL(result.blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = result.filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    this.setState({ exporting: null });
+  };
+
+  handleExportSheets = async () => {
+    const eventId = this.props.event ? this.props.event.id : null;
+    const formId = this.getFormId();
+    if (!eventId || !formId || this.state.exporting) return;
+
+    this.setState({ exporting: 'sheets', exportError: null, exportSheetUrl: null });
+    const result = await formResponseService.exportResponsesToGoogleSheets(eventId, formId, this.state.filters);
+
+    if (result.error) {
+      this.setState({ exporting: null, exportError: result.error });
+      return;
+    }
+
+    this.setState({ exporting: null, exportSheetUrl: result.url });
+    window.open(result.url, '_blank', 'noopener,noreferrer');
+  };
+
   handleBack = () => {
     if (this.props.formId) {
       // Rendered from /responseList context — go back
@@ -129,7 +173,7 @@ class FormResponseListComponent extends Component {
 
   render() {
     const { t } = this.props;
-    const { responses, loading, error, pagination, filters } = this.state;
+    const { responses, loading, error, pagination, filters, exporting, exportError, exportSheetUrl } = this.state;
 
     if (loading && responses.length === 0) {
       return (
@@ -165,13 +209,45 @@ class FormResponseListComponent extends Component {
                 <p className="text-sm text-muted-foreground mt-0.5">{this.state.formName}</p>
               )}
             </div>
-            {!this.props.formId && (
-              <button onClick={this.handleBack}
-                      className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
-                ← {t("Back to Forms")}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={this.handleExportCsv}
+                disabled={!!exporting || pagination.total === 0}
+                className="inline-flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold border border-border text-foreground hover:bg-surface-high transition-colors disabled:opacity-40"
+              >
+                {exporting === 'csv' ? t("Exporting…") : t("Export CSV")}
               </button>
-            )}
+              <button
+                onClick={this.handleExportSheets}
+                disabled={!!exporting || pagination.total === 0}
+                className="inline-flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold border border-border text-foreground hover:bg-surface-high transition-colors disabled:opacity-40"
+              >
+                {exporting === 'sheets' ? t("Exporting…") : t("Export to Google Sheets")}
+              </button>
+              {!this.props.formId && (
+                <button onClick={this.handleBack}
+                        className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+                  ← {t("Back to Forms")}
+                </button>
+              )}
+            </div>
           </div>
+
+          {exportError && (
+            <div className="bg-error/10 text-error border border-error/20 px-4 py-3 rounded-xl text-sm">
+              {exportError}
+            </div>
+          )}
+
+          {exportSheetUrl && (
+            <div className="bg-green-50 text-green-700 border border-green-200 px-4 py-3 rounded-xl text-sm flex items-center justify-between gap-3">
+              <span>{t("Google Sheet created — it should have opened in a new tab.")}</span>
+              <a href={exportSheetUrl} target="_blank" rel="noopener noreferrer"
+                 className="font-medium underline whitespace-nowrap">
+                {t("Open spreadsheet")}
+              </a>
+            </div>
+          )}
 
           <form onSubmit={this.handleSearchSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-2">
