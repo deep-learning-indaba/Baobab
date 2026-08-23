@@ -82,6 +82,7 @@ class EventNav extends Component {
             )}
             <SidebarLink to={`/${this.props.eventKey}/invitationLetter`} label={t('Invitation Letter')} />
             <SidebarLink to={`/${this.props.eventKey}/indemnity`} label={t('Indemnity Form')} />
+            <SidebarLink to={`/${this.props.eventKey}/documents`} label={t('My Documents')} />
           </SidebarSection>
         )}
 
@@ -99,6 +100,7 @@ class EventNav extends Component {
             <SidebarLink to={`/${this.props.eventKey}/eventRoleAdmin`} label={t('Event Roles')} />
             <SidebarLink to={`/${this.props.eventKey}/formConfig`} label={t('Form Configuration')} />
             <SidebarLink to={`/${this.props.eventKey}/resourceLinks`} label={t('Resource Links')} />
+            <SidebarLink to={`/${this.props.eventKey}/documentsAdmin`} label={t('Documents')} />
           </SidebarSection>
         )}
 

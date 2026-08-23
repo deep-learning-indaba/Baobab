@@ -29,6 +29,7 @@ from .connections import api as connections_api
 from .discussion import api as discussion_api
 from .engagement import api as engagement_api
 from .outbox import api as outbox_api
+from .documents import api as documents_api
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
 rest_api.add_resource(users_api.UserCommentAPI, '/api/v1/user-comment')
@@ -184,6 +185,7 @@ rest_api.add_resource(profiles_api.ConsentAPI, '/api/v1/consent')
 rest_api.add_resource(forms_api.FormResponseSubmitAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/submit')
 rest_api.add_resource(forms_api.FormResponseWithdrawAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/withdraw')
 rest_api.add_resource(forms_api.FormResponseListAdminAPI, '/api/v1/forms/<int:form_id>/responses/admin')
+rest_api.add_resource(forms_api.FormResponseExportAPI, '/api/v1/forms/<int:form_id>/responses/export')
 rest_api.add_resource(forms_api.FormResponseDetailAdminAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/admin')
 # Programme routes
 rest_api.add_resource(programme_api.SessionListAPI, '/api/v1/programme/sessions')
@@ -232,3 +234,25 @@ rest_api.add_resource(discussion_api.DiscussionPinAPI,             '/api/v1/disc
 rest_api.add_resource(discussion_api.DiscussionMessageAPI,          '/api/v1/discussion/message/<int:message_id>')
 rest_api.add_resource(discussion_api.DiscussionReportAPI,           '/api/v1/discussion/message/<int:message_id>/report')
 rest_api.add_resource(connections_api.ConnectionAPI, '/api/v1/connection')
+
+# Document generation routes
+rest_api.add_resource(documents_api.DocumentTemplateListAPI, '/api/v1/documents/templates')
+rest_api.add_resource(documents_api.DocumentTemplateAPI, '/api/v1/documents/templates/<int:template_id>')
+rest_api.add_resource(documents_api.DocumentTemplateVariantListAPI,
+                      '/api/v1/documents/templates/<int:template_id>/variants')
+rest_api.add_resource(documents_api.DocumentTemplateVariantAPI,
+                      '/api/v1/documents/templates/<int:template_id>/variants/<int:variant_id>')
+rest_api.add_resource(documents_api.DocumentTemplateFormsAPI,
+                      '/api/v1/documents/templates/<int:template_id>/forms')
+rest_api.add_resource(documents_api.DocumentTemplateAnalyseAPI,
+                      '/api/v1/documents/templates/<int:template_id>/analyse')
+rest_api.add_resource(documents_api.DocumentTemplatePreviewAPI,
+                      '/api/v1/documents/templates/<int:template_id>/preview')
+rest_api.add_resource(documents_api.DocumentValidateSourceAPI, '/api/v1/documents/validate-source')
+rest_api.add_resource(documents_api.DocumentGenerateAPI, '/api/v1/documents/generate')
+rest_api.add_resource(documents_api.GeneratedDocumentListAPI, '/api/v1/documents/generated')
+rest_api.add_resource(documents_api.GeneratedDocumentDownloadAPI,
+                      '/api/v1/documents/generated/<int:document_id>/download')
+rest_api.add_resource(documents_api.DocumentAvailableAPI, '/api/v1/documents/available')
+rest_api.add_resource(documents_api.DocumentRequestAPI, '/api/v1/documents/request')
+rest_api.add_resource(documents_api.UserEventDataListAPI, '/api/v1/events/<int:event_id>/user-data')

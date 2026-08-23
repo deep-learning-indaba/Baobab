@@ -21,6 +21,7 @@ import InvitedGuests from "../invitedGuests";
 import CreateInvitedGuests from "../createInvitedGuest";
 import Registration from "../registration";
 import InvitedLetter from "../invitationLetter";
+import { DocumentsAdmin, DocumentTemplateEditor, UserDataAdmin, MyDocuments } from "../documents";
 import RegistrationAdmin from "../registrationAdmin";
 import Offer from "../offer";
 import OfferAdmin from "../offerAdmin";
@@ -566,6 +567,31 @@ class EventHome extends Component {
           exact
           path={`${match.path}/invitationLetter`}
           render={(props) => <InvitedLetter {...props} event={event} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/documents`}
+          render={(props) => <MyDocuments {...props} event={event} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/documentsAdmin`}
+          render={(props) => <DocumentsAdmin {...props} event={event} organisation={this.props.organisation} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/documentsAdmin/user-data`}
+          render={(props) => <UserDataAdmin {...props} event={event} organisation={this.props.organisation} />}
+        />
+        {/* These routes aren't wrapped in a <Switch>, so each <Route> below matches
+            independently rather than only the first hit - a route param has to be
+            constrained (as elsewhere in this file, e.g. :spaceId(\d+)) or an unrelated
+            static path like the /user-data route above renders stacked underneath this
+            one instead of being excluded by it. templateId is always numeric or "new". */}
+        <Route
+          exact
+          path={`${match.path}/documentsAdmin/:templateId(\\d+|new)`}
+          render={(props) => <DocumentTemplateEditor {...props} event={event} organisation={this.props.organisation} />}
         />
         <Route
           exact
