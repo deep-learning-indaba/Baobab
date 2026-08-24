@@ -1,4 +1,5 @@
 from datetime import datetime
+from unittest import mock
 
 from sqlalchemy import inspect as sa_inspect
 
@@ -58,6 +59,35 @@ class DocumentsTestCase(ApiTestCase):
         self.admin_email = self.admin.email
         self.user_firstname = self.user.firstname
         self.user_lastname = self.user.lastname
+        self.mock_bucket = self._mock_storage()
+
+    def _mock_storage(self):
+        """Replaces app.utils.storage.get_storage_bucket with a mock bucket,
+        following the same pattern app/files/tests.py already uses.
+
+        Both generator.py and api.py reach it via `from app.utils import
+        storage; storage.get_storage_bucket()` - patching the attribute on the
+        shared app.utils.storage module object (rather than a per-importer
+        qualified path) covers every caller in one patch, since each of them
+        holds a reference to that same module object, not a copy of the
+        function.
+
+        Without this, a generation test's upload (or a download test's read)
+        falls through to a real `google.cloud.storage.Client()` call, which
+        needs Application Default Credentials neither this sandboxed test
+        environment nor CI (no docker-compose, no fake-gcs-server, no gcloud
+        login) has - raising DefaultCredentialsError. Locally, docker-compose
+        happens to mask this by pointing USE_LOCAL_STORAGE_EMULATOR at a real
+        fake-gcs-server container; CI has no equivalent, so it always surfaces
+        there even when a local `docker-compose run pytest` looks clean.
+        """
+        patcher = mock.patch('app.utils.storage.get_storage_bucket')
+        mock_get_bucket = patcher.start()
+        self.addCleanup(patcher.stop)
+        mock_blob = mock_get_bucket.return_value.blob.return_value
+        mock_blob.upload_from_string.return_value = None
+        mock_blob.download_to_filename.return_value = None
+        return mock_get_bucket
 
     def make_form(self, event_id=None, form_type=None, name=None):
         event_id = event_id or self.event_id
