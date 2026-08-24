@@ -47,6 +47,10 @@ GCP_CREDENTIALS_DICT = {
 GCP_PROJECT_NAME = os.getenv('GCP_PROJECT_NAME', None)
 GCP_BUCKET_NAME = os.getenv('GCP_BUCKET_NAME', None)
 GCP_API_KEY = os.getenv('GCP_API_KEY', None)
+# Drive folder document-generation copies are created in, so an orphaned copy
+# from a crashed run can be found and swept instead of littering the service
+# account's Drive root. None is fine locally/in tests; required in production.
+GCP_DOCS_WORKING_FOLDER_ID = os.getenv('GCP_DOCS_WORKING_FOLDER_ID', None)
 # Dedicated switch for routing storage.py at the local fake-gcs-server in
 # docker-compose, instead of real GCS. Deliberately separate from the GCP_*
 # credential values: those can legitimately be unset placeholders in a real,

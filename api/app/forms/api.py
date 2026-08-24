@@ -1,16 +1,19 @@
 from datetime import datetime
+import csv
+import io
+import re
 import traceback
 import random
 
 import flask_restful as restful
 from flask_restful import reqparse
-from flask import g, request
+from flask import g, request, Response, stream_with_context
 
 from app.forms.models import (
     Form, FormResponse, FormAnswer, FormSection, FormQuestion,
     FormTranslation, FormSectionTranslation, FormQuestionTranslation,
     DependencyEvaluator, FormResponseTag, ValidationError,
-    DISPLAY_ONLY_QUESTION_TYPES
+    DISPLAY_ONLY_QUESTION_TYPES, MULTI_VALUE_SEPARATOR
 )
 from app.forms.visibility import VisibilityEvaluator
 from app.forms.mixins import (
@@ -1267,9 +1270,49 @@ class FormResponseWithdrawAPI(restful.Resource):
             return errors.DB_NOT_AVAILABLE
 
 
+def _filtered_admin_response_query(form_id, args):
+    """FormResponse+AppUser query for a form, with the admin list/export
+    filters (is_submitted, is_withdrawn, user_id, email, name) from `args`
+    (a request.args-like mapping) applied. Shared by FormResponseListAdminAPI
+    and FormResponseExportAPI so the export always matches what the admin
+    filtered the table to.
+    """
+    is_submitted = args.get('is_submitted')
+    is_withdrawn = args.get('is_withdrawn')
+    user_id = args.get('user_id')
+    email_search = args.get('email')
+    name_search = args.get('name')
+
+    query = db.session.query(FormResponse, AppUser).join(
+        AppUser, FormResponse.user_id == AppUser.id
+    ).filter(FormResponse.form_id == form_id)
+
+    if is_submitted:
+        query = query.filter(FormResponse.is_submitted == (is_submitted.lower() == 'true'))
+
+    if is_withdrawn:
+        query = query.filter(FormResponse.is_withdrawn == (is_withdrawn.lower() == 'true'))
+
+    if user_id:
+        query = query.filter(FormResponse.user_id == int(user_id))
+
+    if email_search:
+        query = query.filter(AppUser.email.ilike(f'%{email_search}%'))
+
+    if name_search:
+        query = query.filter(
+            db.or_(
+                AppUser.firstname.ilike(f'%{name_search}%'),
+                AppUser.lastname.ilike(f'%{name_search}%')
+            )
+        )
+
+    return query.order_by(FormResponse.started_timestamp.desc())
+
+
 class FormResponseListAdminAPI(restful.Resource):
     """Admin endpoint to list all responses for a form with pagination"""
-    
+
     @event_admin_required
     def get(self, form_id, event_id):
         """Get paginated list of all responses for a form (admin only)"""
@@ -1293,45 +1336,9 @@ class FormResponseListAdminAPI(restful.Resource):
                     per_page = 10000
             except ValueError:
                 return errors.INVALID_INPUT_MALFORMED_PAGINATION
-            
-            # Parse filter parameters
-            is_submitted = request.args.get('is_submitted')
-            is_withdrawn = request.args.get('is_withdrawn')
-            user_id = request.args.get('user_id')
-            email_search = request.args.get('email')
-            name_search = request.args.get('name')
-            
-            # Build query with user join for user information
-            query = db.session.query(FormResponse, AppUser).join(
-                AppUser, FormResponse.user_id == AppUser.id
-            ).filter(FormResponse.form_id == form_id)
-            
-            # Apply filters
-            if is_submitted:
-                query = query.filter(FormResponse.is_submitted == (is_submitted.lower() == 'true'))
-            
-            if is_withdrawn:
-                query = query.filter(FormResponse.is_withdrawn == (is_withdrawn.lower() == 'true'))
-            
-            if user_id:
-                query = query.filter(FormResponse.user_id == int(user_id))
-            
-            # Search by email (case-insensitive partial match)
-            if email_search:
-                query = query.filter(AppUser.email.ilike(f'%{email_search}%'))
-            
-            # Search by name (case-insensitive partial match on firstname or lastname)
-            if name_search:
-                query = query.filter(
-                    db.or_(
-                        AppUser.firstname.ilike(f'%{name_search}%'),
-                        AppUser.lastname.ilike(f'%{name_search}%')
-                    )
-                )
-            
-            # Order by most recent first
-            query = query.order_by(FormResponse.started_timestamp.desc())
-            
+
+            query = _filtered_admin_response_query(form_id, request.args)
+
             # Paginate
             paginated = query.paginate(page=page, per_page=per_page, error_out=False)
             
@@ -1360,6 +1367,191 @@ class FormResponseListAdminAPI(restful.Resource):
             
         except Exception as e:
             LOGGER.error(f"Error getting responses for form {form_id}: {str(e)}")
+            LOGGER.error(traceback.format_exc())
+            return errors.DB_NOT_AVAILABLE
+
+
+def _form_name(form, language):
+    translations_by_language = {t.language: t for t in form.translations}
+    translation = (
+        translations_by_language.get(language)
+        or translations_by_language.get('en')
+        or next(iter(translations_by_language.values()), None)
+    )
+    return translation.name if translation else f'Form {form.id}'
+
+
+def _build_export_columns(form, language):
+    """Ordered [{question_id, header, options}] for every active,
+    answerable question on `form`, used as the CSV/Sheet columns.
+
+    Question translations are a lazy='dynamic' relationship, so looking one
+    up per question would be a query per question on top of the per-response
+    answer fetch; batching them into one query mirrors serialize_form.
+    """
+    questions = [
+        question
+        for section in form.sections if section.is_active
+        for question in section.questions
+        if question.is_active and question.type not in DISPLAY_ONLY_QUESTION_TYPES
+    ]
+    question_ids = [question.id for question in questions]
+
+    translations_by_question = {}
+    if question_ids:
+        for translation in db.session.query(FormQuestionTranslation).filter(
+            FormQuestionTranslation.form_question_id.in_(question_ids)
+        ).all():
+            translations_by_question.setdefault(
+                translation.form_question_id, {}
+            )[translation.language] = translation
+
+    columns = []
+    for question in questions:
+        by_language = translations_by_question.get(question.id, {})
+        translation = by_language.get(language) or by_language.get('en') or next(iter(by_language.values()), None)
+        header = (translation.headline if translation else None) or question.key or f'Question {question.id}'
+        options_by_value = {}
+        if translation and translation.options:
+            for option in translation.options:
+                options_by_value[option.get('value')] = option.get('label', option.get('value'))
+        columns.append({'question_id': question.id, 'header': header, 'options': options_by_value})
+    return columns
+
+
+def _format_export_answer(raw_value, options_by_value):
+    """A stored answer value as export-ready text: choice questions render
+    their option labels instead of the stored option value, and multi-value
+    answers (MULTI_VALUE_SEPARATOR-joined in storage) render each part
+    resolved the same way.
+    """
+    if raw_value is None:
+        return ''
+    parts = raw_value.split(MULTI_VALUE_SEPARATOR)
+    return MULTI_VALUE_SEPARATOR.join(options_by_value.get(part, part) for part in parts)
+
+
+def _build_export_row(response, user, columns, answers_by_response):
+    if response.is_withdrawn:
+        status = 'Withdrawn'
+    elif response.is_submitted:
+        status = 'Submitted'
+    else:
+        status = 'Draft'
+
+    row = [
+        f'{user.firstname} {user.lastname}'.strip(),
+        user.email,
+        status,
+        response.started_timestamp.isoformat() if response.started_timestamp else '',
+        response.submitted_timestamp.isoformat() if response.submitted_timestamp else '',
+    ]
+    answers = answers_by_response.get(response.id, {})
+    for column in columns:
+        row.append(_format_export_answer(answers.get(column['question_id']), column['options']))
+    return row
+
+
+class FormResponseExportAPI(restful.Resource):
+    """Admin endpoint to export every question and answer across a form's
+    responses as CSV or a freshly created, shared Google Sheet. Honours the
+    same filters as FormResponseListAdminAPI, so an export matches whatever
+    the admin currently has the response list filtered/searched to.
+    """
+
+    @event_admin_required
+    def get(self, form_id, event_id):
+        try:
+            form = db.session.query(Form).filter_by(id=form_id).first()
+            if not form:
+                return errors.FORM_NOT_FOUND
+            if not verify_form_event(form, event_id):
+                return errors.FORBIDDEN
+
+            export_format = request.args.get('format', 'csv')
+            if export_format not in ('csv', 'sheets'):
+                return errors.INVALID_EXPORT_FORMAT
+
+            language = request.args.get('language', 'en')
+
+            rows = _filtered_admin_response_query(form_id, request.args).all()
+            response_ids = [response.id for response, _ in rows]
+
+            # .with_entities avoids instantiating a full FormAnswer ORM
+            # object per row - a large form's answer count (questions x
+            # responses) can run into the hundreds of thousands, where that
+            # per-row object/state-tracking overhead is the dominant cost.
+            answers_by_response = {}
+            if response_ids:
+                answer_rows = db.session.query(
+                    FormAnswer.response_id, FormAnswer.question_id, FormAnswer.value
+                ).filter(
+                    FormAnswer.response_id.in_(response_ids),
+                    FormAnswer.is_active == True
+                )
+                for response_id, question_id, value in answer_rows:
+                    answers_by_response.setdefault(response_id, {})[question_id] = value
+
+            columns = _build_export_columns(form, language)
+            header = ['Name', 'Email', 'Status', 'Started', 'Submitted'] + \
+                [column['header'] for column in columns]
+            form_name = _form_name(form, language)
+
+            if export_format == 'csv':
+                def generate_csv():
+                    # Written straight to the wire row by row rather than
+                    # built up as one in-memory string - a large form's
+                    # export can otherwise mean holding tens of MB of CSV
+                    # text (more with long free-text answers) in one worker
+                    # for the whole request before a single byte goes out.
+                    buffer = io.StringIO()
+                    writer = csv.writer(buffer)
+
+                    writer.writerow(header)
+                    yield buffer.getvalue()
+                    buffer.seek(0)
+                    buffer.truncate(0)
+
+                    for response, user in rows:
+                        writer.writerow(_build_export_row(response, user, columns, answers_by_response))
+                        yield buffer.getvalue()
+                        buffer.seek(0)
+                        buffer.truncate(0)
+
+                filename = re.sub(r'[^A-Za-z0-9_-]+', '_', form_name).strip('_') or f'form-{form.id}'
+                return Response(
+                    stream_with_context(generate_csv()),
+                    mimetype='text/csv',
+                    headers={'Content-Disposition': f'attachment; filename="{filename}_responses.csv"'}
+                )
+
+            # Google Sheets export: create a new sheet under the app's service
+            # account and share it with the requesting admin, rather than
+            # returning file bytes. Unlike the CSV path, the Sheets API needs
+            # the full row matrix up front to write it in row-range batches
+            # (see create_spreadsheet), so there's no equivalent streaming win
+            # available here.
+            data_rows = [_build_export_row(response, user, columns, answers_by_response) for response, user in rows]
+            requester = user_repository.get_by_id(g.current_user['id'])
+
+            from config import GCP_DOCS_WORKING_FOLDER_ID
+            from app.documents.google_client import build_default_client, GoogleApiError
+            try:
+                client = build_default_client(working_folder_id=GCP_DOCS_WORKING_FOLDER_ID)
+                url = client.create_spreadsheet(
+                    title=f'{form_name} Responses',
+                    rows=[header] + data_rows,
+                    share_with_email=requester.email,
+                )
+            except GoogleApiError as e:
+                LOGGER.error(f"Error creating export spreadsheet for form {form_id}: {str(e)}")
+                message = str(e) or errors.EXPORT_GOOGLE_SHEETS_FAILED[0]['message']
+                return {'message': message}, 502
+
+            return {'url': url}, 200
+
+        except Exception as e:
+            LOGGER.error(f"Error exporting responses for form {form_id}: {str(e)}")
             LOGGER.error(traceback.format_exc())
             return errors.DB_NOT_AVAILABLE
 

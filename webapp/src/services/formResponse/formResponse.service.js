@@ -17,7 +17,99 @@ export const formResponseService = {
     removeFormResponseTag,
     getResponseReviews,
     assignResponseReviewer,
-    removeResponseReviewer
+    removeResponseReviewer,
+    exportResponsesCsv,
+    exportResponsesToGoogleSheets
+}
+
+function _exportParams(eventId, filters) {
+    const params = new URLSearchParams();
+    params.append('event_id', eventId);
+    if (filters.is_submitted !== undefined && filters.is_submitted !== '') params.append('is_submitted', filters.is_submitted);
+    if (filters.is_withdrawn !== undefined && filters.is_withdrawn !== '') params.append('is_withdrawn', filters.is_withdrawn);
+    if (filters.email) params.append('email', filters.email);
+    if (filters.name) params.append('name', filters.name);
+    return params;
+}
+
+/**
+ * Extract a friendly error message from a failed export request. The
+ * request is made with responseType 'blob', so an error JSON body from the
+ * backend arrives as a Blob rather than parsed data - it has to be read out
+ * asynchronously before extractErrorMessage's synchronous data.message
+ * lookup can find anything.
+ */
+async function _extractBlobErrorMessage(error) {
+    if (error.response && error.response.data instanceof Blob) {
+        try {
+            const text = await error.response.data.text();
+            const data = JSON.parse(text);
+            return data.message || data.error;
+        } catch (e) {
+            // Body wasn't JSON - fall through to the generic message below.
+        }
+    }
+    return extractErrorMessage(error);
+}
+
+/**
+ * Export every question and answer across a form's responses (honouring the
+ * given list filters) as a CSV file.
+ * @param {number} eventId
+ * @param {number} formId
+ * @param {object} filters - { is_submitted, is_withdrawn, email, name }
+ * @returns {Promise} { blob, filename, error, statusCode }
+ */
+function exportResponsesCsv(eventId, formId, filters = {}) {
+    const params = _exportParams(eventId, filters);
+    params.append('format', 'csv');
+
+    return axios.get(baseUrl + `/api/v1/forms/${formId}/responses/export?${params.toString()}`, {
+        headers: authHeader(),
+        responseType: 'blob'
+    })
+    .then(function(response) {
+        const disposition = response.headers['content-disposition'] || '';
+        const match = disposition.match(/filename="?([^";]+)"?/);
+        return {
+            blob: response.data,
+            filename: match ? match[1] : 'responses.csv',
+            error: '',
+            statusCode: response.status
+        };
+    })
+    .catch(async function(error) {
+        return {
+            blob: null,
+            filename: null,
+            error: await _extractBlobErrorMessage(error),
+            statusCode: error.response && error.response.status
+        };
+    });
+}
+
+/**
+ * Export every question and answer across a form's responses (honouring the
+ * given list filters) to a new Google Sheet, shared with the requesting
+ * admin.
+ * @param {number} eventId
+ * @param {number} formId
+ * @param {object} filters - { is_submitted, is_withdrawn, email, name }
+ * @returns {Promise} { url, error, statusCode }
+ */
+function exportResponsesToGoogleSheets(eventId, formId, filters = {}) {
+    const params = _exportParams(eventId, filters);
+    params.append('format', 'sheets');
+
+    return axios.get(baseUrl + `/api/v1/forms/${formId}/responses/export?${params.toString()}`, {
+        headers: authHeader()
+    })
+    .then(function(response) {
+        return { url: response.data.url, error: '', statusCode: response.status };
+    })
+    .catch(function(error) {
+        return { url: null, error: extractErrorMessage(error), statusCode: error.response && error.response.status };
+    });
 }
 
 /**
