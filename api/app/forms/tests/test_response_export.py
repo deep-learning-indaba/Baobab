@@ -29,10 +29,7 @@ class _FakeSheetsClient:
 class TestFormResponseExportAPI(ApiTestCase):
 
     def seed_static_data(self):
-        # Capture plain ids right after creation, before any request through
-        # self.app - the test client's request tears down db.session, which
-        # detaches these ORM objects and makes later `.id` access raise
-        # DetachedInstanceError.
+        # Capture ids before any request - db.session detaches after.
         admin = self.add_user('admin@example.com', 'Admin', 'User', password='password123')
         self.admin_id = admin.id
         event = self.add_event()
@@ -128,8 +125,7 @@ class TestFormResponseExportAPI(ApiTestCase):
         self.assertEqual(row_dict['Email'], 'applicant@example.com')
         self.assertEqual(row_dict['Status'], 'Submitted')
         self.assertEqual(row_dict['Reason for applying'], 'Because I love ML')
-        # Stored answer is the option value ('za'); export should resolve it
-        # to the human-readable label from the question's options.
+        # 'za' should resolve to its option label.
         self.assertEqual(row_dict['Country'], 'South Africa')
 
     def test_csv_export_respects_email_filter(self):
@@ -152,10 +148,7 @@ class TestFormResponseExportAPI(ApiTestCase):
         self.assertEqual(rows[1][1], 'match@example.com')
 
     def test_csv_export_streams_every_row_without_loss_at_moderate_scale(self):
-        # The CSV path was switched to a generator that yields row by row
-        # instead of building the whole file in memory first - this proves
-        # that refactor didn't drop, duplicate, or reorder rows once there
-        # are enough of them to actually exercise the buffer-reuse loop.
+        # Streaming shouldn't drop/duplicate/reorder rows.
         self.seed_static_data()
         form, text_question, choice_question = self._create_form_with_questions()
 

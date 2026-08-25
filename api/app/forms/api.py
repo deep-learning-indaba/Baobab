@@ -1271,12 +1271,8 @@ class FormResponseWithdrawAPI(restful.Resource):
 
 
 def _filtered_admin_response_query(form_id, args):
-    """FormResponse+AppUser query for a form, with the admin list/export
-    filters (is_submitted, is_withdrawn, user_id, email, name) from `args`
-    (a request.args-like mapping) applied. Shared by FormResponseListAdminAPI
-    and FormResponseExportAPI so the export always matches what the admin
-    filtered the table to.
-    """
+    """FormResponse+AppUser query with the admin list/export filters
+    (is_submitted, is_withdrawn, user_id, email, name) applied."""
     is_submitted = args.get('is_submitted')
     is_withdrawn = args.get('is_withdrawn')
     user_id = args.get('user_id')
@@ -1383,12 +1379,7 @@ def _form_name(form, language):
 
 def _build_export_columns(form, language):
     """Ordered [{question_id, header, options}] for every active,
-    answerable question on `form`, used as the CSV/Sheet columns.
-
-    Question translations are a lazy='dynamic' relationship, so looking one
-    up per question would be a query per question on top of the per-response
-    answer fetch; batching them into one query mirrors serialize_form.
-    """
+    answerable question on `form`, used as the CSV/Sheet columns."""
     questions = [
         question
         for section in form.sections if section.is_active
@@ -1420,11 +1411,7 @@ def _build_export_columns(form, language):
 
 
 def _format_export_answer(raw_value, options_by_value):
-    """A stored answer value as export-ready text: choice questions render
-    their option labels instead of the stored option value, and multi-value
-    answers (MULTI_VALUE_SEPARATOR-joined in storage) render each part
-    resolved the same way.
-    """
+    """Choice-question values rendered as their option label, not stored value."""
     if raw_value is None:
         return ''
     parts = raw_value.split(MULTI_VALUE_SEPARATOR)
@@ -1452,12 +1439,74 @@ def _build_export_row(response, user, columns, answers_by_response):
     return row
 
 
+class FormResponseStatsAPI(restful.Resource):
+    """Form-level response stats: counts by status, submission rate,
+    completion time. Unfiltered - unlike the list/export endpoints, this
+    reflects the whole form, not the admin's current search/page."""
+
+    @event_admin_required
+    def get(self, form_id, event_id):
+        try:
+            form = db.session.query(Form).filter_by(id=form_id).first()
+            if not form:
+                return errors.FORM_NOT_FOUND
+            if not verify_form_event(form, event_id):
+                return errors.FORBIDDEN
+
+            counts = db.session.query(
+                FormResponse.is_submitted, FormResponse.is_withdrawn, db.func.count(FormResponse.id)
+            ).filter(FormResponse.form_id == form_id).group_by(
+                FormResponse.is_submitted, FormResponse.is_withdrawn
+            ).all()
+
+            # Withdrawn takes priority, matching the per-row status badge.
+            submitted = draft = withdrawn = 0
+            for is_submitted, is_withdrawn, count in counts:
+                if is_withdrawn:
+                    withdrawn += count
+                elif is_submitted:
+                    submitted += count
+                else:
+                    draft += count
+            total = submitted + draft + withdrawn
+
+            # Averaged in Python, not SQL - timestamp-subtraction aggregation
+            # isn't portable to the SQLite dialect tests run against.
+            timestamps = db.session.query(
+                FormResponse.started_timestamp, FormResponse.submitted_timestamp
+            ).filter(
+                FormResponse.form_id == form_id,
+                FormResponse.is_submitted == True,
+                FormResponse.is_withdrawn == False
+            ).all()
+
+            durations = [
+                (submitted_ts - started_ts).total_seconds()
+                for started_ts, submitted_ts in timestamps
+                if started_ts and submitted_ts
+            ]
+            avg_completion_seconds = sum(durations) / len(durations) if durations else None
+            last_submitted = max((s for _, s in timestamps if s), default=None)
+
+            return {
+                'total': total,
+                'submitted': submitted,
+                'draft': draft,
+                'withdrawn': withdrawn,
+                'submission_rate': round(submitted / total * 100, 1) if total else 0,
+                'avg_completion_seconds': avg_completion_seconds,
+                'last_submitted_timestamp': last_submitted.isoformat() if last_submitted else None,
+            }, 200
+
+        except Exception as e:
+            LOGGER.error(f"Error getting response stats for form {form_id}: {str(e)}")
+            LOGGER.error(traceback.format_exc())
+            return errors.DB_NOT_AVAILABLE
+
+
 class FormResponseExportAPI(restful.Resource):
-    """Admin endpoint to export every question and answer across a form's
-    responses as CSV or a freshly created, shared Google Sheet. Honours the
-    same filters as FormResponseListAdminAPI, so an export matches whatever
-    the admin currently has the response list filtered/searched to.
-    """
+    """Export every question and answer across a form's responses, as CSV or
+    a shared Google Sheet. Honours the same filters as FormResponseListAdminAPI."""
 
     @event_admin_required
     def get(self, form_id, event_id):
@@ -1477,10 +1526,6 @@ class FormResponseExportAPI(restful.Resource):
             rows = _filtered_admin_response_query(form_id, request.args).all()
             response_ids = [response.id for response, _ in rows]
 
-            # .with_entities avoids instantiating a full FormAnswer ORM
-            # object per row - a large form's answer count (questions x
-            # responses) can run into the hundreds of thousands, where that
-            # per-row object/state-tracking overhead is the dominant cost.
             answers_by_response = {}
             if response_ids:
                 answer_rows = db.session.query(
@@ -1499,11 +1544,7 @@ class FormResponseExportAPI(restful.Resource):
 
             if export_format == 'csv':
                 def generate_csv():
-                    # Written straight to the wire row by row rather than
-                    # built up as one in-memory string - a large form's
-                    # export can otherwise mean holding tens of MB of CSV
-                    # text (more with long free-text answers) in one worker
-                    # for the whole request before a single byte goes out.
+                    # Streamed row by row rather than built as one big string.
                     buffer = io.StringIO()
                     writer = csv.writer(buffer)
 
@@ -1525,12 +1566,7 @@ class FormResponseExportAPI(restful.Resource):
                     headers={'Content-Disposition': f'attachment; filename="{filename}_responses.csv"'}
                 )
 
-            # Google Sheets export: create a new sheet under the app's service
-            # account and share it with the requesting admin, rather than
-            # returning file bytes. Unlike the CSV path, the Sheets API needs
-            # the full row matrix up front to write it in row-range batches
-            # (see create_spreadsheet), so there's no equivalent streaming win
-            # available here.
+            # Sheets needs the full row matrix up front to batch-write it.
             data_rows = [_build_export_row(response, user, columns, answers_by_response) for response, user in rows]
             requester = user_repository.get_by_id(g.current_user['id'])
 
