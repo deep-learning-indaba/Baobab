@@ -3,6 +3,13 @@ import { withTranslation } from "react-i18next";
 import { formResponseService } from "../../../services/formResponse";
 import { formServices } from "../../../services/form/form.service";
 
+const STATUS_FILTERS = {
+  '': { is_submitted: '', is_withdrawn: '' },
+  submitted: { is_submitted: 'true', is_withdrawn: 'false' },
+  draft: { is_submitted: 'false', is_withdrawn: 'false' },
+  withdrawn: { is_submitted: '', is_withdrawn: 'true' }
+};
+
 class FormResponseListComponent extends Component {
   constructor(props) {
     super(props);
@@ -26,12 +33,14 @@ class FormResponseListComponent extends Component {
       },
       exporting: null,
       exportError: null,
-      exportSheetUrl: null
+      exportSheetUrl: null,
+      stats: null
     };
   }
 
   componentDidMount() {
     this.loadResponses();
+    this.loadStats();
   }
 
   getFormId() {
@@ -85,6 +94,17 @@ class FormResponseListComponent extends Component {
     }
   };
 
+  loadStats = async () => {
+    const formId = this.getFormId();
+    const eventId = this.props.event ? this.props.event.id : null;
+    if (!eventId || !formId) return;
+
+    const result = await formResponseService.getResponseStats(eventId, formId);
+    if (!result.error) {
+      this.setState({ stats: result.stats });
+    }
+  };
+
   handlePageChange = (newPage) => {
     this.setState(
       prevState => ({
@@ -98,6 +118,24 @@ class FormResponseListComponent extends Component {
     this.setState(
       prevState => ({
         filters: { ...prevState.filters, [filterName]: value },
+        pagination: { ...prevState.pagination, page: 1 }
+      }),
+      () => this.loadResponses()
+    );
+  };
+
+  getStatusFilter() {
+    const { is_submitted, is_withdrawn } = this.state.filters;
+    if (is_withdrawn === 'true') return 'withdrawn';
+    if (is_submitted === 'true') return 'submitted';
+    if (is_submitted === 'false' && is_withdrawn === 'false') return 'draft';
+    return '';
+  }
+
+  handleStatusFilterChange = (value) => {
+    this.setState(
+      prevState => ({
+        filters: { ...prevState.filters, ...STATUS_FILTERS[value] },
         pagination: { ...prevState.pagination, page: 1 }
       }),
       () => this.loadResponses()
@@ -161,6 +199,17 @@ class FormResponseListComponent extends Component {
     window.open(result.url, '_blank', 'noopener,noreferrer');
   };
 
+  formatDuration = (seconds) => {
+    const { t } = this.props;
+    if (seconds === null || seconds === undefined) return '–';
+    const minutes = Math.round(seconds / 60);
+    if (minutes < 60) return t("~{{count}} min", { count: Math.max(minutes, 1) });
+    const hours = Math.round(minutes / 60);
+    if (hours < 24) return t("~{{count}} hr", { count: hours });
+    const days = Math.round(hours / 24);
+    return t("~{{count}} days", { count: days });
+  };
+
   handleBack = () => {
     if (this.props.formId) {
       // Rendered from /responseList context — go back
@@ -173,7 +222,7 @@ class FormResponseListComponent extends Component {
 
   render() {
     const { t } = this.props;
-    const { responses, loading, error, pagination, filters, exporting, exportError, exportSheetUrl } = this.state;
+    const { responses, loading, error, pagination, filters, exporting, exportError, exportSheetUrl, stats } = this.state;
 
     if (loading && responses.length === 0) {
       return (
@@ -233,6 +282,60 @@ class FormResponseListComponent extends Component {
             </div>
           </div>
 
+          {stats && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-5 py-5 border-y border-border/60">
+              <div>
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  {t("Total responses")}
+                </div>
+                <div className="mt-1 text-2xl font-bold text-foreground">{stats.total}</div>
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                  {t("Submitted")}
+                </div>
+                <div className="mt-1 text-2xl font-bold text-foreground">{stats.submitted}</div>
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                  {t("Draft")}
+                </div>
+                <div className="mt-1 text-2xl font-bold text-foreground">{stats.draft}</div>
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  <span className="w-1.5 h-1.5 rounded-full bg-error"></span>
+                  {t("Withdrawn")}
+                </div>
+                <div className="mt-1 text-2xl font-bold text-foreground">{stats.withdrawn}</div>
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  {t("Submission rate")}
+                </div>
+                <div className="mt-1 text-2xl font-bold text-foreground">{stats.submission_rate}%</div>
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  {t("Avg. time to submit")}
+                </div>
+                <div className="mt-1 text-2xl font-bold text-foreground">
+                  {this.formatDuration(stats.avg_completion_seconds)}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  {t("Last submission")}
+                </div>
+                <div className="mt-1 text-2xl font-bold text-foreground">
+                  {stats.last_submitted_timestamp ? new Date(stats.last_submitted_timestamp).toLocaleDateString() : '–'}
+                </div>
+              </div>
+            </div>
+          )}
+
           {exportError && (
             <div className="bg-error/10 text-error border border-error/20 px-4 py-3 rounded-xl text-sm">
               {exportError}
@@ -276,12 +379,13 @@ class FormResponseListComponent extends Component {
               <label className="block text-sm font-semibold text-foreground/90">{t("Status")}</label>
               <select
                 className="w-full px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30"
-                value={filters.is_submitted}
-                onChange={(e) => this.handleFilterChange('is_submitted', e.target.value)}
+                value={this.getStatusFilter()}
+                onChange={(e) => this.handleStatusFilterChange(e.target.value)}
               >
                 <option value="">{t("All")}</option>
-                <option value="true">{t("Submitted")}</option>
-                <option value="false">{t("Draft")}</option>
+                <option value="submitted">{t("Submitted")}</option>
+                <option value="draft">{t("Draft")}</option>
+                <option value="withdrawn">{t("Withdrawn")}</option>
               </select>
             </div>
 
@@ -292,19 +396,6 @@ class FormResponseListComponent extends Component {
               </button>
             </div>
           </form>
-
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="show_withdrawn"
-              className="rounded border-border text-primary focus:ring-primary w-4 h-4 cursor-pointer"
-              checked={filters.is_withdrawn === 'true'}
-              onChange={e => this.handleFilterChange('is_withdrawn', e.target.checked ? 'true' : '')}
-            />
-            <label htmlFor="show_withdrawn" className="text-sm font-medium text-foreground cursor-pointer select-none">
-              {t("Show withdrawn only")}
-            </label>
-          </div>
 
           {responses.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground">

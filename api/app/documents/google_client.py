@@ -195,14 +195,7 @@ class GoogleWorkspaceClient:
         return _with_retry(func, self._sleep_fn)
 
     def _drive_file_body(self, **fields):
-        """Drive file metadata with `parents` set to the configured Shared
-        Drive working folder, if any.
-
-        A bare service account has no personal Drive storage of its own, so
-        a newly created or copied file needs a Shared Drive parent to have
-        anywhere to be written - both generate_pdf's template copy and
-        create_spreadsheet's new file need this.
-        """
+        """File metadata with `parents` set to working_folder_id, if configured."""
         body = dict(fields)
         if self.working_folder_id:
             body['parents'] = [self.working_folder_id]
@@ -328,28 +321,16 @@ class GoogleWorkspaceClient:
 
     # -- Sheets export ---------------------------------------------------
 
-    # Rows per values().update() call. Google enforces a per-request payload
-    # size limit that isn't published as a precise number, so this chunks
-    # defensively rather than trying to size requests exactly - a form with
-    # many questions and long free-text answers can otherwise build one
-    # request large enough to trip it, and Sheets rejects that request
-    # (and only that request) wholesale rather than partially applying it.
+    # Rows per values().update() call, to stay under Google's per-request payload limit.
     _SHEETS_WRITE_BATCH_ROWS = 500
 
     def create_spreadsheet(self, title, rows, share_with_email):
-        """Create a new Sheet, write `rows` (a list of lists, header first)
-        starting at A1, share it with `share_with_email` as a writer, and
-        return its URL.
+        """Create a new Sheet, write `rows` (a list of lists, header first),
+        share it with `share_with_email` as a writer, and return its URL.
 
-        A bare service account has no personal Drive storage of its own, so
-        creating the file with no parent (via the Sheets API's create, which
-        has no `parents` field anyway) fails outright with a storage-quota
-        error. Creating it via the Drive API instead, inside the same Shared
-        Drive working folder generate_pdf's template copies use (see
-        _drive_file_body), gives it a parent whose storage the domain owns
-        rather than the service account. Unlike those copies, this file is
-        the deliverable itself and is deliberately left in place rather than
-        swept.
+        Created via the Drive API inside working_folder_id rather than the
+        Sheets API's own create (no `parents` field) - a bare service account
+        has no personal Drive storage, so a parentless file fails outright.
         """
         if self.working_folder_id:
             create_body = self._drive_file_body(
@@ -377,8 +358,6 @@ class GoogleWorkspaceClient:
         return spreadsheet_url
 
     def _write_rows_batch(self, spreadsheet_id, start_row_offset, chunk):
-        # start_row_offset is 0-indexed into the full `rows` list (header is
-        # row 0), so sheet row start_row_offset + 1 is where this chunk goes.
         self._call(lambda: self.sheets.spreadsheets().values().update(
             spreadsheetId=spreadsheet_id,
             range=f'A{start_row_offset + 1}',

@@ -475,10 +475,6 @@ class TestGeneratePdf(unittest.TestCase):
 class TestCreateSpreadsheet(unittest.TestCase):
 
     def test_creates_via_drive_api_inside_working_folder(self):
-        # A bare service account has no personal Drive storage, so a new file
-        # must be created with a Shared Drive folder as parent - something
-        # only the Drive API's files().create() (not spreadsheets().create())
-        # can express.
         files = FakeDriveFiles(create_result={'id': 'sheet-42'})
         permissions = FakeDrivePermissions()
         sheets = FakeSheetsService()
@@ -533,11 +529,6 @@ class TestCreateSpreadsheet(unittest.TestCase):
         self.assertEqual(sheets.update_calls, [])
 
     def test_writes_large_row_sets_in_multiple_batches(self):
-        # A single values().update() carrying the whole dataset is what risks
-        # tripping Google's per-request payload size limit for a large form -
-        # this proves large row sets actually go out in more than one call,
-        # each starting at the right sheet row, with nothing dropped or
-        # duplicated across the batch boundary.
         files = FakeDriveFiles(create_result={'id': 'sheet-1'})
         sheets = FakeSheetsService()
         client = _client(
