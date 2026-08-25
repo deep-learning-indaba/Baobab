@@ -186,6 +186,7 @@ rest_api.add_resource(forms_api.FormResponseSubmitAPI, '/api/v1/forms/<int:form_
 rest_api.add_resource(forms_api.FormResponseWithdrawAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/withdraw')
 rest_api.add_resource(forms_api.FormResponseListAdminAPI, '/api/v1/forms/<int:form_id>/responses/admin')
 rest_api.add_resource(forms_api.FormResponseExportAPI, '/api/v1/forms/<int:form_id>/responses/export')
+rest_api.add_resource(forms_api.FormResponseStatsAPI, '/api/v1/forms/<int:form_id>/responses/stats')
 rest_api.add_resource(forms_api.FormResponseDetailAdminAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/admin')
 # Programme routes
 rest_api.add_resource(programme_api.SessionListAPI, '/api/v1/programme/sessions')

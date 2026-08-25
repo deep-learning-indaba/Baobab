@@ -19,7 +19,27 @@ export const formResponseService = {
     assignResponseReviewer,
     removeResponseReviewer,
     exportResponsesCsv,
-    exportResponsesToGoogleSheets
+    exportResponsesToGoogleSheets,
+    getResponseStats
+}
+
+/**
+ * Form-level response stats (counts, submission rate, completion time).
+ * @param {number} eventId
+ * @param {number} formId
+ * @returns {Promise} { stats, error, statusCode }
+ */
+function getResponseStats(eventId, formId) {
+    const params = new URLSearchParams({ event_id: eventId });
+    return axios.get(baseUrl + `/api/v1/forms/${formId}/responses/stats?${params.toString()}`, {
+        headers: authHeader()
+    })
+    .then(function(response) {
+        return { stats: response.data, error: '', statusCode: response.status };
+    })
+    .catch(function(error) {
+        return { stats: null, error: extractErrorMessage(error), statusCode: error.response && error.response.status };
+    });
 }
 
 function _exportParams(eventId, filters) {
@@ -32,13 +52,7 @@ function _exportParams(eventId, filters) {
     return params;
 }
 
-/**
- * Extract a friendly error message from a failed export request. The
- * request is made with responseType 'blob', so an error JSON body from the
- * backend arrives as a Blob rather than parsed data - it has to be read out
- * asynchronously before extractErrorMessage's synchronous data.message
- * lookup can find anything.
- */
+// responseType 'blob' means an error JSON body arrives as a Blob, not parsed data.
 async function _extractBlobErrorMessage(error) {
     if (error.response && error.response.data instanceof Blob) {
         try {
@@ -46,15 +60,14 @@ async function _extractBlobErrorMessage(error) {
             const data = JSON.parse(text);
             return data.message || data.error;
         } catch (e) {
-            // Body wasn't JSON - fall through to the generic message below.
+            // not JSON - fall through
         }
     }
     return extractErrorMessage(error);
 }
 
 /**
- * Export every question and answer across a form's responses (honouring the
- * given list filters) as a CSV file.
+ * Export all questions/answers for a form's responses as a CSV file.
  * @param {number} eventId
  * @param {number} formId
  * @param {object} filters - { is_submitted, is_withdrawn, email, name }
@@ -89,9 +102,8 @@ function exportResponsesCsv(eventId, formId, filters = {}) {
 }
 
 /**
- * Export every question and answer across a form's responses (honouring the
- * given list filters) to a new Google Sheet, shared with the requesting
- * admin.
+ * Export all questions/answers for a form's responses to a new Google
+ * Sheet, shared with the requesting admin.
  * @param {number} eventId
  * @param {number} formId
  * @param {object} filters - { is_submitted, is_withdrawn, email, name }
