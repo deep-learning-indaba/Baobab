@@ -1,4 +1,5 @@
 import json
+import os
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
@@ -268,6 +269,59 @@ class OutboxEmailDeliveryTest(OutboxTestCase):
         pending = (db.session.query(OutboxMessage)
                    .filter(OutboxMessage.status == OutboxStatus.PENDING).count())
         self.assertEqual(pending, 5)
+
+
+@patch('app.utils.emailer.DEBUG', False)
+@patch('app.utils.emailer.smtplib.SMTP')
+class OutboxAttachmentDeliveryTest(OutboxTestCase):
+    """payload['attachment'] - how document generation (app/documents/generator.py,
+    app/documents/worker.py) delivers a PDF through the outbox instead of a
+    second, bespoke email-sending path."""
+
+    @patch('app.utils.storage.get_storage_bucket')
+    def test_attachment_is_downloaded_and_passed_to_smtp(self, mock_get_bucket, mock_smtp):
+        mock_blob = mock_get_bucket.return_value.blob.return_value
+
+        def fake_download(path):
+            with open(path, 'wb') as f:
+                f.write(b'%PDF-1.4 fake')
+        mock_blob.download_to_filename.side_effect = fake_download
+
+        self._message(payload={'attachment': {'blob_name': 'documents/1/2/abc.pdf',
+                                                'filename': 'Invitation_Letter.pdf'}})
+
+        summary = deliver_pending()
+
+        self.assertEqual(summary['sent'], 1)
+        mock_get_bucket.return_value.blob.assert_called_once_with('documents/1/2/abc.pdf')
+        # smtplib.SMTP().sendmail(from, to, message_string) - the attachment
+        # is inlined as a MIME part, so the filename shows up in the raw string.
+        sent_message = mock_smtp.return_value.sendmail.call_args[0][2]
+        self.assertIn('Invitation_Letter.pdf', sent_message)
+
+    @patch('app.utils.storage.get_storage_bucket')
+    def test_tmp_file_is_removed_after_delivery(self, mock_get_bucket, mock_smtp):
+        captured_path = {}
+
+        def fake_download(path):
+            captured_path['path'] = path
+            with open(path, 'wb') as f:
+                f.write(b'%PDF-1.4 fake')
+        mock_get_bucket.return_value.blob.return_value.download_to_filename.side_effect = fake_download
+
+        self._message(payload={'attachment': {'blob_name': 'documents/1/2/abc.pdf', 'filename': 'x.pdf'}})
+        deliver_pending()
+
+        self.assertIn('path', captured_path)
+        self.assertFalse(os.path.exists(captured_path['path']))
+
+    def test_no_attachment_sends_without_downloading_storage(self, mock_smtp):
+        with patch('app.utils.storage.get_storage_bucket') as mock_get_bucket:
+            self._message(payload=None)
+            summary = deliver_pending()
+
+        self.assertEqual(summary['sent'], 1)
+        mock_get_bucket.assert_not_called()
 
 
 class SenderResolutionTest(ApiTestCase):

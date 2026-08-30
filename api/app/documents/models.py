@@ -299,6 +299,11 @@ class GeneratedDocument(db.Model):
     """A record of one produced PDF: who, which variant, what values, where the file is."""
     __tablename__ = 'generated_document'
 
+    #: A bulk-worker attempt is abandoned after this many transport failures -
+    #: mirrors outbox.models.MAX_ATTEMPTS. A resolution failure is never
+    #: retried at all, regardless of this cap - see worker.py.
+    MAX_ATTEMPTS = 3
+
     id = db.Column(db.Integer(), primary_key=True)
     event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
     document_template_id = db.Column(db.Integer(),
@@ -307,8 +312,12 @@ class GeneratedDocument(db.Model):
                             db.ForeignKey('document_template_variant.id'), nullable=True)
     user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
     requested_by_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
+    # Null for a synchronous single generation; set for every row a bulk job
+    # pre-creates as `pending`, which is what the worker claims against.
+    job_id = db.Column(db.Integer(), db.ForeignKey('document_generation_job.id'), nullable=True)
 
     status = db.Column(db.String(16), nullable=False, default=GeneratedDocumentStatus.PENDING)
+    language = db.Column(db.String(2), nullable=False, default='en')
 
     storage_blob_name = db.Column(db.String(255), nullable=True)
     filename = db.Column(db.String(255), nullable=True)
@@ -320,6 +329,14 @@ class GeneratedDocument(db.Model):
 
     error_code = db.Column(db.String(64), nullable=True)
     error_detail = db.Column(db.Text(), nullable=True)
+    attempts = db.Column(db.Integer(), nullable=False, default=0)
+
+    # Claim fields, mirroring outbox.models.OutboxMessage: the worker takes
+    # exclusive ownership of a batch of `pending` rows with a UPDATE ...
+    # WHERE status='pending' before processing any of them, so two overlapping
+    # worker runs can't double-generate the same recipient's document.
+    claimed_at = db.Column(db.DateTime(), nullable=True)
+    claim_token = db.Column(db.String(36), nullable=True)
 
     created_at = db.Column(db.DateTime(), nullable=False)
     generated_at = db.Column(db.DateTime(), nullable=True)
@@ -329,19 +346,25 @@ class GeneratedDocument(db.Model):
     variant = db.relationship('DocumentTemplateVariant', foreign_keys=[variant_id])
     user = db.relationship('AppUser', foreign_keys=[user_id])
     requested_by = db.relationship('AppUser', foreign_keys=[requested_by_user_id])
+    job = db.relationship('DocumentGenerationJob', foreign_keys=[job_id])
 
     __table_args__ = (
         db.Index('idx_generated_document_lookup', 'document_template_id', 'user_id'),
+        db.Index('idx_generated_document_job', 'job_id'),
+        db.Index('ix_generated_document_claimable', 'status', 'job_id'),
     )
 
     def __init__(self, event_id, document_template_id, user_id, requested_by_user_id,
-                 variant_id=None, status=GeneratedDocumentStatus.PENDING):
+                 variant_id=None, status=GeneratedDocumentStatus.PENDING, job_id=None,
+                 language='en'):
         self.event_id = event_id
         self.document_template_id = document_template_id
         self.user_id = user_id
         self.requested_by_user_id = requested_by_user_id
         self.variant_id = variant_id
         self.status = status
+        self.job_id = job_id
+        self.language = language
         self.created_at = datetime.now()
 
     def mark_generated(self, storage_blob_name, filename, placeholder_snapshot):
@@ -350,8 +373,181 @@ class GeneratedDocument(db.Model):
         self.filename = filename
         self.placeholder_snapshot = placeholder_snapshot
         self.generated_at = datetime.now()
+        self.claim_token = None
+        self.claimed_at = None
 
-    def mark_failed(self, error_code, error_detail=None):
-        self.status = GeneratedDocumentStatus.FAILED
+    def mark_failed(self, error_code, error_detail=None, retryable=False):
+        """Record a failed attempt.
+
+        `retryable` distinguishes a transient transport failure (worth trying
+        again) from a resolution/eligibility failure (this person's data
+        won't change between now and the next worker run, so retrying only
+        delays reporting a real problem) - design section 8.2. A retryable
+        failure that still has attempts left goes back to `pending` instead
+        of `failed`, so the next worker run picks it up again.
+        """
+        self.attempts += 1
         self.error_code = error_code
-        self.error_detail = error_detail
+        self.error_detail = str(error_detail)[:2000] if error_detail else None
+        self.claim_token = None
+        self.claimed_at = None
+        if retryable and self.attempts < self.MAX_ATTEMPTS:
+            self.status = GeneratedDocumentStatus.PENDING
+        else:
+            self.status = GeneratedDocumentStatus.FAILED
+
+
+class DerivedPlaceholder(db.Model):
+    """A placeholder whose value is computed from ordered rules rather than
+    read from a single source - see app/documents/derived_placeholders.py.
+
+    Event-scoped, not template-scoped: a presenting sentence is wanted by the
+    invitation letter and the participation confirmation alike. Its rules'
+    conditions and interpolated text are resolved against whichever
+    document template is being resolved at the time, so it has no linked
+    forms of its own.
+    """
+    __tablename__ = 'document_derived_placeholder'
+
+    id = db.Column(db.Integer(), primary_key=True)
+    event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
+    key = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text(), nullable=True)
+    is_active = db.Column(db.Boolean(), nullable=False, default=True)
+
+    created_at = db.Column(db.DateTime(), nullable=False)
+    updated_at = db.Column(db.DateTime(), nullable=False)
+
+    event = db.relationship('Event', foreign_keys=[event_id])
+    rules = db.relationship('DerivedPlaceholderRule', cascade='all, delete-orphan',
+                             order_by='DerivedPlaceholderRule.order',
+                             back_populates='derived_placeholder')
+
+    __table_args__ = (
+        db.UniqueConstraint('event_id', 'key', name='uq_derived_placeholder_event_key'),
+    )
+
+    def __init__(self, event_id, key, description=None, is_active=True):
+        self.event_id = event_id
+        self.key = key.strip().lower()
+        self.description = description
+        self.is_active = is_active
+        self.created_at = datetime.now()
+        self.updated_at = datetime.now()
+
+
+class DerivedPlaceholderRule(db.Model):
+    """One rule of a derived placeholder. Rules are tried in ascending `order`;
+    the first whose condition holds supplies the text - see resolve_derived_placeholder."""
+    __tablename__ = 'document_derived_placeholder_rule'
+
+    id = db.Column(db.Integer(), primary_key=True)
+    derived_placeholder_id = db.Column(
+        db.Integer(), db.ForeignKey('document_derived_placeholder.id'), nullable=False)
+    # Ascending; the first rule whose condition holds supplies the text.
+    order = db.Column(db.Integer(), nullable=False)
+    # Null = the "otherwise" rule. Only valid on the last rule, enforced on save.
+    condition_expression = db.Column(db.JSON(), nullable=True)
+
+    derived_placeholder = db.relationship('DerivedPlaceholder', back_populates='rules')
+    translations = db.relationship('DerivedPlaceholderRuleTranslation', cascade='all, delete-orphan',
+                                    back_populates='rule')
+
+    def __init__(self, derived_placeholder_id, order, condition_expression=None):
+        self.derived_placeholder_id = derived_placeholder_id
+        self.order = order
+        self.condition_expression = condition_expression
+
+    def get_translation(self, language):
+        for translation in self.translations:
+            if translation.language == language:
+                return translation
+        return None
+
+
+class DerivedPlaceholderRuleTranslation(db.Model):
+    __tablename__ = 'document_derived_placeholder_rule_translation'
+    __table_args__ = (
+        db.UniqueConstraint('rule_id', 'language', name='uq_derived_placeholder_rule_translation'),
+    )
+
+    id = db.Column(db.Integer(), primary_key=True)
+    rule_id = db.Column(db.Integer(),
+                         db.ForeignKey('document_derived_placeholder_rule.id'), nullable=False)
+    language = db.Column(db.String(2), nullable=False)
+    text = db.Column(db.Text(), nullable=False)
+
+    rule = db.relationship('DerivedPlaceholderRule', back_populates='translations')
+
+    def __init__(self, rule_id, language, text):
+        self.rule_id = rule_id
+        self.language = language
+        self.text = text
+
+
+class DocumentGenerationJobStatus:
+    PENDING = 'pending'
+    RUNNING = 'running'
+    COMPLETED = 'completed'
+    COMPLETED_WITH_ERRORS = 'completed_with_errors'
+
+
+class DocumentGenerationJob(db.Model):
+    """One bulk-generation run: the recipients resolved at request time become
+    `pending` GeneratedDocument rows carrying this job's id, and the worker
+    behind /api/v1/tasks/document-generation (app/documents/worker.py) drains
+    them - see design section 8.2."""
+    __tablename__ = 'document_generation_job'
+
+    id = db.Column(db.Integer(), primary_key=True)
+    event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
+    document_template_id = db.Column(db.Integer(),
+                                      db.ForeignKey('document_template.id'), nullable=False)
+    requested_by_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
+
+    language = db.Column(db.String(2), nullable=False, default='en')
+    # Whether this run bypassed DocumentTemplate.eligibility_expression - a
+    # deliberate, recorded admin override (design section 7.2), not a default.
+    override_eligibility = db.Column(db.Boolean(), nullable=False, default=False)
+    # What the admin selected, for the audit trail: e.g.
+    # {"type": "tag", "tag_id": 12} or {"type": "user_ids", "user_ids": [...]}.
+    recipient_selection = db.Column(db.JSON(), nullable=True)
+
+    status = db.Column(db.String(24), nullable=False, default=DocumentGenerationJobStatus.PENDING)
+    total_count = db.Column(db.Integer(), nullable=False, default=0)
+    succeeded_count = db.Column(db.Integer(), nullable=False, default=0)
+    failed_count = db.Column(db.Integer(), nullable=False, default=0)
+
+    created_at = db.Column(db.DateTime(), nullable=False)
+    completed_at = db.Column(db.DateTime(), nullable=True)
+
+    event = db.relationship('Event', foreign_keys=[event_id])
+    document_template = db.relationship('DocumentTemplate', foreign_keys=[document_template_id])
+    requested_by = db.relationship('AppUser', foreign_keys=[requested_by_user_id])
+
+    def __init__(self, event_id, document_template_id, requested_by_user_id, total_count,
+                 language='en', override_eligibility=False, recipient_selection=None):
+        self.event_id = event_id
+        self.document_template_id = document_template_id
+        self.requested_by_user_id = requested_by_user_id
+        self.total_count = total_count
+        self.language = language
+        self.override_eligibility = override_eligibility
+        self.recipient_selection = recipient_selection
+        self.status = (DocumentGenerationJobStatus.COMPLETED if total_count == 0
+                        else DocumentGenerationJobStatus.PENDING)
+        self.created_at = datetime.now()
+        if total_count == 0:
+            self.completed_at = datetime.now()
+
+    def record_outcome(self, succeeded):
+        if succeeded:
+            self.succeeded_count += 1
+        else:
+            self.failed_count += 1
+        if self.succeeded_count + self.failed_count >= self.total_count:
+            self.status = (DocumentGenerationJobStatus.COMPLETED if self.failed_count == 0
+                            else DocumentGenerationJobStatus.COMPLETED_WITH_ERRORS)
+            self.completed_at = datetime.now()
+        elif self.status == DocumentGenerationJobStatus.PENDING:
+            self.status = DocumentGenerationJobStatus.RUNNING

@@ -23,6 +23,18 @@ export const documentsService = {
   requestDocument,
   getUserEventData,
   setUserEventData,
+  getUserEventDataGrid,
+  exportUserEventData,
+  importUserEventData,
+  preflightGenerate,
+  bulkGenerate,
+  getGenerationJob,
+  resendDocument,
+  regenerateDocument,
+  getDerivedPlaceholders,
+  createDerivedPlaceholder,
+  updateDerivedPlaceholder,
+  deleteDerivedPlaceholder,
 };
 
 function unwrap(promise) {
@@ -128,4 +140,82 @@ function getUserEventData(eventId) {
 
 function setUserEventData(eventId, entries) {
   return unwrap(axios.put(`${baseUrl}/api/v1/events/${eventId}/user-data`, { entries }, { headers: authHeader() }));
+}
+
+function getUserEventDataGrid(eventId) {
+  return unwrap(axios.get(`${baseUrl}/api/v1/events/${eventId}/documents/user-data/grid`, { headers: authHeader() }));
+}
+
+function exportUserEventData(eventId) {
+  // A blob download, same reasoning as downloadDocument: the endpoint needs
+  // the Authorization header, which a plain <a href> can't carry.
+  return axios
+    .get(`${baseUrl}/api/v1/events/${eventId}/documents/user-data/export`, {
+      headers: authHeader(),
+      responseType: 'blob',
+    })
+    .then((response) => {
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'attendee_data.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      return { error: "" };
+    })
+    .catch((error) => ({ error: extractErrorMessage(error) }));
+}
+
+function importUserEventData(eventId, csv, apply) {
+  return unwrap(axios.post(
+    `${baseUrl}/api/v1/events/${eventId}/documents/user-data/import`,
+    { csv, apply: !!apply },
+    { headers: authHeader() },
+  ));
+}
+
+function preflightGenerate(templateId, recipients, options = {}) {
+  return unwrap(axios.post(
+    `${baseUrl}/api/v1/documents/templates/${templateId}/generate/preflight`,
+    { recipients, ...options },
+    { headers: authHeader() },
+  ));
+}
+
+function bulkGenerate(templateId, recipients, options = {}) {
+  return unwrap(axios.post(
+    `${baseUrl}/api/v1/documents/templates/${templateId}/generate/bulk`,
+    { recipients, ...options },
+    { headers: authHeader() },
+  ));
+}
+
+function getGenerationJob(jobId) {
+  return unwrap(axios.get(`${baseUrl}/api/v1/documents/jobs/${jobId}`, { headers: authHeader() }));
+}
+
+function resendDocument(documentId) {
+  return unwrap(axios.post(`${baseUrl}/api/v1/documents/generated/${documentId}/resend`, {}, { headers: authHeader() }));
+}
+
+function regenerateDocument(documentId) {
+  return unwrap(axios.post(`${baseUrl}/api/v1/documents/generated/${documentId}/regenerate`, {}, { headers: authHeader() }));
+}
+
+function getDerivedPlaceholders(eventId) {
+  return unwrap(axios.get(`${baseUrl}/api/v1/events/${eventId}/documents/placeholders`, { headers: authHeader() }));
+}
+
+function createDerivedPlaceholder(eventId, data) {
+  return unwrap(axios.post(`${baseUrl}/api/v1/events/${eventId}/documents/placeholders`, data, { headers: authHeader() }));
+}
+
+function updateDerivedPlaceholder(derivedPlaceholderId, data) {
+  return unwrap(axios.put(`${baseUrl}/api/v1/documents/placeholders/${derivedPlaceholderId}`, data, { headers: authHeader() }));
+}
+
+function deleteDerivedPlaceholder(derivedPlaceholderId) {
+  return unwrap(axios.delete(`${baseUrl}/api/v1/documents/placeholders/${derivedPlaceholderId}`, { headers: authHeader() }));
 }

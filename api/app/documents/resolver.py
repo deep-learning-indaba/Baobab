@@ -16,6 +16,7 @@ from app.forms.models import (
     FormResponse, FormAnswer, FormQuestion, MULTI_VALUE_SEPARATOR, answer_is_blank,
 )
 from app.documents.models import DocumentTemplateForm, UserEventData
+from app.documents.derived_placeholders import load_derived_placeholders, resolve_value as resolve_derived_value
 
 
 # Matches either a literal doubled brace ({{ or }}) or a single {...} placeholder
@@ -270,6 +271,10 @@ class PlaceholderResolver:
         self.language = language
         self.form_links = document_template.ordered_form_links()
 
+        # Event-scoped, not template-scoped - see DerivedPlaceholder's
+        # docstring. Loaded once here rather than per recipient.
+        self._derived_placeholders = load_derived_placeholders(event.id)
+
         # Event-wide, not per-user: whether *some* attendee has this
         # user_event_data key is what makes a key "defined" for the purposes of
         # the setup-time PLACEHOLDER_NOT_RESOLVABLE check. A key twelve people
@@ -359,7 +364,7 @@ class PlaceholderResolver:
         ).first()
         return row.value if row else None
 
-    def resolve(self, user, variant=None):
+    def resolve(self, user, variant=None, answer_index=None):
         """Resolve placeholder occurrences against `user`.
 
         With `variant` given, resolves only the placeholders that variant's
@@ -368,12 +373,17 @@ class PlaceholderResolver:
         screen (section 9.5) needs, since coverage there is reported per
         template, not per variant.
 
+        `answer_index`, if the caller already built one (generator.py builds
+        one to evaluate eligibility before resolving placeholders), is reused
+        rather than re-querying - a bulk run must not pay for the same two
+        queries twice per recipient.
+
         Returns a ResolutionResult. Errors do not raise: both a missing
         definition and a missing value are collected so the caller can report
         every problem in one pass rather than one round-trip per placeholder.
         """
         result = ResolutionResult()
-        answer_index = _AnswerIndex(user.id, self.form_links)
+        answer_index = answer_index or _AnswerIndex(user.id, self.form_links)
 
         occurrences = set()
         variants = [variant] if variant is not None else self.document_template.active_variants()
@@ -383,13 +393,13 @@ class PlaceholderResolver:
 
         for raw in occurrences:
             namespace, key, filters = parse_placeholder(raw)
-            value, source, skipped = self._resolve_key(user, answer_index, namespace, key)
+            value, source, skipped = self._resolve_key(user, answer_index, namespace, key, result=result)
 
             if source is None:
                 result.errors.append(PlaceholderError(
                     PlaceholderError.NOT_RESOLVABLE, key,
-                    f'No linked form, user data, profile field, event field or '
-                    f'system value defines "{key}".'
+                    f'No derived placeholder, linked form, user data, profile field, '
+                    f'event field or system value defines "{key}".'
                 ))
                 continue
 
@@ -445,6 +455,71 @@ class PlaceholderResolver:
             rendered_text = rendered_text.replace('{' + raw + '}', rendered_value)
         return rendered_text.replace('{{', '{').replace('}}', '}')
 
+    def answer_value(self, user, answer_index, key):
+        """The raw resolved value for `key` (no filters applied), skipping
+        derived placeholders.
+
+        Backs the `key`/`operator` leaf in eligibility, variant-selection and
+        derived-placeholder-rule expressions (app/forms/visibility.py). Never
+        derived-placeholder-aware: design section 5.7.5 scopes recursion to
+        rule *text*, not conditions, so a condition can't participate in a
+        cycle no matter how it's written - see derived_placeholders.resolve_value.
+        """
+        return self._resolve_key(user, answer_index, None, key, include_derived=False)[0]
+
+    def _render_fragment(self, user, answer_index, text, chain, result):
+        """Render {key|filters} interpolation inside one derived-placeholder
+        rule's winning text. Recurses back into _resolve_key for every
+        occurrence found, so nested derived placeholders and every ordinary
+        source resolve exactly as they would inside the document itself.
+
+        `result`, when given (only from resolve(), never resolve_text() or a
+        condition lookup), collects NOT_RESOLVABLE/VALUE_MISSING errors for
+        keys referenced here, so a misspelled key inside a rule surfaces on
+        the placeholder screen instead of appearing as a stray literal in the
+        PDF. Without it, a blank simply renders empty - the same "cosmetic,
+        not an error" behaviour resolve_text() already has for filenames.
+        """
+        if not text:
+            return text
+        rendered_text = text
+        for raw in extract_placeholder_occurrences(text):
+            namespace, key, filters = parse_placeholder(raw)
+            value, source, skipped = self._resolve_key(
+                user, answer_index, namespace, key, chain=chain, result=result)
+
+            if source is None:
+                if result is not None:
+                    result.errors.append(PlaceholderError(
+                        PlaceholderError.NOT_RESOLVABLE, key,
+                        f'No source defines "{key}", referenced inside a derived '
+                        f'placeholder rule.'
+                    ))
+                rendered_value = ''
+            elif value is None or value == '':
+                has_default = any(name == 'default' for name, _arg in filters)
+                if has_default:
+                    rendered_value = _apply_filters('', filters, self.language)
+                elif result is None or self.document_template.allow_blank_values:
+                    rendered_value = ''
+                else:
+                    tried = ', '.join(skipped) if skipped else source
+                    result.errors.append(PlaceholderError(
+                        PlaceholderError.VALUE_MISSING, key,
+                        f'No value found for "{key}" for this person (checked: {tried}), '
+                        f'referenced inside a derived placeholder rule.'
+                    ))
+                    rendered_value = ''
+            else:
+                rendered_value = _apply_filters(
+                    value if isinstance(value, str) else str(value), filters, self.language)
+
+            if result is not None and source is not None:
+                result.snapshot.setdefault(key, {'value': rendered_value, 'source': source, 'skipped': skipped})
+
+            rendered_text = rendered_text.replace('{' + raw + '}', rendered_value)
+        return rendered_text.replace('{{', '{').replace('}}', '}')
+
     def describe_placeholders(self):
         """Every distinct placeholder occurrence across the template's active
         variants, with whether it resolves and (for the form/None namespaces)
@@ -459,18 +534,46 @@ class PlaceholderResolver:
         for variant in self.document_template.active_variants():
             occurrences |= set(variant.detected_placeholders or [])
 
+        # A derived placeholder's rule text may reference other keys; expand
+        # those into the table too; design section 9.5 - a rule interpolating
+        # a misspelled {poster_titel} should show up here rather than as a
+        # stray literal in someone's letter.
+        expanded = set(occurrences)
+        seen_derived = set()
+        frontier = [parse_placeholder(raw)[1] for raw in occurrences]
+        while frontier:
+            key = frontier.pop()
+            if key in seen_derived:
+                continue
+            seen_derived.add(key)
+            derived = self._derived_placeholders.get(key)
+            if derived is None:
+                continue
+            for rule in derived.rules:
+                for translation in rule.translations:
+                    for raw in extract_placeholder_occurrences(translation.text):
+                        if raw not in expanded:
+                            expanded.add(raw)
+                            frontier.append(parse_placeholder(raw)[1])
+
         descriptions = []
-        for raw in sorted(occurrences):
+        for raw in sorted(expanded):
             namespace, key, _filters = parse_placeholder(raw)
-            chain = []
-            if namespace in (None, 'form'):
+            is_derived = namespace is None and key in self._derived_placeholders
+            if is_derived:
+                rule_count = len(self._derived_placeholders[key].rules)
+                chain = [f'derived — {rule_count} rule{"s" if rule_count != 1 else ""}']
+            elif namespace in (None, 'form'):
                 chain = [self._form_source_label(link) for link in self.form_links
                          if key in self._linked_form_keys.get(link.form_id, set())]
+            else:
+                chain = []
             descriptions.append({
                 'raw': raw,
                 'namespace': namespace,
                 'key': key,
                 'defined': self._is_defined_anywhere(key),
+                'is_derived': is_derived,
                 'chain': chain,
             })
         return descriptions
@@ -512,19 +615,25 @@ class PlaceholderResolver:
         one recipient, so it can also drive the admin placeholder screen
         (section 9.5), which has no single person in mind.
         """
-        return (key in self._form_defined_keys
+        return (key in self._derived_placeholders
+                or key in self._form_defined_keys
                 or key in self.PROFILE_KEYS
                 or key in self.EVENT_KEYS
                 or key in self.SYSTEM_KEYS
                 or key in self._user_event_data_keys_in_use)
 
-    def _resolve_key(self, user, answer_index, namespace, key):
+    def _resolve_key(self, user, answer_index, namespace, key,
+                      include_derived=True, chain=(), result=None):
         """Returns (value, source_label_or_None, skipped_source_labels).
 
         `source_label` is None only when nothing anywhere defines `key` - the
         caller turns that into PLACEHOLDER_NOT_RESOLVABLE. Any other case
         (including a value of None/'' with a real source label) is this
         person's data being incomplete, not a configuration problem.
+
+        `include_derived`/`chain`/`result` only matter for the unnamed
+        precedence walk below - an explicit namespace already bypasses
+        derived placeholders entirely, same as every other source.
         """
         # An explicit namespace bypasses the precedence walk entirely and
         # answers only from that one source - see the {profile.x}/{data.x}
@@ -560,6 +669,24 @@ class PlaceholderResolver:
             value, source = self._try_system(key)
             return value, (source or 'system'), []
 
+        # No explicit namespace: derived placeholders are step 0 of the
+        # precedence walk (design section 5.2) - checked first because
+        # defining one is a deliberate act. A derived placeholder that
+        # doesn't fire for this person (no condition matched and no
+        # "otherwise") isn't a value, so the walk continues exactly as if
+        # that source had come back empty - same fallthrough as every other
+        # source below.
+        if include_derived and key in self._derived_placeholders:
+            value, matched = resolve_derived_value(
+                key, self._derived_placeholders, user, self.event, self.language,
+                condition_answer_fn=lambda k: self.answer_value(user, answer_index, k),
+                render_text_fn=lambda text, nested_chain: self._render_fragment(
+                    user, answer_index, text, nested_chain, result),
+                chain=chain,
+            )
+            if matched:
+                return value, 'derived placeholder rules', []
+
         # No explicit namespace: walk the full precedence order, remembering
         # each source tried so a VALUE_MISSING error can name all of them.
         skipped = []
@@ -579,6 +706,8 @@ class PlaceholderResolver:
             # Defined somewhere, but every source came back empty for this
             # person - report it against whichever source is the "natural"
             # home for the key, so the error reads sensibly.
+            if key in self._derived_placeholders:
+                return None, 'derived placeholder rules', skipped
             if key in self._form_defined_keys:
                 return None, 'linked forms', skipped
             if key in self.PROFILE_KEYS:

@@ -251,9 +251,29 @@ rest_api.add_resource(documents_api.DocumentTemplatePreviewAPI,
                       '/api/v1/documents/templates/<int:template_id>/preview')
 rest_api.add_resource(documents_api.DocumentValidateSourceAPI, '/api/v1/documents/validate-source')
 rest_api.add_resource(documents_api.DocumentGenerateAPI, '/api/v1/documents/generate')
+rest_api.add_resource(documents_api.DocumentTemplatePreflightAPI,
+                      '/api/v1/documents/templates/<int:template_id>/generate/preflight')
+rest_api.add_resource(documents_api.DocumentTemplateBulkGenerateAPI,
+                      '/api/v1/documents/templates/<int:template_id>/generate/bulk')
+rest_api.add_resource(documents_api.DocumentGenerationJobAPI, '/api/v1/documents/jobs/<int:job_id>')
+rest_api.add_resource(documents_api.DocumentGenerationWorkerAPI, '/api/v1/tasks/document-generation')
 rest_api.add_resource(documents_api.GeneratedDocumentListAPI, '/api/v1/documents/generated')
 rest_api.add_resource(documents_api.GeneratedDocumentDownloadAPI,
                       '/api/v1/documents/generated/<int:document_id>/download')
+rest_api.add_resource(documents_api.GeneratedDocumentResendAPI,
+                      '/api/v1/documents/generated/<int:document_id>/resend')
+rest_api.add_resource(documents_api.GeneratedDocumentRegenerateAPI,
+                      '/api/v1/documents/generated/<int:document_id>/regenerate')
 rest_api.add_resource(documents_api.DocumentAvailableAPI, '/api/v1/documents/available')
 rest_api.add_resource(documents_api.DocumentRequestAPI, '/api/v1/documents/request')
 rest_api.add_resource(documents_api.UserEventDataListAPI, '/api/v1/events/<int:event_id>/user-data')
+rest_api.add_resource(documents_api.UserEventDataGridAPI,
+                      '/api/v1/events/<int:event_id>/documents/user-data/grid')
+rest_api.add_resource(documents_api.UserEventDataExportAPI,
+                      '/api/v1/events/<int:event_id>/documents/user-data/export')
+rest_api.add_resource(documents_api.UserEventDataImportAPI,
+                      '/api/v1/events/<int:event_id>/documents/user-data/import')
+rest_api.add_resource(documents_api.DerivedPlaceholderListAPI,
+                      '/api/v1/events/<int:event_id>/documents/placeholders')
+rest_api.add_resource(documents_api.DerivedPlaceholderAPI,
+                      '/api/v1/documents/placeholders/<int:derived_placeholder_id>')

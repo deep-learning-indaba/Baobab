@@ -68,6 +68,9 @@ const DocumentsAdmin = (props) => {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="secondary" onClick={() => props.history.push(`/${eventKey}/documentsAdmin/placeholders`)}>
+            {t('Derived placeholders')}
+          </Button>
           <Button variant="secondary" onClick={() => props.history.push(`/${eventKey}/documentsAdmin/user-data`)}>
             {t('Attendee data')}
           </Button>

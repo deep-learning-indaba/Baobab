@@ -1,8 +1,13 @@
+import os
+import tempfile
 import time
+import uuid
+from contextlib import contextmanager
 
 from app import LOGGER, db
 from app.outbox.models import OutboxChannel
 from app.outbox.repository import OutboxRepository
+from app.utils import storage
 from app.utils.emailer import SmtpConnection
 from app.utils.push import push_to_user
 from config import OUTBOX_BATCH_SIZE, OUTBOX_TIME_BUDGET_SECONDS
@@ -13,15 +18,42 @@ from config import OUTBOX_BATCH_SIZE, OUTBOX_TIME_BUDGET_SECONDS
 COMMIT_EVERY = 25
 
 
+@contextmanager
+def _attachment_file(payload):
+    """Downloads payload['attachment']['blob_name'] to a local tmp file for
+    the duration of the block, or yields (None, None) when there is no
+    attachment. A message is small (subject/body/blob name); the PDF itself
+    only exists in GCS until a send actually needs it, one at a time, rather
+    than every queued document sitting in local disk between enqueue and
+    delivery.
+    """
+    attachment = (payload or {}).get('attachment')
+    if not attachment:
+        yield None, None
+        return
+
+    tmp_path = os.path.join(tempfile.gettempdir(), f'{uuid.uuid4().hex}.pdf')
+    try:
+        bucket = storage.get_storage_bucket()
+        bucket.blob(attachment['blob_name']).download_to_filename(tmp_path)
+        yield attachment.get('filename') or 'document.pdf', tmp_path
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
+
 def _deliver_email(message, connection):
-    connection.send(
-        recipient=message.recipient,
-        subject=message.subject or '',
-        body_text=message.body_text or '',
-        body_html=message.body_html or '',
-        sender_name=message.sender_name,
-        sender_email=message.sender_email,
-    )
+    with _attachment_file(message.payload) as (file_name, file_path):
+        connection.send(
+            recipient=message.recipient,
+            subject=message.subject or '',
+            body_text=message.body_text or '',
+            body_html=message.body_html or '',
+            sender_name=message.sender_name,
+            sender_email=message.sender_email,
+            file_name=file_name or '',
+            file_path=file_path or '',
+        )
 
 
 def _deliver_push(message):
