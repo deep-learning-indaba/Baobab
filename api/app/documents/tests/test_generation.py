@@ -150,3 +150,67 @@ class TestGenerateDocumentGoogleFailure(DocumentsTestCase):
             document_template_id=document_template.id, user_id=self.user.id).first()
         self.assertEqual(failed.status, GeneratedDocumentStatus.FAILED)
         self.assertEqual(failed.error_code, 'GOOGLE_API_ERROR')
+
+
+class TestGenerateDocumentEmailDelivery(DocumentsTestCase):
+    """Delivery is queued through the outbox (design section 8.3), never sent
+    inline - see generator._enqueue_delivery_email."""
+
+    def _outbox_message(self, generated_document):
+        from app.outbox.models import OutboxMessage
+        return db.session.query(OutboxMessage).filter_by(
+            source_type='document', source_id=generated_document.id).first()
+
+    def test_attachment_mode_queues_an_email_with_the_pdf_attached(self):
+        self.add_email_template('generated-document', template='Hi {firstname}', subject='Your document')
+        document_template = self.make_document_template(key='invitation-letter', delivery_mode='attachment')
+        self.make_variant(document_template, placeholders={'firstname'})
+
+        result = generate_document(document_template, self.user, self.user, self.event, client=FakeGoogleClient())
+
+        message = self._outbox_message(result)
+        self.assertIsNotNone(message)
+        self.assertEqual(message.recipient, self.user.email)
+        self.assertEqual(message.payload['attachment']['blob_name'], result.storage_blob_name)
+        self.assertEqual(message.payload['attachment']['filename'], result.filename)
+
+    def test_link_mode_queues_an_email_without_an_attachment(self):
+        self.add_email_template('generated-document', template='Hi {firstname}', subject='Your document')
+        document_template = self.make_document_template(key='invitation-letter', delivery_mode='link')
+        self.make_variant(document_template, placeholders={'firstname'})
+
+        result = generate_document(document_template, self.user, self.user, self.event, client=FakeGoogleClient())
+
+        message = self._outbox_message(result)
+        self.assertIsNotNone(message)
+        self.assertIsNone(message.payload)
+
+    def test_none_mode_does_not_queue_an_email(self):
+        self.add_email_template('generated-document', template='Hi {firstname}', subject='Your document')
+        document_template = self.make_document_template(key='invitation-letter', delivery_mode='none')
+        self.make_variant(document_template, placeholders={'firstname'})
+
+        result = generate_document(document_template, self.user, self.user, self.event, client=FakeGoogleClient())
+
+        self.assertIsNone(self._outbox_message(result))
+
+    def test_missing_email_template_is_skipped_not_fatal(self):
+        document_template = self.make_document_template(key='invitation-letter', delivery_mode='attachment')
+        self.make_variant(document_template, placeholders={'firstname'})
+
+        result = generate_document(document_template, self.user, self.user, self.event, client=FakeGoogleClient())
+
+        self.assertEqual(result.status, GeneratedDocumentStatus.GENERATED)
+        self.assertIsNone(self._outbox_message(result))
+
+    def test_custom_email_template_key_is_used(self):
+        self.add_email_template('visa-letter-ready', template='Hi {firstname}', subject='Visa letter ready')
+        document_template = self.make_document_template(key='visa-letter', delivery_mode='attachment')
+        document_template.email_template_key = 'visa-letter-ready'
+        db.session.commit()
+        self.make_variant(document_template, placeholders={'firstname'})
+
+        result = generate_document(document_template, self.user, self.user, self.event, client=FakeGoogleClient())
+
+        message = self._outbox_message(result)
+        self.assertEqual(message.subject, 'Visa letter ready')

@@ -11,3 +11,13 @@ cron:
     url: /api/v1/tasks/outbox
     target: staging-api
     schedule: every 1 minutes
+
+  - description: "Drain pending bulk document generation (production)"
+    url: /api/v1/tasks/document-generation
+    target: prod-api
+    schedule: every 1 minutes
+
+  - description: "Drain pending bulk document generation (staging)"
+    url: /api/v1/tasks/document-generation
+    target: staging-api
+    schedule: every 1 minutes

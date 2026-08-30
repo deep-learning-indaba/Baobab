@@ -181,6 +181,12 @@ DOCUMENT_VARIANT_NOT_FOUND = ({'message': 'No variant exists with that ID on thi
 DOCUMENT_SOURCE_NOT_SPECIFIED = ({'message': 'Could not find a Google Docs or Slides file id in that link.'}, 400)
 GENERATED_DOCUMENT_NOT_FOUND = ({'message': 'No generated document exists with that ID.'}, 404)
 DOCUMENT_NOT_YET_GENERATED = ({'message': 'This document has not finished generating.'}, 409)
+DOCUMENT_GENERATION_JOB_NOT_FOUND = ({'message': 'No generation job exists with that ID.'}, 404)
+DERIVED_PLACEHOLDER_NOT_FOUND = ({'message': 'No derived placeholder exists with that ID.'}, 404)
+DERIVED_PLACEHOLDER_KEY_IN_USE = ({'message': 'A derived placeholder with that key already exists for this event.'}, 409)
+DERIVED_PLACEHOLDER_CYCLE = ({'message': 'This would create a reference cycle between derived placeholders.'}, 400)
+DERIVED_PLACEHOLDER_RULE_INVALID = ({'message': 'Only the last rule may be the "otherwise" rule (a null condition).'}, 400)
+NO_RECIPIENTS_SELECTED = ({'message': 'No recipients matched this selection.'}, 400)
 USER_EVENT_DATA_KEY_REQUIRED = ({'message': 'A key is required.'}, 400)
 
 # Form response export
