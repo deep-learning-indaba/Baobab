@@ -177,7 +177,7 @@ const DetailsTab = ({ template, isNew, eventId, languages, autoTranslateEnabled,
         <p className="text-xs text-muted-foreground mb-2">
           {t('Leave empty to make it available to everyone.')}
         </p>
-        <TagExpressionBuilder expression={eligibilityExpression} onChange={setEligibilityExpression} tags={tags} />
+        <TagExpressionBuilder expression={eligibilityExpression} onChange={setEligibilityExpression} tags={tags} eventId={eventId} />
       </div>
 
       <div className="pt-2">

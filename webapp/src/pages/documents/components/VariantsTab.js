@@ -223,6 +223,7 @@ const VariantsTab = ({ template, eventId, onReload, tags }) => {
                 expression={variant.selection_expression}
                 onChange={(expr) => handleVariantChange(variant, 'selection_expression', expr)}
                 tags={tags}
+                eventId={eventId}
               />
             </div>
 
