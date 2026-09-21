@@ -6,6 +6,7 @@ import { tagsService } from '../../../services/tags';
 import { formServices } from '../../../services/form';
 import { Card } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
+import { uniquePeople } from './uniquePeople';
 
 const STATUS_LABEL = {
   pending: 'Pending',
@@ -56,7 +57,7 @@ const GenerateTab = ({ template, eventId }) => {
 
   useEffect(() => {
     profileService.getProfilesList(eventId).then((result) => {
-      setProfiles(result.List || []);
+      setProfiles(uniquePeople(result.List || []));
     });
     tagsService.getTagList(eventId, 'en').then((result) => {
       setTags((result.tags || []).filter((tag) => tag.active));
@@ -65,6 +66,11 @@ const GenerateTab = ({ template, eventId }) => {
       setForms(result.forms || []);
     });
   }, [eventId]);
+
+  const recipientLabel = (userId) => {
+    const person = profiles.find((p) => p.user_id === userId);
+    return person ? `${person.firstname} ${person.lastname}` : `#${userId}`;
+  };
 
   const loadDocuments = useCallback(() => {
     setLoadingDocuments(true);
@@ -336,6 +342,7 @@ const GenerateTab = ({ template, eventId }) => {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-muted-foreground border-b border-border">
+                <th className="py-2 pr-4">{t('Recipient')}</th>
                 <th className="py-2 pr-4">{t('Filename')}</th>
                 <th className="py-2 pr-4">{t('Status')}</th>
                 <th className="py-2 pr-4">{t('Created')}</th>
@@ -345,10 +352,18 @@ const GenerateTab = ({ template, eventId }) => {
             <tbody>
               {documents.map((doc) => (
                 <tr key={doc.id} className="border-b border-border/50">
+                  <td className="py-2 pr-4">{recipientLabel(doc.user_id)}</td>
                   <td className="py-2 pr-4">{doc.filename || '—'}</td>
                   <td className="py-2 pr-4">
                     {doc.status === 'failed' ? (
-                      <span className="text-error" title={doc.error_detail}>{t(STATUS_LABEL[doc.status])}</span>
+                      <>
+                        <span className="text-error">{t(STATUS_LABEL[doc.status])}</span>
+                        {doc.error_detail && (
+                          <p className="mt-1 text-xs text-muted-foreground whitespace-pre-line break-words max-w-xs">
+                            {doc.error_detail}
+                          </p>
+                        )}
+                      </>
                     ) : (
                       t(STATUS_LABEL[doc.status] || doc.status)
                     )}

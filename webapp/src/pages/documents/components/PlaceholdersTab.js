@@ -4,6 +4,7 @@ import { documentsService } from '../../../services/documents';
 import { profileService } from '../../../services/profilelist';
 import { Card } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
+import { uniquePeople } from './uniquePeople';
 
 const PlaceholdersTab = ({ template, eventId, onReload }) => {
   const { t } = useTranslation();
@@ -18,7 +19,7 @@ const PlaceholdersTab = ({ template, eventId, onReload }) => {
 
   useEffect(() => {
     profileService.getProfilesList(eventId).then((result) => {
-      setProfiles(result.List || []);
+      setProfiles(uniquePeople(result.List || []));
     });
   }, [eventId]);
 

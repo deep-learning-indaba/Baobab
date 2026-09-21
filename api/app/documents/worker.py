@@ -109,6 +109,19 @@ def _record_if_terminal(row):
             job.record_outcome(succeeded=row.status == GeneratedDocumentStatus.GENERATED)
 
 
+def _fail_unexpected(row_id, error):
+    """Record an unexpected exception on its row. Without this the row would
+    stay `generating` until requeue_stale gave up on it as ABANDONED, hiding
+    the real cause and stalling every row claimed after it in the batch."""
+    db.session.rollback()
+    row = db.session.query(GeneratedDocument).filter_by(id=row_id).first()
+    row.mark_failed('INTERNAL_ERROR', f'{type(error).__name__}: {error}', retryable=True)
+    db.session.commit()
+    _record_if_terminal(row)
+    db.session.commit()
+    return 'failed'
+
+
 def _process_one(row, client):
     document_template = db.session.query(DocumentTemplate).filter_by(id=row.document_template_id).first()
     user = db.session.query(AppUser).filter_by(id=row.user_id).first()
@@ -131,11 +144,13 @@ def _process_one(row, client):
     try:
         _process_row(row, document_template, user, event, row.language,
                      client=client, override_eligibility=override_eligibility, retryable=True)
-    except GenerationError as e:
-        LOGGER.info('Bulk generation failed for document %s: %s (%s)', row.id, e.code, e.message)
+    except GenerationError:
         _record_if_terminal(row)
         db.session.commit()
         return 'failed'
+    except Exception as e:
+        LOGGER.exception('Unexpected error generating document %s', row.id)
+        return _fail_unexpected(row.id, e)
 
     _record_if_terminal(row)
     db.session.commit()
@@ -162,7 +177,15 @@ def run_bulk_generation(batch_size=None, time_budget_seconds=None):
     if not rows:
         return summary
 
-    client = build_default_client(working_folder_id=GCP_DOCS_WORKING_FOLDER_ID)
+    try:
+        client = build_default_client(working_folder_id=GCP_DOCS_WORKING_FOLDER_ID)
+    except Exception as e:
+        LOGGER.exception('Could not create the Google client for the document worker')
+        row_ids = [row.id for row in rows]
+        for row_id in row_ids:
+            _fail_unexpected(row_id, e)
+        summary['failed'] = len(row_ids)
+        return summary
 
     for index, row in enumerate(rows):
         if time.monotonic() - started_at > time_budget_seconds:

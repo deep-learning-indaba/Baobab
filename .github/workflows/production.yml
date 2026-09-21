@@ -157,6 +157,7 @@ jobs:
               "PROD_BACKEND_BUCKET",
               "PROD_CLOUD_SQL_INSTANCE",
               "PROD_GCP_API_KEY",
+              "PROD_GCP_DOCS_WORKING_FOLDER_ID",
               "VAPID_PUBLIC_KEY",
               "VAPID_PRIVATE_KEY",
           ]
@@ -183,6 +184,7 @@ jobs:
               "FILE_SIZE_LIMIT": "52428800",
               "BOABAB_HOST": os.environ.get("PROD_BAOBAB_HOST", "https://baobab.deeplearningindaba.com/"),
               "GCP_API_KEY": os.environ["PROD_GCP_API_KEY"],
+              "GCP_DOCS_WORKING_FOLDER_ID": os.environ["PROD_GCP_DOCS_WORKING_FOLDER_ID"],
               "VAPID_PUBLIC_KEY": os.environ["VAPID_PUBLIC_KEY"],
               "VAPID_PRIVATE_KEY": os.environ["VAPID_PRIVATE_KEY"],
           }
@@ -229,6 +231,7 @@ jobs:
           PROD_BAOBAB_HOST: ${{ secrets.PROD_BAOBAB_HOST }}
           PROD_CLOUD_SQL_INSTANCE: ${{ secrets.PROD_CLOUD_SQL_INSTANCE }}
           PROD_GCP_API_KEY: ${{ secrets.PROD_GCP_API_KEY }}
+          PROD_GCP_DOCS_WORKING_FOLDER_ID: ${{ secrets.PROD_GCP_DOCS_WORKING_FOLDER_ID }}
           VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
 
