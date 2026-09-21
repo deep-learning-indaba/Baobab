@@ -62,6 +62,14 @@ class TestTemplateCrossEventAuthorization(DocumentAuthorizationTestCase):
         )
         self.assertEqual(resp.status_code, 403)
 
+    def test_other_events_admin_cannot_recheck_a_variants_access(self):
+        variant = self.make_variant(self.document_template, {'firstname'})
+        resp = self.app.post(
+            f'/api/v1/documents/templates/{self.document_template_id}/variants/{variant.id}/check-access',
+            data=json.dumps({}), content_type='application/json', headers=self.other_admin_headers,
+        )
+        self.assertEqual(resp.status_code, 403)
+
     def test_other_events_admin_cannot_replace_form_links(self):
         resp = self.app.put(
             f'/api/v1/documents/templates/{self.document_template_id}/forms',

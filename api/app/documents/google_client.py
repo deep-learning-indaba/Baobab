@@ -82,6 +82,12 @@ _FILE_ID_PATTERNS = (
 _BARE_ID_PATTERN = re.compile(r'^[a-zA-Z0-9_-]{10,}$')
 
 
+def google_file_url(file_id, file_type):
+    """The browser link that opens a Docs or Slides file for editing."""
+    kind = 'presentation' if file_type == 'presentation' else 'document'
+    return f'https://docs.google.com/{kind}/d/{file_id}/edit'
+
+
 def extract_file_id(value):
     """A Drive file id from a pasted URL in any of Google's link formats, or a
     bare id typed directly. None if nothing recognisable is found."""

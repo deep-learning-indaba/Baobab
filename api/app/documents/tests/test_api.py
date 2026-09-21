@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from app import db
 from app.documents.tests.base import DocumentsTestCase
-from app.documents.google_client import AccessCheckResult, AccessStatus
+from app.documents.google_client import AccessCheckResult, AccessStatus, GoogleApiError
 from app.documents.models import DocumentTemplate, DocumentTemplateVariant, UserEventData
 
 
@@ -183,6 +183,88 @@ class TestDocumentTemplateForms(DocumentApiTestCase):
         )
 
         self.assertEqual(resp.status_code, 404)
+
+
+class TestVariantAccessCheck(DocumentApiTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.document_template = self.make_document_template()
+        self.template_id = self.document_template.id
+
+    def _check_url(self, variant_id):
+        return f'/api/v1/documents/templates/{self.template_id}/variants/{variant_id}/check-access'
+
+    @patch('app.documents.api.build_default_client')
+    def test_recheck_refreshes_a_variant_that_lost_access(self, mock_build_client):
+        variant = self.make_variant(self.document_template, {'firstname'}, google_file_id='abc123')
+        variant_id = variant.id
+        client = FakeGoogleClient()
+        client.check_access = lambda file_id: AccessCheckResult(AccessStatus.NOT_FOUND)
+        mock_build_client.return_value = client
+
+        resp = self.post_json(self._check_url(variant_id), {})
+
+        self.assertEqual(resp.status_code, 200)
+        body = json.loads(resp.data)
+        self.assertEqual(body['access']['status'], 'not_found')
+        self.assertIn('service_account_email', body['access'])
+        self.assertEqual(body['variant']['access_status'], 'not_found')
+        self.assertIsNotNone(body['variant']['access_checked_at'])
+        self.assertEqual(
+            db.session.query(DocumentTemplateVariant).filter_by(id=variant_id).first().access_status, 'not_found')
+
+    @patch('app.documents.api.build_default_client')
+    def test_recheck_recovers_a_variant_once_access_is_restored(self, mock_build_client):
+        variant = self.make_variant(self.document_template, {'firstname'})
+        variant.access_status = 'not_found'
+        db.session.commit()
+        variant_id = variant.id
+        mock_build_client.return_value = FakeGoogleClient(placeholders={'firstname', 'lastname'})
+
+        resp = self.post_json(self._check_url(variant_id), {})
+
+        body = json.loads(resp.data)
+        self.assertEqual(body['access']['status'], 'ok')
+        self.assertEqual(body['variant']['access_status'], 'ok')
+        self.assertEqual(sorted(body['variant']['detected_placeholders']), ['firstname', 'lastname'])
+
+    @patch('app.documents.api.build_default_client')
+    def test_scan_failure_is_reported_as_an_error_with_detail(self, mock_build_client):
+        variant = self.make_variant(self.document_template, {'firstname'})
+        variant_id = variant.id
+        client = FakeGoogleClient()
+
+        def failing_scan(file_id, file_type):
+            raise GoogleApiError(403, 'Google Docs API has not been used in project 123')
+        client.scan_placeholders = failing_scan
+        mock_build_client.return_value = client
+
+        resp = self.post_json(self._check_url(variant_id), {})
+
+        body = json.loads(resp.data)
+        self.assertEqual(body['access']['status'], 'error')
+        self.assertIn('Google Docs API has not been used', body['access']['detail'])
+        self.assertEqual(body['variant']['access_status'], 'error')
+
+    @patch('app.documents.api.build_default_client')
+    def test_unknown_variant_is_404(self, mock_build_client):
+        mock_build_client.return_value = FakeGoogleClient()
+
+        resp = self.post_json(self._check_url(99999), {})
+
+        self.assertEqual(resp.status_code, 404)
+
+    def test_variant_serializes_a_link_that_opens_the_file(self):
+        document = self.make_variant(self.document_template, {'firstname'}, name='Doc', google_file_id='doc123')
+        slides = self.make_variant(self.document_template, {'firstname'}, name='Slides',
+                                   google_file_id='deck456', google_file_type='presentation')
+
+        resp = self.app.get(f'/api/v1/documents/templates/{self.template_id}', headers=self.headers)
+
+        variants = {v['name']: v for v in json.loads(resp.data)['variants']}
+        self.assertEqual(variants['Doc']['google_file_url'], 'https://docs.google.com/document/d/doc123/edit')
+        self.assertEqual(variants['Slides']['google_file_url'], 'https://docs.google.com/presentation/d/deck456/edit')
 
 
 class TestDocumentValidateSource(DocumentApiTestCase):
