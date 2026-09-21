@@ -98,6 +98,7 @@ class TestRunBulkGeneration(WorkerTestCase):
         # regardless of attempts remaining, unlike a transport failure.
         self.assertEqual(row.status, GeneratedDocumentStatus.FAILED)
         self.assertEqual(row.error_code, 'PLACEHOLDER_RESOLUTION_FAILED')
+        self.assertIn('passport_no', row.error_detail)
 
         db.session.refresh(job)
         self.assertEqual(job.failed_count, 1)
@@ -139,6 +140,73 @@ class TestRunBulkGeneration(WorkerTestCase):
 
         run_bulk_generation()
 
+        db.session.refresh(row)
+        self.assertEqual(row.status, GeneratedDocumentStatus.GENERATED)
+
+    def test_google_api_error_detail_is_recorded_on_the_row(self, mock_build_client):
+        from app.documents.google_client import GoogleApiError
+        mock_build_client.return_value = FakeGoogleClient(
+            raise_error=GoogleApiError(403, 'Slides API has not been used in project 123'))
+        job = self.make_generation_job(self.document_template, total_count=1)
+        row = self._pending_row(job)
+
+        run_bulk_generation()
+
+        db.session.refresh(row)
+        self.assertEqual(row.error_code, 'GOOGLE_API_ERROR')
+        self.assertIn('403', row.error_detail)
+        self.assertIn('Slides API has not been used', row.error_detail)
+
+    def test_unexpected_exception_is_recorded_and_does_not_stop_the_batch(self, mock_build_client):
+        class FailsFirstCall(FakeGoogleClient):
+            def generate_pdf(self, *args):
+                first_call = not self.calls
+                super().generate_pdf(*args)
+                if first_call:
+                    raise KeyError('boom')
+                return self.pdf_bytes
+
+        client = FailsFirstCall()
+        mock_build_client.return_value = client
+        job = self.make_generation_job(self.document_template, total_count=2)
+        first = self._pending_row(job)
+        second = self._pending_row(job, user=self.add_user('second@example.com', 'Second', 'User'))
+
+        summary = run_bulk_generation()
+
+        self.assertEqual(summary['failed'], 1)
+        self.assertEqual(summary['generated'], 1)
+        db.session.refresh(first)
+        db.session.refresh(second)
+        self.assertEqual(first.error_code, 'INTERNAL_ERROR')
+        self.assertIn('KeyError', first.error_detail)
+        self.assertEqual(first.status, GeneratedDocumentStatus.PENDING)
+        self.assertEqual(second.status, GeneratedDocumentStatus.GENERATED)
+
+    def test_client_construction_failure_is_recorded_on_every_claimed_row(self, mock_build_client):
+        mock_build_client.side_effect = RuntimeError('no credentials')
+        job = self.make_generation_job(self.document_template, total_count=1)
+        row = self._pending_row(job)
+
+        summary = run_bulk_generation()
+
+        self.assertEqual(summary['failed'], 1)
+        db.session.refresh(row)
+        self.assertEqual(row.error_code, 'INTERNAL_ERROR')
+        self.assertIn('no credentials', row.error_detail)
+
+    def test_delivery_email_failure_does_not_fail_the_generated_document(self, mock_build_client):
+        mock_build_client.return_value = FakeGoogleClient()
+        # An unknown {placeholder} makes str.format raise KeyError while building the email.
+        self.add_email_template('generated-document', template='Hi {unknown}', subject='Ready')
+        self.document_template.delivery_mode = 'attachment'
+        db.session.commit()
+        job = self.make_generation_job(self.document_template, total_count=1)
+        row = self._pending_row(job)
+
+        summary = run_bulk_generation()
+
+        self.assertEqual(summary['generated'], 1)
         db.session.refresh(row)
         self.assertEqual(row.status, GeneratedDocumentStatus.GENERATED)
 

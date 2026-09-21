@@ -42,11 +42,25 @@ class GenerationError(Exception):
     it rather than abort the whole request.
     """
 
-    def __init__(self, code, message, details=None):
+    def __init__(self, code, message, details=None, diagnostic=None):
         super().__init__(message)
         self.code = code
         self.message = message
         self.details = details or {}
+        self.diagnostic = diagnostic
+
+    def describe(self):
+        """The admin-facing account of the failure recorded on the
+        GeneratedDocument row. `message` is safe to show the recipient; this
+        adds the specific forms, placeholders or upstream error involved."""
+        lines = [self.message]
+        if self.diagnostic:
+            lines.append(self.diagnostic)
+        for blocker in self.details.get('blockers', []):
+            lines.append(blocker.get('message') or f"Form not submitted: {blocker.get('form_name')}")
+        for error in self.details.get('errors', []):
+            lines.append(f"{{{error.get('key')}}}: {error.get('message')}")
+        return '\n'.join(lines)
 
 
 def generate_document(document_template, user, requested_by_user, event,
@@ -93,7 +107,11 @@ def _process_row(generated_document, document_template, user, event, language,
             generated_document, document_template, user, event, language,
             client, override_eligibility)
     except GenerationError as e:
-        generated_document.mark_failed(e.code, e.message, retryable=(retryable and e.code == 'GOOGLE_API_ERROR'))
+        LOGGER.warning(
+            'Document generation failed for document %s (template %s, user %s): %s - %s',
+            generated_document.id, document_template.id, user.id, e.code, e.describe())
+        generated_document.mark_failed(
+            e.code, e.describe(), retryable=(retryable and e.code == 'GOOGLE_API_ERROR'))
         db.session.commit()
         raise
 
@@ -105,7 +123,13 @@ def _process_row(generated_document, document_template, user, event, language,
     db.session.commit()
 
     if document_template.delivery_mode != 'none':
-        _enqueue_delivery_email(document_template, generated_document, user, event, filename, language)
+        # The PDF already exists and is downloadable; a delivery problem must
+        # not turn it into a failed document. An admin can resend it.
+        try:
+            _enqueue_delivery_email(document_template, generated_document, user, event, filename, language)
+        except Exception:
+            db.session.rollback()
+            LOGGER.exception('Could not queue the delivery email for generated document %s', generated_document.id)
 
 
 def _run_pipeline(generated_document, document_template, user, event, language,
@@ -152,8 +176,12 @@ def _run_pipeline(generated_document, document_template, user, event, language,
         pdf_bytes = client.generate_pdf(
             variant.google_file_id, variant.google_file_type, resolution.values)
     except GoogleApiError as e:
+        LOGGER.error(
+            'Google API error generating "%s" for user %s from file %s: status %s: %s',
+            document_template.key, user.id, variant.google_file_id, e.status_code, e)
         raise GenerationError(
-            'GOOGLE_API_ERROR', 'Could not generate the document. Please try again shortly.')
+            'GOOGLE_API_ERROR', 'Could not generate the document. Please try again shortly.',
+            diagnostic=f'Google API error {e.status_code}: {e}')
 
     filename = _render_filename(resolver, user, document_template)
     return variant, pdf_bytes, filename, resolution.snapshot
