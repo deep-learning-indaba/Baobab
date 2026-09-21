@@ -8,6 +8,9 @@ import { Card } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { uniquePeople } from './uniquePeople';
 
+const POLL_ACTIVE_MS = 3000;
+const POLL_IDLE_MS = 15000;
+
 const STATUS_LABEL = {
   pending: 'Pending',
   generating: 'Generating...',
@@ -72,15 +75,29 @@ const GenerateTab = ({ template, eventId }) => {
     return person ? `${person.firstname} ${person.lastname}` : `#${userId}`;
   };
 
-  const loadDocuments = useCallback(() => {
-    setLoadingDocuments(true);
+  // A silent load is a background poll: it never shows the loading state, and a
+  // failed poll keeps the rows already on screen rather than blanking the table.
+  const loadDocuments = useCallback((silent = false) => {
+    if (!silent) setLoadingDocuments(true);
     documentsService.getGeneratedDocuments(eventId, template.id).then((result) => {
+      if (result.error && silent) return;
       setDocuments(result.data || []);
       setLoadingDocuments(false);
     });
   }, [eventId, template.id]);
 
   useEffect(() => { loadDocuments(); }, [loadDocuments]);
+
+  // Keep statuses live while the tab is open: quickly while something is still
+  // pending or generating, slowly otherwise so rows created elsewhere still
+  // appear. Paused while the browser tab is in the background.
+  const hasInFlightDocuments = documents.some((d) => d.status === 'pending' || d.status === 'generating');
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!document.hidden) loadDocuments(true);
+    }, hasInFlightDocuments ? POLL_ACTIVE_MS : POLL_IDLE_MS);
+    return () => clearInterval(interval);
+  }, [hasInFlightDocuments, loadDocuments]);
 
   // Poll the active job's status every 3s until it's no longer running, then
   // refresh the results table so newly-generated rows show up without a
@@ -89,7 +106,7 @@ const GenerateTab = ({ template, eventId }) => {
     if (!activeJob) return undefined;
     const isDone = activeJob.status === 'completed' || activeJob.status === 'completed_with_errors';
     if (isDone) {
-      loadDocuments();
+      loadDocuments(true);
       return undefined;
     }
     pollRef.current = setTimeout(() => {
@@ -112,7 +129,7 @@ const GenerateTab = ({ template, eventId }) => {
         setError(result.error);
         return;
       }
-      loadDocuments();
+      loadDocuments(true);
     });
   };
 
@@ -187,12 +204,12 @@ const GenerateTab = ({ template, eventId }) => {
         setActionError(result.error);
         return;
       }
-      loadDocuments();
+      loadDocuments(true);
     });
   };
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 max-w-4xl">
       <Card className="p-5">
         <h3 className="font-heading font-semibold text-foreground mb-3">{t('Generate for someone')}</h3>
         {error && <p className="text-sm text-error mb-3">{error}</p>}
@@ -339,6 +356,7 @@ const GenerateTab = ({ template, eventId }) => {
         ) : documents.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t('Nothing generated yet.')}</p>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-muted-foreground border-b border-border">
@@ -351,24 +369,18 @@ const GenerateTab = ({ template, eventId }) => {
             </thead>
             <tbody>
               {documents.map((doc) => (
-                <tr key={doc.id} className="border-b border-border/50">
-                  <td className="py-2 pr-4">{recipientLabel(doc.user_id)}</td>
+                <React.Fragment key={doc.id}>
+                <tr className="border-b border-border/50">
+                  <td className="py-2 pr-4 whitespace-nowrap">{recipientLabel(doc.user_id)}</td>
                   <td className="py-2 pr-4">{doc.filename || '—'}</td>
                   <td className="py-2 pr-4">
                     {doc.status === 'failed' ? (
-                      <>
-                        <span className="text-error">{t(STATUS_LABEL[doc.status])}</span>
-                        {doc.error_detail && (
-                          <p className="mt-1 text-xs text-muted-foreground whitespace-pre-line break-words max-w-xs">
-                            {doc.error_detail}
-                          </p>
-                        )}
-                      </>
+                      <span className="text-error">{t(STATUS_LABEL[doc.status])}</span>
                     ) : (
                       t(STATUS_LABEL[doc.status] || doc.status)
                     )}
                   </td>
-                  <td className="py-2 pr-4 text-muted-foreground">
+                  <td className="py-2 pr-4 text-muted-foreground whitespace-nowrap">
                     {doc.created_at ? new Date(doc.created_at).toLocaleString() : '—'}
                   </td>
                   <td className="py-2">
@@ -387,9 +399,18 @@ const GenerateTab = ({ template, eventId }) => {
                     </div>
                   </td>
                 </tr>
+                {doc.status === 'failed' && doc.error_detail && (
+                  <tr className="border-b border-border/50">
+                    <td colSpan={5} className="pb-3 pr-4 text-xs text-muted-foreground whitespace-pre-line break-words">
+                      {doc.error_detail}
+                    </td>
+                  </tr>
+                )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </Card>
     </div>

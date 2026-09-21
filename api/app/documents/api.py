@@ -26,7 +26,8 @@ from app.documents.models import (
 )
 from app.documents.mixins import document_admin_required, event_admin_required_from_path
 from app.documents.google_client import (
-    build_default_client, describe_configured_identity, extract_file_id, AccessStatus, GoogleApiError,
+    build_default_client, describe_configured_identity, extract_file_id, google_file_url, AccessStatus,
+    GoogleApiError,
 )
 from app.documents.resolver import PlaceholderResolver, evaluate_form_requirements, _AnswerIndex
 from app.documents.variant_selection import select_variant, is_eligible, NoMatchingVariant
@@ -78,6 +79,7 @@ def serialize_variant(variant):
         'google_file_id': variant.google_file_id,
         'google_file_type': variant.google_file_type,
         'google_file_name': variant.google_file_name,
+        'google_file_url': google_file_url(variant.google_file_id, variant.google_file_type),
         'language': variant.language,
         'selection_expression': variant.selection_expression,
         'priority': variant.priority,
@@ -374,6 +376,29 @@ class DocumentTemplateVariantAPI(restful.Resource):
         return {}, 204
 
 
+class DocumentTemplateVariantAccessAPI(restful.Resource):
+    """POST .../variants/<id>/check-access - re-checks whether Baobab can
+    still open and copy one variant's file, refreshing its stored access
+    status. Access changes after a variant is added (files get moved or
+    unshared), so this is how an admin diagnoses a variant that has stopped
+    generating."""
+
+    @document_admin_required
+    def post(self, document_template, variant_id):
+        variant = next((v for v in document_template.variants if v.id == variant_id), None)
+        if not variant:
+            return errors.DOCUMENT_VARIANT_NOT_FOUND
+
+        access, scan_error = _refresh_variant_access(build_default_client(), variant)
+        db.session.commit()
+
+        access_dict = access.to_dict()
+        if scan_error:
+            access_dict['status'] = AccessStatus.ERROR
+            access_dict['detail'] = scan_error
+        return {'variant': serialize_variant(variant), 'access': {**access_dict, **_identity_fields()}}, 200
+
+
 class DocumentTemplateFormsAPI(restful.Resource):
     """Replaces the whole ordered list of linked forms in one call, matching
     the admin UI: forms are dragged into order and (un)linked on one screen,
@@ -439,6 +464,29 @@ class DocumentValidateSourceAPI(restful.Resource):
         return response, 200
 
 
+def _refresh_variant_access(client, variant):
+    """Re-checks Drive access to a variant's file and, when it's readable,
+    rescans its placeholders. Returns (access_result, scan_error_message);
+    the variant is left in the `error` state when the scan itself fails."""
+    access = client.check_access(variant.google_file_id)
+    variant.access_status = access.status
+    variant.access_checked_at = datetime.now()
+    if access.status != AccessStatus.OK:
+        return access, None
+
+    placeholders, scan_error = _scan_placeholders_safely(client, variant.google_file_id, access.file_type)
+    if scan_error:
+        message = scan_error[0]['message']
+        LOGGER.warning('Placeholder scan failed for variant %s (%s): %s',
+                       variant.id, variant.google_file_id, message)
+        variant.access_status = AccessStatus.ERROR
+        return access, message
+
+    variant.detected_placeholders = placeholders
+    variant.google_file_name = access.file_name
+    return access, None
+
+
 class DocumentTemplateAnalyseAPI(restful.Resource):
     """Rescans every active variant and reports, for the union of placeholders
     found, whether each resolves and which linked forms would be tried -
@@ -449,26 +497,11 @@ class DocumentTemplateAnalyseAPI(restful.Resource):
     def post(self, document_template):
         client = build_default_client()
         for variant in document_template.variants:
-            if not variant.is_active:
-                continue
-            access = client.check_access(variant.google_file_id)
-            variant.access_status = access.status
-            variant.access_checked_at = datetime.now()
-            if access.status == AccessStatus.OK:
-                placeholders, scan_error = _scan_placeholders_safely(
-                    client, variant.google_file_id, access.file_type)
-                if scan_error:
-                    # One variant's Docs/Slides API failure (e.g. the API isn't
-                    # enabled on this project) shouldn't abort rescanning every
-                    # other variant - degrade this one to an error state and
-                    # keep going, rather than losing the whole batch.
-                    LOGGER.warning(
-                        'Placeholder scan failed for variant %s (%s): %s',
-                        variant.id, variant.google_file_id, scan_error[0]['message'])
-                    variant.access_status = AccessStatus.ERROR
-                    continue
-                variant.detected_placeholders = placeholders
-                variant.google_file_name = access.file_name
+            if variant.is_active:
+                # One variant's failure (e.g. the Docs/Slides API isn't enabled
+                # on this project) degrades only that variant to an error
+                # state; the rest are still rescanned.
+                _refresh_variant_access(client, variant)
         db.session.commit()
 
         resolver = PlaceholderResolver(document_template, document_template.event)

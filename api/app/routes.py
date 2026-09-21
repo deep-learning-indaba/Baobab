@@ -243,6 +243,8 @@ rest_api.add_resource(documents_api.DocumentTemplateVariantListAPI,
                       '/api/v1/documents/templates/<int:template_id>/variants')
 rest_api.add_resource(documents_api.DocumentTemplateVariantAPI,
                       '/api/v1/documents/templates/<int:template_id>/variants/<int:variant_id>')
+rest_api.add_resource(documents_api.DocumentTemplateVariantAccessAPI,
+                      '/api/v1/documents/templates/<int:template_id>/variants/<int:variant_id>/check-access')
 rest_api.add_resource(documents_api.DocumentTemplateFormsAPI,
                       '/api/v1/documents/templates/<int:template_id>/forms')
 rest_api.add_resource(documents_api.DocumentTemplateAnalyseAPI,

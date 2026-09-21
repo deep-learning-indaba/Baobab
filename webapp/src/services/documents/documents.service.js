@@ -14,6 +14,7 @@ export const documentsService = {
   deleteVariant,
   setFormLinks,
   validateSource,
+  checkVariantAccess,
   analyseTemplate,
   previewTemplate,
   generateDocument,
@@ -81,6 +82,10 @@ function setFormLinks(templateId, formLinks) {
 
 function validateSource(eventId, url) {
   return unwrap(axios.post(`${baseUrl}/api/v1/documents/validate-source?event_id=${eventId}`, { url }, { headers: authHeader() }));
+}
+
+function checkVariantAccess(templateId, variantId) {
+  return unwrap(axios.post(`${baseUrl}/api/v1/documents/templates/${templateId}/variants/${variantId}/check-access`, {}, { headers: authHeader() }));
 }
 
 function analyseTemplate(templateId) {
