@@ -8,7 +8,7 @@ import unittest
 from googleapiclient.errors import HttpError
 
 from app.documents.google_client import (
-    GoogleWorkspaceClient, AccessStatus, GoogleApiError, extract_file_id,
+    GoogleWorkspaceClient, AccessStatus, GoogleApiError, extract_file_id, FRESH_COPY_RETRY_ATTEMPTS,
 )
 
 
@@ -33,11 +33,12 @@ class _Execuatable:
 
 
 class FakeDriveFiles:
-    def __init__(self, get_result=None, get_error=None, copy_result=None,
+    def __init__(self, get_result=None, get_error=None, copy_result=None, copy_error=None,
                  export_result=None, delete_error=None, create_result=None):
         self._get_result = get_result
         self._get_error = get_error
         self._copy_result = copy_result
+        self._copy_error = copy_error
         self._export_result = export_result
         self._delete_error = delete_error
         self._create_result = create_result or {'id': 'new-file-id'}
@@ -50,7 +51,7 @@ class FakeDriveFiles:
 
     def copy(self, **kwargs):
         self.copy_calls.append(kwargs)
-        return _Execuatable(self._copy_result)
+        return _Execuatable(self._copy_result, self._copy_error)
 
     def export(self, **kwargs):
         return _Execuatable(self._export_result)
@@ -470,6 +471,101 @@ class TestGeneratePdf(unittest.TestCase):
         client.generate_pdf('template-id', 'document', {})
 
         self.assertEqual(files.copy_calls[0]['body']['parents'], ['folder-42'])
+
+
+class FlakyThenOkDriveFiles(FakeDriveFiles):
+    """export() 404s on its first `fail_times` calls (the propagation-lag
+    window right after copy), then succeeds - for exercising the fresh-copy
+    retry without a real network call."""
+
+    def __init__(self, fail_times, **kwargs):
+        super().__init__(**kwargs)
+        self.fail_times = fail_times
+        self.export_calls = 0
+
+    def export(self, **kwargs):
+        self.export_calls += 1
+        if self.export_calls <= self.fail_times:
+            return _Execuatable(None, _http_error(404))
+        return _Execuatable(self._export_result)
+
+
+class AlwaysNotFoundExportDriveFiles(FakeDriveFiles):
+    def export(self, **kwargs):
+        return _Execuatable(None, _http_error(404))
+
+
+class TestGeneratePdfFreshCopyRetry(unittest.TestCase):
+
+    def test_a_transient_404_right_after_copy_is_retried_until_it_succeeds(self):
+        files = FlakyThenOkDriveFiles(
+            fail_times=2, copy_result={'id': 'copy-1'}, export_result=b'%PDF-1.4 fake bytes')
+        client = _client(drive=FakeDriveService(files), docs=FakeDocsService())
+
+        result = client.generate_pdf('template-id', 'document', {})
+
+        self.assertEqual(result, b'%PDF-1.4 fake bytes')
+        self.assertEqual(files.export_calls, 3)
+
+    def test_a_404_that_never_clears_is_raised_labelled_with_the_step(self):
+        files = AlwaysNotFoundExportDriveFiles(copy_result={'id': 'copy-1'})
+        client = _client(drive=FakeDriveService(files), docs=FakeDocsService())
+
+        with self.assertRaises(GoogleApiError) as ctx:
+            client.generate_pdf('template-id', 'document', {})
+
+        self.assertEqual(ctx.exception.status_code, 404)
+        self.assertIn('exporting the copy to PDF', str(ctx.exception))
+        # The copy is still cleaned up even though export never recovered.
+        self.assertEqual(files.delete_calls[0]['fileId'], 'copy-1')
+
+    def test_a_non_404_error_on_the_copy_is_not_retried(self):
+        class RaisingFiles(FakeDriveFiles):
+            def export(self, **kwargs):
+                self.export_calls = getattr(self, 'export_calls', 0) + 1
+                return _Execuatable(None, _http_error(500))
+
+        files = RaisingFiles(copy_result={'id': 'copy-1'})
+        client = _client(drive=FakeDriveService(files), docs=FakeDocsService())
+
+        with self.assertRaises(GoogleApiError):
+            client.generate_pdf('template-id', 'document', {})
+
+        # RETRYABLE_STATUS_CODES already retries 500s inside _call (up to its
+        # own max_attempts=4); the fresh-copy loop adds no further attempts
+        # for a non-404, so the call count stays bounded by that alone.
+        self.assertLessEqual(files.export_calls, 4)
+
+    def test_the_original_failure_is_not_masked_when_cleanup_also_fails(self):
+        class DoubleFailingFiles(FakeDriveFiles):
+            def export(self, **kwargs):
+                return _Execuatable(None, _http_error(404))
+
+            def delete(self, **kwargs):
+                self.delete_calls.append(kwargs)
+                return _Execuatable(None, _http_error(404))
+
+        files = DoubleFailingFiles(copy_result={'id': 'copy-1'})
+        client = _client(drive=FakeDriveService(files), docs=FakeDocsService())
+
+        with self.assertRaises(GoogleApiError) as ctx:
+            client.generate_pdf('template-id', 'document', {})
+
+        # Still the export failure, not "deleting the temporary copy" - a
+        # cleanup failure in `finally` must never replace it.
+        self.assertIn('exporting the copy to PDF', str(ctx.exception))
+
+    def test_step_label_distinguishes_the_original_template_from_the_copy(self):
+        raising = FakeDriveFiles(copy_error=_http_error(404))
+        client = _client(drive=FakeDriveService(raising), docs=FakeDocsService())
+
+        with self.assertRaises(GoogleApiError) as ctx:
+            client.generate_pdf('missing-template-id', 'document', {})
+
+        self.assertIn('creating a copy of the template', str(ctx.exception))
+        # 404 on the copy itself is not the fresh-copy propagation-lag case -
+        # there's no copy yet to be lagging - so this is not retried.
+        self.assertEqual(len(raising.copy_calls), 1)
 
 
 class TestCreateSpreadsheet(unittest.TestCase):
