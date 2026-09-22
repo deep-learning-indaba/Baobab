@@ -40,6 +40,41 @@ class TestPreflight(DocumentApiTestCase):
         self.assertEqual(body['will_succeed_count'], 2)
         self.assertEqual(body['will_fail_count'], 0)
 
+    def test_missing_email_template_is_flagged_once_not_per_candidate(self):
+        self.add_offer(self.event, self.user)
+        document_template = self.make_document_template(key='certificate', delivery_mode='attachment')
+        self.make_variant(document_template, placeholders={'firstname'})
+
+        resp = self.post_json(
+            f'/api/v1/documents/templates/{document_template.id}/generate/preflight',
+            {'recipients': {'type': 'everyone'}},
+        )
+
+        body = json.loads(resp.data)
+        self.assertTrue(body['email_template_missing'])
+        self.assertEqual(body['will_succeed_count'], 1)
+
+    def test_email_template_missing_is_false_when_delivery_is_configured(self):
+        self.add_offer(self.event, self.user)
+        self.add_email_template('generated-document', template='Hi {firstname}', subject='Ready')
+        document_template = self.make_document_template(key='certificate', delivery_mode='attachment')
+        self.make_variant(document_template, placeholders={'firstname'})
+
+        resp = self.post_json(
+            f'/api/v1/documents/templates/{document_template.id}/generate/preflight',
+            {'recipients': {'type': 'everyone'}},
+        )
+
+        self.assertFalse(json.loads(resp.data)['email_template_missing'])
+
+    def test_email_template_missing_is_false_for_download_only_templates(self):
+        self.assertFalse(
+            json.loads(self.post_json(
+                f'/api/v1/documents/templates/{self.document_template.id}/generate/preflight',
+                {'recipients': {'type': 'everyone'}},
+            ).data)['email_template_missing']
+        )
+
     def test_ineligible_recipients_are_excluded_not_counted_as_failures(self):
         self.add_offer(self.event, self.user)
         document_template = self.make_document_template(
@@ -251,10 +286,14 @@ class TestResendAndRegenerate(DocumentApiTestCase):
 
     def test_resend_with_no_email_template_reports_it(self):
         doc = self._generated_document()
+        doc_id = doc.id
 
-        resp = self.app.post(f'/api/v1/documents/generated/{doc.id}/resend', headers=self.headers)
+        resp = self.app.post(f'/api/v1/documents/generated/{doc_id}/resend', headers=self.headers)
 
         self.assertEqual(resp.status_code, 400)
+        self.assertEqual(json.loads(resp.data)['message'], 'No email template is configured for this document.')
+        doc = db.session.query(GeneratedDocument).filter_by(id=doc_id).first()
+        self.assertEqual(doc.email_skipped_reason, 'No email template is configured for this document.')
 
     def test_resend_queues_a_new_outbox_message(self):
         self.add_email_template('generated-document', template='Hi {firstname}', subject='Ready')
@@ -268,6 +307,19 @@ class TestResendAndRegenerate(DocumentApiTestCase):
         count = db.session.query(OutboxMessage).filter_by(
             source_type='document', source_id=doc_id).count()
         self.assertEqual(count, 1)
+
+    def test_resend_clears_a_previous_skip_reason_once_it_succeeds(self):
+        doc = self._generated_document()
+        doc.email_skipped_reason = 'No email template is configured for this document.'
+        db.session.commit()
+        doc_id = doc.id
+        self.add_email_template('generated-document', template='Hi {firstname}', subject='Ready')
+
+        resp = self.app.post(f'/api/v1/documents/generated/{doc_id}/resend', headers=self.headers)
+
+        self.assertEqual(resp.status_code, 200)
+        doc = db.session.query(GeneratedDocument).filter_by(id=doc_id).first()
+        self.assertIsNone(doc.email_skipped_reason)
 
     def test_resend_none_delivery_mode_rejected(self):
         self.document_template.delivery_mode = 'none'

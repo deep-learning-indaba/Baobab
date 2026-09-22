@@ -305,6 +305,11 @@ const GenerateTab = ({ template, eventId }) => {
 
         {preflight && (
           <div className="rounded-lg border border-border p-4 text-sm space-y-2 mb-4">
+            {preflight.email_template_missing && (
+              <p className="text-warning">
+                ⚠️ {t('No email template is configured for this document - documents will be generated and downloadable, but not emailed.')}
+              </p>
+            )}
             <p>{preflight.total_candidates} {t('people selected.')}</p>
             <p className="text-success">✅ {preflight.will_succeed_count} {t('will succeed')}</p>
             {preflight.will_fail_count > 0 && (
@@ -376,6 +381,8 @@ const GenerateTab = ({ template, eventId }) => {
                   <td className="py-2 pr-4">
                     {doc.status === 'failed' ? (
                       <span className="text-error">{t(STATUS_LABEL[doc.status])}</span>
+                    ) : doc.status === 'generated' && doc.email_skipped_reason ? (
+                      <span className="text-warning">{t(STATUS_LABEL[doc.status])} · {t('not emailed')}</span>
                     ) : (
                       t(STATUS_LABEL[doc.status] || doc.status)
                     )}
@@ -403,6 +410,13 @@ const GenerateTab = ({ template, eventId }) => {
                   <tr className="border-b border-border/50">
                     <td colSpan={5} className="pb-3 pr-4 text-xs text-muted-foreground whitespace-pre-line break-words">
                       {doc.error_detail}
+                    </td>
+                  </tr>
+                )}
+                {doc.status === 'generated' && doc.email_skipped_reason && (
+                  <tr className="border-b border-border/50">
+                    <td colSpan={5} className="pb-3 pr-4 text-xs text-muted-foreground whitespace-pre-line break-words">
+                      {doc.email_skipped_reason} {t('Use Resend once a template is configured.')}
                     </td>
                   </tr>
                 )}

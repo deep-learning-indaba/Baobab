@@ -331,6 +331,14 @@ class GeneratedDocument(db.Model):
     error_detail = db.Column(db.Text(), nullable=True)
     attempts = db.Column(db.Integer(), nullable=False, default=0)
 
+    # Set only when the template's delivery_mode wants an email and none was
+    # queued - a missing EmailTemplate for this key/event/language, checked
+    # at generation time and again on every resend. Null the rest of the
+    # time: delivery_mode='none' (no email was ever wanted) and "an email
+    # was queued" look the same as "not set yet", which is deliberate - both
+    # are the normal case, this column exists to flag the abnormal one.
+    email_skipped_reason = db.Column(db.String(255), nullable=True)
+
     # Claim fields, mirroring outbox.models.OutboxMessage: the worker takes
     # exclusive ownership of a batch of `pending` rows with a UPDATE ...
     # WHERE status='pending' before processing any of them, so two overlapping
