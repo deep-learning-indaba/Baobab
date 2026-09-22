@@ -2,7 +2,8 @@
 _context objects. Exercises the real Offer/InvitedGuest/Attendance/FormResponse
 tables rather than a hand-built EligibilityContext."""
 from app.documents.tests.base import DocumentsTestCase
-from app.documents.eligibility import build_eligibility_context
+from app.documents.eligibility import build_eligibility_context, EligibilityContext
+from app.forms.visibility import VisibilityEvaluator
 
 
 class TestBuildEligibilityContext(DocumentsTestCase):
@@ -56,3 +57,75 @@ class TestBuildEligibilityContext(DocumentsTestCase):
         self.assertIn(submitted_form.id, context.submitted_form_ids)
         self.assertNotIn(draft_form.id, context.submitted_form_ids)
         self.assertNotIn(withdrawn_form.id, context.submitted_form_ids)
+
+
+class TestAnswerComparisonLeaf(DocumentsTestCase):
+    """`{"key": ..., "operator": ..., "value"/"values": ...}` - design section 7.5,
+    shared by eligibility, variant selection and derived placeholder rules."""
+
+    def _context(self, answers):
+        return EligibilityContext(set(), set(), False, set(), answer_resolver=answers.get)
+
+    def test_equals(self):
+        context = self._context({'bringing_poster': 'yes'})
+        expr = {'key': 'bringing_poster', 'operator': 'EQUALS', 'value': 'yes'}
+        self.assertTrue(VisibilityEvaluator.evaluate(expr, set(), context))
+        self.assertFalse(VisibilityEvaluator.evaluate(
+            {'key': 'bringing_poster', 'operator': 'EQUALS', 'value': 'no'}, set(), context))
+
+    def test_equals_is_case_and_whitespace_insensitive(self):
+        context = self._context({'gender': ' Female '})
+        expr = {'key': 'gender', 'operator': 'EQUALS', 'value': 'female'}
+        self.assertTrue(VisibilityEvaluator.evaluate(expr, set(), context))
+
+    def test_not_equals(self):
+        context = self._context({'bringing_poster': 'no'})
+        expr = {'key': 'bringing_poster', 'operator': 'NOT_EQUALS', 'value': 'yes'}
+        self.assertTrue(VisibilityEvaluator.evaluate(expr, set(), context))
+
+    def test_in(self):
+        context = self._context({'hostel': 'Blue House'})
+        expr = {'key': 'hostel', 'operator': 'IN', 'values': ['Red House', 'Blue House']}
+        self.assertTrue(VisibilityEvaluator.evaluate(expr, set(), context))
+
+    def test_not_in(self):
+        context = self._context({'hostel': 'Green House'})
+        expr = {'key': 'hostel', 'operator': 'NOT_IN', 'values': ['Red House', 'Blue House']}
+        self.assertTrue(VisibilityEvaluator.evaluate(expr, set(), context))
+
+    def test_is_empty_and_is_not_empty(self):
+        context = self._context({'poster_title': ''})
+        self.assertTrue(VisibilityEvaluator.evaluate(
+            {'key': 'poster_title', 'operator': 'IS_EMPTY'}, set(), context))
+        self.assertFalse(VisibilityEvaluator.evaluate(
+            {'key': 'poster_title', 'operator': 'IS_NOT_EMPTY'}, set(), context))
+
+    def test_missing_key_is_treated_as_blank(self):
+        context = self._context({})
+        self.assertTrue(VisibilityEvaluator.evaluate(
+            {'key': 'never_answered', 'operator': 'IS_EMPTY'}, set(), context))
+        self.assertFalse(VisibilityEvaluator.evaluate(
+            {'key': 'never_answered', 'operator': 'EQUALS', 'value': 'yes'}, set(), context))
+
+    def test_no_context_evaluates_false_not_raise(self):
+        expr = {'key': 'bringing_poster', 'operator': 'EQUALS', 'value': 'yes'}
+        self.assertFalse(VisibilityEvaluator.evaluate(expr, set(), None))
+
+    def test_context_without_answer_resolver_evaluates_false(self):
+        # A plain EligibilityContext built with no answer_resolver (or a form
+        # visibility_expression, which never passes a context at all) must
+        # not raise just because a rule includes this leaf.
+        context = build_eligibility_context(self.user_id, self.event_id)
+        expr = {'key': 'bringing_poster', 'operator': 'EQUALS', 'value': 'yes'}
+        self.assertFalse(VisibilityEvaluator.evaluate(expr, set(), context))
+
+    def test_combines_with_and(self):
+        context = self._context({'bringing_poster': 'yes', 'poster_title': 'A Title'})
+        expr = {
+            'operator': 'AND',
+            'conditions': [
+                {'key': 'bringing_poster', 'operator': 'EQUALS', 'value': 'yes'},
+                {'key': 'poster_title', 'operator': 'IS_NOT_EMPTY'},
+            ],
+        }
+        self.assertTrue(VisibilityEvaluator.evaluate(expr, set(), context))

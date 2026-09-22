@@ -38,6 +38,50 @@ const ACCESS_COPY = {
   },
 };
 
+const AccessProblem = ({ result, onCheckAgain, checkingAgain = false }) => {
+  const { t } = useTranslation();
+  const copy = ACCESS_COPY[result.status];
+  return (
+    <div className="rounded-lg border border-warning/30 bg-warning/5 p-4 text-sm space-y-2">
+      <p className="font-semibold text-foreground">{t(copy?.title || 'Baobab can\'t use this document.')}</p>
+      <p className="text-muted-foreground">
+        {t(copy?.body(result.has_configured_service_account) || '')}
+      </p>
+      {result.detail && result.status === 'error' && (
+        <p className="text-xs text-muted-foreground break-words">{t('Details')}: {result.detail}</p>
+      )}
+      {result.service_account_email && (
+        <div className="flex items-center gap-2">
+          <code className="text-xs bg-surface-low rounded px-2 py-1">{result.service_account_email}</code>
+          <Button
+            variant="ghost" size="sm"
+            onClick={() => navigator.clipboard && navigator.clipboard.writeText(result.service_account_email)}
+          >
+            {t('Copy')}
+          </Button>
+        </div>
+      )}
+      {!result.has_configured_service_account && (
+        <p className="text-xs text-muted-foreground italic">
+          {t('No dedicated service account is configured in this environment - access checks are using whatever local Google credentials happen to be available, which usually can\'t see your documents. This is expected in local development; it will use a real service account once deployed.')}
+        </p>
+      )}
+      <Button variant="secondary" size="sm" onClick={onCheckAgain} disabled={checkingAgain}>
+        {checkingAgain ? t('Checking...') : t('Check again')}
+      </Button>
+    </div>
+  );
+};
+
+const OpenInGoogleIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+       strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+    <polyline points="15 3 21 3 21 9" />
+    <line x1="10" y1="14" x2="21" y2="3" />
+  </svg>
+);
+
 const VariantsTab = ({ template, eventId, onReload, tags }) => {
   const { t } = useTranslation();
   const [url, setUrl] = useState('');
@@ -46,6 +90,9 @@ const VariantsTab = ({ template, eventId, onReload, tags }) => {
   const [checkResult, setCheckResult] = useState(null);
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState(null);
+  const [variantChecks, setVariantChecks] = useState({});
+  const [actionError, setActionError] = useState(null);
+  const [busyVariantId, setBusyVariantId] = useState(null);
 
   const handleCheck = () => {
     if (!url.trim()) return;
@@ -81,15 +128,38 @@ const VariantsTab = ({ template, eventId, onReload, tags }) => {
     });
   };
 
-  const handleVariantChange = (variant, field, value) => {
-    documentsService.updateVariant(template.id, variant.id, { [field]: value }).then((result) => {
+  const handleCheckVariantAccess = (variant) => {
+    setVariantChecks((prev) => ({ ...prev, [variant.id]: { ...prev[variant.id], loading: true } }));
+    documentsService.checkVariantAccess(template.id, variant.id).then((result) => {
+      setVariantChecks((prev) => ({
+        ...prev,
+        [variant.id]: result.error ? { error: result.error } : { result: result.data.access },
+      }));
       if (!result.error) onReload();
     });
   };
 
+  const handleVariantChange = (variant, field, value) => {
+    setActionError(null);
+    documentsService.updateVariant(template.id, variant.id, { [field]: value }).then((result) => {
+      if (result.error) {
+        setActionError(result.error);
+        return;
+      }
+      onReload();
+    });
+  };
+
   const handleDeleteVariant = (variant) => {
+    setActionError(null);
+    setBusyVariantId(variant.id);
     documentsService.deleteVariant(template.id, variant.id).then((result) => {
-      if (!result.error) onReload();
+      setBusyVariantId(null);
+      if (result.error) {
+        setActionError(result.error);
+        return;
+      }
+      onReload();
     });
   };
 
@@ -115,28 +185,8 @@ const VariantsTab = ({ template, eventId, onReload, tags }) => {
         {error && <p className="text-sm text-error mt-3">{error}</p>}
 
         {checkResult && checkResult.status !== 'ok' && (
-          <div className="mt-4 rounded-lg border border-warning/30 bg-warning/5 p-4 text-sm space-y-2">
-            <p className="font-semibold text-foreground">{t(ACCESS_COPY[checkResult.status]?.title || 'Baobab can\'t use this document.')}</p>
-            <p className="text-muted-foreground">
-              {t(ACCESS_COPY[checkResult.status]?.body(checkResult.has_configured_service_account) || '')}
-            </p>
-            {checkResult.service_account_email && (
-              <div className="flex items-center gap-2">
-                <code className="text-xs bg-surface-low rounded px-2 py-1">{checkResult.service_account_email}</code>
-                <Button
-                  variant="ghost" size="sm"
-                  onClick={() => navigator.clipboard && navigator.clipboard.writeText(checkResult.service_account_email)}
-                >
-                  {t('Copy')}
-                </Button>
-              </div>
-            )}
-            {!checkResult.has_configured_service_account && (
-              <p className="text-xs text-muted-foreground italic">
-                {t('No dedicated service account is configured in this environment - access checks are using whatever local Google credentials happen to be available, which usually can\'t see your documents. This is expected in local development; it will use a real service account once deployed.')}
-              </p>
-            )}
-            <Button variant="secondary" size="sm" onClick={handleCheck}>{t('Check again')}</Button>
+          <div className="mt-4">
+            <AccessProblem result={checkResult} onCheckAgain={handleCheck} />
           </div>
         )}
 
@@ -172,26 +222,78 @@ const VariantsTab = ({ template, eventId, onReload, tags }) => {
         </div>
       )}
 
+      {actionError && (
+        <div className="rounded-lg border border-error/30 bg-error/5 px-4 py-3 text-sm text-error">{actionError}</div>
+      )}
+
       <div className="space-y-3">
         {(template.variants || []).map((variant) => (
           <Card key={variant.id} className={'p-4 ' + (variant.is_active ? '' : 'opacity-60')}>
-            <div className="flex items-start justify-between gap-4 mb-3">
-              <div>
+            <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 mb-3">
+              <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-foreground">{variant.name}</span>
                   <span className={'text-xs rounded-full px-2 py-0.5 ' + (variant.access_status === 'ok' ? 'bg-success/10 text-success' : 'bg-error/10 text-error')}>
                     {variant.access_status === 'ok' ? t('Accessible') : t('Access issue')}
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5">{variant.google_file_name || variant.google_file_id}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {variant.google_file_name || variant.google_file_id}
+                  {' · '}{variant.google_file_type === 'presentation' ? t('Google Slides') : t('Google Docs')}
+                </p>
               </div>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => handleVariantChange(variant, 'is_active', !variant.is_active)}>
+              <div className="flex items-center gap-2 shrink-0">
+                <a
+                  href={variant.google_file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={variant.google_file_type === 'presentation' ? t('Open in Google Slides') : t('Open in Google Docs')}
+                  aria-label={variant.google_file_type === 'presentation' ? t('Open in Google Slides') : t('Open in Google Docs')}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md text-primary hover:bg-surface-low"
+                >
+                  <OpenInGoogleIcon />
+                </a>
+                <Button variant="ghost" size="sm" disabled={variantChecks[variant.id]?.loading}
+                        onClick={() => handleCheckVariantAccess(variant)}>
+                  {variantChecks[variant.id]?.loading ? t('Checking...') : t('Check access')}
+                </Button>
+                <Button variant="ghost" size="sm" disabled={busyVariantId === variant.id}
+                        onClick={() => handleVariantChange(variant, 'is_active', !variant.is_active)}>
                   {variant.is_active ? t('Deactivate') : t('Activate')}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => handleDeleteVariant(variant)}>{t('Remove')}</Button>
+                <Button variant="ghost" size="sm" disabled={busyVariantId === variant.id}
+                        onClick={() => handleDeleteVariant(variant)}>
+                  {busyVariantId === variant.id ? t('Removing...') : t('Remove')}
+                </Button>
               </div>
             </div>
+
+            <a
+              href={variant.google_file_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={variant.google_file_url}
+              className="block truncate text-xs text-action hover:underline mb-3"
+            >
+              {variant.google_file_url}
+            </a>
+
+            {variantChecks[variant.id]?.error && (
+              <p className="text-sm text-error mb-3">{variantChecks[variant.id].error}</p>
+            )}
+            {variantChecks[variant.id]?.result && (
+              <div className="mb-3">
+                {variantChecks[variant.id].result.status === 'ok' ? (
+                  <p className="text-sm text-success">✅ {t('Baobab can open and copy this file.')}</p>
+                ) : (
+                  <AccessProblem
+                    result={variantChecks[variant.id].result}
+                    onCheckAgain={() => handleCheckVariantAccess(variant)}
+                    checkingAgain={variantChecks[variant.id]?.loading}
+                  />
+                )}
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
@@ -223,6 +325,7 @@ const VariantsTab = ({ template, eventId, onReload, tags }) => {
                 expression={variant.selection_expression}
                 onChange={(expr) => handleVariantChange(variant, 'selection_expression', expr)}
                 tags={tags}
+                eventId={eventId}
               />
             </div>
 

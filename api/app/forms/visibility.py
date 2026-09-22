@@ -5,14 +5,26 @@ from app import db, LOGGER
 from app.offer.models import Offer, OfferTag
 from app.invitedGuest.models import InvitedGuest, InvitedGuestTag
 from app.tags.models import Tag
+from app.forms.models import DependencyOperator
+
+#: Operators the `key`/`operator` answer-comparison leaf accepts. A subset of
+#: DependencyOperator (form question dependencies): numeric/text-pattern
+#: operators aren't offered because the values being compared are already
+#: humanised strings (option labels, joined multi-values), not raw typed input.
+ANSWER_COMPARISON_OPERATORS = {
+    DependencyOperator.EQUALS.value, DependencyOperator.NOT_EQUALS.value,
+    DependencyOperator.IN.value, DependencyOperator.NOT_IN.value,
+    DependencyOperator.IS_EMPTY.value, DependencyOperator.IS_NOT_EMPTY.value,
+}
 
 
 class VisibilityEvaluator:
     """Evaluates form visibility expressions against user tags.
 
-    Also used, via the optional `context` argument, for document eligibility and
-    variant-selection rules (app/documents/eligibility.py) - one expression
-    language for all three, so admins learn a single rule builder.
+    Also used, via the optional `context` argument, for document eligibility,
+    variant-selection and derived-placeholder rules (app/documents/eligibility.py,
+    app/documents/derived_placeholders.py) - one expression language for all
+    four, so admins learn a single rule builder.
     """
 
     @staticmethod
@@ -101,9 +113,10 @@ class VisibilityEvaluator:
         Args:
             expression: The visibility expression (JSON structure)
             user_tags: Set of tag names (strings) that the user has
-            context: Optional EligibilityContext supplying tag ids and the
-                `attended` / `form_submitted` leaves (app/documents/eligibility.py).
-                Forms visibility never passes this, so those leaves evaluate to
+            context: Optional EligibilityContext supplying tag ids, the
+                `attended` / `form_submitted` leaves, and answers for the
+                `key`/`operator` leaf (app/documents/eligibility.py). Forms
+                visibility never passes this, so those leaves evaluate to
                 False for form dependencies - unchanged behaviour for existing
                 callers.
 
@@ -166,6 +179,49 @@ class VisibilityEvaluator:
             return (context is not None
                     and expression.get('form_submitted') in context.submitted_form_ids)
 
+        if 'key' in expression and 'operator' in expression:
+            return VisibilityEvaluator._evaluate_answer(expression, context)
+
+        return False
+
+    @staticmethod
+    def _evaluate_answer(expression, context):
+        """`{"key": "bringing_poster", "operator": "EQUALS", "value": "yes"}`
+
+        True when the resolved placeholder value for `key` (the same
+        precedence chain a document placeholder is resolved through - linked
+        forms, user data, profile, event, system) compares as requested.
+        Requires a context that implements `get_answer_value(key)`; plain form
+        visibility never supplies one, so this leaf is always False there.
+        """
+        if context is None or not hasattr(context, 'get_answer_value'):
+            return False
+
+        operator = expression.get('operator')
+        if operator not in ANSWER_COMPARISON_OPERATORS:
+            LOGGER.warning('Unknown answer-comparison operator: %s', operator)
+            return False
+
+        raw_value = context.get_answer_value(expression.get('key'))
+        is_blank = raw_value is None or raw_value == ''
+
+        if operator == DependencyOperator.IS_EMPTY.value:
+            return is_blank
+        if operator == DependencyOperator.IS_NOT_EMPTY.value:
+            return not is_blank
+
+        # Blank compares as an empty string rather than short-circuiting, so
+        # EQUALS/NOT_EQUALS/IN/NOT_IN behave the same whether the value came
+        # back None or "" - both mean "nothing here".
+        value = '' if is_blank else str(raw_value).strip().lower()
+        if operator == DependencyOperator.EQUALS.value:
+            return value == str(expression.get('value', '')).strip().lower()
+        if operator == DependencyOperator.NOT_EQUALS.value:
+            return value != str(expression.get('value', '')).strip().lower()
+        if operator == DependencyOperator.IN.value:
+            return value in {str(v).strip().lower() for v in expression.get('values', [])}
+        if operator == DependencyOperator.NOT_IN.value:
+            return value not in {str(v).strip().lower() for v in expression.get('values', [])}
         return False
 
     @staticmethod

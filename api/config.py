@@ -36,6 +36,13 @@ SMTP_MAX_SEND_RATE = float(os.getenv('SMTP_MAX_SEND_RATE', 10))
 OUTBOX_BATCH_SIZE = int(os.getenv('OUTBOX_BATCH_SIZE', 250))
 OUTBOX_TIME_BUDGET_SECONDS = float(os.getenv('OUTBOX_TIME_BUDGET_SECONDS', 30))
 
+# Bulk document generation worker tuning - same reasoning as the outbox above,
+# but the batch is much smaller: each recipient costs ~4 Google API calls
+# (copy, batchUpdate, export, delete) against Drive's per-minute write quota,
+# not one SMTP send, so far fewer fit in the same time budget.
+DOCUMENT_WORKER_BATCH_SIZE = int(os.getenv('DOCUMENT_WORKER_BATCH_SIZE', 20))
+DOCUMENT_WORKER_TIME_BUDGET_SECONDS = float(os.getenv('DOCUMENT_WORKER_TIME_BUDGET_SECONDS', 30))
+
 GCP_CREDENTIALS_DICT = {
     'type': 'service_account',
     'client_id': os.getenv('GCP_CLIENT_ID', None),

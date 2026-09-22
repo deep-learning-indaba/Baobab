@@ -12,6 +12,8 @@ from app.forms.models import (
 from app.documents.models import (
     DocumentTemplate, DocumentTemplateTranslation, DocumentTemplateVariant,
     DocumentTemplateForm, DocumentTemplateFormTranslation, UserEventData,
+    DerivedPlaceholder, DerivedPlaceholderRule, DerivedPlaceholderRuleTranslation,
+    DocumentGenerationJob,
 )
 from app.tags.models import Tag, TagTranslation, TagType
 from app.offer.models import Offer, OfferTag
@@ -197,6 +199,18 @@ class DocumentsTestCase(ApiTestCase):
         db.session.commit()
         return tag
 
+    def add_offer(self, event, user):
+        event_id, user_id = _pk(event), _pk(user)
+        offer = db.session.query(Offer).filter_by(user_id=user_id, event_id=event_id).first()
+        if not offer:
+            offer = Offer(
+                user_id=user_id, event_id=event_id, offer_date=datetime.now(),
+                expiry_date=datetime.now(), payment_required=False, candidate_response=True,
+            )
+            db.session.add(offer)
+            db.session.commit()
+        return offer
+
     def give_offer_tag(self, event, user, tag):
         event_id, user_id = _pk(event), _pk(user)
         offer = db.session.query(Offer).filter_by(user_id=user_id, event_id=event_id).first()
@@ -222,6 +236,38 @@ class DocumentsTestCase(ApiTestCase):
         db.session.add(InvitedGuestTag(invited_guest_id=invited_guest.id, tag_id=_pk(tag)))
         db.session.commit()
         return invited_guest
+
+    def make_derived_placeholder(self, event=None, key='poster_sentence', description=None, is_active=True):
+        event_id = _pk(event) if event is not None else self.event_id
+        derived = DerivedPlaceholder(event_id=event_id, key=key, description=description, is_active=is_active)
+        db.session.add(derived)
+        db.session.commit()
+        return derived
+
+    def add_derived_rule(self, derived_placeholder, order, condition_expression=None, texts=None):
+        """texts: {language: text}. condition_expression=None makes this the
+        'otherwise' rule."""
+        rule = DerivedPlaceholderRule(
+            derived_placeholder_id=_pk(derived_placeholder), order=order,
+            condition_expression=condition_expression,
+        )
+        db.session.add(rule)
+        db.session.flush()
+        for language, text in (texts or {}).items():
+            db.session.add(DerivedPlaceholderRuleTranslation(rule_id=rule.id, language=language, text=text))
+        db.session.commit()
+        return rule
+
+    def make_generation_job(self, document_template, total_count=0, language='en',
+                             override_eligibility=False, recipient_selection=None):
+        job = DocumentGenerationJob(
+            event_id=self.event_id, document_template_id=_pk(document_template),
+            requested_by_user_id=self.user_id, total_count=total_count, language=language,
+            override_eligibility=override_eligibility, recipient_selection=recipient_selection,
+        )
+        db.session.add(job)
+        db.session.commit()
+        return job
 
     def mark_attended(self, event, user):
         attendance = Attendance(event_id=_pk(event), user_id=_pk(user), updated_by_user_id=self.user_id)

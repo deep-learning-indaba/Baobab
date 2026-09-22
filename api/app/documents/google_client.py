@@ -20,6 +20,7 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+from app import LOGGER
 from app.documents.resolver import extract_placeholder_occurrences
 
 
@@ -36,6 +37,14 @@ NATIVE_MIME_TYPES = {
 }
 
 RETRYABLE_STATUS_CODES = (429, 500, 502, 503, 504)
+
+#: A Docs/Slides API call made immediately after copying a file with the
+#: Drive API can 404 briefly before Google's backends agree the copy exists -
+#: most visible copying into a Shared Drive. Retried on 404 only in this
+#: narrow window, right after creating the copy; a 404 anywhere else (e.g.
+#: checking a pasted template link, or the initial copy of a genuinely
+#: missing template) is treated as final on the first attempt.
+FRESH_COPY_RETRY_ATTEMPTS = 5
 
 
 class GoogleApiError(Exception):
@@ -80,6 +89,12 @@ _FILE_ID_PATTERNS = (
     re.compile(r'[?&]id=([a-zA-Z0-9_-]+)'),
 )
 _BARE_ID_PATTERN = re.compile(r'^[a-zA-Z0-9_-]{10,}$')
+
+
+def google_file_url(file_id, file_type):
+    """The browser link that opens a Docs or Slides file for editing."""
+    kind = 'presentation' if file_type == 'presentation' else 'document'
+    return f'https://docs.google.com/{kind}/d/{file_id}/edit'
 
 
 def extract_file_id(value):
@@ -287,12 +302,16 @@ class GoogleWorkspaceClient:
         text that should replace `{occurrence}` in the document.
 
         Returns the PDF bytes. The copy is always deleted, even if replacement
-        or export raises.
+        or export raises. Every failure's message names which step it
+        happened in - "File not found" on its own doesn't say whether Google
+        rejected the original template or the fresh copy of it.
         """
         copy_body = self._drive_file_body(name=f'baobab-doc-{uuid.uuid4().hex}')
 
-        copied = self._call(lambda: self.drive.files().copy(
-            fileId=google_file_id, body=copy_body, supportsAllDrives=True).execute())
+        copied = self._step_call(
+            lambda: self.drive.files().copy(
+                fileId=google_file_id, body=copy_body, supportsAllDrives=True).execute(),
+            'creating a copy of the template')
         copy_id = copied['id']
 
         try:
@@ -307,17 +326,50 @@ class GoogleWorkspaceClient:
             ]
             if requests_list:
                 if google_file_type == 'document':
-                    self._call(lambda: self.docs.documents().batchUpdate(
-                        documentId=copy_id, body={'requests': requests_list}).execute())
+                    self._step_call(
+                        lambda: self.docs.documents().batchUpdate(
+                            documentId=copy_id, body={'requests': requests_list}).execute(),
+                        'replacing placeholders in the copy', retry_fresh_copy=True)
                 else:
-                    self._call(lambda: self.slides.presentations().batchUpdate(
-                        presentationId=copy_id, body={'requests': requests_list}).execute())
+                    self._step_call(
+                        lambda: self.slides.presentations().batchUpdate(
+                            presentationId=copy_id, body={'requests': requests_list}).execute(),
+                        'replacing placeholders in the copy', retry_fresh_copy=True)
 
-            return self._call(lambda: self.drive.files().export(
-                fileId=copy_id, mimeType='application/pdf').execute())
+            return self._step_call(
+                lambda: self.drive.files().export(
+                    fileId=copy_id, mimeType='application/pdf').execute(),
+                'exporting the copy to PDF', retry_fresh_copy=True)
         finally:
-            self._call(lambda: self.drive.files().delete(
-                fileId=copy_id, supportsAllDrives=True).execute())
+            # A failure here must never replace whatever exception is already
+            # propagating from the try block above (Python lets a `finally`
+            # silently override it) - it's logged, not raised, so an admin can
+            # still see the real cause instead of just "couldn't delete".
+            try:
+                self._step_call(
+                    lambda: self.drive.files().delete(
+                        fileId=copy_id, supportsAllDrives=True).execute(),
+                    'deleting the temporary copy', retry_fresh_copy=True)
+            except GoogleApiError as delete_error:
+                LOGGER.warning(
+                    'Could not delete temporary document copy %s (of template %s): %s',
+                    copy_id, google_file_id, delete_error)
+
+    def _step_call(self, func, step, retry_fresh_copy=False):
+        """Runs one Google API call through the shared retry/backoff (_call),
+        labels any failure with which pipeline step it happened in, and -
+        only for calls against a file this same request just copied - retries
+        past a transient 404 rather than surfacing it immediately."""
+        attempt = 0
+        while True:
+            attempt += 1
+            try:
+                return self._call(func)
+            except GoogleApiError as e:
+                if retry_fresh_copy and e.status_code == 404 and attempt < FRESH_COPY_RETRY_ATTEMPTS:
+                    self._sleep_fn(min(2 ** attempt, 10) + random.random())
+                    continue
+                raise GoogleApiError(e.status_code, f'{step}: {e}') from e
 
     # -- Sheets export ---------------------------------------------------
 
