@@ -32,7 +32,10 @@ from app.documents.google_client import (
 from app.documents.resolver import PlaceholderResolver, evaluate_form_requirements, _AnswerIndex
 from app.documents.variant_selection import select_variant, is_eligible, NoMatchingVariant
 from app.documents.eligibility import build_eligibility_context
-from app.documents.generator import generate_document, GenerationError, enqueue_resend
+from app.documents.generator import (
+    generate_document, GenerationError, enqueue_resend, NO_EMAIL_TEMPLATE_REASON,
+)
+from app.email_template.repository import EmailRepository
 from app.documents.derived_placeholders import find_cycle
 from app.documents.recipients import resolve_recipient_user_ids
 from app.documents.worker import run_bulk_generation
@@ -118,6 +121,7 @@ def serialize_generated_document(generated_document):
         'filename': generated_document.filename,
         'error_code': generated_document.error_code,
         'error_detail': generated_document.error_detail,
+        'email_skipped_reason': generated_document.email_skipped_reason,
         'attempts': generated_document.attempts,
         'created_at': generated_document.created_at.isoformat() if generated_document.created_at else None,
         'generated_at': generated_document.generated_at.isoformat() if generated_document.generated_at else None,
@@ -371,6 +375,17 @@ class DocumentTemplateVariantAPI(restful.Resource):
         variant = next((v for v in document_template.variants if v.id == variant_id), None)
         if not variant:
             return errors.DOCUMENT_VARIANT_NOT_FOUND
+
+        # Every GeneratedDocument keeps its variant_id for audit/download - it's
+        # what serialize_generated_document and the resend/regenerate flows key
+        # off - so a variant that produced one can't be hard-deleted without
+        # orphaning that history; deactivating still stops it being selected
+        # for new generations.
+        has_generated_documents = db.session.query(GeneratedDocument.id).filter_by(
+            variant_id=variant.id).first() is not None
+        if has_generated_documents:
+            return errors.DOCUMENT_VARIANT_HAS_GENERATED_DOCUMENTS
+
         db.session.delete(variant)
         db.session.commit()
         return {}, 204
@@ -651,6 +666,16 @@ def _preflight_candidates(document_template, event, selection, language, overrid
 
         succeed_user_ids.append(user.id)
 
+    # Independent of any one recipient - the template either has an
+    # EmailTemplate to send from in this language or it doesn't - so this is
+    # checked once rather than per candidate. Without it, a missing template
+    # only surfaces after the run, one download-only document at a time, on
+    # whichever row an admin happens to click Resend on.
+    email_template_missing = (
+        document_template.delivery_mode != 'none'
+        and EmailRepository.get(event.id, document_template.email_template_key or 'generated-document', language) is None
+    )
+
     return {
         'total_candidates': len(users),
         'excluded_ineligible_count': excluded_ineligible,
@@ -660,6 +685,7 @@ def _preflight_candidates(document_template, event, selection, language, overrid
         'failures': failures,
         'recommended_incomplete_count': len(recommended_incomplete_user_ids),
         'recommended_incomplete_user_ids': recommended_incomplete_user_ids,
+        'email_template_missing': email_template_missing,
     }
 
 
@@ -791,7 +817,7 @@ class GeneratedDocumentResendAPI(restful.Resource):
 
         queued = enqueue_resend(document_template, generated_document, target_user, document_template.event)
         if not queued:
-            return {'message': 'No email template is configured for this document.'}, 400
+            return {'message': NO_EMAIL_TEMPLATE_REASON}, 400
         return {'message': 'Resend queued.'}, 200
 
 

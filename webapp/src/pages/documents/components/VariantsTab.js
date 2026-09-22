@@ -91,6 +91,8 @@ const VariantsTab = ({ template, eventId, onReload, tags }) => {
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState(null);
   const [variantChecks, setVariantChecks] = useState({});
+  const [actionError, setActionError] = useState(null);
+  const [busyVariantId, setBusyVariantId] = useState(null);
 
   const handleCheck = () => {
     if (!url.trim()) return;
@@ -138,14 +140,26 @@ const VariantsTab = ({ template, eventId, onReload, tags }) => {
   };
 
   const handleVariantChange = (variant, field, value) => {
+    setActionError(null);
     documentsService.updateVariant(template.id, variant.id, { [field]: value }).then((result) => {
-      if (!result.error) onReload();
+      if (result.error) {
+        setActionError(result.error);
+        return;
+      }
+      onReload();
     });
   };
 
   const handleDeleteVariant = (variant) => {
+    setActionError(null);
+    setBusyVariantId(variant.id);
     documentsService.deleteVariant(template.id, variant.id).then((result) => {
-      if (!result.error) onReload();
+      setBusyVariantId(null);
+      if (result.error) {
+        setActionError(result.error);
+        return;
+      }
+      onReload();
     });
   };
 
@@ -208,6 +222,10 @@ const VariantsTab = ({ template, eventId, onReload, tags }) => {
         </div>
       )}
 
+      {actionError && (
+        <div className="rounded-lg border border-error/30 bg-error/5 px-4 py-3 text-sm text-error">{actionError}</div>
+      )}
+
       <div className="space-y-3">
         {(template.variants || []).map((variant) => (
           <Card key={variant.id} className={'p-4 ' + (variant.is_active ? '' : 'opacity-60')}>
@@ -239,10 +257,14 @@ const VariantsTab = ({ template, eventId, onReload, tags }) => {
                         onClick={() => handleCheckVariantAccess(variant)}>
                   {variantChecks[variant.id]?.loading ? t('Checking...') : t('Check access')}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => handleVariantChange(variant, 'is_active', !variant.is_active)}>
+                <Button variant="ghost" size="sm" disabled={busyVariantId === variant.id}
+                        onClick={() => handleVariantChange(variant, 'is_active', !variant.is_active)}>
                   {variant.is_active ? t('Deactivate') : t('Activate')}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => handleDeleteVariant(variant)}>{t('Remove')}</Button>
+                <Button variant="ghost" size="sm" disabled={busyVariantId === variant.id}
+                        onClick={() => handleDeleteVariant(variant)}>
+                  {busyVariantId === variant.id ? t('Removing...') : t('Remove')}
+                </Button>
               </div>
             </div>
 

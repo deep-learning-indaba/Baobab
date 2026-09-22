@@ -178,6 +178,9 @@ CONNECTION_NOT_FOUND = ({'message': 'Connection not found.'}, 404)
 DOCUMENT_TEMPLATE_NOT_FOUND = ({'message': 'No document template exists with that ID.'}, 404)
 DOCUMENT_TEMPLATE_KEY_IN_USE = ({'message': 'A document template with that key already exists for this event.'}, 409)
 DOCUMENT_VARIANT_NOT_FOUND = ({'message': 'No variant exists with that ID on this document template.'}, 404)
+DOCUMENT_VARIANT_HAS_GENERATED_DOCUMENTS = ({
+    'message': 'This template version has already been used to generate documents, so it can\'t be removed - '
+                'deactivate it instead to stop it being used for new ones.'}, 409)
 DOCUMENT_SOURCE_NOT_SPECIFIED = ({'message': 'Could not find a Google Docs or Slides file id in that link.'}, 400)
 GENERATED_DOCUMENT_NOT_FOUND = ({'message': 'No generated document exists with that ID.'}, 404)
 DOCUMENT_NOT_YET_GENERATED = ({'message': 'This document has not finished generating.'}, 409)

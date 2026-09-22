@@ -202,6 +202,27 @@ class TestGenerateDocumentEmailDelivery(DocumentsTestCase):
 
         self.assertEqual(result.status, GeneratedDocumentStatus.GENERATED)
         self.assertIsNone(self._outbox_message(result))
+        # The document is still generated and downloadable, but the row must
+        # say why nothing was emailed rather than looking indistinguishable
+        # from a document whose email was queued successfully.
+        self.assertEqual(result.email_skipped_reason, 'No email template is configured for this document.')
+
+    def test_successful_delivery_leaves_no_skip_reason(self):
+        self.add_email_template('generated-document', template='Hi {firstname}', subject='Your document')
+        document_template = self.make_document_template(key='invitation-letter', delivery_mode='attachment')
+        self.make_variant(document_template, placeholders={'firstname'})
+
+        result = generate_document(document_template, self.user, self.user, self.event, client=FakeGoogleClient())
+
+        self.assertIsNone(result.email_skipped_reason)
+
+    def test_none_mode_leaves_no_skip_reason(self):
+        document_template = self.make_document_template(key='invitation-letter', delivery_mode='none')
+        self.make_variant(document_template, placeholders={'firstname'})
+
+        result = generate_document(document_template, self.user, self.user, self.event, client=FakeGoogleClient())
+
+        self.assertIsNone(result.email_skipped_reason)
 
     def test_custom_email_template_key_is_used(self):
         self.add_email_template('visa-letter-ready', template='Hi {firstname}', subject='Visa letter ready')

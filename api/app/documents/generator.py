@@ -197,6 +197,13 @@ def _render_filename(resolver, user, document_template):
     return rendered if rendered.lower().endswith('.pdf') else f'{rendered}.pdf'
 
 
+#: The reason recorded on a GeneratedDocument row when its template wants an
+#: email but no EmailTemplate exists to build one from - shown in the admin
+#: results table and returned by a failed resend, so "why didn't this get
+#: emailed" doesn't require clicking Resend to find out.
+NO_EMAIL_TEMPLATE_REASON = 'No email template is configured for this document.'
+
+
 def _enqueue_delivery_email(document_template, generated_document, user, event, filename, language):
     """Queue this document's delivery email through the outbox rather than
     sending it inline - the same worker that delivers announcement and push
@@ -204,13 +211,17 @@ def _enqueue_delivery_email(document_template, generated_document, user, event, 
     single self-service request returns as soon as the PDF exists rather than
     waiting on a mail server round-trip too.
 
-    A missing EmailTemplate is logged and skipped, not fatal: the document is
-    still generated and downloadable, matching the legacy invitation letter
-    generator's behaviour.
+    A missing EmailTemplate is logged and recorded on the row, not fatal: the
+    document is still generated and downloadable, matching the legacy
+    invitation letter generator's behaviour - but not raising here would
+    otherwise leave nothing to tell an admin their attendees never got it.
     """
     message = _build_delivery_message(document_template, generated_document, user, event, filename, language)
     if message is None:
+        generated_document.email_skipped_reason = NO_EMAIL_TEMPLATE_REASON
+        db.session.commit()
         return
+    generated_document.email_skipped_reason = None
     OutboxRepository.enqueue_many([message], OUTBOX_SOURCE_TYPE, generated_document.id)
     db.session.commit()
 
@@ -232,7 +243,10 @@ def enqueue_resend(document_template, generated_document, user, event):
         document_template, generated_document, user, event,
         generated_document.filename, generated_document.language)
     if message is None:
+        generated_document.email_skipped_reason = NO_EMAIL_TEMPLATE_REASON
+        db.session.commit()
         return False
+    generated_document.email_skipped_reason = None
     OutboxRepository.enqueue_many([message])
     db.session.commit()
     return True

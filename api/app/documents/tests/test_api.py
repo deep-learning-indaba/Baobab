@@ -4,7 +4,9 @@ from unittest.mock import patch
 from app import db
 from app.documents.tests.base import DocumentsTestCase
 from app.documents.google_client import AccessCheckResult, AccessStatus, GoogleApiError
-from app.documents.models import DocumentTemplate, DocumentTemplateVariant, UserEventData
+from app.documents.models import (
+    DocumentTemplate, DocumentTemplateVariant, UserEventData, GeneratedDocument,
+)
 
 
 class FakeGoogleClient:
@@ -145,6 +147,45 @@ class TestDocumentTemplateVariants(DocumentApiTestCase):
         )
         self.assertEqual(delete_resp.status_code, 204)
         self.assertIsNone(db.session.query(DocumentTemplateVariant).filter_by(id=variant_id).first())
+
+    def test_deleting_a_variant_that_generated_a_document_is_rejected(self):
+        variant = self.make_variant(self.document_template, {'firstname'})
+        variant_id = variant.id
+        document = GeneratedDocument(
+            event_id=self.event_id, document_template_id=self.document_template.id,
+            user_id=self.user_id, requested_by_user_id=self.admin_id, variant_id=variant_id,
+            status='generated',
+        )
+        db.session.add(document)
+        db.session.commit()
+
+        delete_resp = self.app.delete(
+            f'/api/v1/documents/templates/{self.document_template.id}/variants/{variant_id}',
+            headers=self.headers,
+        )
+
+        self.assertEqual(delete_resp.status_code, 409)
+        self.assertIn('generate documents', json.loads(delete_resp.data)['message'])
+        self.assertIsNotNone(db.session.query(DocumentTemplateVariant).filter_by(id=variant_id).first())
+
+    def test_deactivating_a_variant_that_generated_a_document_still_works(self):
+        variant = self.make_variant(self.document_template, {'firstname'})
+        variant_id = variant.id
+        document = GeneratedDocument(
+            event_id=self.event_id, document_template_id=self.document_template.id,
+            user_id=self.user_id, requested_by_user_id=self.admin_id, variant_id=variant_id,
+            status='generated',
+        )
+        db.session.add(document)
+        db.session.commit()
+
+        resp = self.put_json(
+            f'/api/v1/documents/templates/{self.document_template.id}/variants/{variant_id}',
+            {'is_active': False},
+        )
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(json.loads(resp.data)['is_active'])
 
 
 class TestDocumentTemplateForms(DocumentApiTestCase):
