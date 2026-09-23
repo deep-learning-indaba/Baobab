@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime
 
 _USDGBP_PATH = "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.min.json"
-_API_KEY = 'sk_LexJK2eK0jY3Kmm9gE6R6nJ4M8RwrZpN'
+_API_KEY = os.getenv('INVOICE_GENERATOR_API_KEY')
 
 class InvoiceGenerator:
     URL = "https://invoice-generator.com"
