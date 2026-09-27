@@ -17,6 +17,7 @@ from app.forms.models import (
 )
 from app.documents.models import DocumentTemplateForm, UserEventData
 from app.documents.derived_placeholders import load_derived_placeholders, resolve_value as resolve_derived_value
+from app.utils.language import translation_for
 
 
 # Matches either a literal doubled brace ({{ or }}) or a single {...} placeholder
@@ -161,7 +162,7 @@ def _humanize_answer(question, raw_value, language):
     if not values:
         return ''
 
-    translation = question.get_translation(language) or question.get_translation('en')
+    translation = question.get_translation(language) or translation_for(question, 'en')
     options_by_value = {}
     if translation and translation.options:
         options_by_value = {opt['value']: opt.get('label', opt['value']) for opt in translation.options}
@@ -338,9 +339,7 @@ class PlaceholderResolver:
 
     def _event_value(self, key):
         if key == 'name':
-            if self.event.has_specific_translation(self.language):
-                return self.event.get_name(self.language)
-            return self.event.get_name('en')
+            return self.event.get_name(self.language)
         if key == 'start_date':
             return self.event.start_date
         if key == 'end_date':
@@ -579,7 +578,7 @@ class PlaceholderResolver:
         return descriptions
 
     def _form_source_label(self, link):
-        translation = link.form.get_translation(self.language) or link.form.get_translation('en')
+        translation = link.form.get_translation(self.language) or translation_for(link.form, 'en')
         return f'linked form "{translation.name if translation else link.form_id}"'
 
     def _try_form(self, user, answer_index, key):
@@ -757,8 +756,8 @@ def evaluate_form_requirements(document_template, user, language='en'):
         if link.form_id in submitted_form_ids:
             continue
 
-        translation = link.get_translation(language) or link.get_translation('en')
-        form_translation = link.form.get_translation(language) or link.form.get_translation('en')
+        translation = link.get_translation(language) or translation_for(link, 'en')
+        form_translation = link.form.get_translation(language) or translation_for(link.form, 'en')
         entry = {
             'form_id': link.form_id,
             'form_name': form_translation.name if form_translation else None,

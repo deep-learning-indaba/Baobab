@@ -45,6 +45,8 @@ import { isPushSupported, getNotificationPermission, registerPushSubscription } 
 import { EventAppProgramme, ProgrammeEditor, EventAppAnnouncements, AnnouncementDetail, AnnouncementsAdmin, MyTicket, CheckinConsole, BadgeExport, MyProfile, ViewMemberProfile, ProfileBrowser, ScanConnect, Connections, ConnectLanding, DiscussionSpaces, DiscussionBoard, DiscussionThread, NewDiscussionThread, DiscussionReportsAdmin } from '../eventApp';
 import EventDashboard from '../eventDashboard';
 import ResourceLinksAdmin from '../resourceLinks';
+import { getEventLanguages } from '../../utils/eventLanguages';
+import EventLanguageNotice from '../../components/EventLanguageNotice';
 
 function iconCls(icon) {
   if (!icon) return null;
@@ -177,9 +179,9 @@ class EventInfo extends Component {
                     {status.label}
                   </p>
                 )}
-                <h1 className="font-heading text-2xl font-bold text-foreground leading-tight">{event.name}</h1>
+                <h1 className="font-heading text-2xl font-bold text-foreground leading-tight" lang={event.content_language}>{event.name}</h1>
                 {event.description && event.description !== event.name && (
-                  <p className="text-sm text-muted-foreground mt-1">{event.description}</p>
+                  <p className="text-sm text-muted-foreground mt-1" lang={event.content_language}>{event.description}</p>
                 )}
                 {status && status.action && (
                   <div className="mt-3">
@@ -231,7 +233,7 @@ class EventInfo extends Component {
           </div>
         ) : (
           <div className="bg-white rounded-xl border border-border p-8">
-            <h1 className="font-heading text-3xl font-bold text-foreground mb-6 pb-6 border-b border-border/50">
+            <h1 className="font-heading text-3xl font-bold text-foreground mb-6 pb-6 border-b border-border/50" lang={event.content_language}>
               {event.description}
             </h1>
             <EventStatus longForm={true} event={event} />
@@ -538,6 +540,7 @@ class EventHome extends Component {
             <i className="fas fa-bars" style={{ fontSize: 16 }} />
             Menu
           </button>
+          <EventLanguageNotice event={event} organisation={organisation} />
           <Route
             exact
           path={`${match.path}/`}
@@ -699,7 +702,7 @@ class EventHome extends Component {
           render={(props) => <ApplicationFormSetting
             {...props}
             event={event}
-            languages={organisation && organisation.languages}
+            languages={getEventLanguages(event, organisation)}
             />}
         />
         <Route
@@ -708,7 +711,7 @@ class EventHome extends Component {
           render={(props) => <ReviewForm
             {...props}
             event={event}
-            languages={organisation && organisation.languages}
+            languages={getEventLanguages(event, organisation)}
             />}
         />
         <Route

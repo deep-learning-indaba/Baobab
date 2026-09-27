@@ -61,6 +61,9 @@ class Event(db.Model):
         'form.id', name='event_survey_form_id_fkey', use_alter=True, ondelete='SET NULL'
     ), nullable=True)
     survey_open = db.Column(db.DateTime(), nullable=True)
+    # Ordered language codes the event's content is authored in; the first is the
+    # primary language. Fixed at creation. NULL inherits the organisation's languages.
+    languages = db.Column(db.JSON(), nullable=True)
 
     organisation = db.relationship('Organisation', foreign_keys=[organisation_id])
     survey_form = db.relationship('Form', foreign_keys=[survey_form_id])
@@ -97,7 +100,8 @@ class Event(db.Model):
         image=None,
         timezone='UTC',
         checkin_mode='per_event',
-        survey_form_id=None
+        survey_form_id=None,
+        languages=None
     ):
         self.start_date = start_date
         self.end_date = None if event_type == EventType.JOURNAL else end_date
@@ -125,6 +129,7 @@ class Event(db.Model):
         self.checkin_mode = checkin_mode
         self.survey_form_id = survey_form_id
         self.event_fees = []
+        self.languages = list(languages) if languages else None
 
         self.add_event_translations(names, descriptions)
 
@@ -188,17 +193,41 @@ class Event(db.Model):
         self.event_roles.append(event_role)
         return True
 
+    @property
+    def effective_languages(self):
+        """Language codes the event's content is available in, primary language first."""
+        if self.languages:
+            return list(self.languages)
+        org_codes = self.organisation.language_codes if self.organisation else []
+        return org_codes or ['en']
+
+    @property
+    def primary_language(self):
+        return self.effective_languages[0]
+
+    def supports_language(self, language):
+        return language in self.effective_languages
+
+    def resolve_language(self, requested):
+        """The language to serve this event's content in: the requested one when the
+        event is authored in it, otherwise the event's primary language."""
+        code = (requested or '')[:2].lower()
+        return code if self.supports_language(code) else self.primary_language
+
+    def _translation_or_fallback(self, language):
+        translations = self.event_translations.all()
+        by_language = {t.language: t for t in translations}
+        return (by_language.get(language)
+                or by_language.get(self.primary_language)
+                or (translations[0] if translations else None))
+
     def get_name(self, language):
-        event_translation = self.event_translations.filter_by(language=language).first()
-        if event_translation is not None:
-            return event_translation.name
-        return None
+        event_translation = self._translation_or_fallback(language)
+        return event_translation.name if event_translation is not None else None
 
     def get_description(self, language):
-        event_translation = self.event_translations.filter_by(language=language).first()
-        if event_translation is not None:
-            return event_translation.description
-        return None
+        event_translation = self._translation_or_fallback(language)
+        return event_translation.description if event_translation is not None else None
     
     def get_all_name_translations(self):
         name_translation_map = {}
@@ -446,13 +475,16 @@ class EventResourceLink(db.Model):
     __tablename__ = 'event_resource_link'
     id = db.Column(db.Integer(), primary_key=True)
     event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
-    title_en = db.Column(db.String(160), nullable=False)
+    # Only the titles in the event's languages are set.
+    title_en = db.Column(db.String(160), nullable=True)
     title_fr = db.Column(db.String(160), nullable=True)
     url = db.Column(db.String(1024), nullable=False)
     category = db.Column(db.String(40), nullable=True)
     icon = db.Column(db.String(40), nullable=True)
     sort_order = db.Column(db.Integer(), nullable=False, default=0)
     created_at = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow)
+
+    event = db.relationship('Event', foreign_keys=[event_id])
 
     def __init__(self, event_id, title_en, url, title_fr=None, category=None, icon=None, sort_order=0):
         self.event_id = event_id
@@ -464,6 +496,5 @@ class EventResourceLink(db.Model):
         self.sort_order = sort_order
 
     def get_title(self, language):
-        if language == 'fr' and self.title_fr:
-            return self.title_fr
-        return self.title_en
+        titles = {'en': self.title_en, 'fr': self.title_fr}
+        return titles.get(language) or self.title_en or self.title_fr

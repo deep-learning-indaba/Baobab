@@ -25,7 +25,7 @@ from app.users.repository import UserRepository as user_repository
 
 from app.events.repository import EventRepository as event_repository
 from app.utils.auth import auth_required
-from app.utils.language import translatable
+from app.utils.language import translatable, translation_for
 
 from app.utils.auth import auth_required, event_admin_required
 from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, RESPONSE_NOT_FOUND, \
@@ -179,7 +179,7 @@ def _serialize_review_question(review_question, language):
     translation = review_question.get_translation(language)
     if translation is None:
         LOGGER.warn('Missing {} translation for review review_question id {}'.format(language, review_question.id))
-        translation = review_question.get_translation('en')
+        translation = translation_for(review_question, 'en')
     return {
         'id': review_question.id,
         'question_id': review_question.question_id,
@@ -202,7 +202,7 @@ def _serialize_review_form(review_form: ReviewForm, language: str) -> Mapping[st
         translation = section.get_translation(language)
         if translation is None:
             LOGGER.warn('Missing {} translation for review section id {}'.format(language, section.id))
-            translation = section.get_translation('en')
+            translation = translation_for(section, 'en')
         review_sections.append({
             'id': section.id,
             'order': section.order,
@@ -252,7 +252,7 @@ def _is_entity_visible(entity: Union[Question, Section], answers: Sequence[Answe
     translation = entity.get_translation(language)    
     if translation is None:
         LOGGER.warn('No {} translation found for {} id {}'.format(language, type(entity), entity.id))
-        translation = entity.get_translation('en')
+        translation = translation_for(entity, 'en')
     
     return translation.show_for_values and dependency_answer.value in translation.show_for_values
 
@@ -456,6 +456,9 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
         if response_reviewer is None:
             return FORBIDDEN
 
+        review_form = db.session.query(ReviewForm).get(review_form_id)
+        if review_form is not None:
+            language = review_form.application_form.event.resolve_language(language)
         review_response = ReviewResponse(review_form_id, reviewer_user_id, response_id, language)
         review_response.review_scores = self.get_review_scores(scores)
         if is_submitted:
@@ -546,7 +549,7 @@ def _serialize_tag(tag, language):
     translation = tag.get_translation(language)
     if translation is None:
         LOGGER.warn('Could not find {} translation for tag id {}'.format(language, tag.id))
-        translation = tag.get_translation('en')
+        translation = translation_for(tag, 'en')
     return {
         'id': tag.id,
         'event_id': tag.event_id,
@@ -766,7 +769,7 @@ class ReviewListAPI(restful.Resource):
     def _serialize_answer(answer, language):
         translation = answer.question.get_translation(language)
         if not translation:
-            translation = answer.question.get_translation('en')
+            translation = translation_for(answer.question, 'en')
             LOGGER.warn('Could not find {} translation for question id {}'.format(language, answer.question.id))
         return {
             'headline': translation.headline,
@@ -880,7 +883,7 @@ class ReviewResponseDetailListAPI(restful.Resource):
     def _serialise_identifier(answer, language):
         question_translation = answer.question.get_translation(language)
         if question_translation is None:
-            question_translation = answer.question.get_translation('en')
+            question_translation = translation_for(answer.question, 'en')
             LOGGER.warn('Could not find {} translation for question id {}'.format(language, answer.question.id))
 
         return {
@@ -892,7 +895,7 @@ class ReviewResponseDetailListAPI(restful.Resource):
     def _serialise_score(review_score, language):
         review_question_translation = review_score.review_question.get_translation(language)
         if review_question_translation is None:
-            review_question_translation = review_score.review_question.get_translation('en')
+            review_question_translation = translation_for(review_score.review_question, 'en')
             LOGGER.warn('Could not find {} translation for review question id {}'.format(language,
                                                                                          review_score.review_question.id))
 
@@ -960,7 +963,7 @@ class ReviewResponseSummaryListAPI(restful.Resource):
                 if review_question.weight > 0:
                     review_question_translation = review_question.get_translation(language)
                     if not review_question_translation:
-                        review_question_translation = review_question.get_translation('en')
+                        review_question_translation = translation_for(review_question, 'en')
                         LOGGER.warn('Could not find {} translation for review question id {}'.format(language, review_question.id))
 
                     average_score = review_repository.get_average_score_for_review_question(response.id, review_question.id)

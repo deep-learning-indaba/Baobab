@@ -19,6 +19,7 @@ from app.events.repository import EventRepository as event_repository
 from app.invitedGuest.repository import InvitedGuestRepository as invited_guest_repository
 from app.utils import misc
 from app.utils.emailer import email_user
+from app.utils.language import translation_for
 
 user_profile_list_fields = {
     'user_id': fields.Integer,
@@ -49,7 +50,7 @@ def _serialize_tag(tag, language):
     translation = tag.get_translation(language)
     if translation is None:
         LOGGER.warn('Could not find {} translation for tag id {}'.format(language, tag.id))
-        translation = tag.get_translation('en')
+        translation = translation_for(tag, 'en')
     return {
         'id': tag.id,
         'event_id': tag.event_id,

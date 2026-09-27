@@ -198,7 +198,7 @@ class ProfileInterestsAPI(restful.Resource):
             return EVENT_NOT_FOUND
 
         tags = (db.session.query(Tag, TagTranslation)
-                .outerjoin(TagTranslation, (TagTranslation.tag_id == Tag.id) & (TagTranslation.language == 'en'))
+                .outerjoin(TagTranslation, (TagTranslation.tag_id == Tag.id) & (TagTranslation.language == event.primary_language))
                 .filter(Tag.event_id == args['event_id'], Tag.tag_type == TagType.INTEREST, Tag.active == True)
                 .all())
 
@@ -224,7 +224,7 @@ class ProfileInterestsAPI(restful.Resource):
                         Tag.event_id == event_id,
                         Tag.tag_type == TagType.INTEREST,
                         db.func.lower(TagTranslation.name) == normalised,
-                        TagTranslation.language == 'en',
+                        TagTranslation.language == event.primary_language,
                     ).first())
         if existing:
             tag, tr = existing
@@ -233,7 +233,7 @@ class ProfileInterestsAPI(restful.Resource):
         tag = Tag(event_id=event_id, tag_type=TagType.INTEREST)
         db.session.add(tag)
         db.session.flush()
-        for lang in ('en', 'fr'):
+        for lang in event.effective_languages:
             db.session.add(TagTranslation(tag_id=tag.id, language=lang, name=name))
         db.session.commit()
         return {'id': tag.id, 'name': name}, 201

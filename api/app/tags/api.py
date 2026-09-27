@@ -6,6 +6,7 @@ from app.tags.repository import TagRepository as tag_repository
 from app.utils import errors
 from app.tags.models import Tag, TagTranslation, TagType
 from app import LOGGER
+from app.utils.language import translation_for
 
 def _serialize_tag_detail(tag):
     """Serializes a tag with all of its translations."""
@@ -29,7 +30,7 @@ def _serialize_tag(tag, language):
     translation = tag.get_translation(language)
     if translation is None:
         LOGGER.warn('Could not find translation for language {} for tag id {}'.format(language, tag.id))
-        translation = tag.get_translation('en')
+        translation = translation_for(tag, 'en')
     return {
         'id': tag.id,
         'event_id': tag.event_id,

@@ -30,9 +30,11 @@ from app.utils.errors import (
     FORBIDDEN,
     EVENT_WITH_KEY_NOT_FOUND,
     EVENT_KEY_IN_USE,
-    EVENT_WITH_TRANSLATION_NOT_FOUND,
     EVENT_MUST_CONTAIN_TRANSLATION,
     EVENT_TRANSLATION_MISMATCH,
+    EVENT_INVALID_LANGUAGES,
+    EVENT_LANGUAGES_IMMUTABLE,
+    EVENT_TRANSLATION_LANGUAGES_MISMATCH,
     STRIPE_SETUP_INCOMPLETE,
     EVENT_MUST_HAVE_DATES,
     EVENT_ROLE_NOT_FOUND,
@@ -40,7 +42,8 @@ from app.utils.errors import (
     EVENT_ROLE_ALREADY_EXISTS,
     INVALID_TIMEZONE,
     INVALID_CHECKIN_MODE,
-    EVENT_RESOURCE_LINK_NOT_FOUND
+    EVENT_RESOURCE_LINK_NOT_FOUND,
+    EVENT_RESOURCE_LINK_TITLE_REQUIRED
 )
 
 from app.utils.auth import auth_optional, auth_required, event_admin_required
@@ -68,6 +71,7 @@ def status_info(status):
     }
 
 def event_info(user_id, event, status, language):
+    language = event.resolve_language(language)
     new_reg_form = db.session.query(GenericForm).filter_by(
         event_id=event.id, form_type='registration'
     ).first()
@@ -116,7 +120,9 @@ def event_info(user_id, event, status, language):
         'checkin_mode': event.checkin_mode,
         'survey_form_id': event.survey_form_id,
         'survey_open': event.survey_open.strftime('%Y-%m-%dT%H:%M:%S') if event.survey_open is not None else None,
-        'is_survey_time': event.is_survey_time
+        'is_survey_time': event.is_survey_time,
+        'languages': event.effective_languages,
+        'content_language': language
     }
 
 
@@ -147,8 +153,23 @@ event_fields = {
     'contact_email': fields.String,
     'image': fields.String,
     'timezone': fields.String,
-    'checkin_mode': fields.String
+    'checkin_mode': fields.String,
+    'languages': fields.Raw(attribute=lambda event: event.effective_languages if isinstance(event, Event) else [])
 }
+
+
+def _infer_languages(names, organisation):
+    """The organisation's languages that `names` is translated into, in the
+    organisation's order, plus any unknown codes so validation rejects them."""
+    org_codes = organisation.language_codes
+    return [c for c in org_codes if c in names] + [c for c in names if c not in org_codes]
+
+
+def _validate_languages(languages, organisation):
+    org_codes = organisation.language_codes
+    if not languages or len(set(languages)) != len(languages):
+        return False
+    return all(l in org_codes for l in languages)
 
 
 def get_user_event_response_status(user_id, event_id):
@@ -212,7 +233,8 @@ def make_journal_event(
     contact_email=None,
     image=None,
     timezone='UTC',
-    checkin_mode='per_event'):
+    checkin_mode='per_event',
+    languages=None):
     return Event(
                 names=names,
                 descriptions=descriptions,
@@ -238,7 +260,8 @@ def make_journal_event(
                 contact_email=contact_email,
                 image=image,
                 timezone=timezone,
-                checkin_mode=checkin_mode
+                checkin_mode=checkin_mode,
+                languages=languages
     )
 
 def update_journal_event(
@@ -319,6 +342,13 @@ class EventAPI(EventMixin, restful.Resource):
         if set(args['name']) != set(args['description']):
             return EVENT_TRANSLATION_MISMATCH
 
+        organisation = db.session.query(Organisation).get(args['organisation_id'])
+        languages = args['languages'] or _infer_languages(args['name'], organisation)
+        if not _validate_languages(languages, organisation):
+            return EVENT_INVALID_LANGUAGES
+        if set(args['name']) != set(languages):
+            return EVENT_TRANSLATION_LANGUAGES_MISMATCH
+
         if (not (args['end_date'] and
             args['application_open'] and
             args['application_close'] and
@@ -347,7 +377,8 @@ class EventAPI(EventMixin, restful.Resource):
                 args['contact_email'],
                 args['image'],
                 timezone=timezone,
-                checkin_mode=checkin_mode
+                checkin_mode=checkin_mode,
+                languages=languages
             )
 
         else:
@@ -376,7 +407,8 @@ class EventAPI(EventMixin, restful.Resource):
                 args['contact_email'],
                 args['image'],
                 timezone=timezone,
-                checkin_mode=checkin_mode
+                checkin_mode=checkin_mode,
+                languages=languages
             )
 
         event.add_event_role('admin', user_id)
@@ -406,6 +438,11 @@ class EventAPI(EventMixin, restful.Resource):
         current_user = user_repository.get_by_id(user_id)
         if not current_user.is_event_admin(event.id):
             return FORBIDDEN
+
+        if args['languages'] is not None and list(args['languages']) != event.effective_languages:
+            return EVENT_LANGUAGES_IMMUTABLE
+        if set(args['name']) != set(event.effective_languages):
+            return EVENT_TRANSLATION_LANGUAGES_MISMATCH
 
         timezone = args['timezone'] or 'UTC'
         if timezone not in pytz.all_timezones_set:
@@ -485,7 +522,6 @@ class EventsAPI(restful.Resource):
     def get(self):
         user_id = g.current_user["id"]
         language = request.args['language']
-        default_language = 'en'
 
         upcoming_events = event_repository.get_upcoming_for_organisation(g.organisation.id)
         attended_events = event_repository.get_attended_by_user_for_organisation(g.organisation.id, user_id)
@@ -493,12 +529,8 @@ class EventsAPI(restful.Resource):
         returnEvents = []
 
         for event in itertools.chain(upcoming_events, attended_events):
-            if not event.has_specific_translation(language):
-                LOGGER.error('Missing {} translation for event {}.'.format(language, event.id))
-                language = default_language
             status = None if user_id == 0 else event_status.get_event_status(event.id, user_id)
             returnEvents.append(event_info(user_id, event, status, language))
-            language = request.args['language']
         return returnEvents, 200
 
 
@@ -653,18 +685,11 @@ class EventsByKeyAPI(EventsKeyMixin, restful.Resource):
 
         user_id = g.current_user['id']
         language = args['language']
-        if language is None or len(language) > 2:
-            LOGGER.warning("Missing or invalid language parameter for EventsByKeyAPI. Defaulting to 'en'")
-            default_language = 'en'
-            language = default_language
 
         event = event_repository.get_by_key(args['event_key'])
         if not event:
             return EVENT_WITH_KEY_NOT_FOUND
-        
-        if not event.has_specific_translation(language):
-            return EVENT_WITH_TRANSLATION_NOT_FOUND
-            
+
         info = event_info(
             g.current_user['id'], 
             event, 
@@ -723,7 +748,7 @@ class NotStartedReminderAPI(EventsMixin, restful.Resource):
 
         users = user_repository.get_all_without_responses()
         for user in users:
-            event_name = event.get_name('en')
+            event_name = event.get_name(event.primary_language)
             organisation_name = event.organisation.name
             system_name = event.organisation.system_name
             deadline = event.application_close.strftime('%A %-d %B %Y')
@@ -886,6 +911,18 @@ event_resource_link_fields = {
 }
 
 
+def _resource_link_titles(event, args):
+    """The link's per-language titles, keeping only the event's languages, or None
+    when the event's primary language has no title."""
+    titles = {}
+    for language in ('en', 'fr'):
+        title = (args.get('title_' + language) or '').strip()
+        titles[language] = title if title and event.supports_language(language) else None
+    if event.primary_language in titles and not titles[event.primary_language]:
+        return None
+    return titles
+
+
 class EventResourceLinkAPI(restful.Resource):
 
     resource_get_parser = reqparse.RequestParser()
@@ -894,7 +931,7 @@ class EventResourceLinkAPI(restful.Resource):
 
     resource_post_parser = reqparse.RequestParser()
     resource_post_parser.add_argument('event_id', type=int, required=True)
-    resource_post_parser.add_argument('title_en', type=str, required=True)
+    resource_post_parser.add_argument('title_en', type=str, required=False)
     resource_post_parser.add_argument('title_fr', type=str, required=False)
     resource_post_parser.add_argument('url', type=str, required=True)
     resource_post_parser.add_argument('category', type=str, required=False)
@@ -904,7 +941,7 @@ class EventResourceLinkAPI(restful.Resource):
     resource_put_parser = reqparse.RequestParser()
     resource_put_parser.add_argument('id', type=int, required=True)
     resource_put_parser.add_argument('event_id', type=int, required=True)
-    resource_put_parser.add_argument('title_en', type=str, required=True)
+    resource_put_parser.add_argument('title_en', type=str, required=False)
     resource_put_parser.add_argument('title_fr', type=str, required=False)
     resource_put_parser.add_argument('url', type=str, required=True)
     resource_put_parser.add_argument('category', type=str, required=False)
@@ -918,7 +955,10 @@ class EventResourceLinkAPI(restful.Resource):
     @auth_optional
     def get(self):
         args = self.resource_get_parser.parse_args()
-        language = args['language'] or 'en'
+        event = event_repository.get_by_id(args['event_id'])
+        if not event:
+            return EVENT_NOT_FOUND
+        language = event.resolve_language(args['language'])
         links = db.session.query(EventResourceLink).filter_by(
             event_id=args['event_id']
         ).order_by(EventResourceLink.sort_order).all()
@@ -944,11 +984,17 @@ class EventResourceLinkAPI(restful.Resource):
         current_user = user_repository.get_by_id(user_id)
         if not current_user.is_event_admin(args['event_id']):
             return FORBIDDEN
+        event = event_repository.get_by_id(args['event_id'])
+        if not event:
+            return EVENT_NOT_FOUND
+        titles = _resource_link_titles(event, args)
+        if titles is None:
+            return EVENT_RESOURCE_LINK_TITLE_REQUIRED
         link = EventResourceLink(
             event_id=args['event_id'],
-            title_en=args['title_en'],
+            title_en=titles['en'],
             url=args['url'],
-            title_fr=args['title_fr'],
+            title_fr=titles['fr'],
             category=args['category'],
             icon=args['icon'],
             sort_order=args['sort_order'] or 0
@@ -958,7 +1004,7 @@ class EventResourceLinkAPI(restful.Resource):
         return {
             'id': link.id,
             'event_id': link.event_id,
-            'title': link.title_en,
+            'title': link.get_title(link.event.primary_language),
             'title_en': link.title_en,
             'title_fr': link.title_fr,
             'url': link.url,
@@ -979,8 +1025,11 @@ class EventResourceLinkAPI(restful.Resource):
         ).first()
         if not link:
             return EVENT_RESOURCE_LINK_NOT_FOUND
-        link.title_en = args['title_en']
-        link.title_fr = args['title_fr']
+        titles = _resource_link_titles(link.event, args)
+        if titles is None:
+            return EVENT_RESOURCE_LINK_TITLE_REQUIRED
+        link.title_en = titles['en']
+        link.title_fr = titles['fr']
         link.url = args['url']
         link.category = args['category']
         link.icon = args['icon']
@@ -989,7 +1038,7 @@ class EventResourceLinkAPI(restful.Resource):
         return {
             'id': link.id,
             'event_id': link.event_id,
-            'title': link.title_en,
+            'title': link.get_title(link.event.primary_language),
             'title_en': link.title_en,
             'title_fr': link.title_fr,
             'url': link.url,

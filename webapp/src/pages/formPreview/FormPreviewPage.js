@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import FormRenderer from '../formRenderer/FormRenderer';
 import { formServices } from '../../services/form';
 import './FormPreviewPage.css';
+import { resolveContentLanguage } from '../../utils/eventLanguages';
 
 /**
  * FormPreviewPage - Preview a form without saving responses to database
@@ -247,7 +248,7 @@ const FormPreviewPage = (props) => {
           <FormRenderer
             form={form}
             response={mockResponse}
-            language={i18n.language}
+            language={resolveContentLanguage(props.event, i18n.language)}
             onSubmit={handleMockSubmit}
             onSave={handleMockSave}
             onCancel={handleCancel}

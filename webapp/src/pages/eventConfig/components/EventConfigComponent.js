@@ -7,6 +7,7 @@ import FormTextBox from "../../../components/form/FormTextBox";
 import FormTextArea from "../../../components/form/FormTextArea";
 import FormDate from "../../../components/form/FormDate";
 import FormSelect from "../../../components/form/FormSelect";
+import { getEventLanguages } from "../../../utils/eventLanguages";
 
 const APPLICATION_DATES = ["application_open", "application_close"];
 const REVIEW_DATES = ["review_open", "review_close"];
@@ -66,15 +67,15 @@ class EventConfigComponent extends Component {
       contact_email: "",
       image: "",
       timezone: "UTC",
-      checkin_mode: "per_event"
+      checkin_mode: "per_event",
+      languages: this.props.organisation.languages.map(l => l.code)
     }
 
     this.state = {
       updatedEvent: this.emptyEvent,
       isNewEvent: this.props.event && this.props.event.id ? false : true,
-      isMultiLingual: this.props.organisation.languages.length > 1,
       allFieldsComplete: false,
-      optionalFields: ["miniconf_url", "contact_email", "image", "timezone", "checkin_mode"],
+      optionalFields: ["miniconf_url", "contact_email", "image", "timezone", "checkin_mode", "languages"],
       requiredDateFields: [],
       isValid: false,
       loading: false,
@@ -204,15 +205,129 @@ class EventConfigComponent extends Component {
     return input + " in " + lang;
   }
 
+  getLanguages = () => getEventLanguages(this.state.updatedEvent, this.props.organisation);
+
+  isMultiLingual = () => this.getLanguages().length > 1;
+
+  toggleLanguage = (code) => {
+    const current = this.state.updatedEvent.languages || [];
+    let languages;
+    if (current.includes(code)) {
+      languages = current.filter(c => c !== code);
+    } else {
+      // Keep the primary language first and the rest in the organisation's order.
+      const selected = new Set([...current, code]);
+      const others = this.props.organisation.languages.map(l => l.code)
+        .filter(c => selected.has(c) && c !== current[0]);
+      languages = current.length ? [current[0], ...others] : others;
+    }
+    this.setEventLanguages(languages);
+  };
+
+  setPrimaryLanguage = (id, dropdown) => {
+    const current = this.state.updatedEvent.languages || [];
+    this.setEventLanguages([dropdown.value, ...current.filter(c => c !== dropdown.value)]);
+  };
+
+  setEventLanguages = (languages) => {
+    const keep = (map) => Object.fromEntries(
+      Object.entries(map || {}).filter(([code]) => languages.includes(code)));
+    this.updateEventState({
+      ...this.state.updatedEvent,
+      languages,
+      name: keep(this.state.updatedEvent.name),
+      description: keep(this.state.updatedEvent.description)
+    });
+  };
+
+  renderLanguages = () => {
+    const t = this.props.t;
+    const orgLanguages = this.props.organisation.languages;
+    const selected = this.state.updatedEvent.languages || [];
+    const eventLanguages = this.getLanguages();
+
+    if (!this.state.isNewEvent) {
+      return (
+        <div className="space-y-2">
+          <span className="block text-sm font-semibold text-foreground/90">{t("Event Languages")}</span>
+          <div className="flex flex-wrap gap-2">
+            {eventLanguages.map((lang, index) => (
+              <span
+                key={lang.code}
+                className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-border px-3 py-1 text-sm text-foreground">
+                {t(lang.description)}
+                {index === 0 && eventLanguages.length > 1 && (
+                  <span className="text-xs text-muted-foreground">({t("primary")})</span>
+                )}
+              </span>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {t("Event languages are set when the event is created and cannot be changed.")}
+          </p>
+        </div>
+      );
+    }
+
+    if (orgLanguages.length < 2) {
+      return null;
+    }
+
+    return (
+      <fieldset className="space-y-3">
+        <legend className="block text-sm font-semibold text-foreground/90 mb-1">
+          <span className="text-error mr-1">*</span>
+          {t("Event Languages")}
+        </legend>
+        <p className="text-xs text-muted-foreground">
+          {t("All of the event's content (forms, emails, programme and announcements) must be provided in every selected language. Participants whose site language is not selected will see the event in its primary language. Languages cannot be changed after the event is created.")}
+        </p>
+        <div className="flex flex-wrap gap-3">
+          {orgLanguages.map(lang => (
+            <label
+              key={lang.code}
+              className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm text-foreground cursor-pointer hover:bg-slate-50">
+              <input
+                type="checkbox"
+                className="h-4 w-4"
+                checked={selected.includes(lang.code)}
+                onChange={() => this.toggleLanguage(lang.code)}
+              />
+              {t(lang.description)}
+            </label>
+          ))}
+        </div>
+        {selected.length > 1 && (
+          <div className="space-y-2 max-w-xs">
+            <label className="block text-sm font-semibold text-foreground/90" htmlFor="primary_language">
+              {t("Primary Language")}
+            </label>
+            <FormSelect
+              id="primary_language"
+              name="primary_language"
+              value={selected[0]}
+              onChange={this.setPrimaryLanguage}
+              options={eventLanguages.map(l => ({ value: l.code, label: t(l.description) }))}
+            />
+          </div>
+        )}
+      </fieldset>
+    );
+  };
+
   validateEventDetails = () => {
     let errors = [];
-    this.props.organisation.languages.forEach(lang => {
+    const isMultiLingual = this.isMultiLingual();
+    if (!this.state.updatedEvent.languages || this.state.updatedEvent.languages.length === 0) {
+      errors.push(this.props.t("Select at least one event language"));
+    }
+    this.getLanguages().forEach(lang => {
       if (!this.state.updatedEvent.name || !this.state.updatedEvent.name[lang.code] || this.state.updatedEvent.name[lang.code].trim().length === 0) {
-        const error_text = (this.state.isMultiLingual ? this.getFieldNameWithLanguage("Event name", lang.description) : "Event name") + " is required"
+        const error_text = (isMultiLingual ? this.getFieldNameWithLanguage("Event name", lang.description) : "Event name") + " is required"
         errors.push(this.props.t(error_text));
       }
       if (!this.state.updatedEvent.description || !this.state.updatedEvent.description[lang.code] || this.state.updatedEvent.description[lang.code].trim().length === 0) {
-        const error_text = (this.state.isMultiLingual ? this.getFieldNameWithLanguage("Event description", lang.description) : "Event description") + " is required"
+        const error_text = (isMultiLingual ? this.getFieldNameWithLanguage("Event description", lang.description) : "Event description") + " is required"
         errors.push(this.props.t(error_text));
       }
     });
@@ -405,7 +520,6 @@ class EventConfigComponent extends Component {
       errors,
       updatedEvent,
       allFieldsComplete,
-      isMultiLingual,
       showErrors,
       isNewEvent
     } = this.state;
@@ -427,6 +541,8 @@ class EventConfigComponent extends Component {
     }
 
     const t = this.props.t;
+    const languages = this.getLanguages();
+    const isMultiLingual = languages.length > 1;
 
     return (
       <div className="w-full max-w-5xl mx-auto pt-6 text-left">
@@ -451,7 +567,9 @@ class EventConfigComponent extends Component {
               />
             </div>
 
-            {this.props.organisation.languages.map((lang) => (
+            {this.renderLanguages()}
+
+            {languages.map((lang) => (
               <div className="space-y-2" key={"name_div"+lang.code}>
                 <label
                   className="block text-sm font-semibold text-foreground/90" 
@@ -534,7 +652,7 @@ class EventConfigComponent extends Component {
               />
             </div>
 
-            {this.props.organisation.languages.map((lang) => (
+            {languages.map((lang) => (
               <div className="space-y-2" key={"description_div"+lang.code}>
                 <label
                   className="block text-sm font-semibold text-foreground/90"

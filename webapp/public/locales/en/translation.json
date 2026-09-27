@@ -1551,5 +1551,16 @@
     "would use variant": "would use variant",
     "No dedicated service account is configured in this environment - access checks are using whatever local Google credentials happen to be available, which usually can't see your documents. This is expected in local development; it will use a real service account once deployed.": "No dedicated service account is configured in this environment - access checks are using whatever local Google credentials happen to be available, which usually can't see your documents. This is expected in local development; it will use a real service account once deployed.",
     "Set link sharing to \"Anyone with the link → Viewer\", then check again.": "Set link sharing to \"Anyone with the link → Viewer\", then check again.",
-    "Untick \"Viewers can't copy\" in Share → Settings.": "Untick \"Viewers can't copy\" in Share → Settings."
+    "Untick \"Viewers can't copy\" in Share → Settings.": "Untick \"Viewers can't copy\" in Share → Settings.",
+    "Event Languages": "Event Languages",
+    "primary": "primary",
+    "Primary Language": "Primary Language",
+    "Event languages are set when the event is created and cannot be changed.": "Event languages are set when the event is created and cannot be changed.",
+    "All of the event's content (forms, emails, programme and announcements) must be provided in every selected language. Participants whose site language is not selected will see the event in its primary language. Languages cannot be changed after the event is created.": "All of the event's content (forms, emails, programme and announcements) must be provided in every selected language. Participants whose site language is not selected will see the event in its primary language. Languages cannot be changed after the event is created.",
+    "Select at least one event language": "Select at least one event language",
+    "Title (French) is required": "Title (French) is required",
+    "This event is only available in {{language}}.": "This event is only available in {{language}}.",
+    "This event is only available in {{languages}}. Its content is shown in {{language}}.": "This event is only available in {{languages}}. Its content is shown in {{language}}.",
+    "Switch site to {{language}}": "Switch site to {{language}}",
+    "Only available in {{languages}}": "Only available in {{languages}}"
 }

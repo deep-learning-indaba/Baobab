@@ -7,6 +7,7 @@ import { ConfirmModal } from '../../components/Modal';
 import Loading from '../../components/Loading';
 import TranslatableFieldGroup from '../formEditor/components/TranslatableFieldGroup';
 import RuleConditionBuilder from './components/RuleConditionBuilder';
+import { getEventLanguages } from '../../utils/eventLanguages';
 
 /**
  * Event-scoped rule builder for derived placeholders (design section 5.7 /
@@ -51,10 +52,10 @@ const DerivedPlaceholdersAdmin = (props) => {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [autoTranslateEnabled, setAutoTranslateEnabled] = useState(true);
 
-  const orgLanguages = (props.organisation && props.organisation.languages) || [];
-  const languages = orgLanguages.length
-    ? [...orgLanguages].sort((a, b) => (a.code === 'en' ? -1 : b.code === 'en' ? 1 : 0))
-    : [{ code: 'en', description: 'English' }];
+  // TranslatableFieldGroup treats languages[0] as the source language for
+  // auto-translate, so the event's primary language leads.
+  const eventLanguages = getEventLanguages(props.event, props.organisation);
+  const languages = eventLanguages.length ? eventLanguages : [{ code: 'en', description: 'English' }];
 
   const load = useCallback(() => {
     if (!event) return;

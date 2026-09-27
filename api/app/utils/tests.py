@@ -31,7 +31,8 @@ class EmailerTest(ApiTestCase):
 
         self.event = self.add_event(
             name={'en': 'English Event Name', 'fr': 'Nom de lévénement en français'},
-            description={'en': 'English Description', 'fr': 'Description en français'}
+            description={'en': 'English Description', 'fr': 'Description en français'},
+            languages=['en', 'fr']
         )
         self.add_email_template('template1', 'English template no event {param}', subject='English subject no event')
         self.add_email_template('template1', 'Modèle français sans événement {param}', subject='Sujet français sans événement', language='fr')

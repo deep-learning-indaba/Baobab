@@ -28,6 +28,7 @@ import history from "./History";
 import { isEventAdmin, isRegistrationAdmin, isRegistrationVolunteer, isEventReviewer } from "./utils/user";
 import { withTranslation } from 'react-i18next';
 import { userService } from "./services/user";
+import { changeSiteLanguage } from "./utils/siteLanguage";
 import { registerPushSubscription } from "./utils/push";
 
 
@@ -65,22 +66,7 @@ class LanguageSelectorComponent extends Component {
 
   changeLanguage = (lang) => {
     this.setState({ isOpen: false });
-    if (this.props.i18n) {
-      this.props.i18n.changeLanguage(lang).then(() => {
-        const currentUser = JSON.parse(localStorage.getItem("user"))
-        if (currentUser) {
-          userService.get().then(result => {
-            userService.update({
-              email: result.email,
-              firstName: result.firstname,
-              lastName: result.lastname,
-              title: result.user_title
-            });
-          });
-        }
-        window.location.reload(true);
-      });
-    }
+    changeSiteLanguage(lang);
   }
 
   render() {
