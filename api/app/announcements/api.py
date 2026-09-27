@@ -20,6 +20,7 @@ from app.tags.repository import TagRepository as tag_repository
 from app.users.models import AppUser
 from app.users.repository import UserRepository as user_repository
 from app.events.repository import EventRepository as event_repository
+from app.utils.language import user_language_for_event
 
 
 #: Identifies announcement messages in the outbox.
@@ -29,13 +30,6 @@ OUTBOX_SOURCE_TYPE = 'announcement'
 def _is_comms_officer(user_id, event_id):
     user = user_repository.get_by_id(user_id)
     return user and user.is_comms_officer(event_id)
-
-
-def _primary_language(event):
-    """The organisation's first configured language, used as the mandatory
-    translation when none is specified — organisations aren't all English-first."""
-    languages = event.organisation.languages if event and event.organisation else None
-    return languages[0]['code'] if languages else 'en'
 
 
 def _translations_for(ann):
@@ -149,7 +143,6 @@ def _enqueue(ann, event, critical, target_audience='checked_in', tag_id=None):
     # Resolved now, while the organisation is in scope, because the worker that
     # sends these has no organisation to fall back on.
     sender_name, sender_email = resolve_sender(organisation.name, organisation.email_from)
-    default_language = _primary_language(event)
     translations = _translations_for(ann)
     push_url = '/{}/event-app/announcements/{}'.format(event.key, ann.id)
     now = datetime.utcnow()
@@ -187,7 +180,7 @@ def _enqueue(ann, event, critical, target_audience='checked_in', tag_id=None):
                 'channel': 'inbox',
             })
 
-        content = render((user.user_primaryLanguage or default_language)[:2])
+        content = render(user_language_for_event(user, event))
 
         common = {
             'organisation_id': organisation.id,
@@ -277,7 +270,7 @@ class AnnouncementListAPI(restful.Resource):
             return errors.EVENT_NOT_FOUND
 
         translations_in = body.get('translations') or []
-        primary_language = _primary_language(event)
+        primary_language = event.primary_language
         primary_trans = next((t for t in translations_in if t.get('language') == primary_language), None)
         if not primary_trans or not primary_trans.get('title'):
             return errors.MISSING_FIELDS

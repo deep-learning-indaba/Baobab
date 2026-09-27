@@ -14,6 +14,7 @@ from app import db, LOGGER
 from app.utils import errors
 from app.utils.auth import auth_required, event_admin_required
 from app.utils.emailer import email_user
+from app.utils.language import user_language_for_event, translation_for
 from app.utils import misc
 from app.outcome.models import Outcome, Status
 from app.outcome.repository import OutcomeRepository as outcome_repository
@@ -75,7 +76,7 @@ class OfferAPI(OfferMixin, restful.Resource):
         translation = offer_tag.tag.get_translation(language)
         if translation is None:
             LOGGER.warn('Could not find {} translation for tag id {}'.format(language, offer_tag.tag.id))
-            translation = offer_tag.tag.get_translation('en')
+            translation = translation_for(offer_tag.tag, 'en')
         return {
             'id': offer_tag.tag.id,
             'event_id': offer_tag.tag.event_id,
@@ -238,7 +239,7 @@ class OfferAPI(OfferMixin, restful.Resource):
 
         db.session.commit()
         
-        language = user.user_primaryLanguage
+        language = user_language_for_event(user, event)
 
         grant_offer_tags = [ot for ot in offer_entity.offer_tags if ot.tag.tag_type == TagType.GRANT]
         note_offer_tags = [ot for ot in offer_entity.offer_tags if ot.tag.tag_type == TagType.OFFER_NOTE]

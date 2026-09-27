@@ -16,6 +16,7 @@ from app.utils.errors import APPLICATION_FORM_EXISTS, QUESTION_NOT_FOUND, SECTIO
 
 from app import db, bcrypt
 from app import LOGGER
+from app.utils.language import translation_for
 
 from typing import Sequence
 
@@ -408,7 +409,7 @@ def _serialize_question(question, language):
     translation = question.get_translation(language)
     if not translation:
         LOGGER.warn('Could not find {} translation for question id {}'.format(language, question.id))
-        translation = question.get_translation('en')
+        translation = translation_for(question, 'en')
     return dict(
         question_id=question.id,
         headline=translation.headline,

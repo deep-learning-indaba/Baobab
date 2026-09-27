@@ -3,6 +3,7 @@ from app.profiles.models import MemberProfile, MemberProfileLink, MemberProfileI
 from app.tags.models import Tag, TagTranslation
 from app.users.models import UserConsent
 from app.attendance.repository import AttendanceRepository
+from app.utils.language import translation_for
 
 
 class ProfileRepository:
@@ -38,18 +39,15 @@ class ProfileRepository:
 
     @staticmethod
     def get_interests_for_user(user_id):
-        rows = (db.session.query(MemberProfileInterest, Tag, TagTranslation)
+        rows = (db.session.query(MemberProfileInterest, Tag)
                 .join(Tag, Tag.id == MemberProfileInterest.tag_id)
-                .outerjoin(
-                    TagTranslation,
-                    (TagTranslation.tag_id == Tag.id) & (TagTranslation.language == 'en')
-                )
                 .filter(MemberProfileInterest.user_id == user_id)
                 .all())
-        return [
-            {'id': tag.id, 'name': tr.name if tr else str(tag.id)}
-            for _, tag, tr in rows
-        ]
+        interests = []
+        for _, tag in rows:
+            tr = translation_for(tag, tag.event.primary_language if tag.event else 'en')
+            interests.append({'id': tag.id, 'name': tr.name if tr else str(tag.id)})
+        return interests
 
     @staticmethod
     def list_community(event_id):

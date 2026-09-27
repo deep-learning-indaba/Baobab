@@ -1550,5 +1550,16 @@
     "would use variant": "utiliserait la variante",
     "No dedicated service account is configured in this environment - access checks are using whatever local Google credentials happen to be available, which usually can't see your documents. This is expected in local development; it will use a real service account once deployed.": "Aucun compte de service dédié n'est configuré dans cet environnement - les vérifications d'accès utilisent les identifiants Google locaux disponibles, qui ne peuvent généralement pas voir vos documents. C'est normal en développement local ; un vrai compte de service sera utilisé une fois déployé.",
     "Set link sharing to \"Anyone with the link → Viewer\", then check again.": "Réglez le partage du lien sur « Toute personne disposant du lien → Lecteur », puis vérifiez à nouveau.",
-    "Untick \"Viewers can't copy\" in Share → Settings.": "Décochez « Les lecteurs ne peuvent pas copier » dans Partager → Paramètres."
+    "Untick \"Viewers can't copy\" in Share → Settings.": "Décochez « Les lecteurs ne peuvent pas copier » dans Partager → Paramètres.",
+    "Event Languages": "Langues de l'événement",
+    "primary": "principale",
+    "Primary Language": "Langue principale",
+    "Event languages are set when the event is created and cannot be changed.": "Les langues de l'événement sont définies lors de sa création et ne peuvent pas être modifiées.",
+    "All of the event's content (forms, emails, programme and announcements) must be provided in every selected language. Participants whose site language is not selected will see the event in its primary language. Languages cannot be changed after the event is created.": "Tout le contenu de l'événement (formulaires, e-mails, programme et annonces) doit être fourni dans chaque langue sélectionnée. Les participants dont la langue du site n'est pas sélectionnée verront l'événement dans sa langue principale. Les langues ne peuvent pas être modifiées après la création de l'événement.",
+    "Select at least one event language": "Sélectionnez au moins une langue pour l'événement",
+    "Title (French) is required": "Le titre (français) est requis",
+    "This event is only available in {{language}}.": "Cet événement n'est proposé que dans une seule langue : {{language}}.",
+    "This event is only available in {{languages}}. Its content is shown in {{language}}.": "Cet événement n'est proposé que dans les langues suivantes : {{languages}}. Son contenu est affiché dans sa langue principale : {{language}}.",
+    "Switch site to {{language}}": "Changer la langue du site : {{language}}",
+    "Only available in {{languages}}": "Langues disponibles : {{languages}}"
 }

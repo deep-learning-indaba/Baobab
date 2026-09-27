@@ -21,6 +21,7 @@ from app.utils.misc import get_baobab_host
 from app.utils.datetime_utils import event_local_date
 from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, ATTENDANCE_NOT_FOUND, EVENT_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, INDEMNITY_NOT_FOUND, INDEMNITY_NOT_SIGNED, NOT_A_GUEST, INVALID_QR, NOT_ON_GUEST_LIST, MISSING_FIELDS, BADGE_ALREADY_LINKED
 from app import LOGGER
+from app.utils.language import translation_for
 
 
 attendance_fields = {
@@ -82,13 +83,13 @@ class AttendanceUser():
         self.confirmed = confirmed
         self.tags = filter_checkin_tag_names(tags)
         self.offer_metadata = [
-            {'name': tag.tag.get_translation('en').name}
+            {'name': translation_for(tag.tag, 'en').name}
             for tag in tags
             if tag.tag.tag_type != TagType.CHECKIN
         ]
         if registration:
             self.registration_metadata = [
-                {'name': qt.tag.get_translation('en').name, 'response': answer.value}
+                {'name': translation_for(qt.tag, 'en').name, 'response': answer.value}
                 for answer in registration.answers
                 for qt in answer.registration_question.tags
             ]
@@ -403,7 +404,7 @@ class MyTicketAPI(restful.Resource):
             'qr_url': qr_url,
             'fullname': user.full_name,
             'role': role,
-            'event_name': event.get_name('en'),
+            'event_name': event.get_name(event.primary_language),
             'checked_in': latest_checkin is not None,
             'checked_in_at': latest_checkin.checked_in_at.isoformat() + 'Z' if latest_checkin else None,
             'has_indemnity_form': indemnity is not None,

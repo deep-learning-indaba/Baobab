@@ -15,6 +15,7 @@ from app import db, LOGGER
 from app.utils import errors
 from app.utils.auth import auth_required
 from app.events.repository import EventRepository
+from app.utils.language import translation_for
 
 
 def invitation_info(invitation_request):
@@ -142,9 +143,9 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
 
         # Look for travel and accommodation tags
         if is_guest_registration and invited_guest is not None:
-            tags = [t.tag.get_translation('en').name for t in invited_guest.invited_guest_tags]
+            tags = [translation_for(t.tag, 'en').name for t in invited_guest.invited_guest_tags]
         else:
-            tags = [t.tag.get_translation('en').name for t in offer.offer_tags if t.accepted]
+            tags = [translation_for(t.tag, 'en').name for t in offer.offer_tags if t.accepted]
 
         accommodation = 'Accommodation' in tags
         travel = 'Transport' in tags or 'Travel' in tags

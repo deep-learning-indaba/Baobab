@@ -8,6 +8,7 @@ import { Card, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { buttonVariants } from '../../components/ui/button';
 import { cn } from '../../utils/styling/styling';
+import { getEventLanguages, isEventInLanguage } from '../../utils/eventLanguages';
 
 /* ── Guest hero ─────────────────────────────────────────────── */
 function GuestHero({ organisation, t }) {
@@ -141,7 +142,7 @@ function FeaturedEventCard({ event, t }) {
     <Card className="overflow-hidden p-6 rounded-2xl shadow-sm border border-border">
       <div className="flex flex-col sm:flex-row justify-between items-start mb-2 gap-4">
         <div>
-          <CardTitle className="text-2xl font-bold text-foreground mb-1">
+          <CardTitle className="text-2xl font-bold text-foreground mb-1" lang={event.content_language}>
             {event.description}
           </CardTitle>
           <p className="text-sm text-muted-foreground">
@@ -190,7 +191,23 @@ function EventImagePlaceholder({ eventType }) {
 }
 
 /* ── Upcoming Event Card ────────────────────────────────── */
-function UpcomingEventCard({ event, t }) {
+function EventLanguageBadge({ event, organisation, uiLanguage, t }) {
+  if (!event.languages || isEventInLanguage(event, uiLanguage, organisation)) {
+    return null;
+  }
+  const languages = getEventLanguages(event, organisation);
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-action/10 text-action border border-action/20"
+      title={t('Only available in {{languages}}', { languages: languages.map((l) => t(l.description)).join(', ') })}
+    >
+      <i className="fas fa-globe" style={{ fontSize: 11 }} aria-hidden="true" />
+      {languages.map((l) => l.code.toUpperCase()).join(' / ')}
+    </span>
+  );
+}
+
+function UpcomingEventCard({ event, organisation, uiLanguage, t }) {
   const dateStr = event.start_date || null;
 
   const typeLabel = {
@@ -207,10 +224,13 @@ function UpcomingEventCard({ event, t }) {
         }
       </div>
       <div className="p-4 flex flex-col flex-1 min-w-0">
-        <span className="inline-flex items-center self-start px-2 py-0.5 rounded-md text-xs font-medium bg-surface-high text-foreground border border-border mb-2">
-          {typeLabel}
-        </span>
-        <h3 className="font-bold text-foreground leading-snug line-clamp-2 text-left">
+        <div className="flex flex-wrap items-center gap-2 mb-2">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-surface-high text-foreground border border-border">
+            {typeLabel}
+          </span>
+          <EventLanguageBadge event={event} organisation={organisation} uiLanguage={uiLanguage} t={t} />
+        </div>
+        <h3 className="font-bold text-foreground leading-snug line-clamp-2 text-left" lang={event.content_language}>
           <NavLink to={`/${event.key}`} className="text-foreground hover:text-primary transition-colors">
             {event.description}
           </NavLink>
@@ -401,7 +421,7 @@ class Home extends Component {
                 </div>
                 <div className="space-y-4">
                   {[...(upcomingEvents || []), ...(awards || []), ...(calls || []), ...(programmes || []), ...(journals || [])].map((e) => (
-                    <UpcomingEventCard key={e.key} event={e} t={t} />
+                    <UpcomingEventCard key={e.key} event={e} organisation={organisation} uiLanguage={i18n && i18n.language} t={t} />
                   ))}
                 </div>
               </section>

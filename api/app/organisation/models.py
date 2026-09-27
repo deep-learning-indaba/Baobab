@@ -39,6 +39,12 @@ class Organisation(db.Model):
         self.privacy_policy = privacy_policy
         self.languages = languages
 
+    @property
+    def language_codes(self):
+        """The organisation's language codes in order. Entries are usually
+        {code, description} objects, but some rows store bare code strings."""
+        return [l['code'] if isinstance(l, dict) else l for l in (self.languages or [])]
+
     def can_accept_payments(self) -> bool:
         return (
             self.iso_currency_code is not None and

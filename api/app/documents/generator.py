@@ -24,6 +24,7 @@ from app.documents.resolver import PlaceholderResolver, evaluate_form_requiremen
 from app.documents.variant_selection import select_variant, is_eligible, NoMatchingVariant
 from app.documents.eligibility import build_eligibility_context
 from app.documents.google_client import build_default_client, GoogleApiError
+from app.utils.language import translation_for
 
 #: Outbox messages produced by this module are grouped under this source
 #: type, e.g. source_id=generated_document.id - see app/outbox/models.py.
@@ -70,6 +71,7 @@ def generate_document(document_template, user, requested_by_user, event,
     for every expected failure mode short of a Google API error, which is
     recorded on the row and re-raised as GenerationError('GOOGLE_API_ERROR').
     """
+    language = event.resolve_language(language)
     generated_document = GeneratedDocument(
         event_id=event.id, document_template_id=document_template.id, user_id=user.id,
         requested_by_user_id=requested_by_user.id, status=GeneratedDocumentStatus.GENERATING,
@@ -102,6 +104,8 @@ def _process_row(generated_document, document_template, user, event, language,
     won't change before the next worker run, so retrying only delays
     reporting a real problem.
     """
+    language = event.resolve_language(language)
+    generated_document.language = language
     try:
         variant, pdf_bytes, filename, snapshot = _run_pipeline(
             generated_document, document_template, user, event, language,
@@ -267,7 +271,7 @@ def _build_delivery_message(document_template, generated_document, user, event, 
     organisation = event.organisation
     sender_name, sender_email = resolve_sender(organisation.name, organisation.email_from)
 
-    event_name = event.get_name(language) if event.has_specific_translation(language) else event.get_name('en')
+    event_name = event.get_name(language)
     parameters = {
         'title': user.user_title or '', 'firstname': user.firstname, 'lastname': user.lastname,
         'event_name': event_name, 'document_name': _template_name(document_template, language),
@@ -301,5 +305,5 @@ def _build_delivery_message(document_template, generated_document, user, event, 
 
 
 def _template_name(document_template, language):
-    translation = document_template.get_translation(language) or document_template.get_translation('en')
+    translation = document_template.get_translation(language) or translation_for(document_template, 'en')
     return translation.name if translation else document_template.key

@@ -42,6 +42,7 @@ class EventMixin(object):
     req_parser.add_argument('image', type=str, required=False)
     req_parser.add_argument('timezone', type=str, required=False)
     req_parser.add_argument('checkin_mode', type=str, required=False)
+    req_parser.add_argument('languages', type=str, action='append', required=False, location='json')
 
 
 class EventsMixin(object):

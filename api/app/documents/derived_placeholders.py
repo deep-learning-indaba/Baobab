@@ -12,6 +12,7 @@ module never resolves a whole document, only one derived key at a time.
 from app import db
 from app.documents.models import DerivedPlaceholder
 from app.documents.eligibility import build_eligibility_context, evaluate_expression
+from app.utils.language import translation_for
 
 #: Rule text may reference other derived placeholders; resolution stops
 #: rather than recursing forever once nesting goes this deep. Real templates
@@ -87,7 +88,7 @@ def resolve_value(key, derived_placeholders, user, event, language,
     if rule is None:
         return None, False
 
-    translation = rule.get_translation(language) or rule.get_translation('en')
+    translation = rule.get_translation(language) or translation_for(rule, 'en')
     text = translation.text if translation else ''
     rendered = render_text_fn(text, chain + (key,))
     return rendered, True
@@ -133,7 +134,7 @@ def find_cycle(event_id, changed_key=None, changed_rule_texts=None):
             continue
         refs = set()
         for rule in derived_placeholder.rules:
-            translation = rule.get_translation('en') or (rule.translations[0] if rule.translations else None)
+            translation = translation_for(rule, 'en') or (rule.translations[0] if rule.translations else None)
             if translation:
                 refs |= referenced_keys(translation.text)
         # Intersected with the known placeholder keys, not with keys minus
