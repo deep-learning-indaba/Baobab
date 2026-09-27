@@ -71,9 +71,9 @@ def _get_candidate_nominator(response):
         }
         candidate = '{nomination_title} {nomination_firstname} {nomination_lastname}'.format(**nomination_info)
         candidate_firstname = nomination_info['nomination_firstname']
-        nominator = '{} {} {}'.format(response.user.user_title, response.user.firstname, response.user.lastname)
+        nominator = response.user.formal_name
     else:
-        candidate = '{} {} {}'.format(response.user.user_title, response.user.firstname, response.user.lastname)
+        candidate = response.user.formal_name
         candidate_firstname = response.user.firstname
         nominator = None
     

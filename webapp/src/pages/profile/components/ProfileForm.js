@@ -7,11 +7,10 @@ import { ConfirmModal } from "../../../components/Modal";
 import validationFields from "../../../utils/validation/validationFields";
 import { getTitleOptions } from "../../../utils/validation/contentHelpers";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
-import { requiredText, requiredDropdown } from "../../../utils/validation/rules.js";
+import { requiredText } from "../../../utils/validation/rules.js";
 import { withTranslation } from 'react-i18next';
 
 const fieldValidations = [
-  ruleRunner(validationFields.title, requiredDropdown),
   ruleRunner(validationFields.firstName, requiredText),
   ruleRunner(validationFields.lastName, requiredText),
 ];
@@ -71,7 +70,7 @@ class ProfileForm extends Component {
     this.setState({
       user: {
         ...this.state.user,
-        [name]: dropdown.value
+        [name]: dropdown ? dropdown.value : null
       }
     },
       function () {
@@ -199,9 +198,11 @@ class ProfileForm extends Component {
             <FormSelect
               options={this.state.titleOptions}
               id={validationFields.title.name}
+              clearable={true}
+              placeholder={t("No title")}
               onChange={this.handleChangeDropdown}
               value={titleValue}
-              label={t(validationFields.title.display)} />
+              label={t("Title (optional)")} />
             <FormTextBox
               id={validationFields.firstName.name}
               type="text"

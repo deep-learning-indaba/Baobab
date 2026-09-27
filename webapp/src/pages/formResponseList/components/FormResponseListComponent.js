@@ -216,13 +216,14 @@ class FormResponseListComponent extends Component {
       this.props.history.goBack();
     } else {
       const eventKey = this.props.event ? this.props.event.key : null;
-      this.props.history.push(`/${eventKey}/formManagement`);
+      this.props.history.push(`/${eventKey}/formResponses`);
     }
   };
 
   render() {
     const { t } = this.props;
     const { responses, loading, error, pagination, filters, exporting, exportError, exportSheetUrl, stats } = this.state;
+    const deletedResponse = this.props.location && this.props.location.state && this.props.location.state.deletedResponse;
 
     if (loading && responses.length === 0) {
       return (
@@ -333,6 +334,16 @@ class FormResponseListComponent extends Component {
                   {stats.last_submitted_timestamp ? new Date(stats.last_submitted_timestamp).toLocaleDateString() : '–'}
                 </div>
               </div>
+            </div>
+          )}
+
+          {deletedResponse && (
+            <div className={`px-4 py-3 rounded-xl text-sm border ${deletedResponse.emailSent
+              ? 'bg-green-50 text-green-700 border-green-200'
+              : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+              {deletedResponse.emailSent
+                ? t("Response deleted. The respondent has been emailed to let them know.")
+                : t("Response deleted, but the email to the respondent could not be sent. Please let them know yourself.")}
             </div>
           )}
 

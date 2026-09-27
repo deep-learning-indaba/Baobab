@@ -43,7 +43,7 @@ def invitedGuest_info(invitedGuest, user):
         'event_id': invitedGuest.event_id,
         'user_id': invitedGuest.user_id,
         'role': invitedGuest.role,
-        'fullname': '{} {} {}'.format(user.user_title, user.firstname, user.lastname)
+        'fullname': user.formal_name
     }
 
 def _serialize_tag(tag, language):

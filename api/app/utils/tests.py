@@ -54,6 +54,26 @@ class EmailerTest(ApiTestCase):
             file_path='')
 
     @patch('app.utils.emailer.send_mail')
+    def test_salutation_with_title(self, send_mail_fn):
+        self.seed_static_data()
+        self.add_email_template('greeting', 'Dear {salutation},')
+
+        email_user('greeting', user=self.english_user)
+
+        self.assertEqual(send_mail_fn.call_args.kwargs['body_text'], 'Dear Mrs User Lastname,')
+
+    @patch('app.utils.emailer.send_mail')
+    def test_salutation_and_title_without_title(self, send_mail_fn):
+        self.seed_static_data()
+        self.english_user.user_title = None
+        db.session.commit()
+        self.add_email_template('greeting', 'Dear {salutation}, [{title}]')
+
+        email_user('greeting', user=self.english_user)
+
+        self.assertEqual(send_mail_fn.call_args.kwargs['body_text'], 'Dear User Lastname, []')
+
+    @patch('app.utils.emailer.send_mail')
     def test_email_no_event_french(self, send_mail_fn):
         """Check email to an French user with no event."""
         self.seed_static_data()

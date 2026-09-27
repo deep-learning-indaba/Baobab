@@ -8,6 +8,7 @@ import { ConfirmModal } from '../../components/Modal';
 import TagSelectorDialog from '../../components/TagSelectorDialog';
 import FormTextBox from '../../components/form/FormTextBox';
 import moment from 'moment';
+import { formatUserName } from "../../utils/userName";
 
 const OUTCOME_OPTIONS = {
   JOURNAL: [
@@ -308,7 +309,7 @@ class ApplicationFormResponsePage extends Component {
           {reviewers.map((r, i) => (
             <div key={r.reviewer_user_id} className="flex items-center justify-between text-sm">
               <div>
-                <span className="font-medium">{r.user_title} {r.firstname} {r.lastname}</span>
+                <span className="font-medium">{formatUserName(r.user_title, r.firstname, r.lastname)}</span>
                 <span className={`ml-2 text-xs font-semibold ${r.is_submitted ? 'text-green-600' : 'text-muted-foreground'}`}>
                   {r.is_submitted ? t('Completed') : t('Not Started')}
                 </span>

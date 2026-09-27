@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { NavLink } from 'react-router-dom';
 import { withTranslation } from 'react-i18next';
-import { isEventAdmin, isRegistrationAdmin, isRegistrationVolunteer, isEventReviewer, isProgrammeEditor, isCommsOfficer } from '../utils/user';
+import { isEventAdmin, isRegistrationAdmin, isRegistrationVolunteer, isEventReviewer, isProgrammeEditor, isCommsOfficer, isFormResponseViewer } from '../utils/user';
 
 class EventNav extends Component {
   render() {
@@ -99,8 +99,15 @@ class EventNav extends Component {
             <SidebarLink to={`/${this.props.eventKey}/invoices-admin`} label={t('Invoices')} />
             <SidebarLink to={`/${this.props.eventKey}/eventRoleAdmin`} label={t('Event Roles')} />
             <SidebarLink to={`/${this.props.eventKey}/formConfig`} label={t('Form Configuration')} />
+            <SidebarLink to={`/${this.props.eventKey}/formResponses`} label={t('Form Responses')} />
             <SidebarLink to={`/${this.props.eventKey}/resourceLinks`} label={t('Resource Links')} />
             <SidebarLink to={`/${this.props.eventKey}/documentsAdmin`} label={t('Documents')} />
+          </SidebarSection>
+        )}
+
+        {!isEventAdmin(this.props.user, this.props.event) && isFormResponseViewer(this.props.user, this.props.event) && this.props.event && (
+          <SidebarSection title={t('Forms')}>
+            <SidebarLink to={`/${this.props.eventKey}/formResponses`} label={t('Form Responses')} />
           </SidebarSection>
         )}
 

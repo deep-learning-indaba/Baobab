@@ -39,6 +39,8 @@ import FormResponseList from "../formResponseList";
 import FormResponseDetail from "../formResponseDetail";
 import ApplicationFormResponsePage from "../applicationFormResponse";
 import FormConfigPage from "../formConfig";
+import FormResponsesPage from "../formResponses";
+import { isEventAdmin } from "../../utils/user";
 import { withTranslation, useTranslation } from 'react-i18next';
 import { useInstall } from '../../context/InstallContext';
 import { isPushSupported, getNotificationPermission, registerPushSubscription } from '../../utils/push';
@@ -741,6 +743,11 @@ class EventHome extends Component {
         />
         <Route
           exact
+          path={`${match.path}/formResponses`}
+          render={(props) => <FormResponsesPage {...props} event={event} user={this.props.user} eventKey={this.state.eventKey}/>}
+        />
+        <Route
+          exact
           path={`${match.path}/formConfig`}
           render={(props) => <FormConfigPage {...props} event={event} user={this.props.user} eventKey={this.state.eventKey}/>}
         />
@@ -799,7 +806,9 @@ class EventHome extends Component {
           path={`${match.path}/form-responses/:formId/:responseId`}
           render={(props) => {
             const formId = parseInt(props.match.params.formId, 10);
-            if (event && event.application_form_id === formId) {
+            // Viewers get the plain read-only detail: the application page
+            // carries admin actions (status, outcome, tags, reviewers).
+            if (event && event.application_form_id === formId && isEventAdmin(this.props.user, event)) {
               return (
                 <ApplicationFormResponsePage
                   {...props}

@@ -1561,5 +1561,22 @@
     "This event is only available in {{language}}.": "Cet événement n'est proposé que dans une seule langue : {{language}}.",
     "This event is only available in {{languages}}. Its content is shown in {{language}}.": "Cet événement n'est proposé que dans les langues suivantes : {{languages}}. Son contenu est affiché dans sa langue principale : {{language}}.",
     "Switch site to {{language}}": "Changer la langue du site : {{language}}",
-    "Only available in {{languages}}": "Langues disponibles : {{languages}}"
+    "Only available in {{languages}}": "Langues disponibles : {{languages}}",
+    "Form Response Viewer": "Lecteur des réponses aux formulaires",
+    "Forms": "Formulaires",
+    "View and export the responses to each of this event's forms.": "Consultez et exportez les réponses à chacun des formulaires de cet événement.",
+    "This event has no forms yet.": "Cet événement n'a pas encore de formulaire.",
+    "Survey": "Sondage",
+    "Stage {{stage}}": "Étape {{stage}}",
+    "Other Form": "Autre formulaire",
+    "{{submitted}} submitted of {{total}} responses": "{{submitted}} soumises sur {{total}} réponses",
+    "View Responses": "Voir les réponses",
+    "Deleting…": "Suppression…",
+    "Delete Response": "Supprimer la réponse",
+    "Delete this response?": "Supprimer cette réponse ?",
+    "This permanently deletes the response and its answers, along with any reviews of it. This cannot be undone. The respondent will be emailed to let them know.": "Cette action supprime définitivement la réponse et ses réponses aux questions, ainsi que toutes ses évaluations. Elle est irréversible. La personne concernée en sera informée par e-mail.",
+    "Response deleted. The respondent has been emailed to let them know.": "Réponse supprimée. La personne concernée en a été informée par e-mail.",
+    "Response deleted, but the email to the respondent could not be sent. Please let them know yourself.": "Réponse supprimée, mais l'e-mail n'a pas pu être envoyé à la personne concernée. Veuillez l'en informer vous-même.",
+    "Title (optional)": "Titre (facultatif)",
+    "No title": "Aucun titre"
 }

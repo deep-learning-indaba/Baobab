@@ -19,9 +19,10 @@ from app.forms.visibility import VisibilityEvaluator
 from app.forms.mixins import (
     uses_new_form, get_form_by_type,
     apply_form_type_defaults, validate_form_type_constraints,
-    form_admin_required, verify_form_event, is_admin_of_form
+    form_admin_required, verify_form_event, is_admin_of_form,
+    can_view_form_responses
 )
-from app.utils.auth import auth_required, event_admin_required
+from app.utils.auth import auth_required, event_admin_required, form_response_viewer_required
 from app.utils import errors
 from app import db, LOGGER
 from app.users.models import AppUser
@@ -34,7 +35,7 @@ from app.registration.models import RegistrationForm
 from app.reviews.models import ReviewForm, ReviewerTag
 from app.events.models import EventRole
 from app.tags.repository import TagRepository as tag_repository
-from app.utils.language import translation_for
+from app.utils.language import translation_for, user_language_for_event
 
 
 def serialize_form(form, language='en', include_inactive=False):
@@ -538,7 +539,9 @@ class FormStructureAPI(restful.Resource):
             if not form:
                 return errors.FORM_NOT_FOUND
 
-            is_admin = is_admin_of_form(form)
+            # Form-viewers read the structure to render the responses they
+            # review, so they see it as admins do, inactive questions included.
+            is_admin = is_admin_of_form(form) or can_view_form_responses(form)
             if not is_admin:
                 if not form.is_active:
                     return errors.FORM_NOT_FOUND
@@ -1310,7 +1313,7 @@ def _filtered_admin_response_query(form_id, args):
 class FormResponseListAdminAPI(restful.Resource):
     """Admin endpoint to list all responses for a form with pagination"""
 
-    @event_admin_required
+    @form_response_viewer_required
     def get(self, form_id, event_id):
         """Get paginated list of all responses for a form (admin only)"""
         try:
@@ -1445,7 +1448,7 @@ class FormResponseStatsAPI(restful.Resource):
     completion time. Unfiltered - unlike the list/export endpoints, this
     reflects the whole form, not the admin's current search/page."""
 
-    @event_admin_required
+    @form_response_viewer_required
     def get(self, form_id, event_id):
         try:
             form = db.session.query(Form).filter_by(id=form_id).first()
@@ -1509,7 +1512,7 @@ class FormResponseExportAPI(restful.Resource):
     """Export every question and answer across a form's responses, as CSV or
     a shared Google Sheet. Honours the same filters as FormResponseListAdminAPI."""
 
-    @event_admin_required
+    @form_response_viewer_required
     def get(self, form_id, event_id):
         try:
             form = db.session.query(Form).filter_by(id=form_id).first()
@@ -1596,7 +1599,7 @@ class FormResponseExportAPI(restful.Resource):
 class FormResponseDetailAdminAPI(restful.Resource):
     """Admin endpoint to retrieve full details of a single response"""
     
-    @event_admin_required
+    @form_response_viewer_required
     def get(self, form_id, response_id, event_id):
         """Get detailed response including answers and linked response (admin only)"""
         try:
@@ -1652,6 +1655,65 @@ class FormResponseDetailAdminAPI(restful.Resource):
             LOGGER.error(f"Error getting response detail {response_id}: {str(e)}")
             LOGGER.error(traceback.format_exc())
             return errors.DB_NOT_AVAILABLE
+
+    @event_admin_required
+    def delete(self, form_id, response_id, event_id):
+        """Permanently delete a response and email its respondent."""
+        try:
+            response = _get_response_for_event(response_id, form_id, event_id)
+            if not response:
+                return _error('Response not found', 404)
+
+            form = response.form
+            # Reviews are created and removed through reviewer assignment, and
+            # their respondent is a reviewer, not an applicant.
+            if form.form_type == 'review':
+                return _error('Review responses cannot be deleted here', 400)
+
+            user = response.user
+            event = form.event
+            form_name = _form_name(form, user_language_for_event(user, event))
+
+            # Reviews of this response are meaningless without it. Responses to
+            # other forms that merely link to it (e.g. for prepopulation) belong
+            # to someone's separate submission, so they only lose the link.
+            linked_responses = db.session.query(FormResponse).filter_by(
+                linked_response_id=response.id
+            ).all()
+            for linked in linked_responses:
+                if linked.form.form_type == 'review':
+                    db.session.delete(linked)
+                else:
+                    linked.linked_response_id = None
+            db.session.query(FormResponse).filter_by(
+                parent_response_id=response.id
+            ).update({FormResponse.parent_response_id: None}, synchronize_session=False)
+
+            db.session.delete(response)
+            db.session.commit()
+
+        except Exception as e:
+            LOGGER.error(f"Error deleting response {response_id}: {str(e)}")
+            LOGGER.error(traceback.format_exc())
+            db.session.rollback()
+            return errors.DB_NOT_AVAILABLE
+
+        # The response is already gone, so a failed email must not turn into
+        # an error response - report it so the admin can follow up by hand.
+        email_sent = True
+        try:
+            email_user(
+                'form-response-deleted',
+                template_parameters=dict(form_name=form_name, event_email=event.email_from),
+                subject_parameters=dict(form_name=form_name),
+                event=event,
+                user=user
+            )
+        except Exception as e:
+            LOGGER.error(f"Failed to send response deletion email to user {user.id}: {str(e)}")
+            email_sent = False
+
+        return {'email_sent': email_sent}, 200
 
 
 class EventFormConfigAPI(restful.Resource):
@@ -1803,6 +1865,68 @@ class EventFormConfigAPI(restful.Resource):
 
         except Exception as e:
             LOGGER.error(f"Error getting form config for event {event_id}: {str(e)}")
+            LOGGER.error(traceback.format_exc())
+            return errors.DB_NOT_AVAILABLE
+
+
+class EventFormResponsesSummaryAPI(restful.Resource):
+    """Every form in an event with its response counts, for the read-only
+    responses page. Carries no form definitions or settings, so it is safe to
+    expose to form-viewers as well as admins."""
+
+    @form_response_viewer_required
+    def get(self, event_id):
+        try:
+            event = event_repository.get_by_id(event_id)
+            language = event.resolve_language(request.args.get('language')) if event else 'en'
+
+            forms = db.session.query(Form).filter(Form.event_id == event_id).all()
+            form_ids = [form.id for form in forms]
+
+            counts = {}
+            if form_ids:
+                rows = db.session.query(
+                    FormResponse.form_id, FormResponse.is_submitted, FormResponse.is_withdrawn,
+                    db.func.count(FormResponse.id)
+                ).filter(FormResponse.form_id.in_(form_ids)).group_by(
+                    FormResponse.form_id, FormResponse.is_submitted, FormResponse.is_withdrawn
+                ).all()
+                for form_id, is_submitted, is_withdrawn, count in rows:
+                    form_counts = counts.setdefault(form_id, {'total': 0, 'submitted': 0})
+                    form_counts['total'] += count
+                    if is_submitted and not is_withdrawn:
+                        form_counts['submitted'] += count
+
+            survey_form_id = event.survey_form_id if event else None
+            type_order = {'application': 0, 'review': 1, 'registration': 2}
+
+            def sort_key(form):
+                return (
+                    type_order.get(form.form_type, 3),
+                    form.stage or 0,
+                    -(form.created_at.timestamp() if form.created_at else 0),
+                )
+
+            forms_data = []
+            for form in sorted(forms, key=sort_key):
+                name_trans = translation_for(form, language)
+                form_counts = counts.get(form.id, {'total': 0, 'submitted': 0})
+                forms_data.append({
+                    'id': form.id,
+                    'form_type': form.form_type,
+                    'stage': form.stage,
+                    'name': name_trans.name if name_trans else None,
+                    'is_active': form.is_active,
+                    'is_open': form.is_open,
+                    'is_survey': form.id == survey_form_id,
+                    'response_count': form_counts['total'],
+                    'submitted_count': form_counts['submitted'],
+                })
+
+            return {'forms': forms_data}, 200
+
+        except Exception as e:
+            LOGGER.error(f"Error getting form responses summary for event {event_id}: {str(e)}")
             LOGGER.error(traceback.format_exc())
             return errors.DB_NOT_AVAILABLE
 

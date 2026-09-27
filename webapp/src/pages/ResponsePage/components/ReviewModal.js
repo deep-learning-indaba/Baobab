@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import Modal from '../../../components/Modal';
+import { formatUserName } from "../../../utils/userName";
 
 
 class ReviewModal extends Component {
@@ -42,7 +43,7 @@ class ReviewModal extends Component {
                             className={selectedReviewer === val ? "review-select active" : "review-select"}
                             key={val.reviewer_user_id}
                         >
-                            <label>{val.user_title} {val.firstname} {val.lastname}</label>
+                            <label>{formatUserName(val.user_title, val.firstname, val.lastname)}</label>
                             <div className="reviewer-email">{val.email}</div>
                             <div>
                                 <p>{t('Reviews Allocated')}: {val.reviews_allocated}</p>

@@ -1562,5 +1562,22 @@
     "This event is only available in {{language}}.": "This event is only available in {{language}}.",
     "This event is only available in {{languages}}. Its content is shown in {{language}}.": "This event is only available in {{languages}}. Its content is shown in {{language}}.",
     "Switch site to {{language}}": "Switch site to {{language}}",
-    "Only available in {{languages}}": "Only available in {{languages}}"
+    "Only available in {{languages}}": "Only available in {{languages}}",
+    "Form Response Viewer": "Form Response Viewer",
+    "Forms": "Forms",
+    "View and export the responses to each of this event's forms.": "View and export the responses to each of this event's forms.",
+    "This event has no forms yet.": "This event has no forms yet.",
+    "Survey": "Survey",
+    "Stage {{stage}}": "Stage {{stage}}",
+    "Other Form": "Other Form",
+    "{{submitted}} submitted of {{total}} responses": "{{submitted}} submitted of {{total}} responses",
+    "View Responses": "View Responses",
+    "Deleting…": "Deleting…",
+    "Delete Response": "Delete Response",
+    "Delete this response?": "Delete this response?",
+    "This permanently deletes the response and its answers, along with any reviews of it. This cannot be undone. The respondent will be emailed to let them know.": "This permanently deletes the response and its answers, along with any reviews of it. This cannot be undone. The respondent will be emailed to let them know.",
+    "Response deleted. The respondent has been emailed to let them know.": "Response deleted. The respondent has been emailed to let them know.",
+    "Response deleted, but the email to the respondent could not be sent. Please let them know yourself.": "Response deleted, but the email to the respondent could not be sent. Please let them know yourself.",
+    "Title (optional)": "Title (optional)",
+    "No title": "No title"
 }

@@ -15,7 +15,7 @@ class AppUser(db.Model, UserMixin):
     email = db.Column(db.String(255), nullable=False)
     firstname = db.Column(db.String(100), nullable=False)
     lastname = db.Column(db.String(100), nullable=False)
-    user_title = db.Column(db.String(20), nullable=False)
+    user_title = db.Column(db.String(20), nullable=True)
     nationality_country_id = db.Column(db.Integer(), db.ForeignKey('country.id'), nullable=True)
     residence_country_id = db.Column(db.Integer(), db.ForeignKey('country.id'), nullable=True)
     user_gender = db.Column(db.String(20), nullable=True)
@@ -53,7 +53,7 @@ class AppUser(db.Model, UserMixin):
         self.email = email
         self.firstname = firstname
         self.lastname = lastname
-        self.user_title = user_title
+        self.user_title = user_title or None
         self.set_password(password)
         self.organisation_id = organisation_id
         self.active = True
@@ -66,6 +66,10 @@ class AppUser(db.Model, UserMixin):
     @property
     def full_name(self):
         return f"{self.firstname} {self.lastname}"
+
+    @property
+    def formal_name(self):
+        return ' '.join(part for part in (self.user_title, self.firstname, self.lastname) if part)
 
     def set_password(self, password):
         self.password = bcrypt.generate_password_hash(password).decode('utf-8')
@@ -137,6 +141,9 @@ class AppUser(db.Model, UserMixin):
 
     def is_comms_officer(self, event_id):
         return self._has_admin_role(event_id, 'comms-officer') or self.is_event_admin(event_id)
+
+    def is_form_response_viewer(self, event_id):
+        return self._has_admin_role(event_id, 'form-viewer') or self.is_event_admin(event_id)
          
 class PasswordReset(db.Model):
 

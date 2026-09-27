@@ -28,6 +28,18 @@ def is_admin_of_form(form):
     return user_info.is_event_admin(form.event_id)
 
 
+def can_view_form_responses(form):
+    """Whether the caller may read `form` and its responses without editing it:
+    an event admin or form-viewer of the form's own event."""
+    user = get_user_from_request()
+    if not user:
+        return False
+    user_info = user_repository.get_by_id(user['id'])
+    if not user_info:
+        return False
+    return user_info.is_form_response_viewer(form.event_id)
+
+
 def form_admin_required(func):
     """Require that the caller is an event admin of the form's own event.
 

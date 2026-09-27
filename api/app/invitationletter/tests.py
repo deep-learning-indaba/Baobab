@@ -10,7 +10,7 @@ from app.registration.models import Registration
 from app.invitationletter.models import InvitationLetterRequest
 from app.invitationletter.models import InvitationTemplate
 from app.utils.pdfconvertor import convert_to
-from app.invitationletter.generator import generate
+from app.invitationletter.generator import generate, check_values
 from unittest import skip as nottest
 from app.organisation.models import Organisation
 
@@ -324,9 +324,13 @@ class PDFConverterTest(ApiTestCase):
                                   expiry_date=datetime(1984, 12, 12).strftime('%Y-%m-%d')), True, self.test_user)
 
 
+class CheckValuesTest(ApiTestCase):
 
-       
-
-
-
-
+    def test_accepts_empty_title(self):
+        check_values(template_path='template.docx', event_id=1, work_address='work',
+                     addressed_to='someone', residential_address='home', passport_name='Some Thing',
+                     passport_no='123', passport_issued_by='RSA', invitation_letter_sent_at='2026-01-01',
+                     to_date='2026-01-02', from_date='2026-01-01', country_of_residence='South Africa',
+                     nationality='South African', date_of_birth='1990-01-01', email='a@a.com',
+                     user_title='', firstname='Some', lastname='Thing', bringing_poster='',
+                     bringing_poster_fr='', expiry_date='2030-01-01')

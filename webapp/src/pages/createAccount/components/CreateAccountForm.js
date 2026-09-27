@@ -11,7 +11,6 @@ import { Link } from "react-router-dom";
 import { withTranslation } from "react-i18next";
 import {
   requiredText,
-  requiredDropdown,
   validEmail,
   validatePassword,
   matchingPasswords
@@ -20,7 +19,6 @@ import {
 const PassStrengthBar = React.lazy(() => import("./PassStrength"));
 
 const fieldValidations = [
-  ruleRunner(validationFields.title, requiredDropdown),
   ruleRunner(validationFields.firstName, requiredText),
   ruleRunner(validationFields.lastName, requiredText),
   ruleRunner(validationFields.email, validEmail),
@@ -86,7 +84,7 @@ class CreateAccountForm extends Component {
       {
         user: {
           ...this.state.user,
-          [name]: dropdown.value
+          [name]: dropdown ? dropdown.value : null
         }
       },
       function() {
@@ -243,9 +241,11 @@ class CreateAccountForm extends Component {
             <FormSelect
               options={this.state.titleOptions}
               id={validationFields.title.name}
+              clearable={true}
+              placeholder={t("No title")}
               onChange={this.handleChangeDropdown}
               value={titleValue}
-              label={t(validationFields.title.display)}
+              label={t("Title (optional)")}
             />
             <FormTextBox
               id={validationFields.firstName.name}

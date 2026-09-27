@@ -2,7 +2,7 @@ import React from 'react';
 
 export class ConfirmModal extends React.Component {
     render() {
-        const { visible, onOK, onCancel, okText, cancelText, children } = this.props;
+        const { visible, onOK, onCancel, okText, cancelText, danger, children } = this.props;
         if (!visible) return null;
 
         return (
@@ -21,7 +21,7 @@ export class ConfirmModal extends React.Component {
                         </button>
                         <button
                             type="button"
-                            className="inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
+                            className={"inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer " + (danger ? "bg-error text-white hover:bg-error/90" : "bg-primary text-primary-foreground hover:bg-primary/90")}
                             onClick={onOK}
                         >
                             {okText || "OK"}

@@ -43,7 +43,9 @@ def email_user(
 
     template_parameters = template_parameters or {}
     if 'title' not in template_parameters:
-        template_parameters['title'] = user.user_title
+        template_parameters['title'] = user.user_title or ''
+    if 'salutation' not in template_parameters:
+        template_parameters['salutation'] = user.formal_name
     if 'firstname' not in template_parameters:
         template_parameters['firstname'] = user.firstname
     if 'lastname' not in template_parameters:

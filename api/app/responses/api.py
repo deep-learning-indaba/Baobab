@@ -326,7 +326,7 @@ def _serialize_reviewer(response_reviewer, review_response):
     
     return {
         'reviewer_id': response_reviewer.reviewer_user_id,
-        'reviewer_name': '{} {} {}'.format(response_reviewer.user.user_title, response_reviewer.user.firstname, response_reviewer.user.lastname),
+        'reviewer_name': response_reviewer.user.formal_name,
         'review_response_id': None if review_response is None else review_response.id,
         'status': _review_response_status(review_response)
     }

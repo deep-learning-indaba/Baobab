@@ -88,3 +88,19 @@ export const isEventAdmin = (user, event) => {
         ))
     );
   };
+
+  export const isFormResponseViewer = (user, event) => {
+    if (!user) {
+      return false;
+    }
+    return (
+      user.is_admin ||
+      (user.roles &&
+        user.roles.some(
+          r =>
+            (r.role === "admin" || r.role === "form-viewer") &&
+            event &&
+            r.event_id === event.id
+        ))
+    );
+  };

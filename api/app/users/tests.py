@@ -12,6 +12,7 @@ from app.users.models import (AppUser, Country, PasswordReset, UserCategory,
                               UserComment)
 from app.utils.errors import POLICY_ALREADY_AGREED, POLICY_NOT_AGREED
 from app.utils.testing import ApiTestCase
+from mock import patch
 
 USER_DATA = {
         'email': 'something@email.com',
@@ -126,6 +127,53 @@ class UserApiTest(ApiTestCase):
         self.assertEqual(data['firstname'], 'Updated')
         self.assertEqual(data['lastname'], 'Updated')
         self.assertEqual(data['user_title'], 'Mrs')
+
+    def test_registration_without_title(self):
+        self.seed_static_data()
+        user_data = copy.deepcopy(USER_DATA)
+        del user_data['user_title']
+
+        response = self.app.post('/api/v1/user', data=user_data)
+        self.assertEqual(response.status_code, 201)
+        headers = {'Authorization': json.loads(response.data)['token']}
+
+        response = self.app.get('/api/v1/user', headers=headers)
+        self.assertIsNone(json.loads(response.data)['user_title'])
+
+    def test_registration_empty_title_stored_as_null(self):
+        self.seed_static_data()
+        user_data = copy.deepcopy(USER_DATA)
+        user_data['user_title'] = ''
+
+        response = self.app.post('/api/v1/user', data=user_data)
+        self.assertEqual(response.status_code, 201)
+
+        user = AppUser.query.filter_by(email=USER_DATA['email']).one()
+        self.assertIsNone(user.user_title)
+
+    def test_update_user_clears_title(self):
+        self.seed_static_data()
+        response = self.app.post('/api/v1/user', data=USER_DATA)
+        headers = {'Authorization': json.loads(response.data)['token']}
+
+        response = self.app.put('/api/v1/user', headers=headers, data={
+            'email': 'something@email.com',
+            'firstname': 'Some',
+            'lastname': 'Thing',
+            'user_title': '',
+            'language': 'en',
+            'password': ''
+        })
+        self.assertEqual(response.status_code, 200)
+
+        response = self.app.get('/api/v1/user', headers=headers)
+        self.assertIsNone(json.loads(response.data)['user_title'])
+
+    def test_formal_name(self):
+        titled = AppUser('a@a.com', 'Some', 'Thing', 'Dr', 'abc', 1)
+        untitled = AppUser('b@b.com', 'Some', 'Thing', None, 'abc', 1)
+        self.assertEqual(titled.formal_name, 'Dr Some Thing')
+        self.assertEqual(untitled.formal_name, 'Some Thing')
 
     def test_authentication_deleted(self):
         self.seed_static_data()
@@ -856,6 +904,25 @@ class EmailerAPITest(ApiTestCase):
 
             response = self.app.post('/api/v1/admin/emailer', headers=header, data=params)
             self.assertEqual(response.status_code, 200)
+
+    @patch('app.users.api.send_mail')
+    def test_email_user_without_title(self, send_mail_fn):
+        with app.app_context():
+            self.setup_static_data()
+            self.candidate2.user_title = None
+            db.session.commit()
+            candidate2_id = self.candidate2.id
+            header = self.get_auth_header_for('system_admin@sa.com')
+            params = {
+                'user_id': candidate2_id,
+                'email_subject': 'This is a test email',
+                'email_body': 'Hello world, this is a test email.'
+            }
+
+            response = self.app.post('/api/v1/admin/emailer', headers=header, data=params)
+            self.assertEqual(response.status_code, 200)
+            body = send_mail_fn.call_args.kwargs['body_text']
+            self.assertTrue(body.startswith('Dear candidate 2,'))
 
 class OrganisationUserTest(ApiTestCase):
     """Test that users are correctly linked to organisations"""

@@ -159,7 +159,7 @@ class UserAPI(SignupMixin, restful.Resource):
 
         user.firstname = firstname
         user.lastname = lastname
-        user.user_title = user_title
+        user.user_title = user_title or None
         user.user_primaryLanguage = user_primaryLanguage
 
         try:
@@ -524,7 +524,7 @@ class UserCommentAPI(restful.Resource):
         return comments
 
 
-GENERIC_EMAIL_TEMPLATE = """Dear {user_title} {user_firstname} {user_lastname},
+GENERIC_EMAIL_TEMPLATE = """Dear {salutation},
 
 {body}
 """
@@ -549,9 +549,7 @@ class EmailerAPI(restful.Resource):
                       sender_email=g.organisation.email_from,
                       subject=args['email_subject'],
                       body_text=GENERIC_EMAIL_TEMPLATE.format(
-                          user_title=user.user_title,
-                          user_firstname=user.firstname,
-                          user_lastname=user.lastname,
+                          salutation=user.formal_name,
                           body=args['email_body'],
                       )
                       )

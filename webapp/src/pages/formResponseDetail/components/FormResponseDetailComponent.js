@@ -4,6 +4,8 @@ import { formResponseService } from "../../../services/formResponse";
 import { formServices } from "../../../services/form/form.service";
 import { getDownloadURL } from "../../../utils/files";
 import { formatAnswerForDisplay } from "../../formRenderer/utils/answerDisplay";
+import { ConfirmModal } from "../../../components/Modal";
+import { isEventAdmin } from "../../../utils/user";
 
 const DISPLAY_ONLY_TYPES = ['information', 'sub-heading'];
 
@@ -14,7 +16,10 @@ class FormResponseDetailComponent extends Component {
       response: null,
       form: null,
       loading: true,
-      error: null
+      error: null,
+      confirmDeleteVisible: false,
+      deleting: false,
+      deleteError: null
     };
   }
 
@@ -77,6 +82,27 @@ class FormResponseDetailComponent extends Component {
 
   handleBack = () => {
     this.props.history.goBack();
+  };
+
+  canDelete() {
+    const { form } = this.state;
+    // Review responses are managed through reviewer assignment instead.
+    return isEventAdmin(this.props.user, this.props.event) && form && form.form_type !== 'review';
+  }
+
+  handleDelete = async () => {
+    const formId = this.getFormId();
+    const eventId = this.props.event.id;
+    this.setState({ confirmDeleteVisible: false, deleting: true, deleteError: null });
+    const result = await formResponseService.deleteResponseAdmin(eventId, formId, this.getResponseId());
+    if (result.error) {
+      this.setState({ deleting: false, deleteError: result.error });
+      return;
+    }
+    this.props.history.replace({
+      pathname: `/${this.props.event.key}/form-responses/${formId}`,
+      state: { deletedResponse: { emailSent: result.emailSent } }
+    });
   };
 
   getQuestionText(question, lang) {
@@ -266,7 +292,35 @@ class FormResponseDetailComponent extends Component {
               {response.user.user_title} {response.user.firstname} {response.user.lastname}
             </h1>
           )}
+          {this.canDelete() && (
+            <button
+              onClick={() => this.setState({ confirmDeleteVisible: true })}
+              disabled={this.state.deleting}
+              className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-error/40 text-error hover:bg-error/5 transition-colors disabled:opacity-40"
+            >
+              <i className="fas fa-trash-alt" />
+              {this.state.deleting ? t('Deleting…') : t('Delete Response')}
+            </button>
+          )}
         </div>
+
+        {this.state.deleteError && (
+          <div className="bg-error/10 text-error border border-error/20 px-4 py-3 rounded-xl text-sm">
+            {this.state.deleteError}
+          </div>
+        )}
+
+        <ConfirmModal
+          visible={this.state.confirmDeleteVisible}
+          onOK={this.handleDelete}
+          onCancel={() => this.setState({ confirmDeleteVisible: false })}
+          okText={t('Delete')}
+          cancelText={t('Cancel')}
+          danger
+        >
+          <p className="font-semibold mb-2">{t('Delete this response?')}</p>
+          <p>{t('This permanently deletes the response and its answers, along with any reviews of it. This cannot be undone. The respondent will be emailed to let them know.')}</p>
+        </ConfirmModal>
 
         <div className="flex flex-wrap gap-2 text-sm">
           <span className={`inline-flex items-center px-3 py-1 rounded-full font-semibold text-xs border ${

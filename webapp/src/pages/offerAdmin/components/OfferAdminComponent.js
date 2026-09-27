@@ -7,6 +7,7 @@ import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import ReactToolTip from "react-tooltip";
 import FormDate from "../../../components/form/FormDate";
+import { formatUserName } from "../../../utils/userName";
 
 /*
 TODO:
@@ -151,7 +152,7 @@ class OfferAdminComponent extends Component {
             Header: <div className="fullname">{t("Full Name")}</div>,
             accessor: u =>
               <div className="fullname">
-                {u.user_title + " " + u.firstname + " " + u.lastname}
+                {formatUserName(u.user_title, u.firstname, u.lastname)}
               </div>,
             minWidth: 150
         }, {
@@ -315,7 +316,7 @@ class OfferAdminComponent extends Component {
             <div className="bg-slate-50/50 rounded-xl border border-border p-6 space-y-6 mt-6">
                 <div className="flex justify-between items-center pb-2 border-b border-border/50">
                     <h3 className="text-lg font-bold text-foreground">
-                        {t("Offer for")} {selectedOffer.user_title + " " + selectedOffer.firstname + " " + selectedOffer.lastname}
+                        {t("Offer for")} {formatUserName(selectedOffer.user_title, selectedOffer.firstname, selectedOffer.lastname)}
                     </h3>
                     <span className="text-sm font-semibold">{this.statusCell({original: selectedOffer})}</span>
                 </div>
