@@ -2,6 +2,7 @@
 
 from app import LOGGER
 import json
+from app.utils.language import translation_for
 
 def _get_answer_value(answer, question, question_translation):
     if answer is None:
@@ -60,13 +61,13 @@ def build_response_email_body(answers, language, application_form):
         section_translation = section.get_translation(language)
         if section_translation is None:
             LOGGER.error('Missing {} translation for section {}.'.format(language, section.id))
-            section_translation = section.get_translation('en')
+            section_translation = translation_for(section, 'en')
         stringified_summary += section_translation.name + '\n' + '-' * 20 + '\n\n'
         for question in section.questions:
             question_translation = question.get_translation(language)
             if question_translation is None:
                 LOGGER.error('Missing {} translation for question {}.'.format(language, question.id))
-                question_translation = question.get_translation('en')
+                question_translation = translation_for(question, 'en')
 
             if question.depends_on_question_id and question_translation.show_for_values:
                 dependency_question = _find_question(question.depends_on_question_id, allQuestions)
@@ -108,14 +109,14 @@ def build_response_html_answers(answers, language, application_form):
         section_translation = section.get_translation(language)
         if section_translation is None:
             LOGGER.error('Missing {} translation for section {}.'.format(language, section.id))
-            section_translation = section.get_translation('en')
+            section_translation = translation_for(section, 'en')
         stringified_answers += '<h1>' + section_translation.name + '</h1>' 
 
         for question in section.questions:
             question_translation = question.get_translation(language)
             if question_translation is None:
                 LOGGER.error('Missing {} translation for question {}.'.format(language, question.id))
-                question_translation = question.get_translation('en')
+                question_translation = translation_for(question, 'en')
 
             answer = _find_answer(question, answers)
             if answer:

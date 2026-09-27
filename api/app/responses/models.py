@@ -10,6 +10,7 @@ from app import db, LOGGER
 from app.applicationModel.models import Question
 from app.tags.models import Tag
 from app.users.models import AppUser
+from app.utils.language import translation_for
 
 
 class ValidationError(str, enum.Enum):
@@ -109,7 +110,7 @@ class Answer(db.Model):
         question_translation = self.question.get_translation(self.response.language)
         if question_translation is None:
             LOGGER.error('Missing {} translation for question {}'.format(self.response.language, self.question.id))
-            question_translation = self.question.get_translation('en')
+            question_translation = translation_for(self.question, 'en')
         if self.question.type == 'multi-choice' and question_translation.options is not None:
             option = [option for option in question_translation.options if option['value'] == self.value]
             if option:
@@ -123,7 +124,7 @@ class Answer(db.Model):
         question_translation = self.question.get_translation(language)
         if question_translation is None:
             LOGGER.error('Missing {} translation for question {}'.format(language, self.question.id))
-            question_translation = self.question.get_translation('en')
+            question_translation = translation_for(self.question, 'en')
 
         if question_translation.options:
             if self.question.type == "multi-choice" and self.value not in [option['value'] for option in question_translation.options]:

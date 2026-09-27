@@ -3,6 +3,7 @@ import { withTranslation } from 'react-i18next';
 import { eventService } from '../../services/events';
 import { Card } from '../../components/ui/card';
 import { ConfirmModal } from '../../components/Modal';
+import { getEventLanguages } from '../../utils/eventLanguages';
 
 const EMPTY_LINK = { title_en: '', title_fr: '', url: '', category: '', icon: '', sort_order: '' };
 
@@ -118,9 +119,10 @@ class ResourceLinksAdmin extends Component {
     });
   };
 
-  hasFrench = () => {
-    const { organisation } = this.props;
-    return organisation && organisation.languages && organisation.languages.some(l => l.code === 'fr');
+  // Links only store English and French titles; the event's primary language is required.
+  titleLanguages = () => {
+    const { event, organisation } = this.props;
+    return getEventLanguages(event, organisation).map(l => l.code).filter(code => code === 'en' || code === 'fr');
   };
 
   openAdd = () => {
@@ -155,8 +157,10 @@ class ResourceLinksAdmin extends Component {
     const { editingLink } = this.state;
     const { event, t } = this.props;
 
-    if (!editingLink.title_en.trim()) {
-      this.setState({ formError: t('Title (English) is required') });
+    const titleLanguages = this.titleLanguages();
+    const primary = titleLanguages[0];
+    if (primary && !editingLink['title_' + primary].trim()) {
+      this.setState({ formError: primary === 'fr' ? t('Title (French) is required') : t('Title (English) is required') });
       return;
     }
     if (!editingLink.url.trim()) {
@@ -166,8 +170,8 @@ class ResourceLinksAdmin extends Component {
 
     const payload = {
       event_id: event.id,
-      title_en: editingLink.title_en.trim(),
-      title_fr: editingLink.title_fr.trim() || undefined,
+      title_en: titleLanguages.includes('en') ? editingLink.title_en.trim() || undefined : undefined,
+      title_fr: titleLanguages.includes('fr') ? editingLink.title_fr.trim() || undefined : undefined,
       url: editingLink.url.trim(),
       category: editingLink.category.trim() || undefined,
       icon: editingLink.icon.trim() || undefined,
@@ -296,30 +300,20 @@ class ResourceLinksAdmin extends Component {
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div>
-            <label className={labelClass}>
-              <span className="text-error mr-1">*</span>
-              {t('Title (English)')}
-            </label>
-            <input
-              className={inputClass}
-              value={editingLink.title_en}
-              onChange={e => this.setField('title_en', e.target.value)}
-              placeholder={t('e.g. Conference Schedule')}
-            />
-          </div>
-
-          {this.hasFrench() && (
-            <div>
-              <label className={labelClass}>{t('Title (French)')}</label>
+          {this.titleLanguages().map((code, index) => (
+            <div key={code}>
+              <label className={labelClass}>
+                {index === 0 && <span className="text-error mr-1">*</span>}
+                {code === 'fr' ? t('Title (French)') : t('Title (English)')}
+              </label>
               <input
                 className={inputClass}
-                value={editingLink.title_fr}
-                onChange={e => this.setField('title_fr', e.target.value)}
-                placeholder={t('e.g. Programme de la conférence')}
+                value={editingLink['title_' + code]}
+                onChange={e => this.setField('title_' + code, e.target.value)}
+                placeholder={code === 'fr' ? t('e.g. Programme de la conférence') : t('e.g. Conference Schedule')}
               />
             </div>
-          )}
+          ))}
 
           <div className="md:col-span-2">
             <label className={labelClass}>
@@ -419,7 +413,7 @@ class ResourceLinksAdmin extends Component {
                             {cls ? <i className={cls} /> : link.icon}
                           </span>
                         )}
-                        <span className="font-semibold text-sm text-foreground">{link.title_en}</span>
+                        <span className="font-semibold text-sm text-foreground">{link.title}</span>
                         {link.category && (
                           <span className="text-xs text-muted-foreground bg-surface-high px-2 py-0.5 rounded-full">{link.category}</span>
                         )}

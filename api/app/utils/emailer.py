@@ -14,6 +14,7 @@ from flask import g, has_app_context, request
 from app.email_template.repository import EmailRepository as email_repository
 from app.users.repository import UserRepository as user_repository
 from app.events.repository import EventRepository as event_repository
+from app.utils.language import user_language_for_event
 
 def email_user(
     email_template_key, 
@@ -28,7 +29,7 @@ def email_user(
     if user is None:
         raise ValueError('You must specify a user!')
 
-    language = user.user_primaryLanguage
+    language = user_language_for_event(user, event)
     email_template = email_repository.get(None if event is None else event.id, email_template_key, language)
 
     if email_template is None:
@@ -36,7 +37,7 @@ def email_user(
     
     subject_parameters = subject_parameters or {}
     if event is not None and 'event_name' not in subject_parameters:
-        subject_parameters['event_name'] = event.get_name(language) if event.has_specific_translation(language) else event.get_name('en')
+        subject_parameters['event_name'] = event.get_name(language)
 
     subject = email_template.subject.format(**subject_parameters)
 
@@ -48,7 +49,7 @@ def email_user(
     if 'lastname' not in template_parameters:
         template_parameters['lastname'] = user.lastname
     if event is not None and 'event_name' not in template_parameters:
-        template_parameters['event_name'] = event.get_name(language) if event.has_specific_translation(language) else event.get_name('en')
+        template_parameters['event_name'] = event.get_name(language)
 
     body_text = email_template.template.format(**template_parameters)
     send_mail(recipient=user.email, subject=subject, body_text=body_text, file_name=file_name, file_path=file_path)

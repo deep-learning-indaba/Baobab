@@ -10,6 +10,7 @@ import {
 } from '../../utils/datetime';
 import ProgrammeSchedule from '../../components/ProgrammeSchedule';
 import TranslatableFieldGroup from '../formEditor/components/TranslatableFieldGroup';
+import { getEventLanguages } from '../../utils/eventLanguages';
 
 var DEFAULT_LANGUAGES = [{ code: 'en', description: 'English' }];
 
@@ -912,7 +913,8 @@ class ProgrammeEditor extends Component {
   }
 
   getLanguages() {
-    return (this.props.organisation && this.props.organisation.languages) || DEFAULT_LANGUAGES;
+    var languages = getEventLanguages(this.props.event, this.props.organisation);
+    return languages.length ? languages : DEFAULT_LANGUAGES;
   }
 
   componentDidMount() {

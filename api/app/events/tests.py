@@ -593,6 +593,9 @@ class EventAPITest(ApiTestCase):
     }
 
     def seed_static_data(self):
+        organisation = db.session.query(Organisation).get(1)
+        organisation.languages = [{'code': 'en', 'description': 'English'},
+                                  {'code': 'fr', 'description': 'French'}]
         self.add_organisation('Test Indaba', 'blah.png',
                               'blah_big.png', 'testindaba')
 
@@ -615,7 +618,7 @@ class EventAPITest(ApiTestCase):
         db.session.add(self.test_user)
         db.session.commit()
 
-        event = self.add_event({'en': 'Indaba 2019'}, {'en': 'Deep Learning Indaba'}, datetime(2019, 8, 25), datetime(2019, 8, 31), 'COOLER')
+        event = self.add_event({'en': 'Indaba 2019'}, {'en': 'Deep Learning Indaba'}, datetime(2019, 8, 25), datetime(2019, 8, 31), 'COOLER', languages=['en'])
         db.session.commit()
 
         db.session.flush()
@@ -1678,10 +1681,12 @@ class EventResourceLinkAPITest(ApiTestCase):
         db.session.commit()
         self.event = self.add_event(
             {'en': 'Resource Event'}, {'en': 'Desc'},
-            datetime(2025, 6, 1), datetime(2025, 6, 10), 'RESEV'
+            datetime(2025, 6, 1), datetime(2025, 6, 10), 'RESEV',
+            languages=['en', 'fr']
         )
         self.event_id = self.event.id
         self.add_event_role('admin', self.admin_user.id, self.event_id)
+        self.admin_email = self.admin_user.email
 
     def test_get_resource_links_empty(self):
         self.seed_static_data()
@@ -1810,6 +1815,46 @@ class EventResourceLinkAPITest(ApiTestCase):
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]['title'], 'French Title')
 
+
+    def _single_language_event(self, key, language):
+        event_id = self.add_event({language: 'Event'}, {language: 'Desc'}, key=key, languages=[language]).id
+        self.add_event_role('admin', self.admin_user.id, event_id)
+        return event_id
+
+    def test_english_only_event_serves_english_title_to_french_viewer(self):
+        self.seed_static_data()
+        event_id = self._single_language_event('ENLINKS', 'en')
+        db.session.add(EventResourceLink(event_id=event_id, title_en='English Title',
+                                         title_fr='Stray French', url='https://example.com'))
+        db.session.commit()
+        response = self.app.get('/api/v1/event-resource-links',
+                                query_string={'event_id': event_id, 'language': 'fr'})
+        self.assertEqual(json.loads(response.data)[0]['title'], 'English Title')
+
+    def test_french_only_event_link_needs_only_french_title(self):
+        self.seed_static_data()
+        event_id = self._single_language_event('FRLINKS', 'fr')
+        header = self.get_auth_header_for(self.admin_email)
+        response = self.app.post('/api/v1/event-resource-links', headers=header, data=json.dumps({
+            'event_id': event_id, 'title_fr': 'Titre', 'title_en': 'Ignored', 'url': 'https://example.com'
+        }), content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        data = json.loads(response.data)
+        self.assertEqual(data['title'], 'Titre')
+        self.assertIsNone(data['title_en'])
+
+        response = self.app.get('/api/v1/event-resource-links',
+                                query_string={'event_id': event_id, 'language': 'en'})
+        self.assertEqual(json.loads(response.data)[0]['title'], 'Titre')
+
+    def test_link_requires_primary_language_title(self):
+        self.seed_static_data()
+        event_id = self._single_language_event('FRLINKS2', 'fr')
+        header = self.get_auth_header_for(self.admin_email)
+        response = self.app.post('/api/v1/event-resource-links', headers=header, data=json.dumps({
+            'event_id': event_id, 'title_en': 'Only English', 'url': 'https://example.com'
+        }), content_type='application/json')
+        self.assertEqual(response.status_code, 400)
 
 class EventSurveyTimeTest(ApiTestCase):
     """Tests for Event.is_survey_time: true once the admin-configured survey_open moment (event-local) has passed."""
@@ -2083,3 +2128,179 @@ class EventSurveyFormAPITest(ApiTestCase):
 
         event = db.session.query(Event).filter_by(id=self.event.id).first()
         self.assertIsNone(event.survey_open)
+
+class EventLanguagesTest(ApiTestCase):
+    """Events choose a subset of their organisation's languages at creation and
+    serve content in the viewer's language only when the event supports it."""
+
+    def seed_static_data(self):
+        organisation = db.session.query(Organisation).get(1)
+        organisation.languages = [
+            {'code': 'en', 'description': 'English'},
+            {'code': 'fr', 'description': 'French'},
+        ]
+        db.session.commit()
+        self.admin = self.add_user('admin@org.com', is_admin=True)
+        self.admin_email = self.admin.email
+        self.user_email = self.add_user('user@org.com').email
+        self.english_event_id = self.add_event(
+            {'en': 'English Event'}, {'en': 'English only'},
+            key='ENONLY', languages=['en']).id
+        self.french_event_id = self.add_event(
+            {'fr': 'Evenement'}, {'fr': 'Francais seulement'},
+            key='FRONLY', languages=['fr']).id
+
+    def _event_payload(self, key, names, descriptions, languages=None, event_id=None):
+        payload = {
+            'key': key,
+            'name': names,
+            'description': descriptions,
+            'start_date': '2030-06-01T00:00:00Z',
+            'end_date': '2030-06-06T00:00:00Z',
+            'organisation_id': 1,
+            'email_from': 'test@testindaba.com',
+            'url': 'testindaba.com',
+            'application_open': '2030-01-01T00:00:00Z',
+            'application_close': '2030-02-01T00:00:00Z',
+            'review_open': '2030-02-01T00:00:00Z',
+            'review_close': '2030-03-01T00:00:00Z',
+            'selection_open': '2030-03-01T00:00:00Z',
+            'selection_close': '2030-05-01T00:00:00Z',
+            'offer_open': '2030-05-01T00:00:00Z',
+            'offer_close': '2030-05-30T00:00:00Z',
+            'registration_open': '2030-05-30T00:00:00Z',
+            'registration_close': '2030-06-01T00:00:00Z',
+            'event_type': 'EVENT',
+            'travel_grant': False,
+        }
+        if languages is not None:
+            payload['languages'] = languages
+        if event_id is not None:
+            payload['id'] = event_id
+        return payload
+
+    def _post(self, payload):
+        return self.app.post('api/v1/event', headers=self.get_auth_header_for(self.admin_email),
+                             data=json.dumps(payload), content_type='application/json')
+
+    def _put(self, payload):
+        return self.app.put('api/v1/event', headers=self.get_auth_header_for(self.admin_email),
+                            data=json.dumps(payload), content_type='application/json')
+
+    def test_create_single_language_event(self):
+        self.seed_static_data()
+        response = self._post(self._event_payload(
+            'newen', {'en': 'Only English'}, {'en': 'Desc'}, languages=['en']))
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(json.loads(response.data)['languages'], ['en'])
+
+    def test_create_infers_languages_from_translations(self):
+        self.seed_static_data()
+        response = self._post(self._event_payload(
+            'newboth', {'fr': 'F', 'en': 'E'}, {'fr': 'F', 'en': 'E'}))
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(json.loads(response.data)['languages'], ['en', 'fr'])
+        response = self._post(self._event_payload('newfr', {'fr': 'F'}, {'fr': 'F'}))
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(json.loads(response.data)['languages'], ['fr'])
+        response = self._post(self._event_payload('newpt2', {'pt': 'P'}, {'pt': 'P'}))
+        self.assertEqual(response.status_code, 400)
+
+    def test_create_preserves_primary_language_order(self):
+        self.seed_static_data()
+        response = self._post(self._event_payload(
+            'frfirst', {'en': 'E', 'fr': 'F'}, {'en': 'E', 'fr': 'F'}, languages=['fr', 'en']))
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(json.loads(response.data)['languages'], ['fr', 'en'])
+
+    def test_create_rejects_language_outside_organisation(self):
+        self.seed_static_data()
+        response = self._post(self._event_payload(
+            'newpt', {'pt': 'P'}, {'pt': 'P'}, languages=['pt']))
+        self.assertEqual(response.status_code, 400)
+
+    def test_create_rejects_duplicate_languages(self):
+        self.seed_static_data()
+        response = self._post(self._event_payload(
+            'newdup', {'en': 'E'}, {'en': 'E'}, languages=['en', 'en']))
+        self.assertEqual(response.status_code, 400)
+
+    def test_create_rejects_translations_not_matching_languages(self):
+        self.seed_static_data()
+        response = self._post(self._event_payload(
+            'newmis', {'en': 'E', 'fr': 'F'}, {'en': 'E', 'fr': 'F'}, languages=['en']))
+        self.assertEqual(response.status_code, 400)
+        response = self._post(self._event_payload(
+            'newmis2', {'en': 'E'}, {'en': 'E'}, languages=['en', 'fr']))
+        self.assertEqual(response.status_code, 400)
+
+    def test_update_cannot_change_languages(self):
+        self.seed_static_data()
+        response = self._put(self._event_payload(
+            'ENONLY', {'en': 'E', 'fr': 'F'}, {'en': 'E', 'fr': 'F'},
+            languages=['en', 'fr'], event_id=self.english_event_id))
+        self.assertEqual(response.status_code, 400)
+        event = db.session.query(Event).get(self.english_event_id)
+        self.assertEqual(event.languages, ['en'])
+
+    def test_update_with_unchanged_languages(self):
+        self.seed_static_data()
+        response = self._put(self._event_payload(
+            'ENONLY', {'en': 'Renamed'}, {'en': 'Desc'},
+            languages=['en'], event_id=self.english_event_id))
+        self.assertEqual(response.status_code, 200)
+        response = self._put(self._event_payload(
+            'ENONLY', {'en': 'Renamed again'}, {'en': 'Desc'}, event_id=self.english_event_id))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.data)['name'], {'en': 'Renamed again'})
+
+    def test_update_rejects_translation_outside_event_languages(self):
+        self.seed_static_data()
+        response = self._put(self._event_payload(
+            'ENONLY', {'en': 'E', 'fr': 'F'}, {'en': 'E', 'fr': 'F'}, event_id=self.english_event_id))
+        self.assertEqual(response.status_code, 400)
+
+    def test_by_key_serves_english_only_event_to_french_user(self):
+        self.seed_static_data()
+        response = self.app.get('api/v1/event-by-key?event_key=ENONLY&language=fr',
+                                headers=self.get_auth_header_for(self.user_email))
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['name'], 'English Event')
+        self.assertEqual(data['languages'], ['en'])
+        self.assertEqual(data['content_language'], 'en')
+
+    def test_by_key_serves_french_only_event_to_english_user(self):
+        self.seed_static_data()
+        response = self.app.get('api/v1/event-by-key?event_key=FRONLY&language=en',
+                                headers=self.get_auth_header_for(self.user_email))
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['name'], 'Evenement')
+        self.assertEqual(data['content_language'], 'fr')
+
+    def test_events_list_resolves_each_event_language(self):
+        self.seed_static_data()
+        response = self.app.get('api/v1/events?language=fr',
+                                headers=self.get_auth_header_for(self.user_email))
+        self.assertEqual(response.status_code, 200)
+        by_key = {e['key']: e for e in json.loads(response.data)}
+        self.assertEqual(by_key['ENONLY']['name'], 'English Event')
+        self.assertEqual(by_key['ENONLY']['content_language'], 'en')
+        self.assertEqual(by_key['FRONLY']['name'], 'Evenement')
+        self.assertEqual(by_key['FRONLY']['content_language'], 'fr')
+
+    def test_resolve_language(self):
+        self.seed_static_data()
+        event = db.session.query(Event).get(self.english_event_id)
+        self.assertEqual(event.resolve_language('fr'), 'en')
+        self.assertEqual(event.resolve_language('en'), 'en')
+        self.assertEqual(event.resolve_language(None), 'en')
+        self.assertEqual(event.resolve_language('en-GB'), 'en')
+
+    def test_null_languages_inherit_organisation(self):
+        self.seed_static_data()
+        event_id = self.add_event(key='INHERIT').id
+        event = db.session.query(Event).get(event_id)
+        self.assertEqual(event.effective_languages, ['en', 'fr'])
+        self.assertEqual(event.primary_language, 'en')

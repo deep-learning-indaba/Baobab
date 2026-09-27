@@ -674,7 +674,7 @@ class AnnouncementQueueingTest(ApiTestCase):
 
     def setUp(self):
         super().setUp()
-        event = self.add_event(key='QUEUE2025')
+        event = self.add_event(key='QUEUE2025', languages=['en', 'fr'])
         self.event_id = event.id
 
         comms = self.add_user('comms@test.com')

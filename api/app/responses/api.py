@@ -20,6 +20,7 @@ from app.outcome.repository import OutcomeRepository as outcome_repository
 from app.users.repository import UserRepository as user_repository
 from app.utils import emailer, errors, strings, pdfconvertor, storage
 from app.utils.zipping import zip_in_memory
+from app.utils.language import user_language_for_event, translation_for
 from app.utils.auth import auth_required, event_admin_required
 from flask import g, send_file
 from flask_restful import fields, inputs, marshal, reqparse
@@ -68,7 +69,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         translation = entity.get_translation(language)    
         if translation is None:
             LOGGER.warn('No {} translation found for {} id {}'.format(language, type(entity), entity.id))
-            translation = entity.get_translation('en')
+            translation = translation_for(entity, 'en')
         
         return translation.show_for_values and dependency_answer.value in translation.show_for_values
 
@@ -135,13 +136,11 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         user_id = g.current_user['id']
         is_submitted = args['is_submitted']
         application_form_id = args['application_form_id']
-        language = args['language']
-        if len(language) != 2:
-            language = 'en'  # Fallback to English if language doesn't look like an ISO 639-1 code
 
         application_form = application_form_repository.get_by_id(application_form_id)
         if application_form is None:
             return errors.FORM_NOT_FOUND_BY_ID
+        language = application_form.event.resolve_language(args['language'])
         
         user = user_repository.get_by_id(user_id)
         responses = response_repository.get_all_for_user_application(user_id, application_form_id)
@@ -294,12 +293,9 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             LOGGER.error('Could not connect to the database to retrieve response confirmation email data on response with ID : {response_id}'.format(response_id=response.id))
 
         try:
-            question_answer_summary = strings.build_response_email_body(answers, user.user_primaryLanguage, application_form)
-
-            if event.has_specific_translation(user.user_primaryLanguage):
-                event_description = event.get_description(user.user_primaryLanguage)
-            else:
-                event_description = event.get_description('en')
+            language = user_language_for_event(user, event)
+            question_answer_summary = strings.build_response_email_body(answers, language, application_form)
+            event_description = event.get_description(language)
 
             emailer.email_user(
                 'confirmation-response-call' if event.event_type == EventType.CALL else 'confirmation-response',
@@ -340,7 +336,7 @@ def _serialize_answer(answer, language):
     translation = question.get_translation(language)
     if translation is None:
         LOGGER.warn('No {} translation found for question id {}'.format(language, question.id))
-        translation = question.get_translation('en')
+        translation = translation_for(question, 'en')
 
     return {
         'question_id': answer.question_id,
@@ -354,7 +350,7 @@ def _serialize_tag(tag, language):
     translation = tag.get_translation(language)
     if translation is None:
         LOGGER.warn('Could not find {} translation for tag id {}'.format(language, tag.id))
-        translation = tag.get_translation('en')
+        translation = translation_for(tag, 'en')
     return {
         'id': tag.id,
         'event_id': tag.event_id,
@@ -523,7 +519,7 @@ class ResponseDetailAPI(restful.Resource):
         translation = tag.get_translation(language)
         if translation is None:
             LOGGER.warn('Could not find {} translation for tag id {}'.format(language, tag.id))
-            translation = tag.get_translation('en')
+            translation = translation_for(tag, 'en')
         return {
             'id': tag.id,
             'event_id': tag.event_id,

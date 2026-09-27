@@ -1,6 +1,7 @@
 from app import db
 from enum import Enum
 from app import LOGGER
+from app.utils.language import translation_for
 
 class TagType(Enum):
     RESPONSE = 'response'
@@ -21,6 +22,7 @@ class Tag(db.Model):
     active = db.Column(db.Boolean(), nullable=False, default=True)
 
     translations = db.relationship('TagTranslation', lazy='selectin')
+    event = db.relationship('Event', foreign_keys=[event_id])
 
     def __init__(
             self, 
@@ -47,14 +49,14 @@ class Tag(db.Model):
         translation = self.get_translation(language)
         if translation is None:
             LOGGER.warn('Could not find {} translation for tag id {}'.format(language, self.id))
-            translation = self.get_translation('en')
+            translation = translation_for(self, 'en')
         return '{}: {}'.format(translation.name, translation.description)
 
     def stringify_tag_name(self, language='en'):
         translation = self.get_translation(language)
         if translation is None:
             LOGGER.warn('Could not find {} translation for tag id {}'.format(language, self.id))
-            translation = self.get_translation('en')
+            translation = translation_for(self, 'en')
         return '{}'.format(translation.name)
 
 class TagTranslation(db.Model):

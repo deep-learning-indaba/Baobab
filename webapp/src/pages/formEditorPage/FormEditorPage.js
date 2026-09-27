@@ -1,15 +1,19 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Redirect } from 'react-router-dom';
 import { FormEditor } from '../formEditor';
 import { formServices } from '../../services/form';
 import Loading from '../../components/Loading';
+import { getEventLanguages } from '../../utils/eventLanguages';
 
 const FormEditorPage = (props) => {
   const { t } = useTranslation();
   const routeFormId = props.match && props.match.params ? props.match.params.formId : null;
   const eventId = props.event ? props.event.id : null;
-  const languages = props.organisation ? props.organisation.languages || [] : [];
+  const languages = useMemo(
+    () => getEventLanguages(props.event, props.organisation),
+    [props.event, props.organisation]
+  );
 
   const [loading, setLoading] = useState(!!routeFormId);
   const [error, setError] = useState(null);

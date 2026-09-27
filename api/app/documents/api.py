@@ -40,6 +40,7 @@ from app.documents.derived_placeholders import find_cycle
 from app.documents.recipients import resolve_recipient_user_ids
 from app.documents.worker import run_bulk_generation
 from app.outbox.api import is_scheduler_request
+from app.utils.language import translation_for
 
 
 # ---------------------------------------------------------------------------
@@ -47,7 +48,7 @@ from app.outbox.api import is_scheduler_request
 # ---------------------------------------------------------------------------
 
 def serialize_template(document_template, language='en'):
-    translation = document_template.get_translation(language) or document_template.get_translation('en')
+    translation = document_template.get_translation(language) or translation_for(document_template, 'en')
     return {
         'id': document_template.id,
         'event_id': document_template.event_id,
@@ -94,8 +95,8 @@ def serialize_variant(variant):
 
 
 def serialize_form_link(link, language='en'):
-    translation = link.get_translation(language) or link.get_translation('en')
-    form_translation = link.form.get_translation(language) or link.form.get_translation('en')
+    translation = link.get_translation(language) or translation_for(link, 'en')
+    form_translation = link.form.get_translation(language) or translation_for(link.form, 'en')
     return {
         'id': link.id,
         'form_id': link.form_id,
@@ -1234,7 +1235,7 @@ class DocumentAvailableAPI(restful.Resource):
             if not is_eligible(template, context):
                 continue
 
-            translation = template.get_translation(language) or template.get_translation('en')
+            translation = template.get_translation(language) or translation_for(template, 'en')
             blockers, prompts = evaluate_form_requirements(template, user, language)
 
             previous = (

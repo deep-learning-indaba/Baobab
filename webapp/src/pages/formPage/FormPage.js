@@ -4,6 +4,7 @@ import FormRenderer from '../formRenderer/FormRenderer';
 import { formServices } from '../../services/form';
 import { formResponseService } from '../../services/formResponse';
 import history from '../../History';
+import { resolveContentLanguage } from '../../utils/eventLanguages';
 
 /**
  * FormPage - Main page for responding to forms
@@ -12,6 +13,7 @@ import history from '../../History';
 const FormPage = (props) => {
   const formId = props.match.params.formId;
   const { t, i18n } = useTranslation();
+  const contentLanguage = resolveContentLanguage(props.event, i18n.language);
 
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(null);
@@ -204,7 +206,7 @@ const FormPage = (props) => {
     currentResponse && currentResponse.is_submitted && !formAllowsEdits
   );
   const formName = form && form.name
-    ? (form.name[i18n.language] || form.name.en || Object.values(form.name)[0] || '')
+    ? (form.name[contentLanguage] || form.name.en || Object.values(form.name)[0] || '')
     : '';
 
   // Handle cancel
@@ -420,7 +422,7 @@ const FormPage = (props) => {
         <FormRenderer
           form={form}
           response={currentResponse}
-          language={i18n.language}
+          language={contentLanguage}
           onSubmit={handleSubmit}
           onSave={handleSave}
           onCancel={handleCancel}

@@ -34,6 +34,7 @@ from app.registration.models import RegistrationForm
 from app.reviews.models import ReviewForm, ReviewerTag
 from app.events.models import EventRole
 from app.tags.repository import TagRepository as tag_repository
+from app.utils.language import translation_for
 
 
 def serialize_form(form, language='en', include_inactive=False):
@@ -272,7 +273,7 @@ def serialize_response(response):
 
     tags_data = []
     for rt in response.response_tags:
-        tag_translation = rt.tag.get_translation('en')
+        tag_translation = translation_for(rt.tag, 'en')
         tags_data.append({
             'id': rt.tag_id,
             'name': tag_translation.name if tag_translation else ''
@@ -883,7 +884,7 @@ class FormResponseAPI(restful.Resource):
                     }, 400
 
             # Create new response
-            language = args.get('language', 'en')
+            language = form.event.resolve_language(args.get('language'))
             response = FormResponse(
                 form_id=form_id,
                 user_id=user_id,
@@ -1521,7 +1522,7 @@ class FormResponseExportAPI(restful.Resource):
             if export_format not in ('csv', 'sheets'):
                 return errors.INVALID_EXPORT_FORMAT
 
-            language = request.args.get('language', 'en')
+            language = form.event.resolve_language(request.args.get('language'))
 
             rows = _filtered_admin_response_query(form_id, request.args).all()
             response_ids = [response.id for response, _ in rows]
@@ -1669,7 +1670,7 @@ class EventFormConfigAPI(restful.Resource):
                 response_count = db.session.query(FormResponse).filter_by(
                     form_id=new_app_form.id, is_submitted=True
                 ).count()
-                name_trans = new_app_form.get_translation('en')
+                name_trans = translation_for(new_app_form, 'en')
                 application_data = {
                     'system': 'new',
                     'form_id': new_app_form.id,
@@ -1704,7 +1705,7 @@ class EventFormConfigAPI(restful.Resource):
                     completed_assignments = db.session.query(FormResponse).filter_by(
                         form_id=review_form.id, is_submitted=True
                     ).count()
-                    name_trans = review_form.get_translation('en')
+                    name_trans = translation_for(review_form, 'en')
                     stages_data.append({
                         'stage': review_form.stage,
                         'form_id': review_form.id,
@@ -1738,7 +1739,7 @@ class EventFormConfigAPI(restful.Resource):
                 response_count = db.session.query(FormResponse).filter_by(
                     form_id=new_reg_form.id, is_submitted=True
                 ).count()
-                name_trans = new_reg_form.get_translation('en')
+                name_trans = translation_for(new_reg_form, 'en')
                 registration_data = {
                     'system': 'new',
                     'form_id': new_reg_form.id,
@@ -1765,7 +1766,7 @@ class EventFormConfigAPI(restful.Resource):
 
             generic_forms_data = []
             for gf in generic_forms:
-                name_trans = gf.get_translation('en')
+                name_trans = translation_for(gf, 'en')
                 response_count = db.session.query(FormResponse).filter_by(
                     form_id=gf.id
                 ).count()
@@ -1784,7 +1785,7 @@ class EventFormConfigAPI(restful.Resource):
                 if event.survey_form_id:
                     survey_form = db.session.query(Form).filter_by(id=event.survey_form_id).first()
                     if survey_form:
-                        name_trans = survey_form.get_translation('en')
+                        name_trans = translation_for(survey_form, 'en')
                         survey_form_name = name_trans.name if name_trans else None
                 survey_data = {
                     'form_id': event.survey_form_id,
@@ -1897,7 +1898,7 @@ class FormReviewAssignmentAPI(restful.Resource):
                         continue
                     translation = rt.tag.get_translation(language)
                     if translation is None:
-                        translation = rt.tag.get_translation('en')
+                        translation = translation_for(rt.tag, 'en')
                     result.append({
                         'id': rt.tag_id,
                         'name': translation.name if translation else '',
@@ -2160,7 +2161,7 @@ class FormResponseTagAPI(restful.Resource):
             db.session.add(frt)
             db.session.commit()
 
-            translation = tag.get_translation('en')
+            translation = translation_for(tag, 'en')
             return {
                 'id': frt.id,
                 'form_response_id': frt.form_response_id,

@@ -7,6 +7,7 @@ from typing import Tuple, Optional
 
 from app import db, LOGGER
 from app.utils import misc
+from app.utils.language import translation_for
 
 
 class DependencyOperator(str, enum.Enum):
@@ -694,7 +695,7 @@ class FormAnswer(db.Model):
         """Validate answer against question rules."""
         question = self.question
         settings = question.settings or {}
-        translation = question.get_translation(language)
+        translation = translation_for(question, language)
 
         if question.type in DISPLAY_ONLY_QUESTION_TYPES:
             return True, None

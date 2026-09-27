@@ -7,6 +7,7 @@ import FormTextArea from "../../../components/form/FormTextArea";
 import FormSelect from "../../../components/form/FormSelect";
 import ReactTable from 'react-table';
 import { ConfirmModal } from "../../../components/Modal";
+import { getEventLanguages } from "../../../utils/eventLanguages";
 
 //TODO test multilingual language
 
@@ -23,7 +24,7 @@ class TagConfigComponent extends Component {
         active: true
       },
       tag_types: [],
-      isMultiLingual: this.props.organisation.languages.length > 1,
+      isMultiLingual: getEventLanguages(this.props.event, this.props.organisation).length > 1,
       isValid: false,
       loading: false,
       error: "",
@@ -166,7 +167,7 @@ class TagConfigComponent extends Component {
 
   validateTagDetails = () => {
     let errors = [];
-    this.props.organisation.languages.forEach(lang => {
+    getEventLanguages(this.props.event, this.props.organisation).forEach(lang => {
       if (!this.state.updatedTag.name || !this.state.updatedTag.name[lang.code] || this.state.updatedTag.name[lang.code].trim().length === 0) {
         const error_text = (this.state.isMultiLingual ? this.getFieldNameWithLanguage("Tag name", lang.description) : "Tag name") + " is required"
         errors.push(this.props.t(error_text));
@@ -252,7 +253,7 @@ class TagConfigComponent extends Component {
           />
         </div>
 
-        {this.props.organisation.languages.map((lang) => (
+        {getEventLanguages(this.props.event, this.props.organisation).map((lang) => (
           <div className="space-y-2" key={"name_div"+lang.code}>
             <label
               className="block text-sm font-semibold text-foreground/90"
@@ -272,7 +273,7 @@ class TagConfigComponent extends Component {
           </div>
         ))}
 
-        {this.props.organisation.languages.map((lang) => (
+        {getEventLanguages(this.props.event, this.props.organisation).map((lang) => (
           <div className="space-y-2" key={"description_div"+lang.code}>
             <label
               className="block text-sm font-semibold text-foreground/90"

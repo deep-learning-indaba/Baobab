@@ -8,6 +8,7 @@ import VariantsTab from './components/VariantsTab';
 import FormsTab from './components/FormsTab';
 import PlaceholdersTab from './components/PlaceholdersTab';
 import GenerateTab from './components/GenerateTab';
+import { getEventLanguages } from '../../utils/eventLanguages';
 
 const TABS = [
   { key: 'details', label: 'Details' },
@@ -31,13 +32,10 @@ const DocumentTemplateEditor = (props) => {
   const [tags, setTags] = useState([]);
   const [autoTranslateEnabled, setAutoTranslateEnabled] = useState(true);
 
-  const orgLanguages = (props.organisation && props.organisation.languages) || [];
   // TranslatableFieldGroup treats languages[0] as the source language for
-  // auto-translate, so English has to lead even if the organisation's own
-  // list happens to order it differently.
-  const languages = orgLanguages.length
-    ? [...orgLanguages].sort((a, b) => (a.code === 'en' ? -1 : b.code === 'en' ? 1 : 0))
-    : [{ code: 'en', description: 'English' }];
+  // auto-translate, so the event's primary language leads.
+  const eventLanguages = getEventLanguages(props.event, props.organisation);
+  const languages = eventLanguages.length ? eventLanguages : [{ code: 'en', description: 'English' }];
 
   const load = useCallback(() => {
     if (isNew || !template) return;

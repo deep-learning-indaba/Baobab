@@ -6,6 +6,7 @@ import { formatInEventTz } from '../../utils/datetime';
 import MarkdownRenderer from '../../components/MarkdownRenderer';
 import TranslatableFieldGroup from '../formEditor/components/TranslatableFieldGroup';
 import FormSelect from '../../components/form/FormSelect';
+import { getEventLanguages } from '../../utils/eventLanguages';
 
 var TABS = { COMPOSE: 'compose', DASHBOARD: 'dashboard' };
 var DEFAULT_LANGUAGES = [{ code: 'en', description: 'English' }];
@@ -98,7 +99,8 @@ class AnnouncementsAdmin extends Component {
   }
 
   getLanguages() {
-    return (this.props.organisation && this.props.organisation.languages) || DEFAULT_LANGUAGES;
+    var languages = getEventLanguages(this.props.event, this.props.organisation);
+    return languages.length ? languages : DEFAULT_LANGUAGES;
   }
 
   getPrimaryLanguage() {
