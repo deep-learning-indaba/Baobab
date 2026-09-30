@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date, time
 import flask_restful as restful
 from app.offer.mixins import OfferTagMixin, OfferMixin
 from app.utils.auth import verify_token
@@ -7,6 +7,7 @@ from flask import g, request
 from flask_restful import  fields, marshal_with, reqparse
 from sqlalchemy.exc import SQLAlchemyError
 from app.events.models import Event
+from app.forms.models import Form, FormResponse
 from app.tags.models import Tag, TagType
 from app.offer.models import Offer, OfferTag
 from app.users.models import AppUser
@@ -53,6 +54,33 @@ def offer_info(offer_entity, requested_travel=None):
     }
 
 
+def validate_offer_tags(event_id, grant_tags, note_tags):
+    """Returns (grant tags, note tags, error). Error is None when every tag is valid for the event."""
+    validated_grant_tags = []
+    for gi in grant_tags:
+        existing_tag = db.session.query(Tag).get(gi['id'])
+        if not existing_tag or existing_tag.event_id != event_id:
+            return None, None, errors.TAG_NOT_FOUND
+        if existing_tag.tag_type != TagType.GRANT:
+            return None, None, errors.TAG_NOT_TYPE_GRANT
+        if not existing_tag.active:
+            return None, None, errors.TAG_NOT_ACTIVE
+        validated_grant_tags.append(existing_tag)
+
+    validated_note_tags = []
+    for nt in note_tags:
+        existing_tag = db.session.query(Tag).get(nt['id'])
+        if not existing_tag or existing_tag.event_id != event_id:
+            return None, None, errors.TAG_NOT_FOUND
+        if existing_tag.tag_type != TagType.OFFER_NOTE:
+            return None, None, errors.TAG_NOT_TYPE_OFFER_NOTE
+        if not existing_tag.active:
+            return None, None, errors.TAG_NOT_ACTIVE
+        validated_note_tags.append(existing_tag)
+
+    return validated_grant_tags, validated_note_tags, None
+
+
 def confirm_offer_payment(offer: Offer):
     try:
         email_user(
@@ -67,6 +95,24 @@ def confirm_offer_payment(offer: Offer):
     except Exception as e:
         LOGGER.error(
             'Error occured while sending email to {}: {}'.format(offer.user.email, e))
+        return False
+
+
+def notify_offer_reset(offer: Offer):
+    try:
+        email_user(
+            'offer-reset',
+            event=offer.event,
+            user=offer.user,
+            template_parameters=dict(
+                host=offer.event.organisation.system_url,
+                event_key=offer.event.key,
+                event_email_from=offer.event.email_from,
+                expiry_date=offer.expiry_date.strftime("%Y-%m-%d")))
+        return True
+    except Exception as e:
+        LOGGER.error(
+            'Error occured while sending offer reset email to {}: {}'.format(offer.user.email, e))
         return False
 
 
@@ -177,29 +223,9 @@ class OfferAPI(OfferMixin, restful.Resource):
             if not event_fee:
                 return errors.EVENT_FEE_NOT_FOUND
 
-        validated_grant_tags = []
-        for gi in grant_tags:
-            tag_id = gi['id']
-            existing_tag = db.session.query(Tag).get(tag_id)
-            if not existing_tag or existing_tag.event_id != event_id:
-                return errors.TAG_NOT_FOUND
-            if existing_tag.tag_type != TagType.GRANT:
-                return errors.TAG_NOT_TYPE_GRANT
-            if not existing_tag.active:
-                return errors.TAG_NOT_ACTIVE
-            validated_grant_tags.append(existing_tag)
-
-        validated_note_tags = []
-        for nt in note_tags:
-            tag_id = nt['id']
-            existing_tag = db.session.query(Tag).get(tag_id)
-            if not existing_tag or existing_tag.event_id != event_id:
-                return errors.TAG_NOT_FOUND
-            if existing_tag.tag_type != TagType.OFFER_NOTE:
-                return errors.TAG_NOT_TYPE_OFFER_NOTE
-            if not existing_tag.active:
-                return errors.TAG_NOT_ACTIVE
-            validated_note_tags.append(existing_tag)
+        validated_grant_tags, validated_note_tags, tag_error = validate_offer_tags(event_id, grant_tags, note_tags)
+        if tag_error:
+            return tag_error
 
         new_outcome = Outcome(
             event_id,
@@ -341,21 +367,154 @@ class OfferListAPI(restful.Resource):
         return [offer_info(offer) for offer in offers], 200
     
 
+def _parse_expiry_date(value):
+    expiry_date = datetime.strptime(value, '%Y-%m-%d')
+    return expiry_date.replace(hour=23, minute=59, second=59)
+
+
 class OfferAdminAPI(restful.Resource):
 
     @event_admin_required
     def put(self, event_id):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('id', type=int, required=True)
-        req_parser.add_argument('expiry_date', type=str, required=True)
+        req_parser.add_argument('expiry_date', type=str, required=False)
+        req_parser.add_argument('grant_tags', type=list, location='json', required=False, default=None)
+        req_parser.add_argument('note_tags', type=list, location='json', required=False, default=None)
         args = req_parser.parse_args()
 
         offer = offer_repository.get_by_id(args['id'])
-        if offer.event_id != event_id:
+        if not offer or offer.event_id != event_id:
             return errors.OFFER_NOT_FOUND
-        
-        expiry_date = datetime.strptime(args['expiry_date'], '%Y-%m-%d')
-        expiry_date = expiry_date.replace(hour=23, minute=59, second=59)
-        offer.update_expiry_date(expiry_date)
+
+        grant_tags = args['grant_tags']
+        note_tags = args['note_tags']
+        if grant_tags is not None or note_tags is not None:
+            error = self._sync_tags(offer, grant_tags, note_tags)
+            if error:
+                db.session.rollback()
+                return error
+
+        if args['expiry_date']:
+            offer.update_expiry_date(_parse_expiry_date(args['expiry_date']))
+
         db.session.commit()
         return offer_info(offer), 200
+
+    @staticmethod
+    def _sync_tags(offer, grant_tags, note_tags):
+        """Makes the offer's tags of each supplied type match the request. A list that is
+        omitted (None) leaves that tag type untouched. Retained tags keep their accepted flag."""
+        current_grant_ids = {ot.tag_id for ot in offer.offer_tags if ot.tag.tag_type == TagType.GRANT}
+        current_note_ids = {ot.tag_id for ot in offer.offer_tags if ot.tag.tag_type == TagType.OFFER_NOTE}
+
+        added_grants = [t for t in (grant_tags or []) if t['id'] not in current_grant_ids]
+        added_notes = [t for t in (note_tags or []) if t['id'] not in current_note_ids]
+        _, _, error = validate_offer_tags(offer.event_id, added_grants, added_notes)
+        if error:
+            return error
+
+        wanted = {}
+        if grant_tags is not None:
+            wanted[TagType.GRANT] = ({t['id'] for t in grant_tags}, current_grant_ids)
+        if note_tags is not None:
+            wanted[TagType.OFFER_NOTE] = ({t['id'] for t in note_tags}, current_note_ids)
+
+        # Inactive tags are not shown to admins, so they are never removed implicitly.
+        for tag_type, (wanted_ids, current_ids) in wanted.items():
+            for offer_tag in list(offer.offer_tags):
+                if (offer_tag.tag.tag_type == tag_type and offer_tag.tag.active
+                        and offer_tag.tag_id not in wanted_ids):
+                    db.session.delete(offer_tag)
+            for tag_id in wanted_ids - current_ids:
+                db.session.add(OfferTag(offer_id=offer.id, tag_id=tag_id, accepted=None))
+        db.session.flush()
+        db.session.refresh(offer)
+        return None
+
+
+class OfferResetAPI(restful.Resource):
+
+    @event_admin_required
+    def post(self, event_id):
+        """Returns a rejected offer to the state it had before the candidate responded, so
+        that they can accept or reject it again."""
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('id', type=int, required=True)
+        req_parser.add_argument('expiry_date', type=str, required=False)
+        args = req_parser.parse_args()
+
+        offer = offer_repository.get_by_id(args['id'])
+        if not offer or offer.event_id != event_id:
+            return errors.OFFER_NOT_FOUND
+
+        if offer.candidate_response is not False:
+            return errors.OFFER_NOT_REJECTED
+
+        if any(invoice.is_paid for invoice in offer.get_valid_invoices()):
+            return errors.OFFER_HAS_PAID_INVOICE
+
+        if args['expiry_date']:
+            offer.update_expiry_date(_parse_expiry_date(args['expiry_date']))
+        elif offer.expiry_date < datetime.combine(date.today(), time()):
+            return errors.OFFER_EXPIRY_DATE_REQUIRED
+
+        offer.candidate_response = None
+        offer.rejected_reason = None
+        offer.responded_at = None
+        for offer_tag in offer.offer_tags:
+            offer_tag.accepted = None
+
+        db.session.commit()
+
+        result = offer_info(offer)
+        result['email_sent'] = notify_offer_reset(offer)
+        return result, 200
+
+
+def _submitted_applicants(event_id):
+    """Users with a submitted, non-withdrawn application. An event with a new-system application
+    form takes its applicants only from that form; otherwise the legacy application form is used."""
+    new_app_form = db.session.query(Form).filter_by(event_id=event_id, form_type='application').first()
+    if new_app_form:
+        form_responses = db.session.query(FormResponse).filter_by(
+            form_id=new_app_form.id, is_submitted=True, is_withdrawn=False).all()
+        return [r.user for r in form_responses]
+
+    responses = response_repository.get_all_for_event(event_id, submitted_only=True, page=1, per_page=100000).items
+    return [r.user for r in responses if not r.is_withdrawn]
+
+
+class OfferCandidatesAPI(restful.Resource):
+
+    @event_admin_required
+    def get(self, event_id):
+        """Applicants who can be given an offer (submitted application, no offer yet, not
+        rejected) along with the event fees that a paid offer can use."""
+        users_with_offers = {o.user_id for o in offer_repository.get_all_offers_for_event(event_id)}
+
+        candidates = []
+        seen = set()
+        for user in _submitted_applicants(event_id):
+            if user.id in users_with_offers or user.id in seen:
+                continue
+            outcome = outcome_repository.get_latest_by_user_for_event(user.id, event_id)
+            if outcome and outcome.status == Status.REJECTED:
+                continue
+            seen.add(user.id)
+            candidates.append({
+                'user_id': user.id,
+                'user_title': user.user_title,
+                'firstname': user.firstname,
+                'lastname': user.lastname,
+                'email': user.email
+            })
+
+        fees = [{
+            'id': fee.id,
+            'name': fee.name,
+            'amount': float(fee.amount),
+            'iso_currency_code': fee.iso_currency_code
+        } for fee in event_repository.get_event_fees(event_id)]
+
+        return {'candidates': candidates, 'event_fees': fees}, 200

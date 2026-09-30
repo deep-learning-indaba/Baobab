@@ -166,6 +166,8 @@ rest_api.add_resource(reporting_api.ReviewReportAPI, '/api/v1/reporting/reviews'
 rest_api.add_resource(reporting_api.RegistrationsReportAPI, '/api/v1/reporting/registrations')
 rest_api.add_resource(reviews_api.ReviewerTagAPI, '/api/v1/reviewertag')
 rest_api.add_resource(offer_api.OfferAdminAPI, '/api/v1/offerAdmin')
+rest_api.add_resource(offer_api.OfferResetAPI, '/api/v1/offerReset')
+rest_api.add_resource(offer_api.OfferCandidatesAPI, '/api/v1/offerCandidates')
 rest_api.add_resource(events_api.EventRoleAPI, '/api/v1/event-roles')
 rest_api.add_resource(events_api.EventResourceLinkAPI, '/api/v1/event-resource-links')
 rest_api.add_resource(invitation_letter_api.InvitationLetterAvailableAPI, '/api/v1/invitation-letter/available')

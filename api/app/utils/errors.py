@@ -89,6 +89,12 @@ APPLICATIONS_CLOSED = (
     {'message': 'Applications are now closed'}, 403)
 DUPLICATE_OFFER = (
     {'message': 'An offer already exists for the user_id and event_id'}, 409)
+OFFER_NOT_REJECTED = (
+    {'message': 'Only a rejected offer can be reset'}, 409)
+OFFER_HAS_PAID_INVOICE = (
+    {'message': 'This offer has a paid invoice and cannot be reset'}, 409)
+OFFER_EXPIRY_DATE_REQUIRED = (
+    {'message': 'A new expiry date is required because the current one has passed'}, 400)
 CREATING_INVITATION_FAILED = (
     {'message': 'Invitation Letter creation failed'}, 502)
 SENDING_INVITATION_FAILED = (

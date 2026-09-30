@@ -3,10 +3,11 @@ from datetime import datetime, timedelta
 from app import db, LOGGER
 from app.utils.testing import ApiTestCase
 from app.users.models import UserCategory, Country
-from app.offer.models import Offer
+from app.offer.models import Offer, OfferTag
+from app.forms.models import Form, FormResponse
 from app.offer.repository import OfferRepository as offer_repository
 from app.outcome.repository import OutcomeRepository as outcome_repository
-from app.outcome.models import Status
+from app.outcome.models import Outcome, Status
 import mock
 
 OFFER_DATA = {
@@ -493,3 +494,263 @@ class OfferTagAPITest(ApiTestCase):
             json=params)
 
         self.assertEqual(response.status_code, 403)
+
+class OfferAdminApiTest(ApiTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.admin = self.add_user('offer_admin@ea.com', 'event_admin', is_admin=True)
+        self.admin_id = self.admin.id
+        self.candidate_id = self.add_user('candidate@email.com').id
+        self.other_candidate_id = self.add_user('other@email.com').id
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
+        db.session.add(UserCategory('Offer Category'))
+        db.session.add(Country('Suid Afrika'))
+        db.session.commit()
+
+        event = self.add_event(key='SPEEDNET')
+        self.event_id = event.id
+        app_form = self.create_application_form()
+        self.add_response(app_form.id, self.candidate_id, True, False)
+        self.add_response(app_form.id, self.other_candidate_id, True, False)
+
+        self.grant_tag_id = self.add_tag(event_id=self.event_id, tag_type='GRANT').id
+        self.grant_tag2_id = self.add_tag(event_id=self.event_id, tag_type='GRANT').id
+        self.note_tag_id = self.add_tag(event_id=self.event_id, tag_type='OFFER_NOTE').id
+        self.response_tag_id = self.add_tag(event_id=self.event_id, tag_type='RESPONSE').id
+
+        self.add_email_template('offer-reset', template='Reset until {expiry_date} {host}/{event_key}/offer {event_email_from}')
+        self.headers = self.get_auth_header_for('offer_admin@ea.com')
+
+    def get_auth_header_for(self, email):
+        response = self.app.post('api/v1/authenticate', data={'email': email, 'password': 'abc'})
+        return {'Authorization': json.loads(response.data)['token']}
+
+    def _make_offer(self, **kwargs):
+        offer = self.add_offer(self.candidate_id, event_id=self.event_id, **kwargs)
+        return offer.id
+
+    def _put(self, body):
+        body = dict(body, event_id=self.event_id)
+        return self.app.put('/api/v1/offerAdmin', data=json.dumps(body),
+                            headers=self.headers, content_type='application/json')
+
+    def _reset(self, body):
+        body = dict(body, event_id=self.event_id)
+        return self.app.post('/api/v1/offerReset', data=json.dumps(body),
+                             headers=self.headers, content_type='application/json')
+
+    def _tag_ids(self, offer_id):
+        return {ot.tag_id for ot in offer_repository.get_by_id(offer_id).offer_tags}
+
+    def test_edit_expiry_date_only_leaves_tags(self):
+        offer_id = self._make_offer()
+        db.session.add(OfferTag(offer_id, self.grant_tag_id))
+        db.session.commit()
+
+        response = self._put({'id': offer_id, 'expiry_date': '2031-05-04'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.data)['expiry_date'], '2031-05-04')
+        self.assertEqual(self._tag_ids(offer_id), {self.grant_tag_id})
+
+    def test_edit_adds_and_removes_tags(self):
+        offer_id = self._make_offer()
+        db.session.add(OfferTag(offer_id, self.grant_tag_id))
+        db.session.add(OfferTag(offer_id, self.note_tag_id))
+        db.session.commit()
+
+        response = self._put({
+            'id': offer_id,
+            'grant_tags': [{'id': self.grant_tag2_id}],
+            'note_tags': []})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self._tag_ids(offer_id), {self.grant_tag2_id})
+        self.assertEqual([t['id'] for t in json.loads(response.data)['tags']], [self.grant_tag2_id])
+
+    def test_edit_omitted_tag_type_is_untouched(self):
+        offer_id = self._make_offer()
+        db.session.add(OfferTag(offer_id, self.grant_tag_id))
+        db.session.add(OfferTag(offer_id, self.note_tag_id))
+        db.session.commit()
+
+        response = self._put({'id': offer_id, 'grant_tags': []})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self._tag_ids(offer_id), {self.note_tag_id})
+
+    def test_edit_keeps_accepted_flag_of_retained_tags(self):
+        offer_id = self._make_offer()
+        db.session.add(OfferTag(offer_id, self.grant_tag_id, accepted=True))
+        db.session.commit()
+
+        self._put({'id': offer_id, 'grant_tags': [{'id': self.grant_tag_id}, {'id': self.grant_tag2_id}]})
+
+        accepted = {ot.tag_id: ot.accepted for ot in offer_repository.get_by_id(offer_id).offer_tags}
+        self.assertEqual(accepted, {self.grant_tag_id: True, self.grant_tag2_id: None})
+
+    def test_edit_rejects_tag_of_wrong_type(self):
+        offer_id = self._make_offer()
+
+        response = self._put({'id': offer_id, 'grant_tags': [{'id': self.note_tag_id}]})
+
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(self._tag_ids(offer_id), set())
+
+    def test_edit_rejects_tag_from_another_event(self):
+        offer_id = self._make_offer()
+        other_event = self.add_event(key='OTHER')
+        foreign_tag_id = self.add_tag(event_id=other_event.id, tag_type='GRANT').id
+
+        response = self._put({'id': offer_id, 'grant_tags': [{'id': foreign_tag_id}]})
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_edit_keeps_already_attached_inactive_tag(self):
+        offer_id = self._make_offer()
+        inactive_tag_id = self.add_tag(event_id=self.event_id, tag_type='GRANT', active=False).id
+        db.session.add(OfferTag(offer_id, inactive_tag_id))
+        db.session.commit()
+
+        response = self._put({'id': offer_id, 'grant_tags': [{'id': self.grant_tag_id}]})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self._tag_ids(offer_id), {inactive_tag_id, self.grant_tag_id})
+
+    def test_edit_offer_from_another_event_not_found(self):
+        other_event = self.add_event(key='OTHER')
+        offer_id = self.add_offer(self.candidate_id, event_id=other_event.id).id
+
+        response = self._put({'id': offer_id, 'expiry_date': '2031-05-04'})
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_reset_rejected_offer(self):
+        offer_id = self._make_offer(candidate_response=False)
+        offer = offer_repository.get_by_id(offer_id)
+        offer.rejected_reason = 'Cannot travel'
+        offer.responded_at = datetime.now()
+        db.session.add(OfferTag(offer_id, self.grant_tag_id, accepted=False))
+        db.session.commit()
+
+        response = self._reset({'id': offer_id})
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(data['candidate_response'])
+        self.assertIsNone(data['rejected_reason'])
+        self.assertIsNone(data['responded_at'])
+        self.assertIsNone(data['tags'][0]['accepted'])
+
+    def test_reset_sends_email_to_candidate(self):
+        offer_id = self._make_offer(candidate_response=False)
+
+        with mock.patch('app.utils.emailer.send_mail') as send_mail:
+            response = self._reset({'id': offer_id})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(json.loads(response.data)['email_sent'])
+        send_mail.assert_called_once()
+        self.assertEqual(send_mail.call_args.kwargs['recipient'], 'candidate@email.com')
+        self.assertIn('/offer', send_mail.call_args.kwargs['body_text'])
+
+    def test_reset_succeeds_when_email_fails(self):
+        offer_id = self._make_offer(candidate_response=False)
+
+        with mock.patch('app.utils.emailer.send_mail', side_effect=Exception('smtp down')):
+            response = self._reset({'id': offer_id})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(json.loads(response.data)['email_sent'])
+        self.assertIsNone(offer_repository.get_by_id(offer_id).candidate_response)
+
+    def test_reset_with_new_expiry_date(self):
+        offer_id = self._make_offer(candidate_response=False, expiry_date=datetime.now() - timedelta(days=3))
+
+        response = self._reset({'id': offer_id, 'expiry_date': '2031-05-04'})
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data['expiry_date'], '2031-05-04')
+        self.assertFalse(data['is_expired'])
+
+    def test_reset_expired_offer_requires_new_expiry_date(self):
+        offer_id = self._make_offer(candidate_response=False, expiry_date=datetime.now() - timedelta(days=3))
+
+        response = self._reset({'id': offer_id})
+
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(offer_repository.get_by_id(offer_id).candidate_response is None)
+
+    def test_reset_only_allowed_for_rejected_offers(self):
+        pending_id = self._make_offer()
+        accepted_id = self.add_offer(self.other_candidate_id, event_id=self.event_id, candidate_response=True).id
+
+        self.assertEqual(self._reset({'id': pending_id}).status_code, 409)
+        self.assertEqual(self._reset({'id': accepted_id}).status_code, 409)
+        self.assertTrue(offer_repository.get_by_id(accepted_id).candidate_response)
+
+    def test_reset_requires_event_admin(self):
+        offer_id = self._make_offer(candidate_response=False)
+        self.add_user('plain@email.com')
+        headers = self.get_auth_header_for('plain@email.com')
+
+        response = self.app.post('/api/v1/offerReset',
+                                 data=json.dumps({'id': offer_id, 'event_id': self.event_id}),
+                                 headers=headers, content_type='application/json')
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_candidates_excludes_users_with_offers_and_rejected(self):
+        self._make_offer()
+        response = self.app.get(f'/api/v1/offerCandidates?event_id={self.event_id}', headers=self.headers)
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([c['user_id'] for c in data['candidates']], [self.other_candidate_id])
+
+        outcome_repository.add(Outcome(self.event_id, self.other_candidate_id, Status.REJECTED, self.admin_id))
+        response = self.app.get(f'/api/v1/offerCandidates?event_id={self.event_id}', headers=self.headers)
+        self.assertEqual(json.loads(response.data)['candidates'], [])
+
+    def test_candidates_includes_event_fees(self):
+        self.add_event_fee(self.event_id, self.admin_id, amount=150)
+
+        response = self.app.get(f'/api/v1/offerCandidates?event_id={self.event_id}', headers=self.headers)
+        fees = json.loads(response.data)['event_fees']
+
+        self.assertEqual(len(fees), 1)
+        self.assertEqual(fees[0]['amount'], 150)
+
+    def _add_new_application_form(self, submitted_user_ids, withdrawn_user_ids=()):
+        form = Form(self.event_id, self.admin_id)
+        form.form_type = 'application'
+        db.session.add(form)
+        db.session.commit()
+        for user_id in list(submitted_user_ids) + list(withdrawn_user_ids):
+            response = FormResponse(form.id, user_id)
+            response.is_submitted = True
+            response.is_withdrawn = user_id in withdrawn_user_ids
+            db.session.add(response)
+        db.session.commit()
+
+    def test_candidates_come_only_from_new_form_when_event_has_one(self):
+        # The legacy responses for both candidates exist, but the new form is authoritative.
+        self._add_new_application_form([self.other_candidate_id])
+
+        response = self.app.get(f'/api/v1/offerCandidates?event_id={self.event_id}', headers=self.headers)
+
+        self.assertEqual([c['user_id'] for c in json.loads(response.data)['candidates']],
+                         [self.other_candidate_id])
+
+    def test_candidates_from_new_form_exclude_withdrawn_and_users_with_offers(self):
+        third_id = self.add_user('third@email.com').id
+        self._add_new_application_form(
+            [self.candidate_id, self.other_candidate_id], withdrawn_user_ids=[third_id])
+        self._make_offer()
+
+        response = self.app.get(f'/api/v1/offerCandidates?event_id={self.event_id}', headers=self.headers)
+
+        self.assertEqual([c['user_id'] for c in json.loads(response.data)['candidates']],
+                         [self.other_candidate_id])
