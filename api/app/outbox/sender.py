@@ -18,32 +18,43 @@ from config import OUTBOX_BATCH_SIZE, OUTBOX_TIME_BUDGET_SECONDS
 COMMIT_EVERY = 25
 
 
-@contextmanager
-def _attachment_file(payload):
-    """Downloads payload['attachment']['blob_name'] to a local tmp file for
-    the duration of the block, or yields (None, None) when there is no
-    attachment. A message is small (subject/body/blob name); the PDF itself
-    only exists in GCS until a send actually needs it, one at a time, rather
-    than every queued document sitting in local disk between enqueue and
-    delivery.
-    """
-    attachment = (payload or {}).get('attachment')
-    if not attachment:
-        yield None, None
-        return
+def _attachment_specs(payload):
+    """[{blob_name, filename, content_type}] from a message payload. Messages
+    queued before attachments became a list carry a single 'attachment'."""
+    payload = payload or {}
+    specs = list(payload.get('attachments') or [])
+    if payload.get('attachment'):
+        specs.append(payload['attachment'])
+    return specs
 
-    tmp_path = os.path.join(tempfile.gettempdir(), f'{uuid.uuid4().hex}.pdf')
+
+@contextmanager
+def _attachment_files(payload):
+    """Downloads each attachment's blob to a local tmp file for the duration of
+    the block, yielding [(filename, path, content_type)]. A message only holds
+    blob names; the files themselves stay in GCS until a send needs them."""
+    specs = _attachment_specs(payload)
+    paths = []
     try:
-        bucket = storage.get_storage_bucket()
-        bucket.blob(attachment['blob_name']).download_to_filename(tmp_path)
-        yield attachment.get('filename') or 'document.pdf', tmp_path
+        files = []
+        for spec in specs:
+            tmp_path = os.path.join(tempfile.gettempdir(), uuid.uuid4().hex)
+            paths.append(tmp_path)
+            # 'bucket' is set for files kept in their own bucket (invoices);
+            # None is the default bucket.
+            bucket = storage.get_storage_bucket(spec.get('bucket'))
+            bucket.blob(spec['blob_name']).download_to_filename(tmp_path)
+            files.append((spec.get('filename') or 'document.pdf', tmp_path,
+                          spec.get('content_type') or 'application/pdf'))
+        yield files
     finally:
-        if os.path.exists(tmp_path):
-            os.remove(tmp_path)
+        for path in paths:
+            if os.path.exists(path):
+                os.remove(path)
 
 
 def _deliver_email(message, connection):
-    with _attachment_file(message.payload) as (file_name, file_path):
+    with _attachment_files(message.payload) as attachments:
         connection.send(
             recipient=message.recipient,
             subject=message.subject or '',
@@ -51,8 +62,8 @@ def _deliver_email(message, connection):
             body_html=message.body_html or '',
             sender_name=message.sender_name,
             sender_email=message.sender_email,
-            file_name=file_name or '',
-            file_path=file_path or '',
+            attachments=attachments,
+            reply_to=message.reply_to,
         )
 
 
@@ -90,6 +101,21 @@ def _deliver_one(message, connection):
                      message.id, message.channel, e, exc_info=True)
         OutboxRepository.mark_failed(message, e)
         return 'failed'
+
+
+def deliver_now(message_ids):
+    """Deliver specific messages immediately, for an email someone is waiting
+    on (a password reset). Anything that fails stays queued with the usual
+    backoff, so the cron worker retries it. Returns {message_id: outcome}."""
+    messages = OutboxRepository.claim_ids(message_ids)
+    outcomes = {}
+    if not messages:
+        return outcomes
+    with SmtpConnection() as connection:
+        for message in messages:
+            outcomes[message.id] = _deliver_one(message, connection)
+    db.session.commit()
+    return outcomes
 
 
 def deliver_pending(batch_size=None, time_budget_seconds=None):

@@ -1,4 +1,4 @@
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 
 import json
 from app.applicationModel.repository import ApplicationFormRepository as application_form_repository
@@ -11,7 +11,8 @@ from app import LOGGER, app, db
 
 
 
-from app.utils.emailer import email_user
+from app.email_template.service import queue_email
+from app.outbox.models import OutboxMessage
 from app.utils.strings import build_response_html_answers, build_response_html_app_info
 from app.utils.testing import ApiTestCase
 from mock import patch
@@ -19,7 +20,9 @@ from mock import patch
 
 
 class EmailerTest(ApiTestCase):
-    """Test Emailer functionality."""
+    """Language and override resolution when queueing an email."""
+
+    VERIFY = {'verification': 'https://example.org/verifyEmail?token=t'}
 
     def seed_static_data(self):
         def set_language(u, language):
@@ -30,120 +33,71 @@ class EmailerTest(ApiTestCase):
         self.zulu_user = self.add_user(email='zulu@person.com', post_create_fn=partial(set_language, language='zu'))
 
         self.event = self.add_event(
-            name={'en': 'English Event Name', 'fr': 'Nom de lévénement en français'},
+            name={'en': 'English Event Name', 'fr': 'Nom de l\'événement en français'},
             description={'en': 'English Description', 'fr': 'Description en français'},
             languages=['en', 'fr']
         )
-        self.add_email_template('template1', 'English template no event {param}', subject='English subject no event')
-        self.add_email_template('template1', 'Modèle français sans événement {param}', subject='Sujet français sans événement', language='fr')
-        self.add_email_template('template1', 'English template {event_name} {param}', subject='English subject {event_name}', event_id=1)
-        self.add_email_template('template1', 'Modèle français {event_name} {param}', subject='Sujet français {event_name}', language='fr', event_id=1)
+        self.add_email_template('verify-email', 'English template no event {{ verification.url }}', subject='English subject no event')
+        self.add_email_template('verify-email', 'Modèle français sans événement', subject='Sujet français sans événement', language='fr')
+        self.add_email_template('withdrawal', 'English template {{ event.name }}', subject='English subject {{ event.name }}', event_id=1)
+        self.add_email_template('withdrawal', 'Modèle français {{ event.name }}', subject='Sujet français {{ event.name }}', language='fr', event_id=1)
 
-    @patch('app.utils.emailer.send_mail')
-    def test_email_no_event_english(self, send_mail_fn):
-        """Check email to an English user with no event."""
+    def _queued(self):
+        db.session.commit()
+        return db.session.query(OutboxMessage).order_by(OutboxMessage.id.desc()).first()
+
+    def test_email_no_event_english(self):
         self.seed_static_data()
-        
-        email_user('template1', template_parameters={'param': 'Blah'}, user=self.english_user)
+        queue_email('verify-email', self.english_user, context=self.VERIFY)
+        message = self._queued()
+        self.assertEqual(message.recipient, self.english_user.email)
+        self.assertEqual(message.subject, 'English subject no event')
+        self.assertEqual(message.body_text, 'English template no event https://example.org/verifyEmail?token=t')
+        self.assertIsNone(message.event_id)
 
-        send_mail_fn.assert_called_with(
-            recipient=self.english_user.email, 
-            subject='English subject no event', 
-            body_text='English template no event Blah', 
-            file_name='', 
-            file_path='')
-
-    @patch('app.utils.emailer.send_mail')
-    def test_salutation_with_title(self, send_mail_fn):
+    def test_salutation_with_title(self):
         self.seed_static_data()
-        self.add_email_template('greeting', 'Dear {salutation},')
+        self.add_email_template('withdrawal', 'Dear {{ recipient.salutation }},', event_id=None)
+        queue_email('withdrawal', self.english_user, event=self.add_event(key='OTHER'))
+        self.assertEqual(self._queued().body_text, 'Dear Mrs User Lastname,')
 
-        email_user('greeting', user=self.english_user)
-
-        self.assertEqual(send_mail_fn.call_args.kwargs['body_text'], 'Dear Mrs User Lastname,')
-
-    @patch('app.utils.emailer.send_mail')
-    def test_salutation_and_title_without_title(self, send_mail_fn):
+    def test_salutation_and_title_without_title(self):
         self.seed_static_data()
         self.english_user.user_title = None
         db.session.commit()
-        self.add_email_template('greeting', 'Dear {salutation}, [{title}]')
+        self.add_email_template('withdrawal', 'Dear {{ recipient.salutation }}, [{{ recipient.title }}]', event_id=None)
+        queue_email('withdrawal', self.english_user, event=self.add_event(key='OTHER'))
+        self.assertEqual(self._queued().body_text, 'Dear User Lastname, []')
 
-        email_user('greeting', user=self.english_user)
-
-        self.assertEqual(send_mail_fn.call_args.kwargs['body_text'], 'Dear User Lastname, []')
-
-    @patch('app.utils.emailer.send_mail')
-    def test_email_no_event_french(self, send_mail_fn):
-        """Check email to an French user with no event."""
+    def test_email_no_event_french(self):
         self.seed_static_data()
-        
-        email_user('template1', template_parameters={'param': 'bleu'}, user=self.french_user)
+        queue_email('verify-email', self.french_user, context=self.VERIFY)
+        message = self._queued()
+        self.assertEqual(message.subject, 'Sujet français sans événement')
+        self.assertEqual(message.body_text, 'Modèle français sans événement')
 
-        send_mail_fn.assert_called_with(
-            recipient=self.french_user.email, 
-            subject='Sujet français sans événement', 
-            body_text='Modèle français sans événement bleu', 
-            file_name='', 
-            file_path='')
-
-    @patch('app.utils.emailer.send_mail')
-    def test_email_english_default(self, send_mail_fn):
-        """Check email to use with unsupported language defaults to English."""
+    def test_email_english_default(self):
+        """A user whose language has no template gets English."""
         self.seed_static_data()
-        
-        email_user('template1', template_parameters={'param': 'Blah'}, user=self.zulu_user)
+        queue_email('verify-email', self.zulu_user, context=self.VERIFY)
+        message = self._queued()
+        self.assertEqual(message.subject, 'English subject no event')
+        self.assertEqual(message.language, 'en')
 
-        send_mail_fn.assert_called_with(
-            recipient=self.zulu_user.email, 
-            subject='English subject no event', 
-            body_text='English template no event Blah', 
-            file_name='', 
-            file_path='')
-
-    @patch('app.utils.emailer.send_mail')
-    def test_files(self, send_mail_fn):
-        """Check that file parameters are correctly passed to send_mail function."""
+    def test_email_event_english(self):
         self.seed_static_data()
-        
-        email_user('template1', template_parameters={'param': 'Blah'}, user=self.english_user, 
-                file_name='myfile.pdf', file_path='/long/way/home')
+        queue_email('withdrawal', self.english_user, event=self.event)
+        message = self._queued()
+        self.assertEqual(message.subject, 'English subject English Event Name')
+        self.assertEqual(message.body_text, 'English template English Event Name')
 
-        send_mail_fn.assert_called_with(
-            recipient=self.english_user.email, 
-            subject='English subject no event', 
-            body_text='English template no event Blah', 
-            file_name='myfile.pdf', 
-            file_path='/long/way/home')
-
-    
-    @patch('app.utils.emailer.send_mail')
-    def test_email_event_english(self, send_mail_fn):
-        """Check email to an English user with an event."""
+    def test_email_event_french(self):
         self.seed_static_data()
-        
-        email_user('template1', template_parameters={'param': 'Blah'}, user=self.english_user, event=self.event)
+        queue_email('withdrawal', self.french_user, event=self.event)
+        message = self._queued()
+        self.assertEqual(message.subject, "Sujet français Nom de l'événement en français")
+        self.assertEqual(message.body_text, "Modèle français Nom de l'événement en français")
 
-        send_mail_fn.assert_called_with(
-            recipient=self.english_user.email, 
-            subject='English subject English Event Name', 
-            body_text='English template English Event Name Blah', 
-            file_name='', 
-            file_path='')
-
-    @patch('app.utils.emailer.send_mail')
-    def test_email_event_french(self, send_mail_fn):
-        """Check email to an French user with an event."""
-        self.seed_static_data()
-        
-        email_user('template1', template_parameters={'param': 'bleu'}, user=self.french_user, event=self.event)
-
-        send_mail_fn.assert_called_with(
-            recipient=self.french_user.email, 
-            subject='Sujet français Nom de lévénement en français', 
-            body_text='Modèle français Nom de lévénement en français bleu', 
-            file_name='', 
-            file_path='')
 
 class BuildResponseHTMLTest(ApiTestCase):
     """

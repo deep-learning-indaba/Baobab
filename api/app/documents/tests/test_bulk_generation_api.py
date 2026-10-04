@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from app import db
 from app.documents.tests.test_api import DocumentApiTestCase
+from app.documents.generator import EMAIL_NOT_QUEUED_REASON
 from app.documents.models import (
     GeneratedDocument, GeneratedDocumentStatus, DocumentGenerationJob, DocumentGenerationJobStatus,
 )
@@ -40,8 +41,10 @@ class TestPreflight(DocumentApiTestCase):
         self.assertEqual(body['will_succeed_count'], 2)
         self.assertEqual(body['will_fail_count'], 0)
 
-    def test_missing_email_template_is_flagged_once_not_per_candidate(self):
+    def test_broken_email_template_is_flagged_once_not_per_candidate(self):
         self.add_offer(self.event, self.user)
+        self.add_email_template('generated-document', template='{% if %}', subject='Ready',
+                                event_id=self.event_id)
         document_template = self.make_document_template(key='certificate', delivery_mode='attachment')
         self.make_variant(document_template, placeholders={'firstname'})
 
@@ -52,11 +55,24 @@ class TestPreflight(DocumentApiTestCase):
 
         body = json.loads(resp.data)
         self.assertTrue(body['email_template_missing'])
+        self.assertTrue(body['email_template_problem'])
         self.assertEqual(body['will_succeed_count'], 1)
+
+    def test_standard_email_is_used_when_none_is_customised(self):
+        self.add_offer(self.event, self.user)
+        document_template = self.make_document_template(key='certificate', delivery_mode='attachment')
+        self.make_variant(document_template, placeholders={'firstname'})
+
+        resp = self.post_json(
+            f'/api/v1/documents/templates/{document_template.id}/generate/preflight',
+            {'recipients': {'type': 'everyone'}},
+        )
+
+        self.assertFalse(json.loads(resp.data)['email_template_missing'])
 
     def test_email_template_missing_is_false_when_delivery_is_configured(self):
         self.add_offer(self.event, self.user)
-        self.add_email_template('generated-document', template='Hi {firstname}', subject='Ready')
+        self.add_email_template('generated-document', template='Hi {{ recipient.firstname }}', subject='Ready')
         document_template = self.make_document_template(key='certificate', delivery_mode='attachment')
         self.make_variant(document_template, placeholders={'firstname'})
 
@@ -284,19 +300,22 @@ class TestResendAndRegenerate(DocumentApiTestCase):
 
         self.assertEqual(resp.status_code, 409)
 
-    def test_resend_with_no_email_template_reports_it(self):
+    def test_resend_with_broken_email_template_reports_it(self):
+        self.add_email_template('generated-document', template='{% if %}', subject='Ready',
+                                event_id=self.event_id)
         doc = self._generated_document()
         doc_id = doc.id
 
         resp = self.app.post(f'/api/v1/documents/generated/{doc_id}/resend', headers=self.headers)
 
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(json.loads(resp.data)['message'], 'No email template is configured for this document.')
+        message = json.loads(resp.data)['message']
+        self.assertTrue(message.startswith(EMAIL_NOT_QUEUED_REASON), message)
         doc = db.session.query(GeneratedDocument).filter_by(id=doc_id).first()
-        self.assertEqual(doc.email_skipped_reason, 'No email template is configured for this document.')
+        self.assertEqual(doc.email_skipped_reason, message)
 
     def test_resend_queues_a_new_outbox_message(self):
-        self.add_email_template('generated-document', template='Hi {firstname}', subject='Ready')
+        self.add_email_template('generated-document', template='Hi {{ recipient.firstname }}', subject='Ready')
         doc = self._generated_document()
         doc_id = doc.id
 
@@ -310,10 +329,10 @@ class TestResendAndRegenerate(DocumentApiTestCase):
 
     def test_resend_clears_a_previous_skip_reason_once_it_succeeds(self):
         doc = self._generated_document()
-        doc.email_skipped_reason = 'No email template is configured for this document.'
+        doc.email_skipped_reason = EMAIL_NOT_QUEUED_REASON
         db.session.commit()
         doc_id = doc.id
-        self.add_email_template('generated-document', template='Hi {firstname}', subject='Ready')
+        self.add_email_template('generated-document', template='Hi {{ recipient.firstname }}', subject='Ready')
 
         resp = self.app.post(f'/api/v1/documents/generated/{doc_id}/resend', headers=self.headers)
 

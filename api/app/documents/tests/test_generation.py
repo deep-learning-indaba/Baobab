@@ -4,7 +4,7 @@ network. Covers each GenerationError short-circuit and the happy path through
 to a stored GeneratedDocument + GCS blob."""
 from app import db
 from app.documents.tests.base import DocumentsTestCase
-from app.documents.generator import generate_document, GenerationError
+from app.documents.generator import generate_document, GenerationError, EMAIL_NOT_QUEUED_REASON
 from app.documents.models import GeneratedDocument, GeneratedDocumentStatus
 from app.documents.google_client import GoogleApiError
 from app.utils import storage
@@ -162,7 +162,7 @@ class TestGenerateDocumentEmailDelivery(DocumentsTestCase):
             source_type='document', source_id=generated_document.id).first()
 
     def test_attachment_mode_queues_an_email_with_the_pdf_attached(self):
-        self.add_email_template('generated-document', template='Hi {firstname}', subject='Your document')
+        self.add_email_template('generated-document', template='Hi {{ recipient.firstname }}', subject='Your document')
         document_template = self.make_document_template(key='invitation-letter', delivery_mode='attachment')
         self.make_variant(document_template, placeholders={'firstname'})
 
@@ -171,11 +171,13 @@ class TestGenerateDocumentEmailDelivery(DocumentsTestCase):
         message = self._outbox_message(result)
         self.assertIsNotNone(message)
         self.assertEqual(message.recipient, self.user.email)
-        self.assertEqual(message.payload['attachment']['blob_name'], result.storage_blob_name)
-        self.assertEqual(message.payload['attachment']['filename'], result.filename)
+        self.assertEqual(message.payload['attachments'][0]['blob_name'], result.storage_blob_name)
+        self.assertEqual(message.payload['attachments'][0]['filename'], result.filename)
+        self.assertEqual(message.template_key, 'generated-document')
+        self.assertIn('Hi ', message.body_text)
 
     def test_link_mode_queues_an_email_without_an_attachment(self):
-        self.add_email_template('generated-document', template='Hi {firstname}', subject='Your document')
+        self.add_email_template('generated-document', template='Hi {{ recipient.firstname }}', subject='Your document')
         document_template = self.make_document_template(key='invitation-letter', delivery_mode='link')
         self.make_variant(document_template, placeholders={'firstname'})
 
@@ -186,7 +188,7 @@ class TestGenerateDocumentEmailDelivery(DocumentsTestCase):
         self.assertIsNone(message.payload)
 
     def test_none_mode_does_not_queue_an_email(self):
-        self.add_email_template('generated-document', template='Hi {firstname}', subject='Your document')
+        self.add_email_template('generated-document', template='Hi {{ recipient.firstname }}', subject='Your document')
         document_template = self.make_document_template(key='invitation-letter', delivery_mode='none')
         self.make_variant(document_template, placeholders={'firstname'})
 
@@ -194,7 +196,8 @@ class TestGenerateDocumentEmailDelivery(DocumentsTestCase):
 
         self.assertIsNone(self._outbox_message(result))
 
-    def test_missing_email_template_is_skipped_not_fatal(self):
+    def test_broken_email_template_is_skipped_not_fatal(self):
+        self.add_email_template('generated-document', template='{% if %}', subject='S', event_id=self.event_id)
         document_template = self.make_document_template(key='invitation-letter', delivery_mode='attachment')
         self.make_variant(document_template, placeholders={'firstname'})
 
@@ -205,10 +208,10 @@ class TestGenerateDocumentEmailDelivery(DocumentsTestCase):
         # The document is still generated and downloadable, but the row must
         # say why nothing was emailed rather than looking indistinguishable
         # from a document whose email was queued successfully.
-        self.assertEqual(result.email_skipped_reason, 'No email template is configured for this document.')
+        self.assertTrue(result.email_skipped_reason.startswith(EMAIL_NOT_QUEUED_REASON))
 
     def test_successful_delivery_leaves_no_skip_reason(self):
-        self.add_email_template('generated-document', template='Hi {firstname}', subject='Your document')
+        self.add_email_template('generated-document', template='Hi {{ recipient.firstname }}', subject='Your document')
         document_template = self.make_document_template(key='invitation-letter', delivery_mode='attachment')
         self.make_variant(document_template, placeholders={'firstname'})
 
@@ -225,7 +228,7 @@ class TestGenerateDocumentEmailDelivery(DocumentsTestCase):
         self.assertIsNone(result.email_skipped_reason)
 
     def test_custom_email_template_key_is_used(self):
-        self.add_email_template('visa-letter-ready', template='Hi {firstname}', subject='Visa letter ready')
+        self.add_email_template('visa-letter-ready', template='Hi {{ recipient.firstname }}', subject='Visa letter ready')
         document_template = self.make_document_template(key='visa-letter', delivery_mode='attachment')
         document_template.email_template_key = 'visa-letter-ready'
         db.session.commit()

@@ -29,6 +29,8 @@ from .connections import api as connections_api
 from .discussion import api as discussion_api
 from .engagement import api as engagement_api
 from .outbox import api as outbox_api
+from .outbox import history as outbox_history_api
+from .email_template import api as email_template_api
 from .documents import api as documents_api
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
@@ -218,6 +220,44 @@ rest_api.add_resource(announcements_api.PushSubscriptionTestAPI, '/api/v1/push-s
 rest_api.add_resource(engagement_api.EngagementInstallAPI, '/api/v1/engagement/install')
 # Scheduled task routes — driven by App Engine cron, see api/cron.yaml
 rest_api.add_resource(outbox_api.OutboxWorkerAPI, '/api/v1/tasks/outbox')
+rest_api.add_resource(outbox_history_api.EmailRetentionWorkerAPI, '/api/v1/tasks/email-retention')
+rest_api.add_resource(outbox_history_api.UserEmailHistoryAPI,
+                      '/api/v1/events/<int:event_id>/users/<int:user_id>/emails')
+rest_api.add_resource(outbox_history_api.UserEmailDetailAPI,
+                      '/api/v1/events/<int:event_id>/users/<int:user_id>/emails/<int:message_id>')
+rest_api.add_resource(outbox_history_api.UserEmailResendAPI,
+                      '/api/v1/events/<int:event_id>/users/<int:user_id>/emails/<int:message_id>/resend')
+
+rest_api.add_resource(email_template_api.EventEmailTypeListAPI, '/api/v1/events/<int:event_id>/email-types')
+rest_api.add_resource(email_template_api.EventEmailTypeAPI, '/api/v1/events/<int:event_id>/email-types/<string:key>')
+rest_api.add_resource(email_template_api.EventEmailTemplateAPI,
+                      '/api/v1/events/<int:event_id>/email-templates/<string:key>')
+rest_api.add_resource(email_template_api.EventEmailTemplateRevisionsAPI,
+                      '/api/v1/events/<int:event_id>/email-templates/<string:key>/revisions')
+rest_api.add_resource(email_template_api.EventEmailTemplatePreviewAPI,
+                      '/api/v1/events/<int:event_id>/email-templates/<string:key>/preview')
+rest_api.add_resource(email_template_api.EventEmailTemplateTestSendAPI,
+                      '/api/v1/events/<int:event_id>/email-templates/<string:key>/test-send')
+rest_api.add_resource(email_template_api.EventEmailTemplateTranslateAPI,
+                      '/api/v1/events/<int:event_id>/email-templates/<string:key>/translate')
+rest_api.add_resource(email_template_api.EventEmailLayoutAPI, '/api/v1/events/<int:event_id>/email-layout')
+rest_api.add_resource(email_template_api.EventEmailLayoutPreviewAPI,
+                      '/api/v1/events/<int:event_id>/email-layout/preview')
+rest_api.add_resource(email_template_api.OrganisationEmailTypeListAPI, '/api/v1/organisation/email-types')
+rest_api.add_resource(email_template_api.OrganisationEmailTypeAPI, '/api/v1/organisation/email-types/<string:key>')
+rest_api.add_resource(email_template_api.OrganisationEmailTemplateAPI,
+                      '/api/v1/organisation/email-templates/<string:key>')
+rest_api.add_resource(email_template_api.OrganisationEmailTemplateRevisionsAPI,
+                      '/api/v1/organisation/email-templates/<string:key>/revisions')
+rest_api.add_resource(email_template_api.OrganisationEmailTemplatePreviewAPI,
+                      '/api/v1/organisation/email-templates/<string:key>/preview')
+rest_api.add_resource(email_template_api.OrganisationEmailTemplateTestSendAPI,
+                      '/api/v1/organisation/email-templates/<string:key>/test-send')
+rest_api.add_resource(email_template_api.OrganisationEmailTemplateTranslateAPI,
+                      '/api/v1/organisation/email-templates/<string:key>/translate')
+rest_api.add_resource(email_template_api.OrganisationEmailLayoutAPI, '/api/v1/organisation/email-layout')
+rest_api.add_resource(email_template_api.OrganisationEmailLayoutPreviewAPI,
+                      '/api/v1/organisation/email-layout/preview')
 # Connection routes — static paths before dynamic
 rest_api.add_resource(connections_api.ConnectionResolveAPI, '/api/v1/connection/resolve')
 rest_api.add_resource(connections_api.ConnectionRespondAPI, '/api/v1/connection/respond')

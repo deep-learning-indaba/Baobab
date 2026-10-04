@@ -205,3 +205,9 @@ USER_EVENT_DATA_KEY_REQUIRED = ({'message': 'A key is required.'}, 400)
 # Form response export
 INVALID_EXPORT_FORMAT = ({'message': "Invalid export format. Must be 'csv' or 'sheets'."}, 400)
 EXPORT_GOOGLE_SHEETS_FAILED = ({'message': 'Failed to create the Google Sheet. Please try again.'}, 502)
+# Email templates and history
+EMAIL_TYPE_NOT_FOUND = ({'message': 'No email of that type can be edited here.'}, 404)
+EMAIL_MESSAGE_NOT_FOUND = ({'message': 'No email with that ID was sent to this person for this event.'}, 404)
+EMAIL_CONTENT_UNAVAILABLE = ({'message': 'This email cannot be resent: its content was removed, '
+                                         'either because it contained a login or reset link or '
+                                         'because it is older than the retention period.'}, 400)

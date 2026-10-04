@@ -11,6 +11,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app import LOGGER, bcrypt, db
 from app.events.models import EventRole
+from app.events.repository import EventRepository as event_repository
 import app.events.status as event_status
 from app.users.mixins import (AuthenticateMixin, PrivacyPolicyMixin,
                               SignupMixin, UserProfileListMixin,
@@ -19,7 +20,7 @@ from app.users.models import AppUser, PasswordReset, UserComment
 from app.users.repository import UserRepository as user_repository
 from app.utils import errors, misc
 from app.utils.auth import admin_required, auth_required, generate_token, get_user_from_request
-from app.utils.emailer import email_user, send_mail
+from app.email_template.service import queue_email
 from app.utils.errors import (ADD_VERIFY_TOKEN_FAILED, BAD_CREDENTIALS,
                               EMAIL_IN_USE, EMAIL_NOT_VERIFIED,
                               EMAIL_VERIFY_CODE_NOT_VALID,
@@ -119,16 +120,9 @@ class UserAPI(SignupMixin, restful.Resource):
             return EMAIL_IN_USE
 
         if(not invitedGuest):
-            email_user(
-                'verify-email',
-                template_parameters=dict(
-                    system=g.organisation.system_name,
-                    organisation=g.organisation.name,
-                    host=misc.get_baobab_host(),
-                    token=user.verify_token
-                ),
-                user=user,
-                subject_parameters=dict(system=g.organisation.system_name))
+            queue_email('verify-email', user, send_now=True, context={
+                'verification': '{}/verifyEmail?token={}'.format(misc.get_baobab_host(), user.verify_token),
+            })
 
             LOGGER.debug("Sent verification email to {}".format(user.email))
         else:
@@ -169,16 +163,9 @@ class UserAPI(SignupMixin, restful.Resource):
             return ERROR_UPDATING_USER_PROFILE
 
         if not user.verified_email:
-            email_user(
-                'verify-email',
-                template_parameters=dict(
-                    system=g.organisation.system_name,
-                    organisation=g.organisation.name,
-                    host=misc.get_baobab_host(),
-                    token=user.verify_token
-                ),
-                user=user,
-                subject_parameters=dict(system=g.organisation.system_name))
+            queue_email('verify-email', user, send_now=True, context={
+                'verification': '{}/verifyEmail?token={}'.format(misc.get_baobab_host(), user.verify_token),
+            })
 
             LOGGER.debug("Sent re-verification email to {}".format(user.email))
 
@@ -370,16 +357,9 @@ class PasswordResetRequestAPI(restful.Resource):
         db.session.add(password_reset)
         db.session.commit()
 
-        email_user(
-            'password-reset',
-            template_parameters=dict(
-                system_name=g.organisation.system_name, 
-                organisation=g.organisation.name,
-                host=misc.get_baobab_host(), 
-                token=password_reset.code
-            ),
-            subject_parameters=dict(system_name=g.organisation.system_name),
-            user=user)
+        queue_email('password-reset', user, send_now=True, context={
+            'reset': '{}/resetPassword?resetToken={}'.format(misc.get_baobab_host(), password_reset.code),
+        })
 
         return {}, 201
 
@@ -463,16 +443,9 @@ class ResendVerificationEmailAPI(restful.Resource):
             LOGGER.error("Adding verify token for {} failed. ".format(email))
             return ADD_VERIFY_TOKEN_FAILED
 
-        email_user(
-            'verify-email',
-            template_parameters=dict(
-                system=g.organisation.system_name,
-                organisation=g.organisation.name,
-                host=misc.get_baobab_host(),
-                token=user.verify_token
-            ),
-            user=user,
-            subject_parameters=dict(system=g.organisation.system_name))
+        queue_email('verify-email', user, send_now=True, context={
+            'verification': '{}/verifyEmail?token={}'.format(misc.get_baobab_host(), user.verify_token),
+        })
 
         LOGGER.debug("Resent email verification to: {}".format(email))
 
@@ -524,18 +497,13 @@ class UserCommentAPI(restful.Resource):
         return comments
 
 
-GENERIC_EMAIL_TEMPLATE = """Dear {salutation},
-
-{body}
-"""
-
-
 class EmailerAPI(restful.Resource):
 
     @admin_required
     def post(self):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('user_id', type=int, required=True)
+        req_parser.add_argument('event_id', type=int, required=True)
         req_parser.add_argument('email_subject', type=str, required=True)
         req_parser.add_argument('email_body', type=str, required=True)
         args = req_parser.parse_args()
@@ -543,19 +511,20 @@ class EmailerAPI(restful.Resource):
         user = user_repository.get_by_id(args['user_id'])
         if user is None:
             return errors.USER_NOT_FOUND
+        event = event_repository.get_by_id(args['event_id'])
+        if event is None:
+            return errors.EVENT_NOT_FOUND
         try:
-            send_mail(recipient=user.email,
-                      sender_name=g.organisation.name,
-                      sender_email=g.organisation.email_from,
-                      subject=args['email_subject'],
-                      body_text=GENERIC_EMAIL_TEMPLATE.format(
-                          salutation=user.formal_name,
-                          body=args['email_body'],
-                      )
-                      )
+            queue_email('admin-message', user, event=event, context={'message': {
+                'subject': args['email_subject'],
+                'body': args['email_body'],
+            }})
+            db.session.commit()
         except Exception as e:
-            LOGGER.error('Error sending email: {}'.format(e))
+            LOGGER.error('Error queueing email: {}'.format(e))
+            db.session.rollback()
             return errors.EMAIL_NOT_SENT
+        return {}, 200
 
 
 class PrivacyPolicyAPI(PrivacyPolicyMixin, restful.Resource):

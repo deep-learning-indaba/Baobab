@@ -7,7 +7,7 @@ from app import app, db, LOGGER
 from app.events.models import Event, EventFee, EventResourceLink
 from app.utils.testing import ApiTestCase
 from app.responses.models import Response, Answer
-from app.email_template.models import EmailTemplate
+from app.outbox.models import OutboxMessage
 from app.events.models import Event, EventRole
 from app.users.models import AppUser, Country, UserCategory
 from app.applicationModel.models import ApplicationForm, Section, Question
@@ -465,12 +465,6 @@ class RemindersAPITest(ApiTestCase):
         db.session.add(event)
         db.session.commit()
 
-        email_templates = [
-            EmailTemplate('application-not-submitted', None, 'Application Not Submitted', '', 'en'),
-            EmailTemplate('application-not-started', None, 'Application Not Started', '', 'en')]
-        db.session.add_all(email_templates)
-        db.session.commit()
-
         event_role = EventRole('admin', event_admin.id, event.id)
         db.session.add(event_role)
 
@@ -483,8 +477,8 @@ class RemindersAPITest(ApiTestCase):
         self.add_response(application_form.id, self.test_users[1].id)
         self.add_response(application_form.id, self.test_users[4].id)
 
-        self.add_email_template('application-not-submitted')
-        self.add_email_template('application-not-started')
+    def _reminders_queued(self, key):
+        return db.session.query(OutboxMessage).filter_by(template_key=key).count()
 
     def get_auth_header_for(self, email):
         body = {
@@ -506,6 +500,7 @@ class RemindersAPITest(ApiTestCase):
         data = json.loads(response.data)
         LOGGER.warning(data)
         self.assertEqual(data['unsubmitted_responses'], 1)
+        self.assertEqual(self._reminders_queued('application-not-submitted'), 1)
 
     def test_not_started_reminder(self):
         self.seed_static_data()
@@ -517,6 +512,7 @@ class RemindersAPITest(ApiTestCase):
         data = json.loads(response.data)
         LOGGER.warning(data)
         self.assertEqual(data['not_started_responses'], 2)
+        self.assertEqual(self._reminders_queued('application-not-started'), 2)
 
     def test_non_event_admin_blocked_from_sending_reminders(self):
         self.seed_static_data()
@@ -2304,3 +2300,66 @@ class EventLanguagesTest(ApiTestCase):
         event = db.session.query(Event).get(event_id)
         self.assertEqual(event.effective_languages, ['en', 'fr'])
         self.assertEqual(event.primary_language, 'en')
+
+
+class EventScopedRemindersTest(ApiTestCase):
+    """Reminders reach only this event's organisation and this event's applicants."""
+
+    def setUp(self):
+        super().setUp()
+        other_org = self.add_organisation(name='Other Org', domain='otherorg')
+        self.event_id = self.add_event(key='MAIN').id
+        self.other_event_id = self.add_event(key='OTHERMAIN').id
+
+        self.admin_id = self.add_user('admin@x.org').id
+        self.add_event_role('admin', self.admin_id, self.event_id)
+        self.unsubmitted_id = self.add_user('unsubmitted@x.org').id
+        self.submitted_id = self.add_user('submitted@x.org').id
+        self.both_id = self.add_user('both@x.org').id
+        self.other_event_only_id = self.add_user('otherevent@x.org').id
+        self.guest_id = self.add_user('guest@x.org').id
+        self.add_invited_guest(self.guest_id, event_id=self.event_id)
+        self.other_org_user_id = self.add_user('elsewhere@x.org', organisation_id=other_org.id).id
+
+        form_id = self.create_application_form(self.event_id, True, False).id
+        other_form_id = self.create_application_form(self.other_event_id, True, False).id
+        self.add_response(form_id, self.unsubmitted_id)
+        self.add_response(form_id, self.submitted_id, is_submitted=True)
+        self.add_response(form_id, self.both_id, is_submitted=True)
+        self.add_response(form_id, self.both_id)
+        self.add_response(other_form_id, self.other_event_only_id)
+        self.headers = self.get_auth_header_for('admin@x.org')
+
+    def _recipients(self, key):
+        return {m.user_id for m in db.session.query(OutboxMessage).filter_by(template_key=key)}
+
+    def test_not_submitted_only_this_events_unfinished_applications(self):
+        response = self.app.post('/api/v1/reminder-unsubmitted', headers=self.headers,
+                                 data={'event_id': self.event_id})
+        self.assertEqual(json.loads(response.data)['unsubmitted_responses'], 1)
+        self.assertEqual(self._recipients('application-not-submitted'), {self.unsubmitted_id})
+
+    def test_not_started_only_this_organisation_without_an_application(self):
+        response = self.app.post('/api/v1/reminder-not-started', headers=self.headers,
+                                 data={'event_id': self.event_id})
+        recipients = self._recipients('application-not-started')
+        self.assertEqual(json.loads(response.data)['not_started_responses'], len(recipients))
+        # Someone who applied only to another event hasn't started this one.
+        self.assertIn(self.other_event_only_id, recipients)
+        self.assertIn(self.admin_id, recipients)
+        for excluded in (self.unsubmitted_id, self.submitted_id, self.both_id, self.guest_id,
+                         self.other_org_user_id):
+            self.assertNotIn(excluded, recipients)
+
+    def test_forms_system_applications_are_used_when_the_event_has_one(self):
+        from app.forms.models import Form, FormResponse
+        form = Form(event_id=self.event_id, created_by_user_id=self.admin_id, form_type='application',
+                    is_open=True)
+        db.session.add(form)
+        db.session.flush()
+        new_user_id = self.add_user('newsystem@x.org').id
+        db.session.add(FormResponse(form_id=form.id, user_id=new_user_id))
+        db.session.commit()
+
+        self.app.post('/api/v1/reminder-unsubmitted', headers=self.headers, data={'event_id': self.event_id})
+        self.assertEqual(self._recipients('application-not-submitted'), {new_user_id})

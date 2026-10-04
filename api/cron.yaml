@@ -21,3 +21,13 @@ cron:
     url: /api/v1/tasks/document-generation
     target: staging-api
     schedule: every 1 minutes
+
+  - description: "Clear the content of old sent emails (production)"
+    url: /api/v1/tasks/email-retention
+    target: prod-api
+    schedule: every 24 hours
+
+  - description: "Clear the content of old sent emails (staging)"
+    url: /api/v1/tasks/email-retention
+    target: staging-api
+    schedule: every 24 hours

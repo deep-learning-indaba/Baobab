@@ -15,13 +15,14 @@ from app.utils.errors import EVENT_NOT_FOUND, USER_NOT_FOUND, RESPONSE_NOT_FOUND
                         APPLICATIONS_CLOSED, REFERENCE_REQUEST_NOT_FOUND, BAD_CONFIGURATION
 
 from app.utils.auth import auth_optional, auth_required
-from app.utils.emailer import email_user
+from app.email_template.service import queue_email
+from app.email_template.views import Recipient
+from app.utils.language import user_language_for_event
 from app.references.repository import ReferenceRequestRepository as reference_request_repository
 from app.references.repository import ReferenceRepository as reference_repository
 from app.references.models import ReferenceRequest, Reference
 from app.references.mixins import ReferenceRequestsMixin, ReferenceRequestsListMixin, ReferenceRequestDetailMixin, \
     ReferenceMixin
-from app.utils import misc
 from app.users.repository import UserRepository as user_repository
 from app.responses.repository import ResponseRepository as response_repository
 
@@ -115,28 +116,21 @@ class ReferenceRequestAPI(ReferenceRequestsMixin, restful.Resource):
                 firstname=firstname, lastname=lastname, relation=relation, email=email)
         reference_request_repository.create(reference_request)
 
-        link = "{host}/reference/{token}".format(host=misc.get_baobab_host(),
-                                                 token=reference_request.token)
-
         try:
             candidate, candidate_firstname, nominator = _get_candidate_nominator(response)
         except ValueError as e:
             LOGGER.error(e)
             return BAD_CONFIGURATION
 
-        email_user(
-            'reference-request-self-nomination' if nominator is None else 'reference-request',
-            template_parameters=dict(
-                candidate=candidate,
-                candidate_firstname=candidate_firstname,
-                nominator=nominator,
-                event_url=event.url,
-                application_close_date=event.application_close,
-                link=link
-            ),
-            event=event,
-            user=user
-        )
+        # The referee usually has no account; write to them in the language the
+        # applicant uses for this event.
+        referee = Recipient(email, firstname=firstname, lastname=lastname, title=title,
+                            language=user_language_for_event(user, event))
+        queue_email('reference-request', referee, event=event, context={
+            'reference': reference_request,
+            'candidate': {'name': candidate, 'firstname': candidate_firstname},
+            'nominator': nominator,
+        })
 
         reference_request.set_email_sent(datetime.now())
         reference_request_repository.add(reference_request)

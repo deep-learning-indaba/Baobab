@@ -6,7 +6,6 @@ import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with, marshal
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.email_template.repository import EmailRepository as email_repository
 from app.events.models import Event, EventRole, EventFee, EventResourceLink
 from app.events.mixins import EventsMixin, EventsKeyMixin, EventMixin, EventFeeMixin, EventRoleMixin
 from app.users.models import AppUser
@@ -47,7 +46,7 @@ from app.utils.errors import (
 )
 
 from app.utils.auth import auth_optional, auth_required, event_admin_required
-from app.utils.emailer import email_user
+from app.email_template.service import queue_emails
 from app.events.repository import EventRepository as event_repository
 from app.organisation.models import Organisation
 from app.events.models import EventType
@@ -714,18 +713,10 @@ class NotSubmittedReminderAPI(EventsMixin, restful.Resource):
         if not current_user.is_event_admin(event_id):
             return FORBIDDEN
 
-        users = user_repository.get_all_with_unsubmitted_response()
-        for user in users:
-            organisation_name = event.organisation.name
-            deadline = event.application_close.strftime('%A %-d %B %Y')
-
-            email_user(
-                'application-not-submitted', 
-                template_parameters=dict(
-                    organisation_name=organisation_name,
-                    deadline=deadline), 
-                event=event,
-                user=user)
+        users = user_repository.get_all_with_unsubmitted_response_for(event.id)
+        queue_emails('application-not-submitted', [(user, {}) for user in users], event=event,
+                     source=('reminder', event.id))
+        db.session.commit()
 
         return {'unsubmitted_responses': len(users)}, 201
 
@@ -746,24 +737,10 @@ class NotStartedReminderAPI(EventsMixin, restful.Resource):
         if not current_user.is_event_admin(event_id):
             return FORBIDDEN
 
-        users = user_repository.get_all_without_responses()
-        for user in users:
-            event_name = event.get_name(event.primary_language)
-            organisation_name = event.organisation.name
-            system_name = event.organisation.system_name
-            deadline = event.application_close.strftime('%A %-d %B %Y')
-
-            email_user(
-                'application-not-started', 
-                template_parameters=dict(
-                    event=event_name,
-                    organisation_name=organisation_name,
-                    system_name=system_name,
-                    deadline=deadline
-                ),
-                event=event,
-                user=user
-            )
+        users = user_repository.get_all_without_response_for(event)
+        queue_emails('application-not-started', [(user, {}) for user in users], event=event,
+                     source=('reminder', event.id))
+        db.session.commit()
 
         return {'not_started_responses': len(users)}, 201
 

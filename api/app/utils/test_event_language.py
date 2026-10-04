@@ -15,7 +15,7 @@ from app.organisation.models import Organisation
 from app.outbox.models import OutboxMessage
 from app.tags.models import Tag, TagTranslation, TagType
 from app.users.models import AppUser
-from app.utils.emailer import email_user
+from app.email_template.service import queue_email
 from app.utils.language import translation_for, user_language_for_event
 from app.utils.testing import ApiTestCase
 from app.events.models import Event
@@ -87,28 +87,29 @@ class EventLanguageTest(ApiTestCase):
     # ------------------------------------------------------------------
 
     def _send(self, user_id, event_id):
-        with patch('app.utils.emailer.send_mail') as send_mail:
-            email_user('some-template', user=self._user(user_id), event=self._event(event_id))
-        return send_mail.call_args.kwargs
+        message = queue_email('withdrawal', self._user(user_id), event=self._event(event_id))
+        db.session.commit()
+        return message
 
     def test_french_user_gets_english_only_event_template(self):
         self.seed_static_data()
-        self.add_email_template('some-template', template='Global French', language='fr',
+        self.add_email_template('withdrawal', template='Organisation French', language='fr',
                                 subject='Sujet')
-        self.add_email_template('some-template', template='Event English {event_name}', language='en',
-                                subject='Subject {event_name}', event_id=self.english_event_id)
+        self.add_email_template('withdrawal', template='Event English {{ event.name }}', language='en',
+                                subject='Subject {{ event.name }}', event_id=self.english_event_id)
 
         sent = self._send(self.french_user_id, self.english_event_id)
-        self.assertEqual(sent['body_text'], 'Event English English Event')
-        self.assertEqual(sent['subject'], 'Subject English Event')
+        self.assertEqual(sent.body_text, 'Event English English Event')
+        self.assertEqual(sent.subject, 'Subject English Event')
+        self.assertEqual(sent.language, 'en')
 
     def test_english_user_gets_french_only_event_content(self):
         self.seed_static_data()
-        self.add_email_template('some-template', template='Global English {event_name}', language='en')
-        self.add_email_template('some-template', template='Global French {event_name}', language='fr')
+        self.add_email_template('withdrawal', template='Organisation English {{ event.name }}', language='en')
+        self.add_email_template('withdrawal', template='Organisation French {{ event.name }}', language='fr')
 
         sent = self._send(self.english_user_id, self.french_event_id)
-        self.assertEqual(sent['body_text'], 'Global French Evenement Francais')
+        self.assertEqual(sent.body_text, 'Organisation French Evenement Francais')
 
     # ------------------------------------------------------------------
     # Forms

@@ -14,9 +14,8 @@ from app.users.models import AppUser
 from app import db, LOGGER
 from app.utils import errors
 from app.utils.auth import auth_required, event_admin_required
-from app.utils.emailer import email_user
-from app.utils.language import user_language_for_event, translation_for
-from app.utils import misc
+from app.email_template.service import queue_email
+from app.utils.language import translation_for
 from app.outcome.models import Outcome, Status
 from app.outcome.repository import OutcomeRepository as outcome_repository
 from app.responses.repository import ResponseRepository as response_repository
@@ -83,14 +82,8 @@ def validate_offer_tags(event_id, grant_tags, note_tags):
 
 def confirm_offer_payment(offer: Offer):
     try:
-        email_user(
-            'offer-paid',
-            event=offer.event,
-            user=offer.user,
-            template_parameters=dict(
-                host=offer.event.organisation.system_url,
-                event_key=offer.event.key))
-        
+        queue_email('offer-paid', offer.user, event=offer.event, context={'offer': offer})
+        db.session.commit()
         return True
     except Exception as e:
         LOGGER.error(
@@ -100,15 +93,8 @@ def confirm_offer_payment(offer: Offer):
 
 def notify_offer_reset(offer: Offer):
     try:
-        email_user(
-            'offer-reset',
-            event=offer.event,
-            user=offer.user,
-            template_parameters=dict(
-                host=offer.event.organisation.system_url,
-                event_key=offer.event.key,
-                event_email_from=offer.event.email_from,
-                expiry_date=offer.expiry_date.strftime("%Y-%m-%d")))
+        queue_email('offer-reset', offer.user, event=offer.event, context={'offer': offer})
+        db.session.commit()
         return True
     except Exception as e:
         LOGGER.error(
@@ -203,7 +189,6 @@ class OfferAPI(OfferMixin, restful.Resource):
         event_fee_id = args['event_fee_id']
         user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
         event = db.session.query(Event).filter(Event.id == event_id).first()
-        event_email_from = event.email_from
 
         existing_offer = db.session.query(Offer).filter(Offer.user_id == user_id, Offer.event_id == event_id).first()
         if existing_offer:
@@ -265,38 +250,8 @@ class OfferAPI(OfferMixin, restful.Resource):
 
         db.session.commit()
         
-        language = user_language_for_event(user, event)
-
-        grant_offer_tags = [ot for ot in offer_entity.offer_tags if ot.tag.tag_type == TagType.GRANT]
-        note_offer_tags = [ot for ot in offer_entity.offer_tags if ot.tag.tag_type == TagType.OFFER_NOTE]
-
-        if grant_offer_tags:
-            grant_strs = [ot.tag.stringify_tag_name_description(language=language) for ot in grant_offer_tags]
-            grants_summary = "\n\u2022 " + "\n\u2022 ".join(grant_strs)
-            email_template = 'offer-fee-grants' if payment_required else 'offer-nofee-grants'
-        else:
-            grants_summary = ''
-            email_template = 'offer-fee' if payment_required else 'offer-nofee'
-
-        if note_offer_tags:
-            note_strs = [ot.tag.stringify_tag_name_description(language=language) for ot in note_offer_tags]
-            notes_summary = "\n\u2022 " + "\n\u2022 ".join(note_strs)
-        else:
-            notes_summary = ''
-
-        email_user(
-            email_template,
-            template_parameters=dict(
-                host=misc.get_baobab_host(),
-                expiry_date=offer_entity.expiry_date.strftime("%Y-%m-%d"),
-                event_email_from=event_email_from,
-                grants=grants_summary,
-                notes=notes_summary,
-                payment_amount=float(event_fee.amount) if payment_required else 0,
-                payment_currency=event_fee.iso_currency_code if payment_required else '',
-            ),
-            event=event,
-            user=user)
+        queue_email('offer', user, event=event, context={'offer': offer_entity})
+        db.session.commit()
 
         return offer_info(offer_entity), 201
 

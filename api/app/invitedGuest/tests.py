@@ -9,7 +9,7 @@ from app.events.models import Event, EventRole
 from app.applicationModel.models import ApplicationForm
 from app.responses.models import Response
 from app.organisation.models import Organisation
-from mock import patch
+from app.outbox.models import OutboxMessage
 
 
 INVITED_GUEST = {
@@ -69,10 +69,6 @@ class InvitedGuestTest(ApiTestCase):
         self.headers = self.get_auth_header_for("something@email.com")
         self.adminHeaders = self.get_auth_header_for("event_admin@ea.com")
 
-        self.add_email_template('guest-invitation-with-registration')
-        self.add_email_template('guest-invitation')
-        self.add_email_template('new-guest-registration')
-        self.add_email_template('new-guest-no-registration')
 
         db.session.flush()
 
@@ -116,11 +112,10 @@ class InvitedGuestTest(ApiTestCase):
         assert response.status_code == 201
         assert data['fullname'] == '{} {} {}'.format(USER_DATA["user_title"], USER_DATA["firstname"], USER_DATA["lastname"])
 
-    @patch('app.utils.emailer.send_mail')
-    def test_create_invitedGuest_create_user_without_title(self, send_mail_fn):
+    def test_create_invitedGuest_create_user_without_title(self):
         self.seed_static_data()
-        for key in ('new-guest-registration', 'new-guest-no-registration'):
-            self.add_email_template(key, 'Dear {salutation}, {title}', event_id=self.event1_id)
+        self.add_email_template('new-guest', 'Dear {{ recipient.salutation }}, [{{ recipient.title }}]',
+                                event_id=self.event1_id)
         user_data = dict(USER_DATA)
         del user_data['user_title']
 
@@ -132,7 +127,8 @@ class InvitedGuestTest(ApiTestCase):
 
         user = AppUser.query.filter_by(email=USER_DATA['email']).one()
         self.assertIsNone(user.user_title)
-        self.assertEqual(send_mail_fn.call_args.kwargs['body_text'], 'Dear Some Thing, ')
+        email = db.session.query(OutboxMessage).filter_by(template_key='new-guest').one()
+        self.assertEqual(email.body_text, 'Dear Some Thing, []')
 
     def test_create_invitedGuest_list(self):
         self.seed_static_data()

@@ -49,10 +49,11 @@ def _find_question(question_id, questions):
     else:
         return None
 
-def build_response_email_body(answers, language, application_form):
-    #stringifying the dictionary summary, with linebreaks between question/answer pairs
-    stringified_summary = ""
-
+def response_answer_sections(answers, language, application_form):
+    """[{'name': section name, 'answers': [{'question', 'answer'}]}] for every
+    section with an answered question, skipping questions hidden by a
+    dependency - the copy of an application that goes in its confirmation email."""
+    sections = []
     allQuestions = [q for section in application_form.sections for q in section.questions]
 
     for section in application_form.sections:
@@ -62,7 +63,7 @@ def build_response_email_body(answers, language, application_form):
         if section_translation is None:
             LOGGER.error('Missing {} translation for section {}.'.format(language, section.id))
             section_translation = translation_for(section, 'en')
-        stringified_summary += section_translation.name + '\n' + '-' * 20 + '\n\n'
+        pairs = []
         for question in section.questions:
             question_translation = question.get_translation(language)
             if question_translation is None:
@@ -78,10 +79,14 @@ def build_response_email_body(answers, language, application_form):
             answer = _find_answer(question, answers)
 
             if answer:
-                answer_value = _get_answer_value(answer, answer.question, question_translation)
-                stringified_summary += '{question}\n{answer}\n\n'.format(question=question_translation.headline, answer=answer_value)
+                pairs.append({
+                    'question': question_translation.headline,
+                    'answer': _get_answer_value(answer, answer.question, question_translation),
+                })
+        if pairs:
+            sections.append({'name': section_translation.name, 'answers': pairs})
 
-    return stringified_summary
+    return sections
 
 
 def build_response_html_app_info(response, language):

@@ -56,6 +56,20 @@ class OutboxMessage(db.Model):
     # it cannot resolve an organisation the way an ordinary request does.
     sender_name = db.Column(db.String(100), nullable=True)
     sender_email = db.Column(db.String(100), nullable=True)
+    # The event's contact address, so replies reach the organisers while From
+    # stays the organisation's verified sending address.
+    reply_to = db.Column(db.String(255), nullable=True)
+
+    # Which email type and template revision produced the message (null for
+    # push, and for a code default, which has no revision).
+    template_key = db.Column(db.String(50), nullable=True)
+    template_revision_id = db.Column(db.Integer(), nullable=True)
+    language = db.Column(db.String(2), nullable=True)
+    # The body carries a login, reset or verification code: it is hidden from
+    # admins and cleared once the message reaches a terminal status.
+    sensitive = db.Column(db.Boolean(), nullable=False, default=False, server_default=db.false())
+    # Set when the body has been cleared (sensitive, or past retention).
+    body_purged_at = db.Column(db.DateTime(), nullable=True)
 
     status = db.Column(db.String(16), nullable=False, default=OutboxStatus.PENDING)
     attempts = db.Column(db.Integer(), nullable=False, default=0)
@@ -73,12 +87,15 @@ class OutboxMessage(db.Model):
     source_type = db.Column(db.String(32), nullable=False)
     source_id = db.Column(db.Integer(), nullable=True)
 
+    # Makes enqueueing idempotent where a producer wants it: re-running an
+    # announcement can't queue a second copy for someone it already covered.
+    # Null for messages that may legitimately repeat (a resent verification
+    # email, a second reminder).
+    idempotency_key = db.Column(db.String(255), nullable=True, unique=True)
+
     __table_args__ = (
-        # Makes enqueueing idempotent: re-running a producer for the same source
-        # can't queue a second copy for a recipient it already covered. Rows with
-        # no user_id are exempt, since NULLs don't collide in a unique index.
-        db.UniqueConstraint('source_type', 'source_id', 'channel', 'user_id',
-                            name='uq_outbox_source_channel_user'),
         db.Index('ix_outbox_claimable', 'status', 'scheduled_at'),
         db.Index('ix_outbox_source', 'source_type', 'source_id'),
+        db.Index('ix_outbox_event_user_created', 'event_id', 'user_id', 'created_at'),
+        db.Index('ix_outbox_recipient', 'recipient'),
     )

@@ -7,6 +7,7 @@ from app.forms.models import (
     Form, FormTranslation, FormSection, FormQuestion,
     FormResponse, FormAnswer, FormResponseTag
 )
+from app.outbox.models import OutboxMessage
 from app.tags.models import Tag
 from app.utils.testing import ApiTestCase
 
@@ -40,12 +41,16 @@ class FormResponseDeleteTest(ApiTestCase):
 
         self.add_email_template(
             'form-response-deleted',
-            template='Dear {firstname}, your {form_name} response is gone. Contact {event_email}.',
-            subject='Deleted: {form_name}'
+            template='Dear {{ recipient.firstname }}, your {{ form.name }} response is gone. '
+                     'Contact {{ event.email_from }}.',
+            subject='Deleted: {{ form.name }}'
         )
 
         self.form_id = self._create_form('Application', form_type='application')
         self.response_id = self._add_response(self.form_id, self.applicant_id)
+
+    def _emails(self):
+        return db.session.query(OutboxMessage).filter_by(channel='email').all()
 
     def _create_form(self, name, form_type=None, linked_form_id=None, event_id=None):
         form = Form(
@@ -88,8 +93,7 @@ class FormResponseDeleteTest(ApiTestCase):
             headers=headers
         )
 
-    @patch('app.utils.emailer.send_mail')
-    def test_admin_deletes_response_and_answers_and_emails_respondent(self, send_mail):
+    def test_admin_deletes_response_and_answers_and_emails_respondent(self):
         self.seed_static_data()
         response = self._delete(self.form_id, self.response_id, self.admin_headers)
 
@@ -100,14 +104,13 @@ class FormResponseDeleteTest(ApiTestCase):
             db.session.query(FormAnswer).filter_by(response_id=self.response_id).count(), 0
         )
 
-        send_mail.assert_called_once()
-        kwargs = send_mail.call_args.kwargs
-        self.assertEqual(kwargs['recipient'], 'applicant@example.com')
-        self.assertEqual(kwargs['subject'], 'Deleted: Application')
-        self.assertIn('Dear Ada, your Application response is gone.', kwargs['body_text'])
+        emails = self._emails()
+        self.assertEqual(len(emails), 1)
+        self.assertEqual(emails[0].recipient, 'applicant@example.com')
+        self.assertEqual(emails[0].subject, 'Deleted: Application')
+        self.assertIn('Dear Ada, your Application response is gone.', emails[0].body_text)
 
-    @patch('app.utils.emailer.send_mail')
-    def test_delete_removes_tags(self, send_mail):
+    def test_delete_removes_tags(self):
         self.seed_static_data()
         tag = Tag(event_id=self.event_id, tag_type='RESPONSE')
         db.session.add(tag)
@@ -121,8 +124,7 @@ class FormResponseDeleteTest(ApiTestCase):
             db.session.query(FormResponseTag).filter_by(form_response_id=self.response_id).count(), 0
         )
 
-    @patch('app.utils.emailer.send_mail')
-    def test_delete_removes_reviews_but_only_unlinks_other_linked_responses(self, send_mail):
+    def test_delete_removes_reviews_but_only_unlinks_other_linked_responses(self):
         self.seed_static_data()
         review_form_id = self._create_form('Review', form_type='review', linked_form_id=self.form_id)
         review_id = self._add_response(review_form_id, self.reviewer_id, linked_response_id=self.response_id)
@@ -141,18 +143,17 @@ class FormResponseDeleteTest(ApiTestCase):
         self.assertIsNotNone(child)
         self.assertIsNone(child.parent_response_id)
         # Only the respondent is emailed - not the reviewer whose review went too.
-        send_mail.assert_called_once()
+        self.assertEqual(len(self._emails()), 1)
 
-    @patch('app.utils.emailer.send_mail', side_effect=Exception('SMTP down'))
-    def test_email_failure_still_deletes_and_is_reported(self, send_mail):
+    @patch('app.forms.api.queue_email', side_effect=Exception('Template broken'))
+    def test_email_failure_still_deletes_and_is_reported(self, queue_email):
         self.seed_static_data()
         response = self._delete(self.form_id, self.response_id, self.admin_headers)
         self.assertEqual(response.status_code, 200)
         self.assertFalse(json.loads(response.data)['email_sent'])
         self.assertIsNone(db.session.query(FormResponse).get(self.response_id))
 
-    @patch('app.utils.emailer.send_mail')
-    def test_review_responses_cannot_be_deleted(self, send_mail):
+    def test_review_responses_cannot_be_deleted(self):
         self.seed_static_data()
         review_form_id = self._create_form('Review', form_type='review', linked_form_id=self.form_id)
         review_id = self._add_response(review_form_id, self.reviewer_id, linked_response_id=self.response_id)
@@ -160,28 +161,25 @@ class FormResponseDeleteTest(ApiTestCase):
         response = self._delete(review_form_id, review_id, self.admin_headers)
         self.assertEqual(response.status_code, 400)
         self.assertIsNotNone(db.session.query(FormResponse).get(review_id))
-        send_mail.assert_not_called()
+        self.assertEqual(self._emails(), [])
 
-    @patch('app.utils.emailer.send_mail')
-    def test_viewer_cannot_delete(self, send_mail):
+    def test_viewer_cannot_delete(self):
         self.seed_static_data()
         response = self._delete(self.form_id, self.response_id, self.viewer_headers)
         self.assertEqual(response.status_code, 403)
         self.assertIsNotNone(db.session.query(FormResponse).get(self.response_id))
-        send_mail.assert_not_called()
+        self.assertEqual(self._emails(), [])
 
-    @patch('app.utils.emailer.send_mail')
-    def test_admin_of_another_event_cannot_delete(self, send_mail):
+    def test_admin_of_another_event_cannot_delete(self):
         self.seed_static_data()
         response = self._delete(
             self.form_id, self.response_id, self.other_admin_headers, event_id=self.other_event_id
         )
         self.assertEqual(response.status_code, 404)
         self.assertIsNotNone(db.session.query(FormResponse).get(self.response_id))
-        send_mail.assert_not_called()
+        self.assertEqual(self._emails(), [])
 
-    @patch('app.utils.emailer.send_mail')
-    def test_response_must_belong_to_form_in_url(self, send_mail):
+    def test_response_must_belong_to_form_in_url(self):
         self.seed_static_data()
         other_form_id = self._create_form('Other')
         response = self._delete(other_form_id, self.response_id, self.admin_headers)

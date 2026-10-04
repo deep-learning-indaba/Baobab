@@ -22,6 +22,7 @@ import CreateInvitedGuests from "../createInvitedGuest";
 import Registration from "../registration";
 import InvitedLetter from "../invitationLetter";
 import { DocumentsAdmin, DocumentTemplateEditor, UserDataAdmin, MyDocuments, DerivedPlaceholdersAdmin } from "../documents";
+import { EmailTemplatesAdmin, EmailTemplateEditor, EmailLayoutEditor } from "../emailTemplates";
 import RegistrationAdmin from "../registrationAdmin";
 import Offer from "../offer";
 import OfferAdmin from "../offerAdmin";
@@ -602,6 +603,21 @@ class EventHome extends Component {
           exact
           path={`${match.path}/documentsAdmin/:templateId(\\d+|new)`}
           render={(props) => <DocumentTemplateEditor {...props} event={event} organisation={this.props.organisation} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/emailTemplates`}
+          render={(props) => <EmailTemplatesAdmin {...props} event={event} organisation={this.props.organisation} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/emailTemplates/design`}
+          render={(props) => <EmailLayoutEditor {...props} event={event} organisation={this.props.organisation} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/emailTemplates/edit/:key([a-z0-9-]+)`}
+          render={(props) => <EmailTemplateEditor {...props} event={event} organisation={this.props.organisation} />}
         />
         <Route
           exact

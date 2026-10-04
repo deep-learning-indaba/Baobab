@@ -8,6 +8,7 @@ from app.forms.models import Form, FormResponse
 from app.offer.repository import OfferRepository as offer_repository
 from app.outcome.repository import OutcomeRepository as outcome_repository
 from app.outcome.models import Outcome, Status
+from app.outbox.models import OutboxMessage
 import mock
 
 OFFER_DATA = {
@@ -75,12 +76,6 @@ class OfferApiTest(ApiTestCase):
         self.headers2 = self.get_auth_header_for("something2@email.com")
         self.adminHeaders = self.get_auth_header_for("offer_admin@ea.com")
 
-        self.add_email_template('offer-nofee')
-        self.add_email_template('offer-fee')
-        self.add_email_template('offer-nofee-grants', template='These are your grants: {grants}')
-        self.add_email_template('offer-fee-grants', template='These are your grants: {grants}')
-        self.add_email_template('offer-paid')
-        self.add_email_template('invoice')
 
         db.session.flush()
 
@@ -519,7 +514,8 @@ class OfferAdminApiTest(ApiTestCase):
         self.note_tag_id = self.add_tag(event_id=self.event_id, tag_type='OFFER_NOTE').id
         self.response_tag_id = self.add_tag(event_id=self.event_id, tag_type='RESPONSE').id
 
-        self.add_email_template('offer-reset', template='Reset until {expiry_date} {host}/{event_key}/offer {event_email_from}')
+        self.add_email_template('offer-reset',
+                                template='Reset until {{ offer.expiry_date }} {{ offer.url }} {{ event.email_from }}')
         self.headers = self.get_auth_header_for('offer_admin@ea.com')
 
     def get_auth_header_for(self, email):
@@ -646,19 +642,18 @@ class OfferAdminApiTest(ApiTestCase):
     def test_reset_sends_email_to_candidate(self):
         offer_id = self._make_offer(candidate_response=False)
 
-        with mock.patch('app.utils.emailer.send_mail') as send_mail:
-            response = self._reset({'id': offer_id})
+        response = self._reset({'id': offer_id})
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(json.loads(response.data)['email_sent'])
-        send_mail.assert_called_once()
-        self.assertEqual(send_mail.call_args.kwargs['recipient'], 'candidate@email.com')
-        self.assertIn('/offer', send_mail.call_args.kwargs['body_text'])
+        email = db.session.query(OutboxMessage).filter_by(template_key='offer-reset').one()
+        self.assertEqual(email.recipient, 'candidate@email.com')
+        self.assertIn('/offer', email.body_text)
 
     def test_reset_succeeds_when_email_fails(self):
         offer_id = self._make_offer(candidate_response=False)
 
-        with mock.patch('app.utils.emailer.send_mail', side_effect=Exception('smtp down')):
+        with mock.patch('app.offer.api.queue_email', side_effect=Exception('template broken')):
             response = self._reset({'id': offer_id})
 
         self.assertEqual(response.status_code, 200)

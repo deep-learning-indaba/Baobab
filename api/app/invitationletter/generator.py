@@ -2,7 +2,8 @@ from app import LOGGER
 from config import GCP_CREDENTIALS_DICT, GCP_PROJECT_NAME
 from google.cloud import storage
 from google.auth.transport.requests import Request
-from app.utils import emailer
+from app import db
+from app.email_template.service import queue_email, upload_attachment
 from app.events.models import Event
 from app import db
 from app.utils import errors
@@ -148,13 +149,10 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
         f.write(export_request)
 
     try:
-        emailer.email_user(
-            'invitation-letter',
-            event=event,
-            user=user,
-            file_name="InvitationLetter.pdf",
-            file_path=output_file
-        )
+        with open(output_file, 'rb') as f:
+            attachment = upload_attachment(f.read(), 'InvitationLetter.pdf')
+        queue_email('invitation-letter', user, event=event, attachments=[attachment])
+        db.session.commit()
 
         LOGGER.debug('successfully sent email...')
         return True

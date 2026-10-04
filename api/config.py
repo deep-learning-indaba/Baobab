@@ -35,6 +35,8 @@ SMTP_MAX_SEND_RATE = float(os.getenv('SMTP_MAX_SEND_RATE', 10))
 # releasing the remainder is the exception.
 OUTBOX_BATCH_SIZE = int(os.getenv('OUTBOX_BATCH_SIZE', 250))
 OUTBOX_TIME_BUDGET_SECONDS = float(os.getenv('OUTBOX_TIME_BUDGET_SECONDS', 30))
+# Sent email bodies are cleared after this long; who/when/what-type/status stay.
+EMAIL_BODY_RETENTION_DAYS = int(os.getenv('EMAIL_BODY_RETENTION_DAYS', 365))
 
 # Bulk document generation worker tuning - same reasoning as the outbox above,
 # but the batch is much smaller: each recipient costs ~4 Google API calls

@@ -1,5 +1,4 @@
 import time
-import traceback
 import ssl
 from app import LOGGER
 from config import (SMTP_USERNAME, SMTP_PASSWORD, SMTP_SENDER_NAME, SMTP_SENDER_EMAIL, SMTP_HOST,
@@ -10,51 +9,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
-from flask import g, has_app_context, request
-from app.email_template.repository import EmailRepository as email_repository
-from app.users.repository import UserRepository as user_repository
-from app.events.repository import EventRepository as event_repository
-from app.utils.language import user_language_for_event
-
-def email_user(
-    email_template_key, 
-    user, 
-    template_parameters=None, 
-    event=None,
-    subject_parameters=None, 
-    file_name='',
-    file_path=''
-):
-    """Send an email to a specified user using an email template. Handles resolving the correct language."""
-    if user is None:
-        raise ValueError('You must specify a user!')
-
-    language = user_language_for_event(user, event)
-    email_template = email_repository.get(None if event is None else event.id, email_template_key, language)
-
-    if email_template is None:
-        raise ValueError('Could not find email template with key {}'.format(email_template_key))
-    
-    subject_parameters = subject_parameters or {}
-    if event is not None and 'event_name' not in subject_parameters:
-        subject_parameters['event_name'] = event.get_name(language)
-
-    subject = email_template.subject.format(**subject_parameters)
-
-    template_parameters = template_parameters or {}
-    if 'title' not in template_parameters:
-        template_parameters['title'] = user.user_title or ''
-    if 'salutation' not in template_parameters:
-        template_parameters['salutation'] = user.formal_name
-    if 'firstname' not in template_parameters:
-        template_parameters['firstname'] = user.firstname
-    if 'lastname' not in template_parameters:
-        template_parameters['lastname'] = user.lastname
-    if event is not None and 'event_name' not in template_parameters:
-        template_parameters['event_name'] = event.get_name(language)
-
-    body_text = email_template.template.format(**template_parameters)
-    send_mail(recipient=user.email, subject=subject, body_text=body_text, file_name=file_name, file_path=file_path)
+from flask import g, has_app_context
 
 
 def resolve_sender(sender_name, sender_email):
@@ -106,7 +61,7 @@ def _log_email(recipient, subject, body_text, body_html, sender_name, sender_ema
 
 
 def _build_message(recipient, subject, body_text, body_html, charset, file_name, file_path,
-                   sender_name, sender_email):
+                   sender_name, sender_email, attachments=None, reply_to=None):
     # The plain text and the HTML are two renderings of one message, so they go in a
     # multipart/alternative and the client displays whichever it prefers — normally
     # the HTML. Under multipart/mixed a client shows every part instead, one after
@@ -119,24 +74,32 @@ def _build_message(recipient, subject, body_text, body_html, charset, file_name,
         # alternative a client prefers, so it would render as a blank message.
         body.attach(MIMEText(body_html, 'html', _charset=charset))
 
+    attachments = list(attachments or [])
     if file_name and file_path:
+        attachments.append((file_name, file_path, 'application/octet-stream'))
+
+    if attachments:
         # An attachment is not an alternative to the body, so it sits alongside it
         # in a mixed container that wraps the alternative pair.
         msg = MIMEMultipart('mixed')
         msg.attach(body)
 
-        with open(file_path, 'rb') as attachment:
-            part = MIMEBase('application', 'octet-stream')
-            part.set_payload(attachment.read())
-        encoders.encode_base64(part)
-        part.add_header('Content-Disposition', "attachment; filename= %s" % file_name)
-        msg.attach(part)
+        for name, path, content_type in attachments:
+            maintype, _, subtype = (content_type or 'application/octet-stream').partition('/')
+            with open(path, 'rb') as attachment:
+                part = MIMEBase(maintype, subtype or 'octet-stream')
+                part.set_payload(attachment.read())
+            encoders.encode_base64(part)
+            part.add_header('Content-Disposition', 'attachment', filename=name)
+            msg.attach(part)
     else:
         msg = body
 
     msg['Subject'] = subject
     msg['From'] = email.utils.formataddr((sender_name, sender_email))
     msg['To'] = recipient
+    if reply_to:
+        msg['Reply-To'] = reply_to
     return msg
 
 
@@ -145,7 +108,7 @@ class SmtpConnection:
 
     The TLS handshake and login cost far more than transmitting an individual
     message, so anything sending to more than one recipient must share a single
-    connection rather than calling send_mail in a loop. Sends are also paced:
+    connection rather than opening one per message. Sends are also paced:
     SES enforces a per-second limit by rejecting messages above it.
 
     Under DEBUG no connection is opened and messages are only logged.
@@ -197,7 +160,7 @@ class SmtpConnection:
             time.sleep(minimum_interval - elapsed)
 
     def send(self, recipient, subject, body_text='', body_html='', charset='UTF-8', file_name='',
-             file_path='', sender_name=None, sender_email=None):
+             file_path='', sender_name=None, sender_email=None, attachments=None, reply_to=None):
         sender_name, sender_email = resolve_sender(sender_name, sender_email)
 
         if DEBUG:
@@ -206,7 +169,7 @@ class SmtpConnection:
 
         self.open()
         msg = _build_message(recipient, subject, body_text, body_html, charset, file_name,
-                             file_path, sender_name, sender_email)
+                             file_path, sender_name, sender_email, attachments, reply_to)
         self._wait_for_rate_limit()
         try:
             self._server.sendmail(sender_email, recipient, msg.as_string())
@@ -220,39 +183,3 @@ class SmtpConnection:
         finally:
             self._last_send_at = time.monotonic()
         LOGGER.info('Email sent successfully to %s', recipient)
-
-
-def send_mail(recipient, subject, body_text='', body_html='', charset='UTF-8', mail_type='AMZ', file_name='',
-              file_path='', sender_name=None, sender_email=None):
-    """Send a single email over a connection opened and closed for it alone.
-
-    Sending to many recipients must go through the outbox (or share one
-    SmtpConnection) instead of calling this in a loop — connection setup
-    dominates, and a few thousand recipients will not fit inside a request.
-    """
-    sender_name, sender_email = resolve_sender(sender_name, sender_email)
-    _log_missing_smtp_config()
-
-    if DEBUG:
-        _log_email(recipient, subject, body_text, body_html, sender_name, sender_email)
-        return
-
-    if mail_type != 'AMZ':
-        return
-
-    try:
-        with SmtpConnection() as connection:
-            connection.send(
-                recipient=recipient,
-                subject=subject,
-                body_text=body_text,
-                body_html=body_html,
-                charset=charset,
-                file_name=file_name,
-                file_path=file_path,
-                sender_name=sender_name,
-                sender_email=sender_email,
-            )
-    except Exception as e:
-        LOGGER.error("Exception {} while trying to send email: {}".format(e, traceback.format_exc()))
-        raise e

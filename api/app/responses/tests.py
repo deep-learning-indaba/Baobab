@@ -9,7 +9,6 @@ from unittest import skip
 import dateutil.parser
 
 from app import db
-from app.email_template.models import EmailTemplate
 from app.utils.testing import ApiTestCase
 
 
@@ -29,13 +28,6 @@ class ResponseApiTest(ApiTestCase):
         organisation = self.add_organisation(name='Deep Learning Indaba')
         test_country = self.add_country()
         test_category = self.add_category()
-
-        email_templates = [
-            EmailTemplate('withdrawal', None, 'Withdrawal', '', 'en'),
-            EmailTemplate('confirmation-response', None, 'Confirmation', '{question_answer_summary}', 'en')
-        ]
-        db.session.add_all(email_templates)
-        db.session.commit()
 
         self.add_email_template('verify-email')
 
@@ -58,6 +50,12 @@ class ResponseApiTest(ApiTestCase):
         self.question2 = self.add_question(self.form.id, self.section.id, order=2)
         self.question_translation2 = self.add_question_translation(self.question2.id, 'en', 'Question 2')
         self.response = self.add_response(self.form.id, self.other_user_data['id'], False, False)
+        # Requests commit and expire everything above; read ids from these instead.
+        self.event_id = self.event.id
+        self.form_id = self.form.id
+        self.question_id = self.question.id
+        self.question2_id = self.question2.id
+        self.response_id = self.response.id
         self.answer1 = self.add_answer(self.response.id, self.question.id, 'My Answer')
 
         self.event_with_nomination = self.add_event({'en': 'Event With Nomination'}, key='eeml-2025')
@@ -200,15 +198,15 @@ class ResponseApiTest(ApiTestCase):
 
         self._seed_data()
         response_data = {
-            'application_form_id': self.form.id,
+            'application_form_id': self.form_id,
             'is_submitted': True,
             'answers': [
                 {
-                    'question_id': self.question.id,
+                    'question_id': self.question_id,
                     'value': 'Answer 1'
                 },
                 {
-                    'question_id': self.question2.id,
+                    'question_id': self.question2_id,
                     'value': 'Hello world, this is the 2nd answer.'
                 }
             ]
@@ -225,7 +223,7 @@ class ResponseApiTest(ApiTestCase):
 
         data = json.loads(response.data)
 
-        self.assertEqual(data['application_form_id'], self.form.id)
+        self.assertEqual(data['application_form_id'], self.form_id)
         self.assertEqual(data['user_id'], self.user_data['id'])
         self.assertIsNotNone(data['submitted_timestamp'])
         self.assertTrue(data['is_submitted'])
@@ -236,12 +234,12 @@ class ResponseApiTest(ApiTestCase):
 
         answer = data['answers'][0]
         self.assertEqual(answer['value'], 'Answer 1')
-        self.assertEqual(answer['question_id'], self.question.id)
+        self.assertEqual(answer['question_id'], self.question_id)
 
         answer = data['answers'][1]
         self.assertEqual(
             answer['value'], 'Hello world, this is the 2nd answer.')
-        self.assertEqual(answer['question_id'], self.question2.id)
+        self.assertEqual(answer['question_id'], self.question2_id)
 
     def test_second_response_rejected_without_nomination(self):
         self._seed_data()
@@ -317,16 +315,16 @@ class ResponseApiTest(ApiTestCase):
 
         self._seed_data()
         update_data = {
-            'id': self.response.id,
-            'application_form_id': self.form.id,
+            'id': self.response_id,
+            'application_form_id': self.form_id,
             'is_submitted': True,  # Set submitted
             'answers': [
                 {
-                    'question_id': self.question.id,
+                    'question_id': self.question_id,
                     'value': 'Answer 1 UPDATED'  # Update an existing answer
                 },
                 {
-                    'question_id': self.question2.id,  # Add a new answer
+                    'question_id': self.question2_id,  # Add a new answer
                     'value': 'This is the 2nd answer.'
                 }
             ]
@@ -345,11 +343,11 @@ class ResponseApiTest(ApiTestCase):
         response = self.app.get(
             'api/v1/response',
             headers={'Authorization': self.other_user_data['token']},
-            query_string={'event_id': self.event.id})
+            query_string={'event_id': self.event_id})
 
         data = json.loads(response.data)[0]
 
-        self.assertEqual(data['application_form_id'], self.form.id)
+        self.assertEqual(data['application_form_id'], self.form_id)
         self.assertEqual(data['user_id'], self.other_user_data['id'])
 
         parsed_submitted = dateutil.parser.parse(
@@ -364,11 +362,11 @@ class ResponseApiTest(ApiTestCase):
 
         answer = data['answers'][0]
         self.assertEqual(answer['value'], 'Answer 1 UPDATED')
-        self.assertEqual(answer['question_id'], self.question.id)
+        self.assertEqual(answer['question_id'], self.question_id)
 
         answer = data['answers'][1]
         self.assertEqual(answer['value'], 'This is the 2nd answer.')
-        self.assertEqual(answer['question_id'], self.question2.id)
+        self.assertEqual(answer['question_id'], self.question2_id)
 
     def test_update_missing(self):
         """Test that 404 is returned if we try to update a response that doesn't exist."""
@@ -437,7 +435,7 @@ class ResponseApiTest(ApiTestCase):
         response = self.app.delete(
             '/api/v1/response',
             headers={'Authorization': self.other_user_data['token']},
-            query_string={'id': self.response.id})
+            query_string={'id': self.response_id})
 
         self.assertEqual(response.status_code, 204)
 
@@ -445,7 +443,7 @@ class ResponseApiTest(ApiTestCase):
         response = self.app.get(
             '/api/v1/response',
             headers={'Authorization': self.other_user_data['token']},
-            query_string={'event_id': self.event.id})
+            query_string={'event_id': self.event_id})
         data = json.loads(response.data)[0]
         self.assertFalse(data['is_submitted'])
         self.assertTrue(data['is_withdrawn'])

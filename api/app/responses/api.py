@@ -18,7 +18,9 @@ from app.reviews.repository import ReviewRepository as review_repository
 from app.outcome.models import Outcome
 from app.outcome.repository import OutcomeRepository as outcome_repository
 from app.users.repository import UserRepository as user_repository
-from app.utils import emailer, errors, strings, pdfconvertor, storage
+from app import db
+from app.email_template.service import queue_email
+from app.utils import errors, strings, pdfconvertor, storage
 from app.utils.zipping import zip_in_memory
 from app.utils.language import user_language_for_event, translation_for
 from app.utils.auth import auth_required, event_admin_required
@@ -260,16 +262,9 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         try:
             user = user_repository.get_by_id(current_user_id)
             event = response.application_form.event
-            organisation = event.organisation
 
-            emailer.email_user(
-                'withdrawal',
-                template_parameters=dict(
-                    organisation_name=organisation.name
-                ),
-                event=event,
-                user=user
-            )
+            queue_email('withdrawal', user, event=event)
+            db.session.commit()
 
         except:                
             LOGGER.error('Failed to send withdrawal confirmation email for response with ID : {id}, but the response was withdrawn succesfully'.format(id=args['id']))
@@ -294,18 +289,11 @@ class ResponseAPI(ResponseMixin, restful.Resource):
 
         try:
             language = user_language_for_event(user, event)
-            question_answer_summary = strings.build_response_email_body(answers, language, application_form)
-            event_description = event.get_description(language)
-
-            emailer.email_user(
-                'confirmation-response-call' if event.event_type == EventType.CALL else 'confirmation-response',
-                template_parameters=dict(
-                    event_description=event_description,
-                    question_answer_summary=question_answer_summary,
-                ),
-                event=event,
-                user=user
-            )
+            queue_email('application-submitted', user, event=event, context={'response': {
+                'applicant': response.user,
+                'sections': strings.response_answer_sections(answers, language, application_form),
+            }})
+            db.session.commit()
 
         except Exception as e:
             LOGGER.error('Could not send confirmation email for response with id : {response_id} due to: {e}'.format(response_id=response.id, e=e))

@@ -18,7 +18,7 @@ from app.users.repository import UserRepository as user_repository
 from app.events.repository import EventRepository as event_repository
 from app.invitedGuest.repository import InvitedGuestRepository as invited_guest_repository
 from app.utils import misc
-from app.utils.emailer import email_user
+from app.email_template.service import queue_email
 from app.utils.language import translation_for
 
 user_profile_list_fields = {
@@ -129,16 +129,8 @@ class InvitedGuestAPI(restful.Resource):
 
         if send_email:
             try:
-                email_user(
-                    'guest-invitation-with-registration' if event.is_registration_open else 'guest-invitation',
-                    template_parameters=dict(
-                        role=role,
-                        system_name=g.organisation.system_name,
-                        host=misc.get_baobab_host(),
-                        event_key=event.key
-                    ),
-                    event=event,
-                    user=user)
+                queue_email('guest-invitation', user, event=event, context={'guest': role})
+                db.session.commit()
 
             except Exception as e:
                 LOGGER.error('Failed to send email to invited guest with user Id {}, due to {}'.format(user.id, e))
@@ -169,14 +161,8 @@ class InvitedGuestAPI(restful.Resource):
             return DELETE_INVITED_GUEST_FAILED
 
         try:
-            email_user(
-                'guest-removal',
-                template_parameters=dict(
-                    event_email=event.email_from,
-                    role=role
-                ),
-                event=event,
-                user=user)
+            queue_email('guest-removal', user, event=event, context={'guest': role})
+            db.session.commit()
         except Exception as e:
             LOGGER.error('Failed to send removal email to guest with user Id {}, due to {}'.format(user.id, e))
 
@@ -233,18 +219,9 @@ class CreateUser(SignupMixin, restful.Resource):
 
             try:
 
-                email_user(
-                    'new-guest-registration' if event.is_registration_open else 'new-guest-no-registration',
-                    template_parameters=dict(
-                        event_key=event.key,
-                        system_name=g.organisation.system_name,
-                        host=misc.get_baobab_host(),
-                        role=role,
-                        reset_code=password_reset.code,
-                    ),
-                    event=event,
-                    user=user
-                )
+                queue_email('new-guest', user, event=event,
+                            context={'guest': role, 'account': password_reset.code})
+                db.session.commit()
             except Exception as e:
                 LOGGER.error('Failed to send email for invited guest with user Id {} due to: {}'.format(user.id, e))
                 return INVITED_GUEST_EMAIL_FAILED

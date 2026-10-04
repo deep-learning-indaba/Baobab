@@ -102,6 +102,7 @@ class EventNav extends Component {
             <SidebarLink to={`/${this.props.eventKey}/formResponses`} label={t('Form Responses')} />
             <SidebarLink to={`/${this.props.eventKey}/resourceLinks`} label={t('Resource Links')} />
             <SidebarLink to={`/${this.props.eventKey}/documentsAdmin`} label={t('Documents')} />
+            <SidebarLink to={`/${this.props.eventKey}/emailTemplates`} label={t('Emails')} />
           </SidebarSection>
         )}
 

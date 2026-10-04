@@ -28,8 +28,7 @@ from app import db, LOGGER
 from app.users.models import AppUser
 from app.users.repository import UserRepository as user_repository
 from app.events.repository import EventRepository as event_repository
-from app.utils.emailer import email_user
-from app.utils import misc
+from app.email_template.service import queue_email
 from app.applicationModel.models import ApplicationForm
 from app.registration.models import RegistrationForm
 from app.reviews.models import ReviewForm, ReviewerTag
@@ -1700,17 +1699,14 @@ class FormResponseDetailAdminAPI(restful.Resource):
 
         # The response is already gone, so a failed email must not turn into
         # an error response - report it so the admin can follow up by hand.
+        # email_sent means queued: delivery itself happens in the outbox worker.
         email_sent = True
         try:
-            email_user(
-                'form-response-deleted',
-                template_parameters=dict(form_name=form_name, event_email=event.email_from),
-                subject_parameters=dict(form_name=form_name),
-                event=event,
-                user=user
-            )
+            queue_email('form-response-deleted', user, event=event, context={'form': {'name': form_name}})
+            db.session.commit()
         except Exception as e:
-            LOGGER.error(f"Failed to send response deletion email to user {user.id}: {str(e)}")
+            LOGGER.error(f"Failed to queue response deletion email to user {user.id}: {str(e)}")
+            db.session.rollback()
             email_sent = False
 
         return {'email_sent': email_sent}, 200
@@ -2161,17 +2157,9 @@ class FormReviewAssignmentAPI(restful.Resource):
             if len(to_assign) > 0:
                 event = event_repository.get_by_id(event_id)
                 reviewer = user_repository.get_by_email(reviewer_email, g.organisation.id)
-                email_user(
-                    'reviews-assigned',
-                    template_parameters=dict(
-                        num_reviews=len(to_assign),
-                        baobab_host=misc.get_baobab_host(),
-                        system_name=g.organisation.system_name,
-                        event_key=event.key
-                    ),
-                    event=event,
-                    user=reviewer
-                )
+                queue_email('reviews-assigned', reviewer, event=event,
+                            context={'reviews': len(to_assign)})
+                db.session.commit()
 
             return {'reviews_assigned': len(to_assign)}, 201
 

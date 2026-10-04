@@ -12,6 +12,7 @@ from app.users.models import (AppUser, Country, PasswordReset, UserCategory,
                               UserComment)
 from app.utils.errors import POLICY_ALREADY_AGREED, POLICY_NOT_AGREED
 from app.utils.testing import ApiTestCase
+from app.outbox.models import OutboxMessage
 from mock import patch
 
 USER_DATA = {
@@ -867,6 +868,7 @@ class EmailerAPITest(ApiTestCase):
         db.session.add_all(users)
 
         db.session.commit()
+        self.event_id = self.add_event().id
     
     def get_auth_header_for(self, email):
         body = {
@@ -898,15 +900,27 @@ class EmailerAPITest(ApiTestCase):
             header = self.get_auth_header_for('system_admin@sa.com')
             params = {
                 'user_id': self.candidate2.id,
+                'event_id': self.event_id,
                 'email_subject': 'This is a test email',
-                'email_body': 'Hello world, this is a test email.'
+                'email_body': 'Hello **world**, this is a test email.'
             }
 
             response = self.app.post('/api/v1/admin/emailer', headers=header, data=params)
             self.assertEqual(response.status_code, 200)
+            email = db.session.query(OutboxMessage).filter_by(template_key='admin-message').one()
+            self.assertEqual(email.subject, 'This is a test email')
+            self.assertEqual(email.event_id, self.event_id)
+            self.assertIn('<strong>world</strong>', email.body_html)
 
-    @patch('app.users.api.send_mail')
-    def test_email_user_without_title(self, send_mail_fn):
+    def test_email_requires_event(self):
+        with app.app_context():
+            self.setup_static_data()
+            header = self.get_auth_header_for('system_admin@sa.com')
+            params = {'user_id': self.candidate2.id, 'email_subject': 'S', 'email_body': 'B'}
+            response = self.app.post('/api/v1/admin/emailer', headers=header, data=params)
+            self.assertEqual(response.status_code, 400)
+
+    def test_email_user_without_title(self):
         with app.app_context():
             self.setup_static_data()
             self.candidate2.user_title = None
@@ -915,13 +929,14 @@ class EmailerAPITest(ApiTestCase):
             header = self.get_auth_header_for('system_admin@sa.com')
             params = {
                 'user_id': candidate2_id,
+                'event_id': self.event_id,
                 'email_subject': 'This is a test email',
                 'email_body': 'Hello world, this is a test email.'
             }
 
             response = self.app.post('/api/v1/admin/emailer', headers=header, data=params)
             self.assertEqual(response.status_code, 200)
-            body = send_mail_fn.call_args.kwargs['body_text']
+            body = db.session.query(OutboxMessage).filter_by(template_key='admin-message').one().body_text
             self.assertTrue(body.startswith('Dear candidate 2,'))
 
 class OrganisationUserTest(ApiTestCase):

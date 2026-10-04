@@ -1,4 +1,5 @@
 import csv
+import re
 import io
 import tempfile
 from datetime import datetime
@@ -33,9 +34,10 @@ from app.documents.resolver import PlaceholderResolver, evaluate_form_requiremen
 from app.documents.variant_selection import select_variant, is_eligible, NoMatchingVariant
 from app.documents.eligibility import build_eligibility_context
 from app.documents.generator import (
-    generate_document, GenerationError, enqueue_resend, NO_EMAIL_TEMPLATE_REASON,
+    generate_document, GenerationError, enqueue_resend, document_email_key,
 )
-from app.email_template.repository import EmailRepository
+from app.email_template.registry import DOCUMENT_EMAIL_TYPE, EMAIL_TYPES
+from app.email_template.service import check_email_renders
 from app.documents.derived_placeholders import find_cycle
 from app.documents.recipients import resolve_recipient_user_ids
 from app.documents.worker import run_bulk_generation
@@ -236,6 +238,9 @@ class DocumentTemplateListAPI(restful.Resource):
         key = (data.get('key') or '').strip()
         if not key:
             return errors.MISSING_FIELDS
+        email_key_error = _email_key_error(data.get('email_template_key'))
+        if email_key_error:
+            return email_key_error
 
         existing = db.session.query(DocumentTemplate).filter_by(event_id=event_id, key=key).first()
         if existing:
@@ -270,6 +275,25 @@ class DocumentTemplateListAPI(restful.Resource):
         return serialize_template(document_template), 201
 
 
+_EMAIL_KEY_RE = re.compile(r'^[a-z0-9][a-z0-9-]{0,49}$')
+
+
+def _email_key_error(value):
+    """None if `value` is usable as a document's email key, else an error.
+
+    The key names the document's own email type (an alias of
+    'generated-document'), so it can't reuse another email's key - that email
+    expects different data - and it must fit the editor's URL.
+    """
+    if value in (None, ''):
+        return None
+    if not isinstance(value, str) or not _EMAIL_KEY_RE.match(value):
+        return ({'message': 'The email key may only use lowercase letters, digits and hyphens.'}, 400)
+    if value in EMAIL_TYPES and value != DOCUMENT_EMAIL_TYPE:
+        return ({'message': '"{}" is already used by another email.'.format(value)}, 400)
+    return None
+
+
 class DocumentTemplateAPI(restful.Resource):
 
     @document_admin_required
@@ -287,6 +311,10 @@ class DocumentTemplateAPI(restful.Resource):
             if existing:
                 return errors.DOCUMENT_TEMPLATE_KEY_IN_USE
             document_template.key = data['key']
+
+        email_key_error = _email_key_error(data.get('email_template_key'))
+        if email_key_error:
+            return email_key_error
 
         for field in ('self_service', 'eligibility_expression', 'delivery_mode',
                       'email_template_key', 'filename_pattern', 'allow_blank_values', 'is_active'):
@@ -667,14 +695,14 @@ def _preflight_candidates(document_template, event, selection, language, overrid
 
         succeed_user_ids.append(user.id)
 
-    # Independent of any one recipient - the template either has an
-    # EmailTemplate to send from in this language or it doesn't - so this is
-    # checked once rather than per candidate. Without it, a missing template
-    # only surfaces after the run, one download-only document at a time, on
-    # whichever row an admin happens to click Resend on.
-    email_template_missing = (
-        document_template.delivery_mode != 'none'
-        and EmailRepository.get(event.id, document_template.email_template_key or 'generated-document', language) is None
+    # Independent of any one recipient - the email either renders in this
+    # language or it doesn't - so this is checked once rather than per
+    # candidate. Without it, a broken template only surfaces after the run,
+    # one download-only document at a time, on whichever row an admin happens
+    # to click Resend on.
+    email_problem = (
+        check_email_renders(document_email_key(document_template), event, language)
+        if document_template.delivery_mode != 'none' else None
     )
 
     return {
@@ -686,7 +714,8 @@ def _preflight_candidates(document_template, event, selection, language, overrid
         'failures': failures,
         'recommended_incomplete_count': len(recommended_incomplete_user_ids),
         'recommended_incomplete_user_ids': recommended_incomplete_user_ids,
-        'email_template_missing': email_template_missing,
+        'email_template_missing': email_problem is not None,
+        'email_template_problem': email_problem,
     }
 
 
@@ -816,9 +845,9 @@ class GeneratedDocumentResendAPI(restful.Resource):
         if document_template.delivery_mode == 'none':
             return {'message': 'This document has no delivery configured - it is download-only.'}, 400
 
-        queued = enqueue_resend(document_template, generated_document, target_user, document_template.event)
-        if not queued:
-            return {'message': NO_EMAIL_TEMPLATE_REASON}, 400
+        problem = enqueue_resend(document_template, generated_document, target_user, document_template.event)
+        if problem:
+            return {'message': problem}, 400
         return {'message': 'Resend queued.'}, 200
 
 
