@@ -1597,5 +1597,18 @@
     "Set a new expiry date in the future to reset this offer.": "Définissez une nouvelle date d'expiration future pour réinitialiser cette offre.",
     "Responded At": "Date de réponse",
     "The offer was reset, but the notification email could not be sent to the candidate.": "L'offre a été réinitialisée, mais l'e-mail de notification n'a pas pu être envoyé au candidat.",
-    "Reset the rejected offer for {{name}}? The rejection will be cleared and the candidate will be emailed so they can respond to the offer again.": "Réinitialiser l'offre rejetée pour {{name}} ? Le rejet sera effacé et le candidat recevra un e-mail lui permettant de répondre à nouveau à l'offre."
+    "Reset the rejected offer for {{name}}? The rejection will be cleared and the candidate will be emailed so they can respond to the offer again.": "Réinitialiser l'offre rejetée pour {{name}} ? Le rejet sera effacé et le candidat recevra un e-mail lui permettant de répondre à nouveau à l'offre.",
+    "Like": "J'aime",
+    "Love": "Adore",
+    "Applause": "Applaudissements",
+    "Celebrate": "Fêter",
+    "Happy": "Content",
+    "Insightful": "Instructif",
+    "Thank you": "Merci",
+    "Exciting": "Enthousiasmant",
+    "You": "Vous",
+    "Add reaction": "Ajouter une réaction",
+    "{{label}}: {{count}}": "{{label}} : {{count}}",
+    "React with {{emoji}}": "Réagir avec {{emoji}}",
+    "{{count}} reactions": "{{count}} réactions"
 }

@@ -237,6 +237,7 @@ rest_api.add_resource(discussion_api.DiscussionSubscriptionAPI,     '/api/v1/dis
 rest_api.add_resource(discussion_api.DiscussionPinAPI,             '/api/v1/discussion/thread/<int:thread_id>/pin')
 rest_api.add_resource(discussion_api.DiscussionMessageAPI,          '/api/v1/discussion/message/<int:message_id>')
 rest_api.add_resource(discussion_api.DiscussionReportAPI,           '/api/v1/discussion/message/<int:message_id>/report')
+rest_api.add_resource(discussion_api.DiscussionReactionAPI,         '/api/v1/discussion/message/<int:message_id>/reaction')
 rest_api.add_resource(connections_api.ConnectionAPI, '/api/v1/connection')
 
 # Document generation routes

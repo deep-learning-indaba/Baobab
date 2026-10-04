@@ -1598,5 +1598,18 @@
     "Set a new expiry date in the future to reset this offer.": "Set a new expiry date in the future to reset this offer.",
     "Responded At": "Responded At",
     "The offer was reset, but the notification email could not be sent to the candidate.": "The offer was reset, but the notification email could not be sent to the candidate.",
-    "Reset the rejected offer for {{name}}? The rejection will be cleared and the candidate will be emailed so they can respond to the offer again.": "Reset the rejected offer for {{name}}? The rejection will be cleared and the candidate will be emailed so they can respond to the offer again."
+    "Reset the rejected offer for {{name}}? The rejection will be cleared and the candidate will be emailed so they can respond to the offer again.": "Reset the rejected offer for {{name}}? The rejection will be cleared and the candidate will be emailed so they can respond to the offer again.",
+    "Like": "Like",
+    "Love": "Love",
+    "Applause": "Applause",
+    "Celebrate": "Celebrate",
+    "Happy": "Happy",
+    "Insightful": "Insightful",
+    "Thank you": "Thank you",
+    "Exciting": "Exciting",
+    "You": "You",
+    "Add reaction": "Add reaction",
+    "{{label}}: {{count}}": "{{label}}: {{count}}",
+    "React with {{emoji}}": "React with {{emoji}}",
+    "{{count}} reactions": "{{count}} reactions"
 }

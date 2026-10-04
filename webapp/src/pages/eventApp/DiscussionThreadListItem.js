@@ -1,5 +1,6 @@
 import React from 'react';
 import { formatInEventTz } from '../../utils/datetime';
+import { REACTION_BY_KEY } from './reactions';
 
 function DiscussionThreadListItem(props) {
   var th = props.thread, t = props.t, timezone = props.timezone, onClick = props.onClick;
@@ -33,6 +34,19 @@ function DiscussionThreadListItem(props) {
           </p>
         </div>
       </button>
+      {th.reaction_count > 0 && (
+        <span
+          className="flex-shrink-0 self-center flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/30 px-3 py-1.5"
+          aria-label={t('{{count}} reactions', { count: th.reaction_count })}
+        >
+          <span className="flex items-center gap-1 text-base leading-none" aria-hidden="true">
+            {(th.top_reactions || []).map(function (key) {
+              return REACTION_BY_KEY[key] ? <span key={key}>{REACTION_BY_KEY[key].glyph}</span> : null;
+            })}
+          </span>
+          <span className="text-sm font-bold text-primary">{th.reaction_count}</span>
+        </span>
+      )}
       {th.unread && (
         <span className="flex-shrink-0 text-xs font-semibold text-primary-foreground bg-primary px-2 py-0.5 rounded-full self-start">
           {t('New')}
