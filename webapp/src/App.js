@@ -30,6 +30,7 @@ import { withTranslation } from 'react-i18next';
 import { userService } from "./services/user";
 import { changeSiteLanguage } from "./utils/siteLanguage";
 import { registerPushSubscription } from "./utils/push";
+import { EmailTemplatesAdmin, EmailTemplateEditor, EmailLayoutEditor } from "./pages/emailTemplates";
 
 
 ReactGA.initialize("UA-136093201-1", {
@@ -278,6 +279,11 @@ class AppComponent extends Component {
                     />
                   )}
                 />
+                {/* Organisation-wide email settings, for system admins; the API refuses
+                    anyone else. Above /:eventKey so it isn't taken for an event key. */}
+                <PrivateRoute exact path="/emailSettings" component={EmailTemplatesAdmin} />
+                <PrivateRoute exact path="/emailSettings/design" component={EmailLayoutEditor} />
+                <PrivateRoute exact path="/emailSettings/edit/:key([a-z0-9-]+)" component={EmailTemplateEditor} />
                 <Route exact path="/verifyEmail" component={VerifyEmail} />
                 <Route exact path="/file/:filename" component={ViewFile} />
                 <PrivateRoute exact path="/profile" component={Profile} />

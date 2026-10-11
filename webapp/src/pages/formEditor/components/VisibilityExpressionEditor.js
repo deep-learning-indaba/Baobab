@@ -51,10 +51,7 @@ const VisibilityExpressionEditor = ({ expression, onChange, scope = 'form', even
   const createSimpleCondition = () => ({ tag: '' });
   const createLogicalExpression = (operator) => ({ operator, conditions: [createSimpleCondition()] });
 
-  const handleToggleEditor = () => {
-    if (!showEditor && !expression) onChange(createSimpleCondition());
-    setShowEditor(!showEditor);
-  };
+  const handleToggleEditor = () => setShowEditor(!showEditor);
 
   const handleClear = () => { onChange(null); setShowEditor(false); };
 
@@ -229,7 +226,7 @@ const VisibilityExpressionEditor = ({ expression, onChange, scope = 'form', even
           <span className="text-sm text-muted-foreground font-normal">{scopeCopy.help}</span>
         </label>
         <div className="flex gap-2 flex-shrink-0 ml-4">
-          {hasExpression && (
+          {expression && (
             <button
               type="button"
               onClick={handleClear}

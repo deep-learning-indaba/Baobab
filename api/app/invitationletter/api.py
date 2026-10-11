@@ -235,7 +235,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                             nationality=country_of_nationality,
                             date_of_birth=date_of_birth.strftime("%Y-%m-%d"),
                             email=user.email,
-                            user_title=user.user_title,
+                            user_title=user.user_title or '',
                             firstname=user.firstname,
                             lastname=user.lastname,
                             bringing_poster=bringing_poster,

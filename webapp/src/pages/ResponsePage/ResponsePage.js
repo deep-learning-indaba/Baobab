@@ -14,6 +14,7 @@ import { ConfirmModal } from "../../components/Modal";
 import moment from 'moment'
 import { getDownloadURL } from '../../utils/files';
 import TagSelectorDialog from '../../components/TagSelectorDialog';
+import { formatUserName } from "../../utils/userName";
 
 class ResponsePage extends Component {
     constructor(props) {
@@ -542,7 +543,7 @@ class ResponsePage extends Component {
                     return <div className="reviewer">
                         <label>{this.props.t("Reviewer") + " " + num}</label>
                         <div>
-                            <p>{val.user_title} {val.firstname} {val.lastname}</p>
+                            <p>{formatUserName(val.user_title, val.firstname, val.lastname)}</p>
                             
                             {val.status === "completed" && <p className="review-completed">{this.props.t("Completed")}</p>}
                             {val.status === "started" && <p className="review-started">{this.props.t("In Progress")}</p>}
@@ -717,7 +718,7 @@ class ResponsePage extends Component {
                 {applicationData &&
                     <div className="headings-lower">
                         <div className="user-details">
-                            <h2>{applicationData.user_title} {applicationData.firstname} {applicationData.lastname}</h2>
+                            <h2>{formatUserName(applicationData.user_title, applicationData.firstname, applicationData.lastname)}</h2>
                             <p>{t("Language")}: {applicationData.language}</p>
                             <div className="tags">
                                 {this.renderTags()}

@@ -16,10 +16,8 @@ import {
   requiredDropdown,
   validEmail
 } from "../../../utils/validation/rules.js";
-import {
-  getTitleOptions
-} from "../../../utils/validation/contentHelpers";
 import { ConfirmModal } from "../../../components/Modal";
+import { formatUserName } from "../../../utils/userName";
 
 const baseFieldValidations = [
   ruleRunner(validationFields.email, validEmail),
@@ -27,7 +25,6 @@ const baseFieldValidations = [
 ];
 
 const extraFieldValidations = [
-  ruleRunner(validationFields.title, requiredDropdown),
   ruleRunner(validationFields.firstName, requiredText),
   ruleRunner(validationFields.lastName, requiredText),
 ]
@@ -80,20 +77,8 @@ class InvitedGuests extends Component {
     });
   }
 
-  checkOptionsList(optionsList) {
-    if (Array.isArray(optionsList)) {
-      return optionsList;
-    } else
-      return [];
-  }
-
   componentDidMount() {
     this.setState({ loading: true }, () => this.getGuestList());
-    getTitleOptions.then(result => {
-      this.setState({
-        titleOptions: this.checkOptionsList(result)
-      });
-    });
   }
 
   runValidations = callback => {
@@ -138,7 +123,7 @@ class InvitedGuests extends Component {
 
     for (var i = 0; i < guestList.length; i++) {
       const tags = guestList[i].tags.map(t=>t.name).join("; ");
-      const fullname = guestList[i].user.user_title + " " + guestList[i].user.firstname + " " + guestList[i].user.lastname
+      const fullname = formatUserName(guestList[i].user.user_title, guestList[i].user.firstname, guestList[i].user.lastname)
       str += fullname + ',' + guestList[i].user.email + ',' + guestList[i].role + ',' + tags;
       str += "\r\n";
     }
@@ -156,7 +141,7 @@ class InvitedGuests extends Component {
     const filtered = this.state.guestList.filter(g => {
       let passed = true;
       if (nameSearch) {
-        const fullname = g.user.user_title + " " + g.user.firstname + " " + g.user.lastname;
+        const fullname = formatUserName(g.user.user_title, g.user.firstname, g.user.lastname);
         passed = (fullname.toLowerCase().indexOf(nameSearch.toLowerCase()) > -1
           || g.user.email.toLowerCase().indexOf(nameSearch.toLowerCase()) > -1);
       }
@@ -368,7 +353,7 @@ class InvitedGuests extends Component {
   handleDeleteGuest = (resp) => {
     if (resp.statusCode === 200) {
       const removedGuest = this.state.guestList.find(g => g.invited_guest_id === resp.response.data.invited_guest_id);
-      const guestName = removedGuest.user.user_title + " " + removedGuest.user.firstname + " " + removedGuest.user.lastname;
+      const guestName = formatUserName(removedGuest.user.user_title, removedGuest.user.firstname, removedGuest.user.lastname);
       this.setState({
         guestList: this.state.guestList.filter(g => g.invited_guest_id !== resp.response.data.invited_guest_id),
         addedSucess: true,
@@ -420,7 +405,7 @@ class InvitedGuests extends Component {
       Header: <div className="invitedguest-fullname text-left font-bold">{t("Full Name")}</div>,
       accessor: u =>
         <div className="invitedguest-fullname font-medium text-foreground">
-          {u.user.user_title + " " + u.user.firstname + " " + u.user.lastname}
+          {formatUserName(u.user.user_title, u.user.firstname, u.user.lastname)}
         </div>,
       minWidth: 150
     }, {
@@ -455,7 +440,7 @@ class InvitedGuests extends Component {
     }
   ];
 
-  const guestName = this.state.selectedGuest ? this.state.selectedGuest.user.user_title + " " + this.state.selectedGuest.user.firstname + " " + this.state.selectedGuest.user.lastname : "";
+  const guestName = this.state.selectedGuest ? formatUserName(this.state.selectedGuest.user.user_title, this.state.selectedGuest.user.firstname, this.state.selectedGuest.user.lastname) : "";
 
     return (
       <div className="w-full pt-6 text-left space-y-6">
@@ -626,20 +611,7 @@ class InvitedGuests extends Component {
 
             {!this.state.addedSucess && this.state.notFound && (
               <div className="space-y-6 pt-6 border-t border-border/50">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <FormSelect
-                      options={this.state.titleOptions}
-                      id={validationFields.title.name}
-                      placeholder={t(validationFields.title.display)}
-                      onChange={this.handleChangeDropdown}
-                      label={t(validationFields.title.display)}
-                      showError={this.getError(validationFields.title.name)}
-                      errorText={this.getError(validationFields.title.name)}
-                      defaultValue={this.state.user[validationFields.title.name] || ""}
-                      value={this.state.user[validationFields.title.name] || ""} />
-                  </div>
-
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <FormTextBox
                       id={validationFields.firstName.name}

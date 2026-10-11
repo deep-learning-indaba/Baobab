@@ -13,7 +13,8 @@ from app.events.models import Event
 from app.utils.auth import auth_required, admin_required
 from app.users.repository import UserRepository
 from app.events.repository import EventRepository
-from app.utils import errors, emailer, strings
+from app.utils import errors, strings
+from app.email_template.service import queue_email
 from app import LOGGER
 from app.users.repository import UserRepository as user_repository
 from app.registrationResponse.repository import RegistrationRepository
@@ -256,22 +257,16 @@ class RegistrationApi(restful.Resource):
             LOGGER.warn(
                 'Found no questions associated with application form with id {form_id}'.format(form_id=user.id))
         try:
-            # Building the summary, where the summary is a dictionary whose key is the question headline, and the value
-            # is the relevant answer
-            summary = ""
+            pairs = []
             for answer in answers:
                 for question in questions:
                     if answer.registration_question_id == question.id:
-                        summary += "Question:" + question.headline + "\nAnswer:" + _get_answer_value(
-                                answer, question) + "\n"
+                        pairs.append({'question': question.headline,
+                                      'answer': _get_answer_value(answer, question)})
 
-            emailer.email_user(
-                'registration-with-confirmation' if confirmed else 'registration-pending-confirmation',
-                template_parameters=dict(
-                    summary=summary
-                ),
-                event=event,
-                user=user)
+            queue_email('registration-received', user, event=event,
+                        context={'registration': {'confirmed': confirmed, 'answers': pairs}})
+            db.session.commit()
 
         except Exception as e:
             LOGGER.error('Could not send confirmation email for response with id : {response_id}'.format(
@@ -392,11 +387,8 @@ class RegistrationConfirmedAPI(RegistrationAdminMixin, restful.Resource):
 
 def send_registration_confirmation_mail(user, event):
     try:
-        emailer.email_user(
-            'registration-confirmed',
-            event=event,
-            user=user)
-        
+        queue_email('registration-confirmed', user, event=event)
+        db.session.commit()
         return True
     except Exception as e:
         LOGGER.error(

@@ -137,6 +137,7 @@ const DocumentTemplateEditor = (props) => {
           template={template}
           isNew={isNew}
           eventId={event.id}
+          eventKey={event.key}
           languages={languages}
           autoTranslateEnabled={autoTranslateEnabled}
           tags={tags}

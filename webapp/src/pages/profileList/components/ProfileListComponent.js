@@ -56,7 +56,7 @@ class ProfileListComponent extends Component {
 
         const columns = [{
             id: "user", Header: <div className="list-fullname">{t("Full Name")}</div>,
-            accessor: u => u.lastname + " " + u.firstname + ", " + u.user_title,
+            accessor: u => u.lastname + " " + u.firstname + (u.user_title ? ", " + u.user_title : ""),
             Cell: props =>
                 <button className="link-style"
                     onClick={e => {

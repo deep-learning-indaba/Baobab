@@ -1,7 +1,5 @@
-import html
 from datetime import datetime
 
-import markdown as md_lib
 from flask import g, request
 import flask_restful as restful
 from flask_restful import reqparse
@@ -9,6 +7,7 @@ from flask_restful import reqparse
 from app import db, LOGGER
 from app.utils.auth import auth_required
 from app.utils import errors
+from app.email_template.service import wrap_markdown
 from app.utils.emailer import resolve_sender
 from app.utils.push import push_to_user
 from app.announcements.models import Announcement, AnnouncementTranslation, AnnouncementReceipt, PushSubscription
@@ -156,18 +155,19 @@ def _enqueue(ann, event, critical, target_audience='checked_in', tag_id=None):
     # languages and thousands of guests.
     rendered = {}
 
-    def render(language):
+    def render(language, with_email):
         if language not in rendered:
             title, body = _pick_translation(translations, language)
             rendered[language] = {
                 'title': title,
                 'body': body,
-                # The title is free text, so it has to be escaped before going into
-                # the heading; markdown already escapes what it renders.
-                'body_html': '<h2>{}</h2>{}'.format(html.escape(title), md_lib.markdown(body)),
                 'push_body': body[:120] + ('...' if len(body) > 120 else ''),
             }
-        return rendered[language]
+        content = rendered[language]
+        if with_email and 'body_html' not in content:
+            content['body_html'], content['body_text'] = wrap_markdown(
+                organisation, event, language, content['title'], content['title'], content['body'])
+        return content
 
     receipts = []
     messages = []
@@ -180,7 +180,7 @@ def _enqueue(ann, event, critical, target_audience='checked_in', tag_id=None):
                 'channel': 'inbox',
             })
 
-        content = render(user_language_for_event(user, event))
+        content = render(user_language_for_event(user, event), critical and user.email)
 
         common = {
             'organisation_id': organisation.id,
@@ -198,6 +198,7 @@ def _enqueue(ann, event, critical, target_audience='checked_in', tag_id=None):
         messages.append(dict(
             common,
             channel=OutboxChannel.PUSH,
+            idempotency_key='{}:{}:{}:{}'.format(OUTBOX_SOURCE_TYPE, ann.id, OutboxChannel.PUSH, user.id),
             body_text=content['push_body'],
             payload={
                 'title': content['title'],
@@ -211,16 +212,19 @@ def _enqueue(ann, event, critical, target_audience='checked_in', tag_id=None):
             messages.append(dict(
                 common,
                 channel=OutboxChannel.EMAIL,
+                idempotency_key='{}:{}:{}:{}'.format(OUTBOX_SOURCE_TYPE, ann.id, OutboxChannel.EMAIL, user.id),
                 recipient=user.email,
-                body_text='{}\n\n{}'.format(content['title'], content['body']),
+                body_text=content['body_text'],
                 body_html=content['body_html'],
+                reply_to=event.email_from,
+                language=user_language_for_event(user, event),
                 sender_name=sender_name,
                 sender_email=sender_email,
             ))
 
     if receipts:
         db.session.bulk_insert_mappings(AnnouncementReceipt, receipts)
-    queued = OutboxRepository.enqueue_many(messages, OUTBOX_SOURCE_TYPE, ann.id)
+    queued = OutboxRepository.enqueue_many(messages)
 
     db.session.commit()
     LOGGER.info('Announcement %s queued %s messages for %s recipients', ann.id, queued, len(users))

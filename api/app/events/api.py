@@ -6,7 +6,6 @@ import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with, marshal
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.email_template.repository import EmailRepository as email_repository
 from app.events.models import Event, EventRole, EventFee, EventResourceLink
 from app.events.mixins import EventsMixin, EventsKeyMixin, EventMixin, EventFeeMixin, EventRoleMixin
 from app.users.models import AppUser
@@ -47,14 +46,15 @@ from app.utils.errors import (
 )
 
 from app.utils.auth import auth_optional, auth_required, event_admin_required
-from app.utils.emailer import email_user
+from app.email_template.service import queue_emails
 from app.events.repository import EventRepository as event_repository
 from app.organisation.models import Organisation
 from app.events.models import EventType
 import app.events.status as event_status
 from app.reviews.repository import ReviewRepository as review_repository
 from app.reviews.repository import ReviewConfigurationRepository as review_config_repository
-from app.forms.models import Form as GenericForm
+from app.forms import system as form_system
+from app.forms import stats as form_stats
 
 def status_info(status):
     if status is None:
@@ -72,15 +72,9 @@ def status_info(status):
 
 def event_info(user_id, event, status, language):
     language = event.resolve_language(language)
-    new_reg_form = db.session.query(GenericForm).filter_by(
-        event_id=event.id, form_type='registration'
-    ).first()
-    new_app_form = db.session.query(GenericForm).filter_by(
-        event_id=event.id, form_type='application'
-    ).first()
-    new_review_form = db.session.query(GenericForm).filter_by(
-        event_id=event.id, form_type='review'
-    ).first()
+    new_reg_form = form_system.get_registration_form(event)
+    new_app_form = form_system.get_application_form(event)
+    new_review_form = form_system.get_active_review_form(event)
 
     return {
         'id': event.id,
@@ -116,6 +110,7 @@ def event_info(user_id, event, status, language):
         'registration_form_id': new_reg_form.id if new_reg_form else None,
         'application_form_id': new_app_form.id if new_app_form else None,
         'review_form_id': new_review_form.id if new_review_form else None,
+        'uses_new_forms': event.uses_new_forms,
         'timezone': event.timezone,
         'checkin_mode': event.checkin_mode,
         'survey_form_id': event.survey_form_id,
@@ -577,17 +572,31 @@ class EventStatsAPI(EventsMixin, restful.Resource):
             return EVENT_NOT_FOUND
 
         try:
-            num_responses = response_repository.get_total_count_by_event(event_id)
-            num_submitted_respones = response_repository.get_submitted_count_by_event(event_id)
-            num_withdrawn_responses = response_repository.get_withdrawn_count_by_event(event_id)
-            submitted_response_timeseries = _process_timeseries(response_repository.get_submitted_timeseries_by_event(event_id))
+            if event.uses_new_forms:
+                applications = form_stats.application_stats(form_system.get_application_form(event))
+                num_responses = applications['total']
+                num_submitted_respones = applications['submitted']
+                num_withdrawn_responses = applications['withdrawn']
+                submitted_response_timeseries = _process_timeseries(applications['submitted_timeseries'])
 
-            review_config = review_config_repository.get_configuration_for_event(event_id)
-            required_reviews = 1 if review_config is None else review_config.num_reviews_required
-            reviews_completed = review_repository.get_count_reviews_completed_for_event(event_id)
-            reviews_incomplete = review_repository.get_count_reviews_incomplete_for_event(event_id)
-            reviews_unallocated = review_repository.count_unassigned_reviews(event_id, required_reviews)
-            reviews_timeseries = _process_timeseries(review_repository.get_review_complete_timeseries_by_event(event_id))
+                reviews = form_stats.review_stats(form_system.get_active_review_form(event))
+                required_reviews = reviews['required']
+                reviews_completed = reviews['completed']
+                reviews_incomplete = reviews['incomplete']
+                reviews_unallocated = reviews['unallocated']
+                reviews_timeseries = _process_timeseries(reviews['timeseries'])
+            else:
+                num_responses = response_repository.get_total_count_by_event(event_id)
+                num_submitted_respones = response_repository.get_submitted_count_by_event(event_id)
+                num_withdrawn_responses = response_repository.get_withdrawn_count_by_event(event_id)
+                submitted_response_timeseries = _process_timeseries(response_repository.get_submitted_timeseries_by_event(event_id))
+
+                review_config = review_config_repository.get_configuration_for_event(event_id)
+                required_reviews = 1 if review_config is None else review_config.num_reviews_required
+                reviews_completed = review_repository.get_count_reviews_completed_for_event(event_id)
+                reviews_incomplete = review_repository.get_count_reviews_incomplete_for_event(event_id)
+                reviews_unallocated = review_repository.count_unassigned_reviews(event_id, required_reviews)
+                reviews_timeseries = _process_timeseries(review_repository.get_review_complete_timeseries_by_event(event_id))
 
             offers_allocated = offer_repository.count_offers_allocated(event_id)
             offers_accepted = offer_repository.count_offers_accepted(event_id)
@@ -596,12 +605,15 @@ class EventStatsAPI(EventsMixin, restful.Resource):
             offers_rejected = offer_repository.count_offers_rejected(event_id)
             offers_timeseries = _process_timeseries(offer_repository.timeseries_offers_accepted(event_id))
 
-            num_registrations = registration_repository.count_registrations(event_id)
-            num_guests = guest_registration_repository.count_guests(event_id)
-            num_registered_guests = guest_registration_repository.count_registered_guests(event_id)
-            # registration_timeseries = _process_timeseries(registration_repository.timeseries_registrations(event_id))
-            # guest_registration_timeseries = _process_timeseries(guest_registration_repository.timeseries_guest_registrations(event_id))
-            # registration_timeseries = _combine_timeseries(registration_timeseries, guest_registration_timeseries)
+            if event.uses_new_forms:
+                registrations = form_stats.registration_stats(event_id, form_system.get_registration_form(event))
+                num_registrations = registrations['registrations']
+                num_guests = registrations['guests']
+                num_registered_guests = registrations['registered_guests']
+            else:
+                num_registrations = registration_repository.count_registrations(event_id)
+                num_guests = guest_registration_repository.count_guests(event_id)
+                num_registered_guests = guest_registration_repository.count_registered_guests(event_id)
 
             # Event app usage: the attendee pool is everyone who accepted an offer or
             # was invited as a guest; confirmed attendees are the subset who have
@@ -714,18 +726,10 @@ class NotSubmittedReminderAPI(EventsMixin, restful.Resource):
         if not current_user.is_event_admin(event_id):
             return FORBIDDEN
 
-        users = user_repository.get_all_with_unsubmitted_response()
-        for user in users:
-            organisation_name = event.organisation.name
-            deadline = event.application_close.strftime('%A %-d %B %Y')
-
-            email_user(
-                'application-not-submitted', 
-                template_parameters=dict(
-                    organisation_name=organisation_name,
-                    deadline=deadline), 
-                event=event,
-                user=user)
+        users = user_repository.get_all_with_unsubmitted_response_for(event.id)
+        queue_emails('application-not-submitted', [(user, {}) for user in users], event=event,
+                     source=('reminder', event.id))
+        db.session.commit()
 
         return {'unsubmitted_responses': len(users)}, 201
 
@@ -746,24 +750,10 @@ class NotStartedReminderAPI(EventsMixin, restful.Resource):
         if not current_user.is_event_admin(event_id):
             return FORBIDDEN
 
-        users = user_repository.get_all_without_responses()
-        for user in users:
-            event_name = event.get_name(event.primary_language)
-            organisation_name = event.organisation.name
-            system_name = event.organisation.system_name
-            deadline = event.application_close.strftime('%A %-d %B %Y')
-
-            email_user(
-                'application-not-started', 
-                template_parameters=dict(
-                    event=event_name,
-                    organisation_name=organisation_name,
-                    system_name=system_name,
-                    deadline=deadline
-                ),
-                event=event,
-                user=user
-            )
+        users = user_repository.get_all_without_response_for(event)
+        queue_emails('application-not-started', [(user, {}) for user in users], event=event,
+                     source=('reminder', event.id))
+        db.session.commit()
 
         return {'not_started_responses': len(users)}, 201
 

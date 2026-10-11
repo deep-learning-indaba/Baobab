@@ -9,13 +9,11 @@ against each one - the exact same eligibility/blocker/variant/resolution/PDF
 steps, just entered with a row that already exists instead of creating one.
 """
 import uuid
-from datetime import datetime
 
 from app import db, LOGGER
 from app.utils import storage
-from app.utils.emailer import resolve_sender
-from app.email_template.repository import EmailRepository
-from app.outbox.models import OutboxChannel, OutboxStatus
+from app.email_template.engine import EmailRenderError
+from app.email_template.service import Attachment, prepare_email
 from app.outbox.repository import OutboxRepository
 from config import GCP_DOCS_WORKING_FOLDER_ID
 
@@ -201,11 +199,15 @@ def _render_filename(resolver, user, document_template):
     return rendered if rendered.lower().endswith('.pdf') else f'{rendered}.pdf'
 
 
-#: The reason recorded on a GeneratedDocument row when its template wants an
-#: email but no EmailTemplate exists to build one from - shown in the admin
-#: results table and returned by a failed resend, so "why didn't this get
-#: emailed" doesn't require clicking Resend to find out.
-NO_EMAIL_TEMPLATE_REASON = 'No email template is configured for this document.'
+#: Prefix of the reason recorded on a GeneratedDocument row when its delivery
+#: email couldn't be built - shown in the admin results table and returned by a
+#: failed resend, so "why didn't this get emailed" doesn't require clicking
+#: Resend to find out.
+EMAIL_NOT_QUEUED_REASON = 'The delivery email could not be created'
+
+
+def document_email_key(document_template):
+    return document_template.email_template_key or 'generated-document'
 
 
 def _enqueue_delivery_email(document_template, generated_document, user, event, filename, language):
@@ -215,93 +217,51 @@ def _enqueue_delivery_email(document_template, generated_document, user, event, 
     single self-service request returns as soon as the PDF exists rather than
     waiting on a mail server round-trip too.
 
-    A missing EmailTemplate is logged and recorded on the row, not fatal: the
-    document is still generated and downloadable, matching the legacy
-    invitation letter generator's behaviour - but not raising here would
-    otherwise leave nothing to tell an admin their attendees never got it.
+    A template that can't be rendered is logged and recorded on the row, not
+    fatal: the document is still generated and downloadable - but not
+    recording it would leave nothing to tell an admin their attendees never
+    got it.
     """
-    message = _build_delivery_message(document_template, generated_document, user, event, filename, language)
-    if message is None:
-        generated_document.email_skipped_reason = NO_EMAIL_TEMPLATE_REASON
-        db.session.commit()
-        return
-    generated_document.email_skipped_reason = None
-    OutboxRepository.enqueue_many([message], OUTBOX_SOURCE_TYPE, generated_document.id)
-    db.session.commit()
+    _queue_delivery(document_template, generated_document, user, event, filename, language,
+                    idempotency_key='document:{}'.format(generated_document.id))
 
 
 def enqueue_resend(document_template, generated_document, user, event):
     """Admin-triggered resend of an already-generated document's delivery
     email (design section 9.7's results tab).
 
-    Deliberately bypasses enqueue_many's per-source dedup: that dedup exists
-    so the automatic delivery from generation never gets double-queued by an
-    unrelated retry, but a resend is a deliberate repeat, not an accident -
-    an admin who clicks it again after the first email bounced expects a new
-    attempt, not silence.
+    Deliberately has no idempotency key: that dedup exists so the automatic
+    delivery from generation never gets double-queued by an unrelated retry,
+    but a resend is a deliberate repeat, not an accident - an admin who clicks
+    it again after the first email bounced expects a new attempt, not silence.
 
-    Returns False (nothing queued) only when there's no EmailTemplate to
-    render from.
+    Returns the reason nothing was queued, or None when it was.
     """
-    message = _build_delivery_message(
-        document_template, generated_document, user, event,
-        generated_document.filename, generated_document.language)
-    if message is None:
-        generated_document.email_skipped_reason = NO_EMAIL_TEMPLATE_REASON
+    return _queue_delivery(document_template, generated_document, user, event,
+                           generated_document.filename, generated_document.language)
+
+
+def _queue_delivery(document_template, generated_document, user, event, filename, language,
+                    idempotency_key=None):
+    attachments = ()
+    if document_template.delivery_mode in ('attachment', 'both'):
+        attachments = [Attachment(generated_document.storage_blob_name, filename)]
+    try:
+        message = prepare_email(
+            document_email_key(document_template), user, event=event,
+            context={'document': {'name': _template_name(document_template, language), 'filename': filename}},
+            attachments=attachments, source=(OUTBOX_SOURCE_TYPE, generated_document.id),
+            idempotency_key=idempotency_key, language=language)
+    except (EmailRenderError, ValueError) as e:
+        LOGGER.warning('Delivery email for generated document %s not queued: %s', generated_document.id, e)
+        reason = '{}: {}'.format(EMAIL_NOT_QUEUED_REASON, e)
+        generated_document.email_skipped_reason = reason[:255]
         db.session.commit()
-        return False
+        return generated_document.email_skipped_reason
     generated_document.email_skipped_reason = None
     OutboxRepository.enqueue_many([message])
     db.session.commit()
-    return True
-
-
-def _build_delivery_message(document_template, generated_document, user, event, filename, language):
-    """An OutboxMessage-shaped dict for this document's delivery email, or
-    None when no EmailTemplate exists for this key/event/language."""
-    email_template = EmailRepository.get(
-        event.id, document_template.email_template_key or 'generated-document', language)
-    if email_template is None:
-        LOGGER.warning(
-            'No email template "%s" found for generated document %s; not emailing.',
-            document_template.email_template_key or 'generated-document', generated_document.id,
-        )
-        return None
-
-    organisation = event.organisation
-    sender_name, sender_email = resolve_sender(organisation.name, organisation.email_from)
-
-    event_name = event.get_name(language)
-    parameters = {
-        'title': user.user_title or '', 'firstname': user.firstname, 'lastname': user.lastname,
-        'event_name': event_name, 'document_name': _template_name(document_template, language),
-    }
-    subject = email_template.subject.format(**parameters)
-    body_text = email_template.template.format(**parameters)
-
-    payload = None
-    if document_template.delivery_mode in ('attachment', 'both'):
-        payload = {'attachment': {'blob_name': generated_document.storage_blob_name, 'filename': filename}}
-
-    now = datetime.utcnow()
-    return {
-        'organisation_id': organisation.id,
-        'event_id': event.id,
-        'user_id': user.id,
-        'channel': OutboxChannel.EMAIL,
-        'recipient': user.email,
-        'subject': subject,
-        'body_text': body_text,
-        'sender_name': sender_name,
-        'sender_email': sender_email,
-        'payload': payload,
-        'status': OutboxStatus.PENDING,
-        'attempts': 0,
-        'created_at': now,
-        'scheduled_at': now,
-        'source_type': OUTBOX_SOURCE_TYPE,
-        'source_id': generated_document.id,
-    }
+    return None
 
 
 def _template_name(document_template, language):

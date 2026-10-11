@@ -12,6 +12,7 @@ export const formResponseService = {
     withdrawResponse,
     getResponseListAdmin,
     getResponseDetailAdmin,
+    deleteResponseAdmin,
     adminUpdateResponseStatus,
     tagFormResponse,
     removeFormResponseTag,
@@ -20,7 +21,29 @@ export const formResponseService = {
     removeResponseReviewer,
     exportResponsesCsv,
     exportResponsesToGoogleSheets,
-    getResponseStats
+    getResponseStats,
+    getFormResponsesSummary
+}
+
+/**
+ * Every form in an event with its response counts. Readable by event admins
+ * and form-viewers.
+ * @param {number} eventId
+ * @param {string} language
+ * @returns {Promise} { forms, error, statusCode }
+ */
+function getFormResponsesSummary(eventId, language) {
+    const params = new URLSearchParams({ event_id: eventId });
+    if (language) params.append('language', language);
+    return axios.get(baseUrl + `/api/v1/form-responses-summary?${params.toString()}`, {
+        headers: authHeader()
+    })
+    .then(function(response) {
+        return { forms: response.data.forms, error: '', statusCode: response.status };
+    })
+    .catch(function(error) {
+        return { forms: [], error: extractErrorMessage(error), statusCode: error.response && error.response.status };
+    });
 }
 
 /**
@@ -336,6 +359,19 @@ function getResponseListAdmin(eventId, formId, filters = {}) {
             statusCode: error.response && error.response.status
         };
     });
+}
+
+/**
+ * Permanently delete a response (event admin only). The respondent is emailed.
+ * @returns {Promise} { emailSent, error, statusCode }
+ */
+function deleteResponseAdmin(eventId, formId, responseId) {
+    const params = new URLSearchParams({ event_id: eventId });
+    return axios.delete(baseUrl + `/api/v1/forms/${formId}/responses/${responseId}/admin?${params.toString()}`, {
+        headers: authHeader()
+    })
+    .then(r => ({ emailSent: r.data.email_sent, error: '', statusCode: r.status }))
+    .catch(e => ({ emailSent: false, error: extractErrorMessage(e), statusCode: e.response && e.response.status }));
 }
 
 /**

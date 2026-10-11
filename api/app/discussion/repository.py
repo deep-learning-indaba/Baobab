@@ -5,8 +5,9 @@ from sqlalchemy import and_, exists, func, not_, or_
 from app import db
 from app.discussion.models import (
     DiscussionThread, DiscussionMessage, DiscussionSubscription, DiscussionReport, DiscussionRead,
-    DiscussionSpace, NO_SUBJECT_PLACEHOLDER,
+    DiscussionSpace, DiscussionReaction, NO_SUBJECT_PLACEHOLDER, REACTION_EMOJIS,
 )
+from app.users.models import AppUser
 
 
 class DiscussionRepository:
@@ -323,6 +324,63 @@ class DiscussionRepository:
     def set_report_status(report, status):
         report.status = status      # 'dismissed' | 'actioned'
         db.session.commit()
+
+    # ---------- Reactions ----------
+
+    @staticmethod
+    def add_reaction(message, user_id, emoji):
+        """Idempotent: adding an existing (message, user, emoji) reaction is a no-op."""
+        existing = (db.session.query(DiscussionReaction)
+                    .filter_by(message_id=message.id, user_id=user_id, emoji=emoji).first())
+        if existing:
+            return existing, False
+        reaction = DiscussionReaction(
+            message_id=message.id, event_id=message.event_id, user_id=user_id, emoji=emoji)
+        db.session.add(reaction)
+        db.session.commit()
+        return reaction, True
+
+    @staticmethod
+    def remove_reaction(message_id, user_id, emoji):
+        (db.session.query(DiscussionReaction)
+         .filter_by(message_id=message_id, user_id=user_id, emoji=emoji)
+         .delete())
+        db.session.commit()
+
+    @staticmethod
+    def reactions_for_messages(message_ids):
+        """{message_id: [(emoji, user_id, firstname, lastname), ...]}, oldest reaction first."""
+        grouped = {}
+        if not message_ids:
+            return grouped
+        rows = (db.session.query(DiscussionReaction.message_id, DiscussionReaction.emoji,
+                                 DiscussionReaction.user_id, AppUser.firstname, AppUser.lastname)
+                .join(AppUser, AppUser.id == DiscussionReaction.user_id)
+                .filter(DiscussionReaction.message_id.in_(message_ids),
+                        DiscussionReaction.emoji.in_(REACTION_EMOJIS))
+                .order_by(DiscussionReaction.created_at.asc(), DiscussionReaction.id.asc())
+                .all())
+        for message_id, emoji, user_id, firstname, lastname in rows:
+            grouped.setdefault(message_id, []).append((emoji, user_id, firstname, lastname))
+        return grouped
+
+    @staticmethod
+    def reaction_counts_for_threads(thread_ids):
+        """{thread_id: {emoji: count}} over the thread's non-deleted messages."""
+        if not thread_ids:
+            return {}
+        rows = (db.session.query(DiscussionMessage.thread_id, DiscussionReaction.emoji,
+                                 func.count(DiscussionReaction.id))
+                .join(DiscussionReaction, DiscussionReaction.message_id == DiscussionMessage.id)
+                .filter(DiscussionMessage.thread_id.in_(thread_ids),
+                        DiscussionMessage.is_deleted.is_(False),
+                        DiscussionReaction.emoji.in_(REACTION_EMOJIS))
+                .group_by(DiscussionMessage.thread_id, DiscussionReaction.emoji)
+                .all())
+        grouped = {}
+        for thread_id, emoji, count in rows:
+            grouped.setdefault(thread_id, {})[emoji] = count
+        return grouped
 
     # ---------- Event-level stats ----------
 

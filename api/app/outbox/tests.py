@@ -166,8 +166,9 @@ class OutboxRetryTest(OutboxTestCase):
 
 class OutboxEnqueueTest(OutboxTestCase):
 
-    def _mapping(self, channel=OutboxChannel.EMAIL, user_id=None):
+    def _mapping(self, channel=OutboxChannel.EMAIL, user_id=None, idempotency_key=None):
         return {
+            'idempotency_key': idempotency_key,
             'organisation_id': self.dummy_org_id,
             'event_id': self.event_id,
             'user_id': self.user_id if user_id is None else user_id,
@@ -184,21 +185,33 @@ class OutboxEnqueueTest(OutboxTestCase):
 
     def test_enqueue_many_inserts_messages(self):
         queued = OutboxRepository.enqueue_many(
-            [self._mapping(), self._mapping(channel=OutboxChannel.PUSH)], 'test', 99)
+            [self._mapping(), self._mapping(channel=OutboxChannel.PUSH)])
         db.session.commit()
 
         self.assertEqual(queued, 2)
         self.assertEqual(db.session.query(OutboxMessage).count(), 2)
 
-    def test_enqueue_many_does_not_duplicate_an_already_queued_source(self):
-        OutboxRepository.enqueue_many([self._mapping()], 'test', 99)
+    def test_enqueue_many_does_not_duplicate_an_already_queued_key(self):
+        OutboxRepository.enqueue_many([self._mapping(idempotency_key='test:99')])
         db.session.commit()
 
-        queued = OutboxRepository.enqueue_many([self._mapping()], 'test', 99)
+        queued = OutboxRepository.enqueue_many([self._mapping(idempotency_key='test:99')])
         db.session.commit()
 
         self.assertEqual(queued, 0)
         self.assertEqual(db.session.query(OutboxMessage).count(), 1)
+
+    def test_enqueue_many_skips_duplicate_keys_within_one_call(self):
+        queued = OutboxRepository.enqueue_many([self._mapping(idempotency_key='k'), self._mapping(idempotency_key='k')])
+        db.session.commit()
+        self.assertEqual(queued, 1)
+
+    def test_messages_without_a_key_may_repeat(self):
+        OutboxRepository.enqueue_many([self._mapping()])
+        queued = OutboxRepository.enqueue_many([self._mapping()])
+        db.session.commit()
+        self.assertEqual(queued, 1)
+        self.assertEqual(db.session.query(OutboxMessage).count(), 2)
 
     def test_status_counts_groups_by_source_channel_and_status(self):
         self._message(source_id=1, channel=OutboxChannel.EMAIL)

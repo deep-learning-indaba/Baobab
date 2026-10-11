@@ -8,6 +8,7 @@ import { withTranslation } from 'react-i18next'
 import "../ReviewDashboard.css";
 import { downloadCSV } from "../../../utils/files";
 import { reviewService } from "../../../services/reviews";
+import { formatUserName } from "../../../utils/userName";
 // csv-string pulled in Node.js `stream` which is unavailable in the browser.
 // This app only uses CSV.stringify on an array-of-arrays, so an inline
 // RFC 4180-compliant implementation is sufficient.
@@ -183,7 +184,7 @@ class ReviewListComponent extends Component {
             {
                 Header: <div className="text-left font-bold">{this.props.t("Candidate")}</div>,
                 id: "candidate",
-                accessor: r => `${r.response_user_title} ${r.response_user_firstname} ${r.response_user_lastname}`,
+                accessor: r => formatUserName(r.response_user_title, r.response_user_firstname, r.response_user_lastname),
                 filterable: false,
             }
         ];
@@ -192,7 +193,7 @@ class ReviewListComponent extends Component {
             columns.push({
                 id: "reviewer",
                 Header: <div className="text-left font-bold">{this.props.t("Reviewer")}</div>,
-                accessor: r => `${r.reviewer_user_title} ${r.reviewer_user_firstname} ${r.reviewer_user_lastname}`,
+                accessor: r => formatUserName(r.reviewer_user_title, r.reviewer_user_firstname, r.reviewer_user_lastname),
                 filterable: false,
             });
         }
@@ -306,7 +307,7 @@ class ReviewAssignmentComponent extends Component {
             {
                 id: 'fullName',
                 Header: <div className="text-left font-bold">{t("Name")}</div>,
-                accessor: d => d.user_title + " " + d.firstname + " " + d.lastname
+                accessor: d => formatUserName(d.user_title, d.firstname, d.lastname)
             },
             {
                 Header: <div className="text-left font-bold">{t("No. Allocated")}</div>,

@@ -43,7 +43,7 @@ function create(user) {
       email: user.email,
       firstname: user.firstName,
       lastname: user.lastName,
-      user_title: user.title,
+      user_title: user.title || null,
       password: user.password,
       policy_agreed: user.agreePrivacyPolicy
     })
@@ -62,7 +62,7 @@ function update(user) {
         email: user.email,
         firstname: user.firstName,
         lastname: user.lastName,
-        user_title: user.title,
+        user_title: user.title || null,
         password: ""
       },
       { headers: authHeader() }

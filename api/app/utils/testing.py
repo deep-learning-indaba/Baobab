@@ -213,12 +213,15 @@ class ApiTestCase(unittest.TestCase):
                  registration_close = datetime.now() + timedelta(days=15),
                  event_type = EventType.EVENT,
                  travel_grant = False,
-                 languages = None):
-
+                 languages = None,
+                 uses_new_forms = False):
+        # Defaults to the legacy form system because most fixtures in the suite
+        # build legacy application/review/registration forms; tests of the new
+        # form flows opt in with uses_new_forms=True.
         event = Event(name, description, start_date,  end_date, key,  organisation_id,  email_from,  url, 
                       application_open, application_close, review_open, review_close, selection_open, 
                       selection_close, offer_open,  offer_close, registration_open, registration_close, event_type,
-                      travel_grant, languages=languages)
+                      travel_grant, languages=languages, uses_new_forms=uses_new_forms)
         db.session.add(event)
         db.session.commit()
         return event
@@ -292,8 +295,11 @@ class ApiTestCase(unittest.TestCase):
 
         return review_question_translation
 
-    def add_email_template(self, template_key, template='This is an email', language='en', subject='Subject', event_id=None):
-        email_template = EmailTemplate(template_key, event_id, subject, template, language)
+    def add_email_template(self, template_key, template='This is an email', language='en', subject='Subject', event_id=None,
+                           organisation_id=None):
+        if organisation_id is None:
+            organisation_id = db.session.query(Event).get(event_id).organisation_id if event_id else 1
+        email_template = EmailTemplate(template_key, organisation_id, language, subject, template, event_id=event_id)
         db.session.add(email_template)
         db.session.commit()
         return email_template

@@ -65,6 +65,29 @@ class TranslationService:
             return None
     
     @classmethod
+    def translate_many(cls, texts, target_language, source_language='en', format_='text'):
+        """Translate a list of strings into one language in a single request.
+
+        Returns a list of translations in the same order, or None on error.
+        """
+        if not texts:
+            return []
+        client = cls._get_client()
+        if not client:
+            return None
+        try:
+            results = client.translate(
+                list(texts),
+                target_language=target_language,
+                source_language=source_language,
+                format_=format_,
+            )
+            return [result['translatedText'] for result in results]
+        except Exception as e:
+            LOGGER.error(f"Translation error: {str(e)}")
+            return None
+
+    @classmethod
     def translate_batch(cls, texts, target_languages, source_language='en'):
         """
         Translate a single text to multiple target languages.

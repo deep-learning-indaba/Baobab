@@ -127,7 +127,6 @@ function createInvitedGuest(user, event_Id, role) {
     email: user.email,
     firstname: user.firstName,
     lastname: user.lastName,
-    user_title: user.title,
     role: role,
     policy_agreed: true,
     tag_ids: user.tag_ids || []

@@ -31,8 +31,7 @@ from app.utils.auth import auth_required, event_admin_required
 from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, RESPONSE_NOT_FOUND, \
     REVIEW_FORM_NOT_FOUND, REVIEW_ALREADY_COMPLETED, NO_ACTIVE_REVIEW_FORM, REVIEW_FORM_FOR_STAGE_NOT_FOUND, REVIEW_FORM_EXISTS, UPDATE_CONFLICT, QUESTION_NOT_FOUND, SECTION_NOT_FOUND, TAG_NOT_FOUND
 
-from app.utils import misc
-from app.utils.emailer import email_user
+from app.email_template.service import queue_email
 
 option_fields = {
     'value': fields.String,
@@ -624,16 +623,9 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         db.session.commit()
 
         if len(response_ids) > 0:
-            email_user(
-                'reviews-assigned',
-                template_parameters=dict(
-                    num_reviews=len(response_ids),
-                    baobab_host=misc.get_baobab_host(),
-                    system_name=g.organisation.system_name,
-                    event_key=event.key
-                ),
-                event=event,
-                user=reviewer_user)
+            queue_email('reviews-assigned', reviewer_user, event=event,
+                        context={'reviews': len(response_ids)})
+            db.session.commit()
         return {'reviews_assigned': len(response_ids)}, 201
 
     @event_admin_required
@@ -843,16 +835,9 @@ class ResponseReviewAssignmentAPI(restful.Resource):
         db.session.commit()
 
         if len(response_ids) > 0:
-            email_user(
-                'reviews-assigned',
-                template_parameters=dict(
-                    num_reviews=len(response_ids),
-                    baobab_host=misc.get_baobab_host(),
-                    system_name=g.organisation.system_name,
-                    event_key=event.key
-                ),
-                event=event,
-                user=reviewer_user)
+            queue_email('reviews-assigned', reviewer_user, event=event,
+                        context={'reviews': len(response_ids)})
+            db.session.commit()
         return {}, 201
 
     @event_admin_required

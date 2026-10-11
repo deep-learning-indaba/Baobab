@@ -307,7 +307,8 @@ const GenerateTab = ({ template, eventId }) => {
           <div className="rounded-lg border border-border p-4 text-sm space-y-2 mb-4">
             {preflight.email_template_missing && (
               <p className="text-warning">
-                ⚠️ {t('No email template is configured for this document - documents will be generated and downloadable, but not emailed.')}
+                ⚠️ {t("This document's email can't be created, so documents will be generated and downloadable, but not emailed:")}{' '}
+                {preflight.email_template_problem}
               </p>
             )}
             <p>{preflight.total_candidates} {t('people selected.')}</p>
@@ -416,7 +417,7 @@ const GenerateTab = ({ template, eventId }) => {
                 {doc.status === 'generated' && doc.email_skipped_reason && (
                   <tr className="border-b border-border/50">
                     <td colSpan={5} className="pb-3 pr-4 text-xs text-muted-foreground whitespace-pre-line break-words">
-                      {doc.email_skipped_reason} {t('Use Resend once a template is configured.')}
+                      {doc.email_skipped_reason} {t('Use Resend once the email has been fixed.')}
                     </td>
                   </tr>
                 )}

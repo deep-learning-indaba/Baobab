@@ -23,6 +23,7 @@ import FormSelectOther from "../../../components/form/FormSelectOther";
 import FormMultiCheckboxOther from "../../../components/form/FormMultiCheckboxOther";
 import FormCheckbox from "../../../components/form/FormCheckbox";
 import { eventService } from "../../../services/events";
+import FormNotAvailable from "../../../components/FormNotAvailable";
 
 
 const SHORT_TEXT = "short-text";
@@ -1124,6 +1125,7 @@ class ApplicationForm extends Component {
         formSpec: formResponse.formSpec,
         responses: responseResponse.response,
         isError: formResponse.formSpec === null || responseResponse.error,
+        formNotFound: formResponse.formSpec === null && formResponse.status === 404,
         errorMessage: (formResponse.error + " " + responseResponse.error).trim(),
         isLoading: false,
         selectedResponse: selectFirstResponse ? responseResponse.response[0] : null,
@@ -1160,6 +1162,10 @@ class ApplicationForm extends Component {
 
     if (isLoading) {
       return (<Loading />);
+    }
+
+    if (this.state.formNotFound) {
+      return <FormNotAvailable message={this.props.t('The application form for this event has not been published yet.')} />;
     }
 
     if (isError) {

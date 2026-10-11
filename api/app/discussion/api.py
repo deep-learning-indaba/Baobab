@@ -6,6 +6,7 @@ from app import db, LOGGER
 from app.utils.auth import auth_required
 from app.utils import errors
 from app.utils.push import push_to_user
+from app.discussion.models import REACTION_EMOJIS
 from app.discussion.repository import DiscussionRepository as repo
 from app.attendance.repository import AttendanceRepository
 from app.users.repository import UserRepository as user_repository
@@ -62,7 +63,25 @@ def _author_block(user_id, event_id=None):
     }
 
 
-def _serialize_message(msg, current_user_id, is_moderator):
+def _serialize_reactions(rows, current_user_id):
+    """Group (emoji, user_id, firstname, lastname) rows into per-emoji entries in display order."""
+    by_emoji = {}
+    for emoji, user_id, firstname, lastname in rows:
+        by_emoji.setdefault(emoji, []).append(
+            {'user_id': user_id, 'firstname': firstname, 'lastname': lastname,
+             'is_me': user_id == current_user_id})
+    return [
+        {
+            'emoji': emoji,
+            'count': len(by_emoji[emoji]),
+            'reacted_by_me': any(u['is_me'] for u in by_emoji[emoji]),
+            'users': by_emoji[emoji],
+        }
+        for emoji in REACTION_EMOJIS if emoji in by_emoji
+    ]
+
+
+def _serialize_message(msg, current_user_id, is_moderator, reaction_rows=()):
     is_own = (msg.user_id == current_user_id)
     body = msg.body_markdown
     if msg.is_deleted:
@@ -79,10 +98,20 @@ def _serialize_message(msg, current_user_id, is_moderator):
         'created_at': msg.created_at.isoformat() + 'Z',
         'can_edit': is_own and not msg.is_deleted,
         'can_delete': (is_own or is_moderator) and not msg.is_deleted,
+        'reactions': [] if msg.is_deleted else _serialize_reactions(reaction_rows, current_user_id),
     }
 
 
-def _serialize_thread_summary(thread, current_user_id):
+TOP_REACTIONS_SHOWN = 3
+
+
+def _top_reactions(by_emoji):
+    """Most-used emoji keys first; ties fall back to the fixed display order."""
+    ranked = sorted(by_emoji, key=lambda e: (-by_emoji[e], REACTION_EMOJIS.index(e)))
+    return ranked[:TOP_REACTIONS_SHOWN]
+
+
+def _serialize_thread_summary(thread, current_user_id, reaction_counts=None):
     root = repo.get_root_message(thread.id)
     preview = ''
     subject = thread.subject
@@ -93,6 +122,7 @@ def _serialize_thread_summary(thread, current_user_id):
     read = repo.get_read(thread.id, current_user_id)
     unread = bool(read is None or thread.last_activity_at > read.last_read_at)
     space = repo.get_space(thread.space_id)
+    by_emoji = (reaction_counts or {}).get(thread.id, {})
     return {
         'id': thread.id,
         'event_id': thread.event_id,
@@ -102,6 +132,8 @@ def _serialize_thread_summary(thread, current_user_id):
         'preview': preview,
         'author': _author_block(thread.created_by_user_id, thread.event_id),
         'reply_count': repo.reply_count(thread.id),
+        'reaction_count': sum(by_emoji.values()),
+        'top_reactions': _top_reactions(by_emoji),
         'is_pinned': thread.is_pinned,
         'last_activity_at': thread.last_activity_at.isoformat() + 'Z',
         'created_at': thread.created_at.isoformat() + 'Z',
@@ -281,7 +313,8 @@ class DiscussionThreadListAPI(restful.Resource):
         if not _get_valid_space(space_id, event_id):
             return {'message': 'Space not found'}, 404
         threads = repo.list_threads(event_id, space_id)
-        return [_serialize_thread_summary(t, user_id) for t in threads]
+        counts = repo.reaction_counts_for_threads([t.id for t in threads])
+        return [_serialize_thread_summary(t, user_id, counts) for t in threads]
 
     @auth_required
     def post(self):
@@ -334,6 +367,7 @@ class DiscussionThreadDetailAPI(restful.Resource):
 
         is_mod = _is_moderator(user_id, event_id)
         messages = repo.list_messages(thread_id)
+        reactions = repo.reactions_for_messages([m.id for m in messages if not m.is_deleted])
         space = repo.get_space(thread.space_id)
         repo.mark_read(thread_id, user_id)  # in-app "inbox" read tracking
         return {
@@ -345,7 +379,7 @@ class DiscussionThreadDetailAPI(restful.Resource):
             'is_subscribed': repo.is_subscribed(thread_id, user_id),
             'is_moderator': is_mod,
             'created_at': thread.created_at.isoformat() + 'Z',
-            'messages': [_serialize_message(m, user_id, is_mod) for m in messages],
+            'messages': [_serialize_message(m, user_id, is_mod, reactions.get(m.id, ())) for m in messages],
         }
 
 
@@ -439,6 +473,61 @@ class DiscussionMessageAPI(restful.Resource):
         return {}, 204
 
 
+# ---------------- Reactions ----------------
+
+class DiscussionReactionAPI(restful.Resource):
+    """PUT    /api/v1/discussion/message/<id>/reaction   {event_id, emoji}   add own reaction (idempotent)
+       DELETE /api/v1/discussion/message/<id>/reaction?event_id=&emoji=   remove own reaction (idempotent)
+
+    Both return the message's full, updated reactions list."""
+
+    def _load(self, message_id, event_id, emoji):
+        """Shared validation; returns (message, None) or (None, error_response)."""
+        if not event_id or emoji not in REACTION_EMOJIS:
+            return None, errors.MISSING_FIELDS
+        user_id = g.current_user['id']
+        if not _is_confirmed_guest(event_id, user_id):
+            return None, errors.FORBIDDEN
+        msg = repo.get_message(message_id)
+        if not msg or msg.event_id != event_id:
+            return None, ({'message': 'Message not found'}, 404)
+        if msg.is_deleted:
+            return None, errors.FORBIDDEN
+        return msg, None
+
+    @staticmethod
+    def _current(msg, user_id):
+        rows = repo.reactions_for_messages([msg.id]).get(msg.id, ())
+        return {'reactions': _serialize_reactions(rows, user_id)}
+
+    @auth_required
+    def put(self, message_id):
+        body = request.get_json() or {}
+        event_id, emoji = body.get('event_id'), body.get('emoji')
+        msg, err = self._load(message_id, event_id, emoji)
+        if err:
+            return err
+        user_id = g.current_user['id']
+        _, created = repo.add_reaction(msg, user_id, emoji)
+        if created:
+            _emit(event_repository.get_by_id(event_id), user_id, 'reaction_added',
+                  {'message_id': msg.id, 'emoji': emoji})
+        return self._current(msg, user_id), 200
+
+    @auth_required
+    def delete(self, message_id):
+        parser = reqparse.RequestParser()
+        parser.add_argument('event_id', type=int, required=True)
+        parser.add_argument('emoji', type=str, required=True)
+        args = parser.parse_args()
+        msg, err = self._load(message_id, args['event_id'], args['emoji'])
+        if err:
+            return err
+        user_id = g.current_user['id']
+        repo.remove_reaction(msg.id, user_id, args['emoji'])
+        return self._current(msg, user_id), 200
+
+
 # ---------------- Report ----------------
 
 class DiscussionReportAPI(restful.Resource):
@@ -509,7 +598,8 @@ class DiscussionSubscriptionListAPI(restful.Resource):
         if not _is_confirmed_guest(event_id, user_id):
             return errors.FORBIDDEN
         threads = repo.list_subscribed_threads(event_id, user_id)
-        return [_serialize_thread_summary(t, user_id) for t in threads]
+        counts = repo.reaction_counts_for_threads([t.id for t in threads])
+        return [_serialize_thread_summary(t, user_id, counts) for t in threads]
 
 
 # ---------------- Moderator: report queue + pin ----------------

@@ -8,13 +8,12 @@ from app.outcome.models import Outcome, Status
 from app.outcome.repository import OutcomeRepository as outcome_repository
 from app.events.repository import EventRepository as event_repository
 from app.users.repository import UserRepository as user_repository
-from app.utils.emailer import email_user
+from app.email_template.service import queue_email
 
 from app.utils.auth import auth_required, event_admin_required
 from app import LOGGER
 from app import db
 from app.utils import errors
-from app.utils import misc
 
 
 def _extract_status(outcome):
@@ -107,14 +106,9 @@ class OutcomeAPI(restful.Resource):
             db.session.commit()
 
             if (status == Status.REJECTED or status == Status.WAITLIST):  # Email will be sent with offer for accepted candidates  
-                email_user(
-                    'outcome-rejected' if status == Status.REJECTED else 'outcome-waitlist',
-                    template_parameters=dict(
-                        host=misc.get_baobab_host()
-                    ),
-                    event=event,
-                    user=user,
-                )
+                queue_email('outcome-rejected' if status == Status.REJECTED else 'outcome-waitlist',
+                            user, event=event)
+                db.session.commit()
 
             return outcome, 201
 

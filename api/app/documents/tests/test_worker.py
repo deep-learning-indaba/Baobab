@@ -197,8 +197,8 @@ class TestRunBulkGeneration(WorkerTestCase):
 
     def test_delivery_email_failure_does_not_fail_the_generated_document(self, mock_build_client):
         mock_build_client.return_value = FakeGoogleClient()
-        # An unknown {placeholder} makes str.format raise KeyError while building the email.
-        self.add_email_template('generated-document', template='Hi {unknown}', subject='Ready')
+        # A template that can't be parsed makes building the email fail.
+        self.add_email_template('generated-document', template='Hi {% if %}', subject='Ready')
         self.document_template.delivery_mode = 'attachment'
         db.session.commit()
         job = self.make_generation_job(self.document_template, total_count=1)
@@ -212,7 +212,7 @@ class TestRunBulkGeneration(WorkerTestCase):
 
     def test_delivery_email_is_queued_for_each_generated_document(self, mock_build_client):
         mock_build_client.return_value = FakeGoogleClient()
-        self.add_email_template('generated-document', template='Hi {firstname}', subject='Ready')
+        self.add_email_template('generated-document', template='Hi {{ recipient.firstname }}', subject='Ready')
         self.document_template.delivery_mode = 'attachment'
         db.session.commit()
         job = self.make_generation_job(self.document_template, total_count=1)

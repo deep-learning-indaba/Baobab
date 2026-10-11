@@ -12,6 +12,7 @@ import FormTextBox from "../../../components/form/FormTextBox";
 import { reviewService } from '../../../services/reviews/review.service';
 import { ConfirmModal } from "../../../components/Modal";
 import TagSelectorDialog from '../../../components/TagSelectorDialog';
+import { formatUserName } from "../../../utils/userName";
 
 class ResponseListComponent extends Component {
     constructor(props) {
@@ -202,7 +203,7 @@ class ResponseListComponent extends Component {
             Header: <div className="response-fullname text-left font-bold">{t("Full Name")}</div>,
             accessor: u =>
               <div className="response-fullname font-medium text-foreground">
-                {u.user_title + " " + u.firstname + " " + u.lastname}
+                {formatUserName(u.user_title, u.firstname, u.lastname)}
               </div>,
             minWidth: 150
         }, {

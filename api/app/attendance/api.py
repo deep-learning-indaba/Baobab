@@ -16,11 +16,11 @@ from app.users.repository import UserRepository as user_repository
 from app.registration.repository import RegistrationRepository as registration_repository
 from app.invitedGuest.repository import InvitedGuestRepository as invited_guest_repository
 from app.utils.auth import auth_required
-from app.utils.emailer import email_user
+from app.email_template.service import queue_email
 from app.utils.misc import get_baobab_host
 from app.utils.datetime_utils import event_local_date
 from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, ATTENDANCE_NOT_FOUND, EVENT_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, INDEMNITY_NOT_FOUND, INDEMNITY_NOT_SIGNED, NOT_A_GUEST, INVALID_QR, NOT_ON_GUEST_LIST, MISSING_FIELDS, BADGE_ALREADY_LINKED
-from app import LOGGER
+from app import LOGGER, db
 from app.utils.language import translation_for
 
 
@@ -189,11 +189,8 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
         if not checkin_repository.is_checked_in(event_id, user_id, day):
             checkin_repository.create(event_id, user_id, registration_user_id, 'manual', day)
 
-        email_user(
-            'attendance-confirmation',
-            event=event,
-            user=user
-        )
+        queue_email('attendance-confirmation', user, event=event)
+        db.session.commit()
 
         return None, 201
 
@@ -287,13 +284,10 @@ class IndemnityAPI(restful.Resource):
         attendance_repository.save()
         LOGGER.info(f"Saved")
 
-        email_user(
-            'indemnity-signed',
-            event=event,
-            user=user,
-            template_parameters={
-                "indemnity_form": indemnity.indemnity_form.format(attendee_name=user.full_name)
-            })  
+        queue_email('indemnity-signed', user, event=event, context={
+            'indemnity': indemnity.indemnity_form.format(attendee_name=user.full_name),
+        })
+        db.session.commit()
         LOGGER.info(f"Emailed")
 
         return {
@@ -531,11 +525,8 @@ class CheckinAPI(restful.Resource):
         user = user_repository.get_by_id(target_user_id)
 
         if is_first_checkin:
-            email_user(
-                'attendance-confirmation',
-                event=event,
-                user=user
-            )
+            queue_email('attendance-confirmation', user, event=event)
+            db.session.commit()
 
         return {
             'checked_in': True,
