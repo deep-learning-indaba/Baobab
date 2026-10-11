@@ -39,7 +39,8 @@ const FormRenderer = ({
   showConfirmation = true,
   autoSaveInterval = 0,
   userTags = [],
-  isPreview = false
+  isPreview = false,
+  onAnswersChange = null
 }) => {
   const { t } = useTranslation();
 
@@ -86,6 +87,10 @@ const FormRenderer = ({
   useEffect(() => {
     if (response && response.answers) setAnswers(response.answers.filter(a => a.is_active !== false));
   }, [response]);
+
+  useEffect(() => {
+    if (onAnswersChange) onAnswersChange(answers);
+  }, [answers, onAnswersChange]);
 
   useEffect(() => {
     // Never autosave a response that has already been submitted - a timer

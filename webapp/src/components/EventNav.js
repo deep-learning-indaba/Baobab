@@ -127,8 +127,8 @@ class EventNav extends Component {
 
         {isEventReviewer(this.props.user, this.props.event) && this.props.event && this.props.event.is_review_open && (
           <SidebarSection title={t('Reviews')}>
-            <SidebarLink to={`/${this.props.eventKey}/reviewlist`} label={t('Review')} />
-            <SidebarLink to={`/${this.props.eventKey}/reviewHistory`} label={t('Review History')} />
+            <SidebarLink to={`/${this.props.eventKey}/${this.props.event.uses_new_forms ? 'reviews' : 'reviewlist'}`} label={t('Review')} />
+            <SidebarLink to={`/${this.props.eventKey}/${this.props.event.uses_new_forms ? 'reviews/history' : 'reviewHistory'}`} label={t('Review History')} />
           </SidebarSection>
         )}
 

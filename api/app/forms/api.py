@@ -16,8 +16,12 @@ from app.forms.models import (
     DISPLAY_ONLY_QUESTION_TYPES, MULTI_VALUE_SEPARATOR
 )
 from app.forms.visibility import VisibilityEvaluator
+from app.forms.system import review_setting
+from app.forms.review_serializers import review_status, serialize_review
+from app.forms.stats import count_unallocated_reviews
+from app.forms import system as form_system
+from app.forms import lifecycle as form_lifecycle
 from app.forms.mixins import (
-    uses_new_form, get_form_by_type,
     apply_form_type_defaults, validate_form_type_constraints,
     form_admin_required, verify_form_event, is_admin_of_form,
     can_view_form_responses
@@ -854,6 +858,10 @@ class FormResponseAPI(restful.Resource):
                 if not VisibilityEvaluator.check_form_visibility(form, user_id, form.event_id):
                     return _error('You do not have permission to access this form', 403)
             
+            access_error = form_lifecycle.check_can_respond(form, user_id, creating=True)
+            if access_error:
+                return access_error
+
             linked_response_id = args.get('linked_response_id')
 
             # Check if multiple_responses is allowed
@@ -961,6 +969,10 @@ class FormResponseAPI(restful.Resource):
                 if not VisibilityEvaluator.check_form_visibility(response.form, user_id, response.form.event_id):
                     return _error('You do not have permission to access this form', 403)
             
+            access_error = form_lifecycle.check_can_respond(form, user_id)
+            if access_error:
+                return access_error
+
             # Cannot update submitted response unless the form allows edits
             if response.is_submitted and not response.form.allow_edits:
                 return _error('Cannot update a submitted response', 400)
@@ -1090,6 +1102,10 @@ class FormResponseSubmitAPI(restful.Resource):
 
             if response.is_submitted and not form.allow_edits:
                 return _error('This response has already been submitted', 400)
+
+            access_error = form_lifecycle.check_can_respond(form, response.user_id)
+            if access_error:
+                return access_error
 
             # Server-side validation (backup to client validation)
             # Build answers dictionary for dependency evaluation
@@ -1225,11 +1241,16 @@ class FormResponseSubmitAPI(restful.Resource):
                     'details': validation_errors
                 }, 400
             
-            # Mark as submitted
+            # Submitting and withdrawing are mutually exclusive: resubmitting a
+            # withdrawn response puts it back in the running.
             response.is_submitted = True
             response.submitted_timestamp = datetime.now()
+            response.is_withdrawn = False
+            response.withdrawn_timestamp = None
             db.session.commit()
-            
+
+            form_lifecycle.on_submitted(response)
+
             return serialize_response(response), 200
             
         except Exception as e:
@@ -1259,11 +1280,14 @@ class FormResponseWithdrawAPI(restful.Resource):
             if response.form_id != form_id:
                 return {'message': 'Form ID mismatch'}, 400
             
-            # Mark as withdrawn
             response.is_withdrawn = True
             response.withdrawn_timestamp = datetime.now()
+            response.is_submitted = False
+            response.submitted_timestamp = None
             db.session.commit()
-            
+
+            form_lifecycle.on_withdrawn(response)
+
             return serialize_response(response), 200
             
         except Exception as e:
@@ -1715,104 +1739,88 @@ class FormResponseDetailAdminAPI(restful.Resource):
 class EventFormConfigAPI(restful.Resource):
     """Returns form system configuration for all form types for an event."""
 
+    @staticmethod
+    def _typed_form_data(form):
+        if form is None:
+            return {'system': 'new', 'form_id': None}
+        response_count = db.session.query(FormResponse).filter_by(
+            form_id=form.id, is_submitted=True
+        ).count()
+        name_trans = translation_for(form, 'en')
+        return {
+            'system': 'new',
+            'form_id': form.id,
+            'form_name': name_trans.name if name_trans else None,
+            'is_open': form.is_open,
+            'is_active': form.is_active,
+            'response_count': response_count
+        }
+
+    @staticmethod
+    def _review_data(event):
+        stages_data = []
+        for review_form in form_system.get_review_forms(event):
+            total_assignments = db.session.query(FormResponse).filter_by(
+                form_id=review_form.id
+            ).count()
+            completed_assignments = db.session.query(FormResponse).filter_by(
+                form_id=review_form.id, is_submitted=True
+            ).count()
+            name_trans = translation_for(review_form, 'en')
+            stages_data.append({
+                'stage': review_form.stage,
+                'form_id': review_form.id,
+                'form_name': name_trans.name if name_trans else None,
+                'is_active': review_form.is_active,
+                'is_open': review_form.is_open,
+                'num_reviews_required': review_setting(review_form, 'num_reviews_required'),
+                'completed_count': completed_assignments,
+                'total_count': total_assignments
+            })
+        active = form_system.get_active_review_form(event)
+        active_name = translation_for(active, 'en') if active else None
+        return {
+            'system': 'new',
+            'form_id': active.id if active else None,
+            'form_name': active_name.name if active_name else None,
+            'stages': stages_data
+        }
+
     @event_admin_required
     def get(self, event_id):
         """Get form system config for all types (old vs new, form IDs, stages)."""
         try:
-            # --- Application ---
-            new_app_form = db.session.query(Form).filter_by(
-                event_id=event_id, form_type='application'
+            event = event_repository.get_by_id(event_id)
+            if not event:
+                return errors.EVENT_NOT_FOUND
+
+            legacy_app_form = db.session.query(ApplicationForm).filter_by(
+                event_id=event_id
             ).first()
 
-            if new_app_form:
-                response_count = db.session.query(FormResponse).filter_by(
-                    form_id=new_app_form.id, is_submitted=True
-                ).count()
-                name_trans = translation_for(new_app_form, 'en')
-                application_data = {
-                    'system': 'new',
-                    'form_id': new_app_form.id,
-                    'form_name': name_trans.name if name_trans else None,
-                    'is_open': new_app_form.is_open,
-                    'is_active': new_app_form.is_active,
-                    'response_count': response_count
-                }
+            if event.uses_new_forms:
+                application_data = self._typed_form_data(form_system.get_application_form(event))
+                review_data = self._review_data(event)
+                registration_data = self._typed_form_data(form_system.get_registration_form(event))
             else:
-                legacy_app_form = db.session.query(ApplicationForm).filter_by(
+                legacy_review_form = None
+                if legacy_app_form:
+                    legacy_review_form = db.session.query(ReviewForm).filter_by(
+                        application_form_id=legacy_app_form.id
+                    ).first()
+                legacy_reg_form = db.session.query(RegistrationForm).filter_by(
                     event_id=event_id
                 ).first()
                 application_data = {
                     'system': 'old',
-                    'form_id': None,
                     'legacy_form_id': legacy_app_form.id if legacy_app_form else None
                 }
-
-            # --- Review ---
-            new_review_forms = db.session.query(Form).filter_by(
-                event_id=event_id, form_type='review'
-            ).order_by(Form.stage).all()
-
-            if new_review_forms:
-                stages_data = []
-                for review_form in new_review_forms:
-                    settings = review_form.settings or {}
-                    num_reviews_required = settings.get('num_reviews_required', 3)
-                    total_assignments = db.session.query(FormResponse).filter_by(
-                        form_id=review_form.id
-                    ).count()
-                    completed_assignments = db.session.query(FormResponse).filter_by(
-                        form_id=review_form.id, is_submitted=True
-                    ).count()
-                    name_trans = translation_for(review_form, 'en')
-                    stages_data.append({
-                        'stage': review_form.stage,
-                        'form_id': review_form.id,
-                        'form_name': name_trans.name if name_trans else None,
-                        'is_active': review_form.is_active,
-                        'num_reviews_required': num_reviews_required,
-                        'completed_count': completed_assignments,
-                        'total_count': total_assignments
-                    })
-                review_data = {'system': 'new', 'stages': stages_data}
-            else:
-                legacy_app = db.session.query(ApplicationForm).filter_by(
-                    event_id=event_id
-                ).first()
-                legacy_review_form = None
-                if legacy_app:
-                    legacy_review_form = db.session.query(ReviewForm).filter_by(
-                        application_form_id=legacy_app.id
-                    ).first()
                 review_data = {
                     'system': 'old',
                     'legacy_form_id': legacy_review_form.id if legacy_review_form else None
                 }
-
-            # --- Registration ---
-            new_reg_form = db.session.query(Form).filter_by(
-                event_id=event_id, form_type='registration'
-            ).first()
-
-            if new_reg_form:
-                response_count = db.session.query(FormResponse).filter_by(
-                    form_id=new_reg_form.id, is_submitted=True
-                ).count()
-                name_trans = translation_for(new_reg_form, 'en')
-                registration_data = {
-                    'system': 'new',
-                    'form_id': new_reg_form.id,
-                    'form_name': name_trans.name if name_trans else None,
-                    'is_open': new_reg_form.is_open,
-                    'is_active': new_reg_form.is_active,
-                    'response_count': response_count
-                }
-            else:
-                legacy_reg_form = db.session.query(RegistrationForm).filter_by(
-                    event_id=event_id
-                ).first()
                 registration_data = {
                     'system': 'old',
-                    'form_id': None,
                     'legacy_form_id': legacy_reg_form.id if legacy_reg_form else None
                 }
 
@@ -1836,7 +1844,6 @@ class EventFormConfigAPI(restful.Resource):
                 })
 
             # --- Survey ---
-            event = event_repository.get_by_id(event_id)
             survey_data = None
             if event and (event.survey_form_id or event.survey_open):
                 survey_form_name = None
@@ -1852,6 +1859,7 @@ class EventFormConfigAPI(restful.Resource):
                 }
 
             return {
+                'uses_new_forms': event.uses_new_forms,
                 'application': application_data,
                 'review': review_data,
                 'registration': registration_data,
@@ -1863,6 +1871,21 @@ class EventFormConfigAPI(restful.Resource):
             LOGGER.error(f"Error getting form config for event {event_id}: {str(e)}")
             LOGGER.error(traceback.format_exc())
             return errors.DB_NOT_AVAILABLE
+
+    @event_admin_required
+    def put(self, event_id):
+        """Switch the event between the new and legacy form systems."""
+        args = request.get_json() or {}
+        if not isinstance(args.get('uses_new_forms'), bool):
+            return _error('uses_new_forms must be true or false', 400)
+
+        event = event_repository.get_by_id(event_id)
+        if not event:
+            return errors.EVENT_NOT_FOUND
+
+        event.uses_new_forms = args['uses_new_forms']
+        db.session.commit()
+        return {'uses_new_forms': event.uses_new_forms}, 200
 
 
 class EventFormResponsesSummaryAPI(restful.Resource):
@@ -1965,6 +1988,16 @@ class EventSurveyFormAPI(restful.Resource):
             'survey_form_id': event.survey_form_id,
             'survey_open': event.survey_open.strftime('%Y-%m-%dT%H:%M:%S') if event.survey_open is not None else None
         }, 200
+
+
+def _ensure_reviewer_role(user_id, event_id):
+    """Give the user the reviewer role for the event if they don't have it, so
+    the review pages and reviewer tags work for them. The caller commits."""
+    existing_role = db.session.query(EventRole).filter_by(
+        role='reviewer', user_id=user_id, event_id=event_id
+    ).first()
+    if not existing_role:
+        db.session.add(EventRole('reviewer', user_id, event_id))
 
 
 class FormReviewAssignmentAPI(restful.Resource):
@@ -2072,14 +2105,9 @@ class FormReviewAssignmentAPI(restful.Resource):
             reviewer_id = reviewer.id
             reviewer_email = reviewer.email
 
-            # Ensure the user has the reviewer event role (required for ReviewerTagAPI)
-            existing_role = db.session.query(EventRole).filter_by(
-                role='reviewer', user_id=reviewer_id, event_id=event_id
-            ).first()
-            if not existing_role:
-                db.session.add(EventRole('reviewer', reviewer_id, event_id))
+            _ensure_reviewer_role(reviewer_id, event_id)
 
-            num_reviews_required = (review_form.settings or {}).get('num_reviews_required', 1)
+            num_reviews_required = review_setting(review_form, 'num_reviews_required')
 
             # Merge explicitly requested tags with the reviewer's own tags
             reviewer_tags = db.session.query(ReviewerTag).filter_by(
@@ -2329,18 +2357,27 @@ class FormResponseAdminUpdateAPI(restful.Resource):
 
             args = request.get_json() or {}
 
+            if args.get('is_submitted') and args.get('is_withdrawn'):
+                return _error('A response cannot be both submitted and withdrawn', 400)
+
             if 'is_submitted' in args:
                 response.is_submitted = bool(args['is_submitted'])
-                if response.is_submitted and not response.submitted_timestamp:
-                    response.submitted_timestamp = datetime.now()
-                elif not response.is_submitted:
+                if response.is_submitted:
+                    if not response.submitted_timestamp:
+                        response.submitted_timestamp = datetime.now()
+                    response.is_withdrawn = False
+                    response.withdrawn_timestamp = None
+                else:
                     response.submitted_timestamp = None
 
             if 'is_withdrawn' in args:
                 response.is_withdrawn = bool(args['is_withdrawn'])
-                if response.is_withdrawn and not response.withdrawn_timestamp:
-                    response.withdrawn_timestamp = datetime.now()
-                elif not response.is_withdrawn:
+                if response.is_withdrawn:
+                    if not response.withdrawn_timestamp:
+                        response.withdrawn_timestamp = datetime.now()
+                    response.is_submitted = False
+                    response.submitted_timestamp = None
+                else:
                     response.withdrawn_timestamp = None
 
             db.session.commit()
@@ -2357,11 +2394,11 @@ class FormResponseReviewsAdminAPI(restful.Resource):
     """Admin endpoints to list, assign, and remove reviewers for a specific application response."""
 
     def _get_review_form(self, form_id, event_id):
-        return db.session.query(Form).filter_by(
-            linked_form_id=form_id,
-            form_type='review',
-            event_id=event_id
-        ).first()
+        """The active review stage, provided it reviews application form `form_id`."""
+        review_form = form_system.get_active_review_form(event_id)
+        if review_form is None or review_form.linked_form_id != form_id:
+            return None
+        return review_form
 
     @event_admin_required
     def get(self, form_id, response_id, event_id):
@@ -2382,6 +2419,7 @@ class FormResponseReviewsAdminAPI(restful.Resource):
                 .all()
             )
 
+            language = request.args.get('language') or 'en'
             return [
                 {
                     'review_response_id': rr.id,
@@ -2391,7 +2429,10 @@ class FormResponseReviewsAdminAPI(restful.Resource):
                     'lastname': reviewer.lastname,
                     'email': reviewer.email,
                     'is_submitted': rr.is_submitted,
-                    'submitted_timestamp': rr.submitted_timestamp.isoformat() if rr.submitted_timestamp else None
+                    'submitted_timestamp': rr.submitted_timestamp.isoformat() if rr.submitted_timestamp else None,
+                    'status': review_status(rr),
+                    'total_score': rr.calculate_score(),
+                    'answers': serialize_review(rr, language)['answers'],
                 }
                 for rr, reviewer in rows
             ], 200
@@ -2410,15 +2451,19 @@ class FormResponseReviewsAdminAPI(restful.Resource):
             if not reviewer_email:
                 return _error('reviewer_email is required', 400)
 
-            reviewer = db.session.query(AppUser).filter(
-                db.func.lower(AppUser.email) == reviewer_email.lower()
-            ).first()
+            reviewer = user_repository.get_by_email(reviewer_email, g.organisation.id)
             if not reviewer:
                 return _error('No user found with that email address', 404)
 
             review_form = self._get_review_form(form_id, event_id)
             if not review_form:
                 return _error('No review form is configured for this event', 404)
+
+            application = _get_response_for_event(response_id, form_id, event_id)
+            if not application:
+                return errors.OBJECT_NOT_FOUND
+            if application.user_id == reviewer.id:
+                return _error('Applicants cannot review their own application', 400)
 
             existing = db.session.query(FormResponse).filter_by(
                 form_id=review_form.id,
@@ -2428,6 +2473,7 @@ class FormResponseReviewsAdminAPI(restful.Resource):
             if existing and not existing.is_withdrawn:
                 return _error('This reviewer is already assigned', 400)
 
+            _ensure_reviewer_role(reviewer.id, event_id)
             review_response = FormResponse(
                 form_id=review_form.id,
                 user_id=reviewer.id,
@@ -2435,6 +2481,10 @@ class FormResponseReviewsAdminAPI(restful.Resource):
                 linked_response_id=response_id
             )
             db.session.add(review_response)
+            db.session.commit()
+
+            event = event_repository.get_by_id(event_id)
+            queue_email('reviews-assigned', reviewer, event=event, context={'reviews': 1})
             db.session.commit()
 
             return {
@@ -2503,60 +2553,11 @@ class FormReviewSummaryAPI(restful.Resource):
             if not review_form:
                 return errors.FORM_NOT_FOUND
 
-            if not review_form.linked_form_id:
-                return {'reviews_unallocated': 0}, 200
-
-            from flask_restful import reqparse as rp
-            parser = rp.RequestParser()
+            parser = reqparse.RequestParser()
             parser.add_argument('tags[]', type=int, action='append', location='args')
-            args = parser.parse_args()
-            tag_ids = args['tags[]'] or []
+            tag_ids = parser.parse_args()['tags[]'] or []
 
-            num_reviews_required = (review_form.settings or {}).get('num_reviews_required', 1)
-
-            # All submitted app responses for the linked form
-            app_responses = db.session.query(FormResponse).filter(
-                FormResponse.form_id == review_form.linked_form_id,
-                FormResponse.is_submitted == True,
-                FormResponse.is_withdrawn == False
-            ).all()
-
-            # Apply tag filter
-            if tag_ids:
-                filtered = []
-                for resp in app_responses:
-                    resp_tag_ids = [rt.tag_id for rt in resp.response_tags]
-                    if all(t in resp_tag_ids for t in tag_ids):
-                        filtered.append(resp)
-                app_responses = filtered
-
-            app_response_ids = [r.id for r in app_responses]
-
-            if not app_response_ids:
-                return {'reviews_unallocated': 0}, 200
-
-            # Count existing active review assignments per app response
-            assignment_counts = dict(
-                db.session.query(
-                    FormResponse.linked_response_id,
-                    db.func.count(FormResponse.id)
-                )
-                .filter(
-                    FormResponse.form_id == form_id,
-                    FormResponse.linked_response_id.in_(app_response_ids),
-                    FormResponse.is_withdrawn == False
-                )
-                .group_by(FormResponse.linked_response_id)
-                .all()
-            )
-
-            total_required = len(app_response_ids) * num_reviews_required
-            assigned = sum(
-                min(assignment_counts.get(rid, 0), num_reviews_required)
-                for rid in app_response_ids
-            )
-
-            return {'reviews_unallocated': total_required - assigned}, 200
+            return {'reviews_unallocated': count_unallocated_reviews(review_form, tag_ids)}, 200
 
         except Exception as e:
             LOGGER.error('Error getting review summary for form {}: {}'.format(form_id, str(e)))

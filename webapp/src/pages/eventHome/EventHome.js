@@ -1,6 +1,6 @@
 import EventNav from '../../components/EventNav';
 import React, { Component } from "react";
-import { Link, Route, Switch } from "react-router-dom";
+import { Link, Redirect, Route, Switch } from "react-router-dom";
 import { eventService } from "../../services/events/events.service";
 import { announcementService } from "../../services/eventApp/announcement.service";
 import Application from "../applicationForm";
@@ -32,6 +32,7 @@ import { attendanceService } from '../../services/attendance';
 import ResponseList from "../ResponseList/ResponseList";
 import ResponsePage from "../ResponsePage/ResponsePage";
 import ReviewDashboard from "../reviewDashboard";
+import { ReviewQueuePage, ReviewPage, ReviewHistoryPage, ReviewDashboardPage } from "../formReviews";
 import { Attendance, Indemnity } from '../attendance';
 import EventRoleAdmin from "../eventRoleAdmin";
 import FormManagement from "../formManagement";
@@ -567,7 +568,9 @@ class EventHome extends Component {
         <Route
           exact
           path={`${match.path}/reviewDashboard`}
-          render={(props) => <ReviewDashboard {...props} event={event} user={this.props.user}/>}
+          render={(props) => event.uses_new_forms
+            ? <ReviewDashboardPage {...props} event={event} />
+            : <ReviewDashboard {...props} event={event} user={this.props.user}/>}
         />
         <Route
           exact
@@ -657,7 +660,9 @@ class EventHome extends Component {
         <Route
           exact
           path={`${match.path}/reviewHistory`}
-          render={(props) => <ReviewHistory {...props} event={event} />}
+          render={(props) => event.uses_new_forms
+            ? <Redirect to={`/${event.key}/reviews/history`} />
+            : <ReviewHistory {...props} event={event} />}
         />
         <Route
           exact
@@ -672,17 +677,38 @@ class EventHome extends Component {
         <Route
           exact
           path={`${match.path}/review`}
-          render={(props) => <Review {...props} event={event} />}
+          render={(props) => event.uses_new_forms
+            ? <Redirect to={`/${event.key}/reviews`} />
+            : <Review {...props} event={event} />}
         />
         <Route
           exact
           path={`${match.path}/review/:id`}
-          render={(props) => <Review {...props} event={event} />}
+          render={(props) => event.uses_new_forms
+            ? <Redirect to={`/${event.key}/reviews`} />
+            : <Review {...props} event={event} />}
         />
         <Route
           exact
           path={`${match.path}/reviewlist`}
-          render={(props) => <ReviewList {...props} event={event} />}
+          render={(props) => event.uses_new_forms
+            ? <Redirect to={`/${event.key}/reviews`} />
+            : <ReviewList {...props} event={event} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/reviews`}
+          render={(props) => <ReviewQueuePage {...props} event={event} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/reviews/history`}
+          render={(props) => <ReviewHistoryPage {...props} event={event} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/reviews/:reviewResponseId(\\d+)`}
+          render={(props) => <ReviewPage {...props} event={event} />}
         />
         <Route
           exact

@@ -5,6 +5,7 @@ import { formConfigService } from "../../services/formConfig/formConfig.service"
 import FormTypeCard from "./components/FormTypeCard";
 import GenericFormsList from "./components/GenericFormsList";
 import SurveyFormConfig from "./components/SurveyFormConfig";
+import { ConfirmModal } from "../../components/Modal";
 
 class FormConfigPage extends Component {
     constructor(props) {
@@ -14,7 +15,9 @@ class FormConfigPage extends Component {
             isLoading: true,
             error: null,
             creatingType: null,
-            createError: null
+            createError: null,
+            confirmSwitchVisible: false,
+            switching: false
         };
     }
 
@@ -52,6 +55,64 @@ class FormConfigPage extends Component {
         }.bind(this));
     }
 
+    handleSwitchSystem = () => {
+        var event = this.props.event;
+        var usesNewForms = !this.state.config.uses_new_forms;
+        this.setState({ confirmSwitchVisible: false, switching: true, createError: null });
+        formConfigService.setUsesNewForms(event.id, usesNewForms).then(function(result) {
+            this.setState({ switching: false });
+            if (result.error) {
+                this.setState({ createError: result.error });
+                return;
+            }
+            // The event (form ids, navigation) is loaded once by EventHome, so
+            // reload to pick up the new system everywhere.
+            window.location.reload();
+        }.bind(this));
+    }
+
+    renderSystemSwitch() {
+        var t = this.props.t;
+        var usesNewForms = this.state.config.uses_new_forms;
+        return (
+            <div className="bg-white rounded-2xl shadow-sm border border-border p-6 flex flex-col md:flex-row md:items-center gap-4">
+                <div className="flex-1 space-y-1">
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-base font-bold text-foreground">{t('Form system')}</h2>
+                        <span className={"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border " + (usesNewForms ? "bg-green-50 text-green-700 border-green-200" : "bg-amber-50 text-amber-700 border-amber-200")}>
+                            {usesNewForms ? t('New System') : t('Legacy System')}
+                        </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                        {usesNewForms
+                            ? t('Applications, reviews and registrations for this event use the new form system.')
+                            : t('Applications, reviews and registrations for this event use the legacy forms.')}
+                    </p>
+                </div>
+                <button
+                    type="button"
+                    className="inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-semibold border border-border text-foreground hover:bg-slate-50 transition-colors disabled:opacity-50"
+                    onClick={function() { this.setState({ confirmSwitchVisible: true }); }.bind(this)}
+                    disabled={this.state.switching}
+                >
+                    {usesNewForms ? t('Switch to legacy forms') : t('Switch to new forms')}
+                </button>
+                <ConfirmModal
+                    visible={this.state.confirmSwitchVisible}
+                    onOK={this.handleSwitchSystem}
+                    onCancel={function() { this.setState({ confirmSwitchVisible: false }); }.bind(this)}
+                    okText={t('Switch')}
+                    cancelText={t('Cancel')}
+                >
+                    <p className="font-semibold mb-2">
+                        {usesNewForms ? t('Switch this event to legacy forms?') : t('Switch this event to new forms?')}
+                    </p>
+                    <p>{t('Applicants, reviewers and organisers will immediately start using the other system. Responses already collected in this system are kept, but are not visible while the event uses the other one.')}</p>
+                </ConfirmModal>
+            </div>
+        );
+    }
+
     render() {
         var t = this.props.t;
         var config = this.state.config;
@@ -77,9 +138,8 @@ class FormConfigPage extends Component {
             );
         }
 
-        var appHasLegacy = config && config.application && config.application.legacy_form_id != null;
-        var reviewHasLegacy = config && config.review && config.review.legacy_form_id != null;
-        var regHasLegacy = config && config.registration && config.registration.legacy_form_id != null;
+        var reviewStages = (config && config.review && config.review.stages) || [];
+        var nextReviewStage = reviewStages.reduce(function(max, s) { return Math.max(max, s.stage || 0); }, 0) + 1;
 
         return (
             <div className="w-full max-w-5xl mx-auto pt-6 text-left space-y-6">
@@ -89,6 +149,8 @@ class FormConfigPage extends Component {
                         {t('Manage which form system is used for each form type for this event.')}
                     </p>
                 </div>
+
+                {config && this.renderSystemSwitch()}
 
                 {createError && (
                     <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm flex justify-between items-center w-full" role="alert">
@@ -109,7 +171,7 @@ class FormConfigPage extends Component {
                         title={t('Application Form')}
                         formTypeData={config && config.application}
                         eventKey={eventKey}
-                        onCreateNew={appHasLegacy ? null : function() { this.handleCreateTypedForm('application'); }.bind(this)}
+                        onCreateNew={function() { this.handleCreateTypedForm('application'); }.bind(this)}
                         isCreating={creatingType === 'application'}
                         legacyEditUrl={'/' + eventKey + '/applicationform'}
                     />
@@ -117,7 +179,7 @@ class FormConfigPage extends Component {
                         title={t('Review Form')}
                         formTypeData={config && config.review}
                         eventKey={eventKey}
-                        onCreateNew={reviewHasLegacy ? null : function() { this.handleCreateTypedForm('review', 1); }.bind(this)}
+                        onCreateNew={function() { this.handleCreateTypedForm('review', 1); }.bind(this)}
                         isCreating={creatingType === 'review'}
                         legacyEditUrl={'/' + eventKey + '/reviewForm'}
                     />
@@ -125,21 +187,25 @@ class FormConfigPage extends Component {
                         title={t('Registration Form')}
                         formTypeData={config && config.registration}
                         eventKey={eventKey}
-                        onCreateNew={regHasLegacy ? null : function() { this.handleCreateTypedForm('registration'); }.bind(this)}
+                        onCreateNew={function() { this.handleCreateTypedForm('registration'); }.bind(this)}
                         isCreating={creatingType === 'registration'}
                         legacyEditUrl={null}
                     />
                 </div>
 
-                <div className="flex items-start gap-2 text-xs text-muted-foreground bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
-                    <i className="fas fa-info-circle text-slate-400 shrink-0 mt-0.5" style={{ fontSize: 15 }} />
-                    <span>{t('Application and review forms must use the same system. If one is legacy, the other must be too.')}</span>
-                </div>
 
-                {config && config.review && config.review.system === 'new' && (
+                {config && config.review && config.review.system === 'new' && reviewStages.length > 0 && (
                     <div className="bg-white rounded-2xl shadow-sm border border-border p-6 space-y-4">
-                        <div className="border-b border-border/50 pb-4">
+                        <div className="border-b border-border/50 pb-4 flex items-center justify-between gap-3">
                             <h2 className="text-lg font-semibold text-foreground/90">{t('Review Stages')}</h2>
+                            <button
+                                type="button"
+                                className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold border border-green-500 text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50"
+                                onClick={function() { this.handleCreateTypedForm('review', nextReviewStage); }.bind(this)}
+                                disabled={creatingType === 'review'}
+                            >
+                                {creatingType === 'review' ? t('Creating...') : t('Add Review Stage')}
+                            </button>
                         </div>
                         <div className="overflow-x-auto rounded-xl border border-border">
                             <table className="min-w-full divide-y divide-border">
@@ -156,7 +222,12 @@ class FormConfigPage extends Component {
                                     {config.review.stages.map(function(stage) {
                                         return (
                                             <tr key={stage.stage} className="hover:bg-slate-50/50 transition-colors">
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{stage.stage}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                                                    {stage.stage}
+                                                    {stage.is_active && (
+                                                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200/50">{t('Active')}</span>
+                                                    )}
+                                                </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground font-medium">{stage.form_name || t('Untitled')}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{stage.num_reviews_required}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{stage.completed_count} / {stage.total_count}</td>

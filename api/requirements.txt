@@ -1,13 +1,11 @@
 Jinja2==3.0.3
 Flask==1.1.2
-Flask-Admin
 Flask-Bcrypt==0.7.1
 Flask-Failsafe
 Flask-Migrate==2.7.0
 Flask-RESTful==0.3.8
 Flask-SQLAlchemy==2.5.1
 Flask-Script==2.0.6
-Flask-Login
 google-api-core
 google-auth 
 google-auth-httplib2 
@@ -40,7 +38,6 @@ parameterized
 mock
 pyrsistent
 rsa
-WTForms==2.3.3
 stripe==3.2.0
 google-api-python-client==2.23.0
 pywebpush>=1.14,<2

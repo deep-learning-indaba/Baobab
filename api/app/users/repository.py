@@ -39,17 +39,14 @@ class UserRepository():
 
     @staticmethod
     def _application_responses(event_id):
-        """(response model, query of the event's application responses).
-
-        Mirrors app/events/status.py: an event with a form_type='application'
-        form in the forms system takes its applications from there; otherwise
-        from the legacy application form.
-        """
-        from app.forms.models import Form, FormResponse
-        form_ids = [row[0] for row in db.session.query(Form.id)
-                    .filter_by(event_id=event_id, form_type='application').all()]
-        if form_ids:
-            return FormResponse, db.session.query(FormResponse).filter(FormResponse.form_id.in_(form_ids))
+        """(response model, query of the event's application responses), from
+        whichever form system the event uses."""
+        from app.forms.models import FormResponse
+        from app.forms import system as form_system
+        if form_system.event_uses_new_forms(event_id):
+            app_form = form_system.get_application_form(event_id)
+            form_id = app_form.id if app_form else None
+            return FormResponse, db.session.query(FormResponse).filter(FormResponse.form_id == form_id)
         return Response, (db.session.query(Response)
                           .join(ApplicationForm, ApplicationForm.id == Response.application_form_id)
                           .filter(ApplicationForm.event_id == event_id))

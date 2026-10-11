@@ -1353,7 +1353,7 @@ class EventsByKeyRegistrationFormIdTest(ApiTestCase):
 
     def seed_static_data(self):
         self.user = self.add_user('user@test.com', 'Test', 'User')
-        self.event = self.add_event(key='TESTEVENT')
+        self.event = self.add_event(key='TESTEVENT', uses_new_forms=True)
 
     def _get_event_by_key(self):
         header = self.get_auth_header_for('user@test.com')
@@ -2351,8 +2351,9 @@ class EventScopedRemindersTest(ApiTestCase):
                          self.other_org_user_id):
             self.assertNotIn(excluded, recipients)
 
-    def test_forms_system_applications_are_used_when_the_event_has_one(self):
+    def test_forms_system_applications_are_used_when_the_event_uses_new_forms(self):
         from app.forms.models import Form, FormResponse
+        db.session.query(Event).get(self.event_id).uses_new_forms = True
         form = Form(event_id=self.event_id, created_by_user_id=self.admin_id, form_type='application',
                     is_open=True)
         db.session.add(form)

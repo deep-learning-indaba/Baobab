@@ -1,11 +1,13 @@
 import React, { Component } from "react";
 import { Redirect } from "react-router-dom";
+import { withTranslation } from "react-i18next";
+import FormNotAvailable from "../../components/FormNotAvailable";
 import "./Registration.css";
 import RegistrationComponent from "./components/RegistrationComponent"
 import GuestRegistrationComponent from "./components/GuestRegistrationComponent"
 import { invitedGuestServices } from '../../services/invitedGuests/invitedGuests.service';
 
-export default class Registration extends Component {
+class Registration extends Component {
 
   constructor(props) {
     super(props);
@@ -31,12 +33,16 @@ export default class Registration extends Component {
         })
   }
   render() {
-    if (this.props.event && this.props.event.registration_form_id) {
-      return <Redirect to={"/" + this.props.event.key + "/forms/" + this.props.event.registration_form_id} />;
+    const { event, t } = this.props;
+    if (event && !event.is_registration_open) {
+      return <div className="alert alert-danger">{t('Registration is now closed')}</div>
     }
 
-    if (this.props.event && !this.props.event.is_registration_open) {
-      return <div class="alert alert-danger">Registration is now closed</div>
+    if (event && event.uses_new_forms) {
+      if (event.registration_form_id) {
+        return <Redirect to={"/" + event.key + "/forms/" + event.registration_form_id} />;
+      }
+      return <FormNotAvailable message={t('The registration form for this event has not been published yet.')} />;
     }
     return (
       <div>
@@ -51,3 +57,5 @@ export default class Registration extends Component {
     );
   }
 }
+
+export default withTranslation()(Registration);

@@ -7,7 +7,9 @@ from flask import g, request
 from flask_restful import  fields, marshal_with, reqparse
 from sqlalchemy.exc import SQLAlchemyError
 from app.events.models import Event
-from app.forms.models import Form, FormResponse
+from app.forms.models import FormResponse
+from app.forms import system as form_system
+from app.forms import lifecycle as form_lifecycle
 from app.tags.models import Tag, TagType
 from app.offer.models import Offer, OfferTag
 from app.users.models import AppUser
@@ -84,6 +86,7 @@ def confirm_offer_payment(offer: Offer):
     try:
         queue_email('offer-paid', offer.user, event=offer.event, context={'offer': offer})
         db.session.commit()
+        form_lifecycle.on_offer_paid(offer)
         return True
     except Exception as e:
         LOGGER.error(
@@ -263,10 +266,17 @@ class OfferAPI(OfferMixin, restful.Resource):
 
         try:
             offer = db.session.query(Offer).filter(Offer.event_id == event_id).filter(Offer.user_id == user_id).first()
-            response = response_repository.get_submitted_by_user_id_for_event(user_id, event_id)
-            if not response:
-                return errors.RESPONSE_NOT_FOUND
-            request_travel = response_repository.get_answer_by_question_key_and_response_id('travel_grant', response.id)
+            if form_system.event_uses_new_forms(event_id):
+                app_form = form_system.get_application_form(event_id)
+                response = form_system.get_submitted_response(app_form, user_id) if app_form else None
+                if not response:
+                    return errors.RESPONSE_NOT_FOUND
+                request_travel = form_system.get_answer_by_question_key(response, 'travel_grant')
+            else:
+                response = response_repository.get_submitted_by_user_id_for_event(user_id, event_id)
+                if not response:
+                    return errors.RESPONSE_NOT_FOUND
+                request_travel = response_repository.get_answer_by_question_key_and_response_id('travel_grant', response.id)
             
             if not offer:
                 return errors.OFFER_NOT_FOUND
@@ -428,12 +438,14 @@ class OfferResetAPI(restful.Resource):
 
 
 def _submitted_applicants(event_id):
-    """Users with a submitted, non-withdrawn application. An event with a new-system application
-    form takes its applicants only from that form; otherwise the legacy application form is used."""
-    new_app_form = db.session.query(Form).filter_by(event_id=event_id, form_type='application').first()
-    if new_app_form:
+    """Users with a submitted, non-withdrawn application, from whichever form
+    system the event uses."""
+    if form_system.event_uses_new_forms(event_id):
+        app_form = form_system.get_application_form(event_id)
+        if not app_form:
+            return []
         form_responses = db.session.query(FormResponse).filter_by(
-            form_id=new_app_form.id, is_submitted=True, is_withdrawn=False).all()
+            form_id=app_form.id, is_submitted=True, is_withdrawn=False).all()
         return [r.user for r in form_responses]
 
     responses = response_repository.get_all_for_event(event_id, submitted_only=True, page=1, per_page=100000).items

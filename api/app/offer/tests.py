@@ -4,6 +4,7 @@ from app import db, LOGGER
 from app.utils.testing import ApiTestCase
 from app.users.models import UserCategory, Country
 from app.offer.models import Offer, OfferTag
+from app.events.models import Event
 from app.forms.models import Form, FormResponse
 from app.offer.repository import OfferRepository as offer_repository
 from app.outcome.repository import OutcomeRepository as outcome_repository
@@ -719,6 +720,7 @@ class OfferAdminApiTest(ApiTestCase):
         self.assertEqual(fees[0]['amount'], 150)
 
     def _add_new_application_form(self, submitted_user_ids, withdrawn_user_ids=()):
+        db.session.query(Event).get(self.event_id).uses_new_forms = True
         form = Form(self.event_id, self.admin_id)
         form.form_type = 'application'
         db.session.add(form)
@@ -730,7 +732,7 @@ class OfferAdminApiTest(ApiTestCase):
             db.session.add(response)
         db.session.commit()
 
-    def test_candidates_come_only_from_new_form_when_event_has_one(self):
+    def test_candidates_come_only_from_new_form_when_event_uses_new_forms(self):
         # The legacy responses for both candidates exist, but the new form is authoritative.
         self._add_new_application_form([self.other_candidate_id])
 

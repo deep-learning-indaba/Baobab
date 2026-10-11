@@ -21,6 +21,7 @@ from .tags import api as tag_api
 from .invoice import api as invoice_api
 from .reporting import api as reporting_api
 from .forms import api as forms_api
+from .forms import reviews_api as forms_reviews_api
 from .utils import translation_api
 from .profiles import api as profiles_api
 from .programme import api as programme_api
@@ -209,6 +210,11 @@ rest_api.add_resource(forms_api.FormResponseTagAPI, '/api/v1/forms/<int:form_id>
 rest_api.add_resource(forms_api.FormReviewSummaryAPI, '/api/v1/forms/<int:form_id>/review-summary')
 rest_api.add_resource(forms_api.FormResponseAdminUpdateAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/admin-status')
 rest_api.add_resource(forms_api.FormResponseReviewsAdminAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/reviews')
+rest_api.add_resource(forms_reviews_api.ReviewerAssignmentListAPI, '/api/v1/reviews/assigned')
+rest_api.add_resource(forms_reviews_api.ReviewerHistoryAPI, '/api/v1/reviews/history')
+rest_api.add_resource(forms_reviews_api.ReviewerAssignmentDetailAPI, '/api/v1/reviews/assigned/<int:review_response_id>')
+rest_api.add_resource(forms_reviews_api.ReviewDashboardAPI, '/api/v1/forms/<int:form_id>/review-dashboard')
+rest_api.add_resource(forms_reviews_api.ReviewFormStageAPI, '/api/v1/review-stages')
 # Announcement routes — register static paths before the <int:id> route
 rest_api.add_resource(announcements_api.AnnouncementActiveAPI, '/api/v1/announcement/active')
 rest_api.add_resource(announcements_api.AnnouncementAdminAPI, '/api/v1/announcement/admin')

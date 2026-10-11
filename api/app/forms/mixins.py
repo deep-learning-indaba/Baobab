@@ -5,6 +5,7 @@ from flask import g
 
 from app import db
 from app.forms.models import Form
+from app.forms.system import REVIEW_SETTING_DEFAULTS
 from app.utils import errors
 from app.utils.auth import get_user_from_request
 from app.users.repository import UserRepository as user_repository
@@ -78,25 +79,6 @@ def verify_form_event(form, event_id):
     return form is not None and form.event_id == event_id
 
 
-def uses_new_form(event_id, form_type):
-    """Check if an event uses the new generic form system for a given form type."""
-    return db.session.query(Form).filter_by(
-        event_id=event_id, form_type=form_type
-    ).first() is not None
-
-
-def get_form_by_type(event_id, form_type, stage=None):
-    """Get the Form for a given event, form type, and optional stage."""
-    query = db.session.query(Form).filter_by(
-        event_id=event_id, form_type=form_type
-    )
-    if stage is not None:
-        query = query.filter_by(stage=stage)
-    else:
-        query = query.filter_by(is_active=True)
-    return query.first()
-
-
 def apply_form_type_defaults(form, form_type, stage=None):
     """Apply role-specific defaults when creating a typed form."""
     if form_type == 'application':
@@ -110,20 +92,29 @@ def apply_form_type_defaults(form, form_type, stage=None):
     elif form_type == 'review':
         if form.settings is None:
             form.settings = {}
-        defaults = {
-            'page_per_section': False,
-            'num_reviews_required': 3,
-            'num_optional_reviews': 0,
-            'drop_optional_question_id': None,
-            'drop_optional_agreement_values': None
-        }
-        for key, value in defaults.items():
+        for key, value in REVIEW_SETTING_DEFAULTS.items():
             if key not in form.settings:
                 form.settings[key] = value
         form.multiple_responses = True
         form.allow_edits = True
         if stage is not None:
             form.stage = stage
+        if form.linked_form_id is None:
+            app_form = db.session.query(Form).filter_by(
+                event_id=form.event_id, form_type='application'
+            ).first()
+            if app_form:
+                form.linked_form_id = app_form.id
+        # Only one review stage is active at a time; a new stage becomes the
+        # active one only if no other stage already is.
+        other_active = db.session.query(Form).filter(
+            Form.event_id == form.event_id,
+            Form.form_type == 'review',
+            Form.is_active == True,  # noqa: E712
+        )
+        if form.id is not None:
+            other_active = other_active.filter(Form.id != form.id)
+        form.is_active = other_active.first() is None
 
     elif form_type == 'registration':
         form.visibility_expression = {

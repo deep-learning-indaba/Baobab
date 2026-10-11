@@ -3,7 +3,8 @@ helper functions, and the GET /api/v1/form-config endpoint."""
 import json
 from app import db
 from app.forms.models import Form, FormResponse, FormTranslation
-from app.forms.mixins import uses_new_form, get_form_by_type, apply_form_type_defaults, validate_form_type_constraints
+from app.forms import system as form_system
+from app.forms.mixins import apply_form_type_defaults, validate_form_type_constraints
 from app.utils.testing import ApiTestCase
 
 
@@ -268,78 +269,52 @@ class TestFormTypeDefaults(ApiTestCase):
 
 
 class TestFormHelpers(ApiTestCase):
-    """Tests for uses_new_form() and get_form_by_type() helpers."""
+    """Tests for the form system selection helpers and form type constraints."""
 
-    def seed_static_data(self):
+    def seed_static_data(self, uses_new_forms=True):
         self.user = self.add_user('admin@test.com', 'Admin', 'User')
-        self.event = self.add_event()
+        self.event = self.add_event(uses_new_forms=uses_new_forms)
 
-    def test_uses_new_form_false_when_no_typed_form(self):
-        """uses_new_form returns False when no typed form exists."""
-        self.seed_static_data()
-        self.assertFalse(uses_new_form(self.event.id, 'registration'))
-        self.assertFalse(uses_new_form(self.event.id, 'application'))
-
-    def test_uses_new_form_true_after_creation(self):
-        """uses_new_form returns True after a typed form is created."""
-        self.seed_static_data()
-        form = Form(
-            event_id=self.event.id,
-            created_by_user_id=self.user.id,
-            form_type='registration'
-        )
+    def _form(self, form_type, **kwargs):
+        form = Form(event_id=self.event.id, created_by_user_id=self.user.id, form_type=form_type, **kwargs)
         db.session.add(form)
         db.session.commit()
+        return form
 
-        self.assertTrue(uses_new_form(self.event.id, 'registration'))
-        self.assertFalse(uses_new_form(self.event.id, 'application'))
-
-    def test_get_form_by_type_returns_none_when_absent(self):
-        """get_form_by_type returns None when no matching form exists."""
+    def test_typed_form_none_when_absent(self):
         self.seed_static_data()
-        result = get_form_by_type(self.event.id, 'registration')
-        self.assertIsNone(result)
+        self.assertIsNone(form_system.get_registration_form(self.event.id))
+        self.assertIsNone(form_system.get_application_form(self.event.id))
 
-    def test_get_form_by_type_returns_form(self):
-        """get_form_by_type returns the correct form."""
+    def test_typed_form_found_on_new_system_event(self):
         self.seed_static_data()
-        form = Form(
-            event_id=self.event.id,
-            created_by_user_id=self.user.id,
-            form_type='registration'
-        )
-        db.session.add(form)
-        db.session.commit()
+        form = self._form('registration')
+        self.assertEqual(form_system.get_registration_form(self.event.id).id, form.id)
+        self.assertIsNone(form_system.get_application_form(self.event.id))
 
-        result = get_form_by_type(self.event.id, 'registration')
-        self.assertIsNotNone(result)
-        self.assertEqual(result.id, form.id)
+    def test_typed_form_ignored_on_legacy_event(self):
+        self.seed_static_data(uses_new_forms=False)
+        self._form('registration')
+        self.assertFalse(form_system.event_uses_new_forms(self.event.id))
+        self.assertIsNone(form_system.get_registration_form(self.event.id))
 
-    def test_get_form_by_type_with_stage(self):
-        """get_form_by_type with stage returns the correct review stage form."""
+    def test_review_forms_in_stage_order(self):
         self.seed_static_data()
-        form1 = Form(
-            event_id=self.event.id,
-            created_by_user_id=self.user.id,
-            form_type='review',
-            stage=1
-        )
-        form2 = Form(
-            event_id=self.event.id,
-            created_by_user_id=self.user.id,
-            form_type='review',
-            stage=2
-        )
-        db.session.add_all([form1, form2])
-        db.session.commit()
+        self._form('review', stage=2)
+        self._form('review', stage=1)
+        self.assertEqual([f.stage for f in form_system.get_review_forms(self.event.id)], [1, 2])
 
-        result = get_form_by_type(self.event.id, 'review', stage=1)
-        self.assertIsNotNone(result)
-        self.assertEqual(result.stage, 1)
+    def test_active_review_form_is_the_active_stage(self):
+        self.seed_static_data()
+        stage1 = self._form('review', stage=1, is_active=True)
+        self._form('review', stage=2, is_active=False)
+        self.assertEqual(form_system.get_active_review_form(self.event.id).id, stage1.id)
 
-        result2 = get_form_by_type(self.event.id, 'review', stage=2)
-        self.assertIsNotNone(result2)
-        self.assertEqual(result2.stage, 2)
+    def test_active_review_form_falls_back_to_latest_stage(self):
+        self.seed_static_data()
+        self._form('review', stage=1, is_active=False)
+        stage2 = self._form('review', stage=2, is_active=False)
+        self.assertEqual(form_system.get_active_review_form(self.event.id).id, stage2.id)
 
     def test_validate_review_form_constraints_fails_without_app_form(self):
         """Validate review form constraint fails when no application form."""
@@ -388,6 +363,10 @@ class TestEventFormConfigAPI(ApiTestCase):
         self.regular_user = db.session.merge(self.regular_user)
         self.event = db.session.merge(self.event)
 
+    def _use_new_forms(self):
+        self.event.uses_new_forms = True
+        db.session.commit()
+
     def _get_form_config(self, event_id=None, headers=None):
         eid = event_id if event_id is not None else self.event.id
         hdrs = headers if headers is not None else self.admin_headers
@@ -426,6 +405,7 @@ class TestEventFormConfigAPI(ApiTestCase):
     def test_registration_shows_new_when_typed_form_exists(self):
         """Returns new system for registration when Form(form_type='registration') exists."""
         self.seed_static_data()
+        self._use_new_forms()
         form = Form(
             event_id=self.event.id,
             created_by_user_id=self.admin.id,
@@ -449,6 +429,7 @@ class TestEventFormConfigAPI(ApiTestCase):
     def test_application_shows_new_when_typed_form_exists(self):
         """Returns new system for application when Form(form_type='application') exists."""
         self.seed_static_data()
+        self._use_new_forms()
         form = Form(
             event_id=self.event.id,
             created_by_user_id=self.admin.id,
@@ -470,6 +451,7 @@ class TestEventFormConfigAPI(ApiTestCase):
     def test_review_shows_new_with_stages(self):
         """Returns new system for review with stage data when review forms exist."""
         self.seed_static_data()
+        self._use_new_forms()
         app_form = Form(
             event_id=self.event.id,
             created_by_user_id=self.admin.id,
@@ -502,6 +484,7 @@ class TestEventFormConfigAPI(ApiTestCase):
     def test_response_count_reflects_submitted_responses(self):
         """response_count is the count of submitted responses for the form."""
         self.seed_static_data()
+        self._use_new_forms()
         form = Form(
             event_id=self.event.id,
             created_by_user_id=self.admin.id,
