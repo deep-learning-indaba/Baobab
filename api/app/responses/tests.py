@@ -473,6 +473,11 @@ class ResponseApiTest(ApiTestCase):
 
 
 class ResponseListAPITest(ApiTestCase):
+    @staticmethod
+    def _formal_name(user_name):
+        # Titles and surnames are random test data and may be empty.
+        return ' '.join(part for part in user_name if part)
+
     def _seed_static_data(self):
         self.event1 = self.add_event(key='event1')
         self.event2 = self.add_event(key='event2')
@@ -578,10 +583,10 @@ class ResponseListAPITest(ApiTestCase):
         self.assertEqual(len(response1['answers']), 0)
         self.assertEqual(len(response1['reviewers']), 2)
         self.assertEqual(response1['reviewers'][0]['reviewer_id'], 2)
-        self.assertEqual(response1['reviewers'][0]['reviewer_name'], '{} {} {}'.format(*self.user_names[1]))
+        self.assertEqual(response1['reviewers'][0]['reviewer_name'], self._formal_name(self.user_names[1]))
         self.assertEqual(response1['reviewers'][0]['review_response_id'], self.review_response_id)
         self.assertEqual(response1['reviewers'][1]['reviewer_id'], 3)
-        self.assertEqual(response1['reviewers'][1]['reviewer_name'], '{} {} {}'.format(*self.user_names[2]))
+        self.assertEqual(response1['reviewers'][1]['reviewer_name'], self._formal_name(self.user_names[2]))
         self.assertEqual(response1['reviewers'][1]['review_response_id'], None)
         self.assertEqual(len(response1['tags']), 1)
         self.assertEqual(response1['tags'][0]['id'], 1)
@@ -600,7 +605,7 @@ class ResponseListAPITest(ApiTestCase):
         self.assertEqual(len(response2['answers']), 0)
         self.assertEqual(len(response2['reviewers']), 2)
         self.assertEqual(response2['reviewers'][0]['reviewer_id'], 1)
-        self.assertEqual(response2['reviewers'][0]['reviewer_name'], '{} {} {}'.format(*self.user_names[0]))
+        self.assertEqual(response2['reviewers'][0]['reviewer_name'], self._formal_name(self.user_names[0]))
         self.assertEqual(response2['reviewers'][0]['review_response_id'], None)
         self.assertEqual(response2['reviewers'][1], None)
         self.assertEqual(len(response2['tags']), 0)
