@@ -127,7 +127,6 @@ export function transformFromApiPayload(apiSections, languages) {
       settings: question.settings || {},
       dependency_expression: mapDependencyExpression(question.dependency_expression, backendToClientIdMap) || null,
       tag_expression: question.tag_expression || null,
-      linked_question_id: question.linked_question_id,
       // All translatable fields are now i18n objects from API
       headline: question.headline || {},
       description: question.description || {},
@@ -179,7 +178,6 @@ export function transformToApiPayload(sections, languages) {
             : null,
           dependency_expression: prepareDependencyExpression(question.dependency_expression, clientToBackendIdMap),
           tag_expression: question.tag_expression || null,
-          linked_question_id: question.linked_question_id || null,
           headline: question.headline,
           description: question.description,
           placeholder: question.placeholder,

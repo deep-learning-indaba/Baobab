@@ -485,6 +485,109 @@ class ReviewDashboardTest(NewFormSystemTestCase):
         self.assertEqual(data[0]['answers'][0]['value'], '5')
 
 
+class LinkedDisplayTest(NewFormSystemTestCase):
+    """settings['linked_display'] on the review form hides application answers
+    from the reviewer, server-side."""
+
+    def setUp(self):
+        super().setUp()
+        app_form = db.session.query(Form).get(self.app_form_id)
+        personal = FormSection(form_id=self.app_form_id, order=2)
+        db.session.add(personal)
+        db.session.flush()
+        self.personal_section_id = personal.id
+        self.app_section_id = db.session.query(FormQuestion).get(self.identifier_q_id).section_id
+        self.name_q_id = self._question(app_form, personal, 'short-text', 'Full name').id
+        db.session.commit()
+
+    def _set_display(self, display):
+        review_form = db.session.query(Form).get(self.review_form_id)
+        review_form.settings = {**(review_form.settings or {}), 'linked_display': display}
+        db.session.commit()
+
+    def _detail(self):
+        app_response_id = self._response(
+            self.app_form_id, self.applicant_id,
+            {self.identifier_q_id: 'Alpha', self.travel_q_id: 'Yes', self.name_q_id: 'Ada Lovelace'},
+            submitted=True)
+        review_id = self._response(self.review_form_id, self.reviewer_id, linked_response_id=app_response_id)
+        response, data = self._json(
+            'get', '/api/v1/reviews/assigned/{}?event_id={}'.format(review_id, self.event_id), 'reviewer@test.com')
+        self.assertEqual(response.status_code, 200)
+        return data
+
+    @staticmethod
+    def _question_ids(data):
+        return {q['id'] for s in data['application_form']['sections'] for q in s['questions']}
+
+    @staticmethod
+    def _answer_ids(data, key='answers'):
+        return {a['question_id'] for a in data['application_response'][key]}
+
+    def test_everything_shown_without_setting(self):
+        data = self._detail()
+        expected = {self.identifier_q_id, self.travel_q_id, self.name_q_id}
+        self.assertEqual(self._question_ids(data), expected)
+        self.assertEqual(self._answer_ids(data), expected)
+        self.assertEqual(data['application_response']['dependency_answers'], [])
+
+    def test_hidden_section_removes_its_questions_and_answers(self):
+        self._set_display({'hidden_section_ids': [self.personal_section_id], 'hidden_question_ids': []})
+        data = self._detail()
+        self.assertEqual(self._question_ids(data), {self.identifier_q_id, self.travel_q_id})
+        self.assertEqual(self._answer_ids(data), {self.identifier_q_id, self.travel_q_id})
+        self.assertEqual(len(data['application_form']['sections']), 1)
+        self.assertNotIn('Ada Lovelace', json.dumps(data))
+
+    def test_hidden_section_hides_questions_added_later(self):
+        self._set_display({'hidden_section_ids': [self.personal_section_id], 'hidden_question_ids': []})
+        app_form = db.session.query(Form).get(self.app_form_id)
+        personal = db.session.query(FormSection).get(self.personal_section_id)
+        later_q_id = self._question(app_form, personal, 'short-text', 'Gender').id
+        db.session.commit()
+        data = self._detail()
+        self.assertNotIn(later_q_id, self._question_ids(data))
+
+    def test_hidden_question_leaves_its_siblings(self):
+        self._set_display({'hidden_section_ids': [], 'hidden_question_ids': [self.travel_q_id]})
+        data = self._detail()
+        self.assertEqual(self._question_ids(data), {self.identifier_q_id, self.name_q_id})
+        self.assertEqual(self._answer_ids(data), {self.identifier_q_id, self.name_q_id})
+
+    def test_hidden_answer_used_by_a_dependency_is_sent_separately(self):
+        comment_q = db.session.query(FormQuestion).get(self.comment_q_id)
+        comment_q.dependency_expression = {
+            'operator': 'AND',
+            'conditions': [{'question_id': self.travel_q_id, 'operator': 'EQUALS', 'values': ['Yes']}],
+        }
+        db.session.commit()
+        self._set_display({'hidden_section_ids': [self.personal_section_id],
+                           'hidden_question_ids': [self.travel_q_id]})
+        data = self._detail()
+        self.assertNotIn(self.travel_q_id, self._question_ids(data))
+        self.assertNotIn(self.travel_q_id, self._answer_ids(data))
+        # The hidden name answer isn't referenced by any dependency, so stays out.
+        self.assertEqual(self._answer_ids(data, 'dependency_answers'), {self.travel_q_id})
+
+    def test_malformed_setting_is_rejected(self):
+        for settings in ({'linked_display': []},
+                         {'linked_display': {'hidden_question_ids': 'all'}},
+                         {'linked_display': {'hidden_section_ids': [True]}}):
+            response, _ = self._json('put', '/api/v1/forms/{}'.format(self.review_form_id),
+                                     'admin@test.com', {'settings': settings})
+            self.assertEqual(response.status_code, 400, settings)
+            response, _ = self._json('put', '/api/v1/forms/{}/structure'.format(self.review_form_id),
+                                     'admin@test.com', {'settings': settings})
+            self.assertEqual(response.status_code, 400, settings)
+
+    def test_valid_setting_is_saved(self):
+        display = {'hidden_section_ids': [self.personal_section_id], 'hidden_question_ids': [999999]}
+        response, data = self._json('put', '/api/v1/forms/{}'.format(self.review_form_id),
+                                    'admin@test.com', {'settings': {'linked_display': display}})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data['settings']['linked_display'], display)
+
+
 class EventStatsTest(NewFormSystemTestCase):
 
     def test_stats_count_new_form_responses(self):

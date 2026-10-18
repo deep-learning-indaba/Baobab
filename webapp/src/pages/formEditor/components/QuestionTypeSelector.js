@@ -1,7 +1,7 @@
 import React from 'react';
 import { default as ReactSelect } from 'react-select';
 
-const QuestionTypeSelector = ({ value, onChange, t, includeReviewTypes = false, linkedFormId = null, hasError = false }) => {
+const QuestionTypeSelector = ({ value, onChange, t, includeReviewTypes = false, hasError = false }) => {
   const baseOptions = [
     { value: 'short-text',    label: t('Short Text'),             icon: 'fa-align-left' },
     { value: 'long-text',     label: t('Long Text'),              icon: 'fa-align-justify' },
@@ -28,10 +28,6 @@ const QuestionTypeSelector = ({ value, onChange, t, includeReviewTypes = false, 
       label: t('Reference Request (not supported)'),
       icon: 'fa-user-friends'
     });
-  }
-
-  if (linkedFormId || value === 'linked-form-question') {
-    baseOptions.push({ value: 'linked-form-question', label: t('Linked Form Question'), icon: 'fa-link' });
   }
 
   const reviewOnlyOptions = [

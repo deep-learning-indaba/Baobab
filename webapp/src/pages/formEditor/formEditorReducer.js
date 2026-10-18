@@ -15,6 +15,16 @@ import { FORM_ACTIONS } from './actionTypes';
 export function formEditorReducer(state, action) {
   switch (action.type) {
     case FORM_ACTIONS.SET_FORM_SETTING:
+      // Section and question ids chosen from the old linked form mean
+      // nothing on a new one.
+      if (action.key === 'linked_form_id' && action.value !== state.form.linked_form_id) {
+        const { linked_display, ...settings } = state.form.settings || {}; // eslint-disable-line no-unused-vars
+        return {
+          ...state,
+          form: { ...state.form, linked_form_id: action.value, settings },
+          ui: { ...state.ui, isDirty: true }
+        };
+      }
       return {
         ...state,
         form: {

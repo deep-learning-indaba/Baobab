@@ -8,7 +8,7 @@ export const MULTI_VALUE_SEPARATOR = ' ; ';
 
 // Types that render no input, so they can never hold an answer and must never
 // be treated as required.
-const DISPLAY_ONLY_TYPES = ['information', 'sub-heading', 'linked-form-question'];
+const DISPLAY_ONLY_TYPES = ['information', 'sub-heading'];
 
 // Types whose stored value is a boolean-ish string.
 const BOOLEAN_TYPES = ['single-checkbox'];

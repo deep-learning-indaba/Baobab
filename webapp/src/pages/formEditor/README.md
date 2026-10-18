@@ -159,7 +159,6 @@ The editor validates:
 - Settings constraints (min ≤ max, valid file extensions) for settings that
   apply to the question's current type
 - That any `validation_regex` compiles
-- That a `linked-form-question` has a question selected
 
 Errors are listed individually in the banner at the top of the editor, and
 required fields are highlighted once a save has been attempted.
@@ -185,7 +184,6 @@ required fields are highlighted once a save has been attempted.
 - `numeric` - Number input
 - `country` - Country selector
 - `sub-heading` - Decorative heading
-- `linked-form-question` - Displays an answer from the linked form
 - `information` - Information display (review forms only)
 
 ### Not offered
@@ -193,6 +191,23 @@ required fields are highlighted once a save has been attempted.
   model and has no implementation in `formRenderer`, so it is not offered for new
   questions. Existing questions of this type keep it selectable so that editing
   such a form doesn't silently change it.
+
+## Linked form answers
+
+When the form has a `linked_form_id`, a "Linked form answers" card above the
+sections lists the linked form's sections and questions with toggles. The
+choice is stored in `form.settings.linked_display`:
+
+```json
+{ "hidden_section_ids": [12], "hidden_question_ids": [101, 107] }
+```
+
+Everything is shown when the key is absent. Hiding a section also hides
+questions added to it later. The reviewer page shows the shown answers beside
+the review form; the server strips hidden ones
+(`api/app/forms/linked_display.py`), except those a dependency in this form
+refers to, which the card warns about. Changing the linked form clears the
+setting. See `utils/linkedDisplay.js` and `utils/useLinkedForm.js`.
 
 ## Settings vs Options
 

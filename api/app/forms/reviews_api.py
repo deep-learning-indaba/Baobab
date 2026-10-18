@@ -15,6 +15,7 @@ from flask import g, request
 from app import db, LOGGER
 from app.forms import system as form_system
 from app.forms.api import serialize_form, serialize_response, _error
+from app.forms.linked_display import dependency_question_ids, filter_serialized_form, hidden_question_ids
 from app.forms.models import Form, FormResponse
 from app.forms.review_serializers import (
     identifiers, numeric_answer, person, review_status, score_questions, serialize_review,
@@ -138,10 +139,20 @@ class ReviewerAssignmentDetailAPI(restful.Resource):
         # Tags are an organiser's notes on the application, not reviewer material.
         application_data.pop('tags', None)
 
+        # Answers the review form hides are left out entirely, not just left
+        # unrendered, so hiding works for blind review. The exception is an
+        # answer a review question's dependency needs: it is sent separately,
+        # never displayed, so the dependency still evaluates in the browser.
+        hidden = hidden_question_ids(review.form, application.form)
+        needed = hidden & dependency_question_ids(review.form)
+        all_answers = application_data['answers']
+        application_data['answers'] = [a for a in all_answers if a['question_id'] not in hidden]
+        application_data['dependency_answers'] = [a for a in all_answers if a['question_id'] in needed]
+
         return {
             'review_form': serialize_form(review.form, language),
             'review_response': serialize_response(review),
-            'application_form': serialize_form(application.form, language),
+            'application_form': filter_serialized_form(serialize_form(application.form, language), hidden),
             'application_response': application_data,
             'applicant_user_id': application.user_id,
             'identifiers': identifiers(application, language),

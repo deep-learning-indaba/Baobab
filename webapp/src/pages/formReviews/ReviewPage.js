@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import FormRenderer from "../formRenderer/FormRenderer";
-import ResponseAnswers from "../../components/form/ResponseAnswers";
+import LinkedResponsePanel from "../../components/form/LinkedResponsePanel";
 import Modal from "../../components/Modal";
 import { Button } from "../../components/ui/button";
 import { reviewService } from "../../services/reviews/review.service";
@@ -58,6 +58,7 @@ export default function ReviewPage({ event, match, history }) {
   const [answers, setAnswers] = useState([]);
   const [justSubmitted, setJustSubmitted] = useState(false);
   const [flagVisible, setFlagVisible] = useState(false);
+  const [mobileTab, setMobileTab] = useState('application');
 
   useEffect(() => {
     setData(null);
@@ -71,6 +72,14 @@ export default function ReviewPage({ event, match, history }) {
   }, [reviewResponseId, event.id, language]);
 
   const reviewFormId = data && data.review_form.id;
+
+  // Answers the review form hides arrive as `dependency_answers`: never
+  // displayed, but the review form's dependencies still need them.
+  const dependencyResponse = useMemo(() => {
+    if (!data) return null;
+    const application = data.application_response;
+    return { ...application, answers: [...application.answers, ...(application.dependency_answers || [])] };
+  }, [data]);
 
   const save = useCallback(async ({ answers: formAnswers }) => {
     const result = await formResponseService.updateResponse(reviewFormId, reviewResponseId, { answers: formAnswers });
@@ -162,22 +171,36 @@ export default function ReviewPage({ event, match, history }) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        <section className="bg-white rounded-2xl border border-border shadow-sm lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] flex flex-col">
-          <div className="px-6 py-4 border-b border-border">
-            <h2 className="font-heading text-base font-bold text-foreground">{t('Application')}</h2>
-          </div>
-          <div className="p-6 overflow-y-auto">
-            <ResponseAnswers form={data.application_form} answers={data.application_response.answers} language={language} />
-          </div>
-        </section>
+      {/* Below lg the two panels would stack, burying the review form under a
+          long application, so they become tabs instead. Both stay mounted so
+          switching tabs keeps unsaved review answers. */}
+      <div className="lg:hidden flex rounded-xl border border-border bg-white p-1" role="tablist">
+        {[['application', t('Application')], ['review', t('Review')]].map(([tab, label]) => (
+          <button key={tab} type="button" role="tab" aria-selected={mobileTab === tab}
+                  onClick={() => setMobileTab(tab)}
+                  className={`flex-1 py-2 rounded-lg text-sm font-semibold border-none cursor-pointer transition-colors ${
+                    mobileTab === tab ? 'bg-primary text-white' : 'bg-transparent text-muted-foreground hover:text-foreground'
+                  }`}>
+            {label}
+          </button>
+        ))}
+      </div>
 
-        <section className="bg-white rounded-2xl border border-border shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        <LinkedResponsePanel
+          title={t('Application')}
+          form={data.application_form}
+          answers={data.application_response.answers}
+          language={language}
+          className={`${mobileTab === 'application' ? '' : 'hidden'} lg:flex lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)]`}
+        />
+
+        <section className={`${mobileTab === 'review' ? '' : 'hidden'} lg:block bg-white rounded-2xl border border-border shadow-sm`}>
           <FormRenderer
             key={data.review_response.id}
             form={data.review_form}
             response={data.review_response}
-            linkedResponse={data.application_response}
+            linkedResponse={dependencyResponse}
             language={language}
             onSave={save}
             onSubmit={submit}

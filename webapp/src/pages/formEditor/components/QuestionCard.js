@@ -6,7 +6,6 @@ import QuestionSettingsEditor from './QuestionSettingsEditor';
 import CountryEditor from './CountryEditor';
 import DependencyEditor from './DependencyEditor';
 import VisibilityExpressionEditor from './VisibilityExpressionEditor';
-import LinkedQuestionSelector from './LinkedQuestionSelector';
 import { FORM_ACTIONS } from '../actionTypes';
 import {
   hasChoiceOptions,
@@ -117,7 +116,6 @@ const QuestionCard = memo(({
   const showPlaceholder = typeHasPlaceholder(question.type);
   const showSettings = hasTypeSettings(question.type);
   const hasCountrySettings = question.type === 'country';
-  const hasLinkedQuestion = question.type === 'linked-form-question';
   const canHaveValidation = typeHasValidation(question.type);
   const displayOnly = isDisplayOnly(question.type);
 
@@ -172,7 +170,6 @@ const QuestionCard = memo(({
               onChange={handleTypeChange}
               t={t}
               includeReviewTypes={includeReviewTypes}
-              linkedFormId={linkedFormId}
               hasError={showErrors && !question.type}
             />
           </div>
@@ -264,30 +261,6 @@ const QuestionCard = memo(({
                 sectionId,
                 questionId: question.id,
                 settings: { ...question.settings, countryOptions: countrySettings }
-              });
-            }}
-            t={t}
-          />
-        )}
-
-        {hasLinkedQuestion && (
-          <LinkedQuestionSelector
-            linkedFormId={linkedFormId}
-            linkedQuestionId={question.linked_question_id}
-            onChange={(questionId) =>
-              dispatch({ type: FORM_ACTIONS.UPDATE_QUESTION_FIELD, sectionId, questionId: question.id, field: 'linked_question_id', value: questionId })
-            }
-            onQuestionDataLoad={(selectedQuestion) => {
-              const currentHeadline = question.headline || {};
-              const currentDescription = question.description || {};
-              languages.forEach(lang => {
-                const langCode = lang.code;
-                if (!currentHeadline[langCode] && selectedQuestion.headline?.[langCode]) {
-                  dispatch({ type: FORM_ACTIONS.UPDATE_QUESTION_FIELD, sectionId, questionId: question.id, field: 'headline', lang: langCode, value: selectedQuestion.headline[langCode] });
-                }
-                if (!currentDescription[langCode] && selectedQuestion.description?.[langCode]) {
-                  dispatch({ type: FORM_ACTIONS.UPDATE_QUESTION_FIELD, sectionId, questionId: question.id, field: 'description', lang: langCode, value: selectedQuestion.description[langCode] });
-                }
               });
             }}
             t={t}

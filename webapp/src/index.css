@@ -124,6 +124,14 @@ input:checked + .form-toggle::after {
 input:focus + .form-toggle {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-ring) 20%, transparent);
 }
+input:disabled + .form-toggle {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+/* On, but only some of what it controls is on. */
+input:checked + .form-toggle.form-toggle-partial {
+  background-color: color-mix(in srgb, var(--color-primary) 50%, var(--color-border));
+}
 
 @keyframes slide-in-right {
   from { opacity: 0; transform: translateX(80px); }
