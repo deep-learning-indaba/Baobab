@@ -167,14 +167,6 @@ export function validateForm(sections, languages, formName = {}, t) {
           });
         }
       });
-
-      if (question.type === 'linked-form-question' && !question.linked_question_id) {
-        errors.push({
-          path: `sections[${sectionIndex}].questions[${questionIndex}].linked_question_id`,
-          message: translate('{{where}}: select a question from the linked form', { where }),
-          severity: 'error'
-        });
-      }
     });
   });
 

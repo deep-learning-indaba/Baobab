@@ -16,6 +16,7 @@ from app.forms.models import (
     DISPLAY_ONLY_QUESTION_TYPES, MULTI_VALUE_SEPARATOR
 )
 from app.forms.visibility import VisibilityEvaluator
+from app.forms.linked_display import validate_linked_display
 from app.forms.system import review_setting
 from app.forms.review_serializers import review_status, serialize_review
 from app.forms.stats import count_unallocated_reviews
@@ -113,7 +114,6 @@ def serialize_form(form, language='en', include_inactive=False):
                 'key': question.key,
                 'dependency_expression': question.dependency_expression,
                 'tag_expression': question.tag_expression,
-                'linked_question_id': question.linked_question_id,
                 'settings': question.settings,
                 'is_active': question.is_active,
                 'version': question.version,
@@ -392,6 +392,9 @@ class FormListAPI(restful.Resource):
             linked_form_id = args.get('linked_form_id')
             if linked_form_id and not _linked_form_is_in_event(linked_form_id, event_id):
                 return _error('Linked form must belong to the same event', 400)
+            settings_error = validate_linked_display(args.get('settings'))
+            if settings_error:
+                return _error(settings_error, 400)
 
             # Create empty form
             form = Form(
@@ -444,6 +447,10 @@ class FormAPI(restful.Resource):
         """Update form definition (admin only)"""
         try:
             args = request.get_json()
+
+            settings_error = validate_linked_display(args.get('settings'))
+            if settings_error:
+                return _error(settings_error, 400)
 
             # Update form properties
             if 'is_open' in args:
@@ -571,6 +578,14 @@ class FormStructureAPI(restful.Resource):
         """Update form structure (sections and questions) with soft delete support (admin only)"""
         try:
             args = request.get_json()
+
+            if args.get('linked_form_id') and not _linked_form_is_in_event(
+                args['linked_form_id'], form.event_id
+            ):
+                return _error('Linked form must belong to the same event', 400)
+            settings_error = validate_linked_display(args.get('settings'))
+            if settings_error:
+                return _error(settings_error, 400)
 
             # Update form name and description translations if provided
             if 'name' in args and args['name']:
@@ -744,8 +759,6 @@ class FormStructureAPI(restful.Resource):
                             question.dependency_expression = question_data['dependency_expression']
                         if 'tag_expression' in question_data:
                             question.tag_expression = question_data['tag_expression']
-                        if 'linked_question_id' in question_data:
-                            question.linked_question_id = question_data['linked_question_id']
                         question.updated_at = datetime.now()
                         if question_data.get('dependency_expression'):
                             questions_needing_dep_remap.append((question, question_data['dependency_expression']))
@@ -792,8 +805,7 @@ class FormStructureAPI(restful.Resource):
                             key=question_data.get('key') or None,
                             settings=question_data.get('settings'),
                             dependency_expression=question_data.get('dependency_expression'),
-                            tag_expression=question_data.get('tag_expression'),
-                            linked_question_id=question_data.get('linked_question_id')
+                            tag_expression=question_data.get('tag_expression')
                         )
                         db.session.add(question)
                         db.session.flush()

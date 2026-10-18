@@ -121,7 +121,7 @@ const formData = {
 | `onSave` | function | No | - | Async callback for saving draft |
 | `onCancel` | function | No | - | Callback when user cancels |
 | `readOnly` | boolean | No | false | Disable all inputs |
-| `linkedResponse` | object | No | null | Linked form response (for review forms) |
+| `linkedResponse` | object | No | null | Linked form response; its answers are available to dependency expressions (for review forms) |
 | `showConfirmation` | boolean | No | true | Show confirmation page before submit |
 | `autoSaveInterval` | number | No | 0 | Idle delay in ms before a draft is auto-saved (0 = disabled) |
 | `userTags` | string[] | No | [] | The user's tag names, for tag-based visibility |
@@ -205,7 +205,6 @@ The component expects form data in the format returned by the generic forms API:
 | `file` | FormFileUpload | Single file upload |
 | `multi-file` | FormMultiFile | Multiple file upload |
 | `country` | FormCountry | Country selector with flags |
-| `linked-form-question` | Display only | Shows the answer from the linked form |
 | `information` | Display only | Information/heading display |
 | `sub-heading` | Display only | Sub-heading display |
 
@@ -260,7 +259,7 @@ The renderer validates answers based on:
    (the check is anchored, matching the server's `re.fullmatch`)
 5. **Option validation** - Ensures selected values are valid options
 
-Display-only types (`information`, `sub-heading`, `linked-form-question`) are
+Display-only types (`information`, `sub-heading`) are
 never validated - they render no input, so they can't be answered.
 
 Every rule here is also enforced server-side on submit

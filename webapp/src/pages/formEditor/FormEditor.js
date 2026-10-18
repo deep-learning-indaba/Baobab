@@ -5,6 +5,9 @@ import { FORM_ACTIONS } from './actionTypes';
 import SectionCard from './components/SectionCard';
 import FormSettingsPanel from './components/FormSettingsPanel';
 import TranslatableFieldGroup from './components/TranslatableFieldGroup';
+import LinkedFormDisplayEditor from './components/LinkedFormDisplayEditor';
+import { clearLinkedFormCache } from './utils/useLinkedForm';
+import { dependencyQuestionIds } from '../../utils/linkedDisplay';
 import { createEmptySection } from './utils/stateUtils';
 import { transformToApiPayload, loadFormFromApi } from './utils/apiTransform';
 import { validateForm, hasValidationErrors } from './utils/validation';
@@ -53,6 +56,9 @@ const FormEditor = ({
 
   const [state, dispatch] = useReducer(formEditorReducer, initialState);
 
+  // The linked form may have been edited since this page last fetched it.
+  useEffect(() => { clearLinkedFormCache(); }, []);
+
   useEffect(() => {
     if (initialData && initialData.sections) {
       const loadedData = loadFormFromApi(initialData, languages);
@@ -64,6 +70,9 @@ const FormEditor = ({
 
   const handleFormSettingChange = (key, value) =>
     dispatch({ type: FORM_ACTIONS.SET_FORM_SETTING, key, value });
+
+  const handleSettingsChange = useCallback((settings) =>
+    dispatch({ type: FORM_ACTIONS.SET_FORM_SETTING, key: 'settings', value: settings }), []);
 
   // Stabilized with useCallback: passed as the `onChange` prop into a
   // React.memo'd TranslatableFieldGroup, so a fresh function reference on
@@ -159,6 +168,17 @@ const FormEditor = ({
       type: q.type, options: q.options || []
     }))
   ), [questionsSignature]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Same content-signature approach as allQuestions above, for the ids the
+  // linked-answers card warns about.
+  const dependencySignature = state.sections
+    .map(s => [s.dependency_expression, ...s.questions.map(q => q.dependency_expression)].map(e => JSON.stringify(e)).join(','))
+    .join('|');
+
+  const dependencyIds = useMemo(
+    () => dependencyQuestionIds(state.sections),
+    [dependencySignature] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   // Shared button class fragments
   const btnPrimary = "inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary-container transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
@@ -270,6 +290,18 @@ const FormEditor = ({
           placeholder={t('Enter form description (optional)')}
         />
       </div>
+
+      {state.form.linked_form_id && (
+        <LinkedFormDisplayEditor
+          key={state.form.linked_form_id}
+          linkedFormId={state.form.linked_form_id}
+          settings={state.form.settings}
+          onChange={handleSettingsChange}
+          dependencyIds={dependencyIds}
+          language={languages[0] && languages[0].code}
+          t={t}
+        />
+      )}
 
       {/* Sections */}
       <div className="px-8 pb-8 max-w-[1200px] mx-auto">

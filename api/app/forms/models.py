@@ -221,7 +221,7 @@ BOOLEAN_QUESTION_TYPES = ('single-checkbox',)
 
 # Types that render no input at all, so they can never carry an answer and
 # must never be treated as required.
-DISPLAY_ONLY_QUESTION_TYPES = ('information', 'sub-heading', 'linked-form-question')
+DISPLAY_ONLY_QUESTION_TYPES = ('information', 'sub-heading')
 
 
 def answer_is_blank(question_type, value):
@@ -479,11 +479,6 @@ class FormQuestion(db.Model):
     # Tag-based visibility control
     tag_expression = db.Column(db.JSON(), nullable=True)
     
-    # Generic question linking - questions can reference other questions
-    # Use case: Review questions can link to application questions to display alongside
-    linked_question_id = db.Column(db.Integer(), 
-                                   db.ForeignKey('form_question.id'), nullable=True)
-    
     # Relationships
     form = db.relationship('Form', back_populates='questions', foreign_keys=[form_id])
     section = db.relationship('FormSection', back_populates='questions', foreign_keys=[section_id])
@@ -491,12 +486,10 @@ class FormQuestion(db.Model):
                                    cascade='all, delete-orphan',
                                    back_populates='question')
     answers = db.relationship('FormAnswer', back_populates='question')
-    linked_question = db.relationship('FormQuestion', remote_side=[id], 
-                                     foreign_keys=[linked_question_id])
     
     def __init__(self, form_id, section_id, order, question_type, 
                  is_required=True, key=None, dependency_expression=None,
-                 tag_expression=None, linked_question_id=None, settings=None):
+                 tag_expression=None, settings=None):
         self.form_id = form_id
         self.section_id = section_id
         self.order = order
@@ -505,7 +498,6 @@ class FormQuestion(db.Model):
         self.key = key
         self.dependency_expression = dependency_expression
         self.tag_expression = tag_expression
-        self.linked_question_id = linked_question_id
         self.settings = settings
         self.is_active = True
         self.version = 1
