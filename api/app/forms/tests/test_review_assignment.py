@@ -301,6 +301,32 @@ class FormReviewAssignmentAPITest(ApiTestCase):
         self.assertEqual(data[0]['reviews_allocated'], 2)
         self.assertEqual(data[0]['reviews_completed'], 1)
 
+    def test_get_lists_reviewer_added_with_no_reviews(self):
+        """Adding a reviewer with 0 reviews lists them, so reviews can then be assigned."""
+        self.seed_static_data()
+        response = self._post_assign(0)
+        self.assertEqual(response.status_code, 201)
+
+        data = json.loads(self._get_assignments().data)
+
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]['email'], 'reviewer@test.com')
+        self.assertEqual(data[0]['reviewer_user_id'], self.reviewer_id)
+        self.assertEqual(data[0]['reviews_allocated'], 0)
+        self.assertEqual(data[0]['reviews_completed'], 0)
+        self.assertEqual(data[0]['tags'], [])
+
+    def test_get_excludes_reviewers_of_other_events(self):
+        """A reviewer role on another event doesn't list the user here."""
+        self.seed_static_data()
+        other_event = self.add_event(key='otherevent')
+        other_reviewer = self.add_user('other-reviewer@test.com', 'Other', 'Reviewer')
+        self.add_event_role('reviewer', other_reviewer.id, other_event.id)
+
+        data = json.loads(self._get_assignments().data)
+
+        self.assertEqual(data, [])
+
     def test_post_returns_forbidden_for_non_admin(self):
         """POST returns 403 for non-admin users."""
         self.seed_static_data()

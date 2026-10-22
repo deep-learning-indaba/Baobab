@@ -2050,6 +2050,19 @@ class FormReviewAssignmentAPI(restful.Resource):
                 .all()
             )
 
+            # Reviewers with nothing assigned yet have no review responses to
+            # join on, so they come from their event role. Without them, a
+            # reviewer just added with 0 reviews has no row to assign from.
+            assigned_ids = {user.id for user, _, _ in rows}
+            unassigned_reviewers = (
+                db.session.query(AppUser)
+                .join(EventRole, EventRole.user_id == AppUser.id)
+                .filter(EventRole.event_id == event_id, EventRole.role == 'reviewer')
+                .order_by(AppUser.id)
+                .all()
+            )
+            rows += [(user, 0, 0) for user in unassigned_reviewers if user.id not in assigned_ids]
+
             # Load all reviewer tags for this event once to avoid N+1 queries
             reviewer_tags = db.session.query(ReviewerTag).filter_by(
                 event_id=event_id
