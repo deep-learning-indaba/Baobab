@@ -1798,5 +1798,14 @@
     "Jump to section": "Aller à la section",
     "Jump to section...": "Aller à la section...",
     "No answers to show.": "Aucune réponse à afficher.",
-    "Respondent's answer": "Réponse du répondant"
+    "Respondent's answer": "Réponse du répondant",
+    "Review Settings": "Paramètres d’évaluation",
+    "Reviews required per application": "Évaluations requises par candidature",
+    "Applications stop being offered for assignment once they have this many reviewers, and count as fully reviewed once this many reviews are submitted.": "Les candidatures ne sont plus proposées à l’attribution une fois qu’elles ont ce nombre d’évaluateurs, et sont considérées comme entièrement évaluées une fois ce nombre d’évaluations soumises.",
+    "Enter a whole number of at least 1.": "Saisissez un nombre entier d’au moins 1.",
+    "{{count}} result(s)": "{{count}} résultat(s)",
+    "Score Settings": "Paramètres de score",
+    "Multiplier applied to the selected option's value when calculating the review score, so option values must be numbers.": "Multiplicateur appliqué à la valeur de l’option choisie lors du calcul du score d’évaluation ; les valeurs des options doivent donc être des nombres.",
+    "{{where}}: a weighted score question needs numeric option values": "{{where}} : une question de score pondérée nécessite des valeurs d’option numériques",
+    "Unable to load event statistics": "Impossible de charger les statistiques de l’événement"
 }

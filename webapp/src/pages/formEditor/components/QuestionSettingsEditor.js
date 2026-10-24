@@ -197,6 +197,22 @@ const QuestionSettingsEditor = ({ type, settings, onChange, languages, t, includ
     );
   }
 
+  if (type === 'radio' && includeReviewTypes) {
+    return (
+      <Wrapper title={t('Score Settings')}>
+        <NumberField
+          label={t('Score Weight')}
+          value={current.weight}
+          onChange={(v) => handleChange('weight', v)}
+          min="0"
+          step="0.1"
+          placeholder={t('Optional')}
+          hint={t("Multiplier applied to the selected option's value when calculating the review score, so option values must be numbers.")}
+        />
+      </Wrapper>
+    );
+  }
+
   if (type === 'reference') {
     const error = minMaxError('min_referrals', 'max_referrals');
     return (

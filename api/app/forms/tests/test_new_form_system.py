@@ -207,6 +207,17 @@ class ReviewStageTest(NewFormSystemTestCase):
         self.assertEqual(form_system.get_active_review_form(self.event_id).id, stage2_id)
         self.assertEqual([s['is_active'] for s in data['stages']], [False, True])
 
+    def test_num_reviews_required_must_be_a_positive_whole_number(self):
+        for value in (0, -1, 1.5, '2', True):
+            for path in ('', '/structure'):
+                response, _ = self._json('put', '/api/v1/forms/{}{}'.format(self.review_form_id, path),
+                                         'admin@test.com', {'settings': {'num_reviews_required': value}})
+                self.assertEqual(response.status_code, 400, (value, path))
+        response, data = self._json('put', '/api/v1/forms/{}'.format(self.review_form_id),
+                                    'admin@test.com', {'settings': {'num_reviews_required': 4}})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data['settings']['num_reviews_required'], 4)
+
     def test_stage_api_unknown_stage(self):
         response, _ = self._json('put', '/api/v1/review-stages', 'admin@test.com',
                                  {'event_id': self.event_id, 'stage': 9})
@@ -440,7 +451,16 @@ class ReviewerFlowTest(NewFormSystemTestCase):
 
 class ReviewDashboardTest(NewFormSystemTestCase):
 
-    def test_dashboard_reviews_and_averages(self):
+    def _dashboard(self, path='', **params):
+        query = '&'.join('{}={}'.format(k, v) for k, v in params.items())
+        response, data = self._json(
+            'get', '/api/v1/forms/{}/review-dashboard{}?event_id={}&{}'.format(
+                self.review_form_id, path, self.event_id, query),
+            'admin@test.com')
+        self.assertEqual(response.status_code, 200)
+        return data
+
+    def _two_reviews_of_alpha(self):
         app_response_id = self._application(self.applicant_id, title='Alpha')
         self._application(self.applicant2_id, title='Beta')
         second_reviewer = self.add_user('reviewer2@test.com')
@@ -448,29 +468,86 @@ class ReviewDashboardTest(NewFormSystemTestCase):
                        submitted=True, linked_response_id=app_response_id)
         self._response(self.review_form_id, second_reviewer.id, {self.score_q_id: '2'},
                        submitted=True, linked_response_id=app_response_id)
+        return app_response_id
 
-        response, data = self._json(
-            'get', '/api/v1/forms/{}/review-dashboard?event_id={}'.format(self.review_form_id, self.event_id),
-            'admin@test.com')
-        self.assertEqual(response.status_code, 200)
+    def test_dashboard_summary(self):
+        self._two_reviews_of_alpha()
+        data = self._dashboard()
         self.assertEqual(data['num_reviews_required'], 2)
         self.assertEqual([q['question_id'] for q in data['score_questions']], [self.score_q_id])
-        self.assertEqual(len(data['reviews']), 2)
-        self.assertEqual(data['reviews'][0]['answers'][1]['display_value'], 'Good')
+        self.assertEqual(data['counts'], {
+            'applications': 2, 'fully_reviewed': 1, 'reviews_assigned': 2, 'reviews_submitted': 2,
+        })
+        self.assertNotIn('applications', data)
+        self.assertNotIn('reviews', data)
 
+    def test_dashboard_applications_have_averages(self):
+        app_response_id = self._two_reviews_of_alpha()
+        data = self._dashboard('/applications')
+        self.assertEqual(data['num_entries'], 2)
         alpha = next(a for a in data['applications'] if a['application_response_id'] == app_response_id)
         self.assertEqual(alpha['reviews_submitted'], 2)
         self.assertEqual(alpha['average_scores'][str(self.score_q_id)], 3.0)
         self.assertEqual(alpha['average_total'], 6.0)
+        self.assertEqual(alpha['identifiers'][0]['value'], 'Alpha')
         beta = next(a for a in data['applications'] if a['application_response_id'] != app_response_id)
         self.assertEqual(beta['reviews_submitted'], 0)
         self.assertIsNone(beta['average_total'])
 
+    def test_dashboard_applications_sort_unscored_last_either_way(self):
+        app_response_id = self._two_reviews_of_alpha()
+        for desc in ('true', 'false'):
+            data = self._dashboard('/applications', sort_column='average_total', sort_desc=desc)
+            self.assertEqual(data['applications'][0]['application_response_id'], app_response_id, desc)
+            self.assertIsNone(data['applications'][1]['average_total'])
+
+    def test_dashboard_applications_paginate_and_search(self):
+        self._two_reviews_of_alpha()
+        first = self._dashboard('/applications', limit=1, page_number=0, sort_column='name', sort_desc='false')
+        second = self._dashboard('/applications', limit=1, page_number=1, sort_column='name', sort_desc='false')
+        self.assertEqual(first['total_pages'], 2)
+        self.assertEqual(first['applications'][0]['applicant']['firstname'], 'App')
+        self.assertEqual(second['applications'][0]['applicant']['firstname'], 'Second')
+
+        found = self._dashboard('/applications', search='beta')
+        self.assertEqual(found['num_entries'], 1)
+        self.assertEqual(found['applications'][0]['identifiers'][0]['value'], 'Beta')
+
+    def test_dashboard_reviews_page_includes_answers(self):
+        self._two_reviews_of_alpha()
+        data = self._dashboard('/reviews')
+        self.assertEqual(data['num_entries'], 2)
+        first = data['reviews'][0]
+        self.assertEqual(first['status'], 'submitted')
+        self.assertEqual(first['total_score'], 8.0)
+        self.assertEqual(first['answers'][1]['display_value'], 'Good')
+        self.assertNotIn('_scores', first)
+
+        page = self._dashboard('/reviews', limit=1, page_number=1)
+        self.assertEqual(page['total_pages'], 2)
+        self.assertEqual(len(page['reviews']), 1)
+        self.assertEqual(page['reviews'][0]['total_score'], 4.0)
+
+        found = self._dashboard('/reviews', search='reviewer2@')
+        self.assertEqual(found['num_entries'], 1)
+
+    def test_dashboard_review_in_progress_status(self):
+        app_response_id = self._application(self.applicant_id)
+        self._response(self.review_form_id, self.reviewer_id, {self.comment_q_id: 'Draft'},
+                       linked_response_id=app_response_id)
+        second_app_id = self._application(self.applicant2_id)
+        self._response(self.review_form_id, self.reviewer_id, {self.comment_q_id: '  '},
+                       linked_response_id=second_app_id)
+        statuses = sorted(r['status'] for r in self._dashboard('/reviews')['reviews'])
+        self.assertEqual(statuses, ['in_progress', 'not_started'])
+
     def test_dashboard_requires_admin(self):
-        response, _ = self._json(
-            'get', '/api/v1/forms/{}/review-dashboard?event_id={}'.format(self.review_form_id, self.event_id),
-            'reviewer@test.com')
-        self.assertEqual(response.status_code, 403)
+        for path in ('', '/applications', '/reviews'):
+            response, _ = self._json(
+                'get', '/api/v1/forms/{}/review-dashboard{}?event_id={}'.format(
+                    self.review_form_id, path, self.event_id),
+                'reviewer@test.com')
+            self.assertEqual(response.status_code, 403, path)
 
     def test_application_reviewers_include_answers(self):
         app_response_id = self._application(self.applicant_id)
@@ -591,16 +668,80 @@ class LinkedDisplayTest(NewFormSystemTestCase):
 class EventStatsTest(NewFormSystemTestCase):
 
     def test_stats_count_new_form_responses(self):
-        app_response_id = self._application(self.applicant_id)
-        self._application(self.applicant2_id, submitted=False)
+        """Application, review, offer and registration counts on the event
+        dashboard, defined as for legacy events (see LegacyEventStatsCountsTest)."""
+        applicant3 = self.add_user('applicant3@test.com')
+        applicant4 = self.add_user('applicant4@test.com')
+        reviewer2 = self.add_user('reviewer2@test.com')
+        guest1 = self.add_user('guest1@test.com')
+        guest2 = self.add_user('guest2@test.com')
+        applicant3_id, applicant4_id, reviewer2_id = applicant3.id, applicant4.id, reviewer2.id
+        guest1_id, guest2_id = guest1.id, guest2.id
+
+        submitted1 = self._application(self.applicant_id)
+        submitted2 = self._application(self.applicant2_id)
+        self._application(applicant3_id, submitted=False)
+        withdrawn = self._application(applicant4_id, submitted=False)
+        withdrawn_response = db.session.query(FormResponse).get(withdrawn)
+        withdrawn_response.is_withdrawn = True
+        withdrawn_response.withdrawn_timestamp = datetime.now()
+        db.session.commit()
+
+        # num_reviews_required is 2 (see setUp).
         self._response(self.review_form_id, self.reviewer_id, {self.score_q_id: '5'},
-                       submitted=True, linked_response_id=app_response_id)
+                       submitted=True, linked_response_id=submitted1)
+        self._response(self.review_form_id, reviewer2_id, {self.score_q_id: '3'}, linked_response_id=submitted1)
+        self._response(self.review_form_id, self.reviewer_id, linked_response_id=submitted2)
+        # Withdrawn applications leave reviewers' queues, so this assignment
+        # can never be completed and isn't counted as incomplete.
+        self._response(self.review_form_id, reviewer2_id, linked_response_id=withdrawn)
+
+        self.add_offer(self.applicant_id, self.event_id, candidate_response=True)
+        self.add_offer(self.applicant2_id, self.event_id, candidate_response=False)
+        self.add_offer(applicant3_id, self.event_id)
+
+        self.add_invited_guest(guest1_id, self.event_id)
+        self.add_invited_guest(guest2_id, self.event_id)
+        self._response(self.reg_form_id, self.applicant_id, {self.diet_q_id: 'None'}, submitted=True)
+        self._response(self.reg_form_id, guest1_id, {self.diet_q_id: 'Vegan'}, submitted=True)
+        self._response(self.reg_form_id, guest2_id, {self.diet_q_id: 'Halal'})
 
         response, data = self._json('get', '/api/v1/eventstats?event_id={}'.format(self.event_id),
                                     'admin@test.com')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(data['num_responses'], 2)
+        self.assertEqual(
+            {k: data[k] for k in (
+                'num_responses', 'num_submitted_responses', 'num_withdrawn_responses',
+                'reviews_completed', 'review_incomplete', 'reviews_unallocated',
+                'offers_allocated', 'offers_accepted', 'offers_confirmed', 'offers_rejected',
+                'num_registrations', 'num_guests', 'num_registered_guests')},
+            {
+                'num_responses': 4, 'num_submitted_responses': 2, 'num_withdrawn_responses': 1,
+                'reviews_completed': 1, 'review_incomplete': 2, 'reviews_unallocated': 1,
+                'offers_allocated': 3, 'offers_accepted': 1, 'offers_confirmed': 1, 'offers_rejected': 1,
+                'num_registrations': 1, 'num_guests': 2, 'num_registered_guests': 1,
+            })
+        self.assertEqual(len(data['submitted_timeseries']), 1)
+        self.assertEqual(len(data['reviews_complete_timeseries']), 1)
+
+    def test_stats_statuses_follow_the_forms(self):
+        reg_form = db.session.query(Form).get(self.reg_form_id)
+        reg_form.is_open = False
+        db.session.commit()
+        _, data = self._json('get', '/api/v1/eventstats?event_id={}'.format(self.event_id), 'admin@test.com')
+        self.assertEqual(data['form_statuses'], {
+            'application': {'is_open': True, 'is_opening': False},
+            'review': {'is_open': True, 'is_opening': False},
+            'registration': {'is_open': False, 'is_opening': False},
+        })
+
+    def test_stats_ignore_legacy_responses_on_new_form_event(self):
+        """A new-system event counts only its new-system forms, so leftover
+        legacy responses for the same event don't inflate the figures."""
+        legacy_form = self.create_application_form(self.event_id)
+        self.add_response(legacy_form.id, self.applicant_id, is_submitted=True)
+        self._application(self.applicant2_id)
+
+        _, data = self._json('get', '/api/v1/eventstats?event_id={}'.format(self.event_id), 'admin@test.com')
+        self.assertEqual(data['num_responses'], 1)
         self.assertEqual(data['num_submitted_responses'], 1)
-        self.assertEqual(data['reviews_completed'], 1)
-        # One submitted application needing two reviews, one assigned.
-        self.assertEqual(data['reviews_unallocated'], 1)

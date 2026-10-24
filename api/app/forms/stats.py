@@ -1,23 +1,12 @@
 """Event dashboard figures for events on the new form system."""
-from collections import Counter
-
 from sqlalchemy import func
+from sqlalchemy.orm import aliased
 
 from app import db
 from app.forms.models import FormResponse
 from app.forms.system import review_setting
 from app.invitedGuest.models import InvitedGuest
-
-
-def _timeseries(query, timestamp_column):
-    """[(date, count)] in date order. Grouped in Python rather than with
-    CAST(... AS DATE), whose result differs between Postgres and SQLite."""
-    counts = Counter(
-        timestamp.date()
-        for (timestamp,) in query.with_entities(timestamp_column)
-        if timestamp is not None
-    )
-    return sorted(counts.items())
+from app.utils.timeseries import daily_counts
 
 
 def application_stats(app_form):
@@ -29,7 +18,7 @@ def application_stats(app_form):
         'total': responses.count(),
         'submitted': submitted.count(),
         'withdrawn': responses.filter(FormResponse.is_withdrawn == True).count(),  # noqa: E712
-        'submitted_timeseries': _timeseries(submitted, FormResponse.submitted_timestamp),
+        'submitted_timeseries': daily_counts(submitted, FormResponse.submitted_timestamp),
     }
 
 
@@ -66,6 +55,15 @@ def count_unallocated_reviews(review_form, tag_ids=()):
     return len(application_ids) * num_reviews_required - assigned
 
 
+def _unfinished_reviews_of_live_applications(reviews):
+    """Unsubmitted reviews whose application hasn't been withdrawn. A withdrawn
+    application leaves reviewers' queues, so its reviews will never be done."""
+    application = aliased(FormResponse)
+    return (reviews.filter(FormResponse.is_submitted == False)  # noqa: E712
+            .join(application, application.id == FormResponse.linked_response_id)
+            .filter(application.is_withdrawn == False))  # noqa: E712
+
+
 def review_stats(review_form):
     if review_form is None:
         return {'required': 0, 'completed': 0, 'incomplete': 0, 'unallocated': 0, 'timeseries': []}
@@ -77,9 +75,9 @@ def review_stats(review_form):
     return {
         'required': review_setting(review_form, 'num_reviews_required'),
         'completed': completed.count(),
-        'incomplete': reviews.filter(FormResponse.is_submitted == False).count(),  # noqa: E712
+        'incomplete': _unfinished_reviews_of_live_applications(reviews).count(),
         'unallocated': count_unallocated_reviews(review_form),
-        'timeseries': _timeseries(completed, FormResponse.submitted_timestamp),
+        'timeseries': daily_counts(completed, FormResponse.submitted_timestamp),
     }
 
 

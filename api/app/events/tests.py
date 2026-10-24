@@ -296,6 +296,70 @@ class EventsStatsAPITest(ApiTestCase):
         self.assertEqual(response.status_code, 400)
 
 
+class LegacyEventStatsCountsTest(ApiTestCase):
+    """Application, review, offer and registration counts on the event
+    dashboard for an event on the legacy form system."""
+
+    def test_counts(self):
+        admin = self.add_user('admin@test.com')
+        applicants = [self.add_user('applicant{}@test.com'.format(i)) for i in range(4)]
+        reviewer1 = self.add_user('reviewer1@test.com')
+        reviewer2 = self.add_user('reviewer2@test.com')
+        guest1 = self.add_user('guest1@test.com')
+        guest2 = self.add_user('guest2@test.com')
+        event = self.add_event(key='LEGACYSTATS')
+        event_id = event.id
+        self.add_event_role('admin', admin.id, event_id)
+
+        app_form = self.create_application_form(event_id)
+        submitted1 = self.add_response(app_form.id, applicants[0].id, is_submitted=True)
+        submitted2 = self.add_response(app_form.id, applicants[1].id, is_submitted=True)
+        self.add_response(app_form.id, applicants[2].id)
+        withdrawn = self.add_response(app_form.id, applicants[3].id, is_withdrawn=True)
+
+        review_form = self.add_review_form(app_form.id)
+        self.add_review_config(review_form.id, num_reviews_required=2, num_optional_reviews=0)
+        self.add_response_reviewer(submitted1.id, reviewer1.id)
+        self.add_response_reviewer(submitted1.id, reviewer2.id)
+        self.add_response_reviewer(submitted2.id, reviewer1.id)
+        # Withdrawn applications leave reviewers' queues, so this assignment
+        # can never be completed and isn't counted as incomplete.
+        self.add_response_reviewer(withdrawn.id, reviewer2.id)
+        self.add_review_response(reviewer1.id, submitted1.id, review_form.id, is_submitted=True)
+        self.add_review_response(reviewer2.id, submitted1.id, review_form.id)
+
+        accepted = self.add_offer(applicants[0].id, event_id, candidate_response=True)
+        self.add_offer(applicants[1].id, event_id, candidate_response=False)
+        self.add_offer(applicants[2].id, event_id)
+
+        registration_form = self.create_registration_form(event_id)
+        self.add_registration_response(accepted.id, registration_form.id)
+        self.add_invited_guest(guest1.id, event_id)
+        self.add_invited_guest(guest2.id, event_id)
+        self.add_guest_registration(guest1.id, registration_form.id)
+
+        response = self.app.get('/api/v1/eventstats', headers=self.get_auth_header_for('admin@test.com'),
+                                query_string={'event_id': event_id})
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(
+            {k: data[k] for k in (
+                'num_responses', 'num_submitted_responses', 'num_withdrawn_responses',
+                'reviews_completed', 'review_incomplete', 'reviews_unallocated',
+                'offers_allocated', 'offers_accepted', 'offers_confirmed', 'offers_rejected',
+                'num_registrations', 'num_guests', 'num_registered_guests')},
+            {
+                'num_responses': 4, 'num_submitted_responses': 2, 'num_withdrawn_responses': 1,
+                'reviews_completed': 1, 'review_incomplete': 2, 'reviews_unallocated': 1,
+                'offers_allocated': 3, 'offers_accepted': 1, 'offers_confirmed': 1, 'offers_rejected': 1,
+                'num_registrations': 1, 'num_guests': 2, 'num_registered_guests': 1,
+            })
+        self.assertEqual(len(data['submitted_timeseries']), 1)
+        self.assertEqual(len(data['reviews_complete_timeseries']), 1)
+        # Legacy events keep using the event's open/close dates.
+        self.assertIsNone(data['form_statuses'])
+
+
 class EventEngagementStatsAPITest(ApiTestCase):
     """Covers the engagement/attendance/discussion/announcement fields added
     to EventStatsAPI. Kept separate from EventsStatsAPITest (and free of any

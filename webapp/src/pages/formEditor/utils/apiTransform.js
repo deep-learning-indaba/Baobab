@@ -199,6 +199,7 @@ export function transformToApiPayload(sections, languages) {
 export function loadFormFromApi(apiData, languages) {
   const form = {
     id: apiData.id,
+    form_type: apiData.form_type || null,
     name: apiData.name || {},
     description: apiData.description || {},
     is_active: apiData.is_active,

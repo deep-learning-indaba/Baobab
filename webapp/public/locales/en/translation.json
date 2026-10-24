@@ -1799,5 +1799,14 @@
     "Jump to section": "Jump to section",
     "Jump to section...": "Jump to section...",
     "No answers to show.": "No answers to show.",
-    "Respondent's answer": "Respondent's answer"
+    "Respondent's answer": "Respondent's answer",
+    "Review Settings": "Review Settings",
+    "Reviews required per application": "Reviews required per application",
+    "Applications stop being offered for assignment once they have this many reviewers, and count as fully reviewed once this many reviews are submitted.": "Applications stop being offered for assignment once they have this many reviewers, and count as fully reviewed once this many reviews are submitted.",
+    "Enter a whole number of at least 1.": "Enter a whole number of at least 1.",
+    "{{count}} result(s)": "{{count}} result(s)",
+    "Score Settings": "Score Settings",
+    "Multiplier applied to the selected option's value when calculating the review score, so option values must be numbers.": "Multiplier applied to the selected option's value when calculating the review score, so option values must be numbers.",
+    "{{where}}: a weighted score question needs numeric option values": "{{where}}: a weighted score question needs numeric option values",
+    "Unable to load event statistics": "Unable to load event statistics"
 }

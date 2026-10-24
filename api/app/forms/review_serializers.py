@@ -116,9 +116,3 @@ def serialize_review(review, language):
     }
 
 
-def numeric_answer(review_data, question_id):
-    answer = next((a for a in review_data['answers'] if a['question_id'] == question_id), None)
-    try:
-        return float(answer['value']) if answer else None
-    except (TypeError, ValueError):
-        return None

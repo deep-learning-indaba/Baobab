@@ -1,5 +1,6 @@
 import React from "react";
 import { Badge } from "../../components/ui/badge";
+import { Button } from "../../components/ui/button";
 import { formatUserName } from "../../utils/userName";
 
 export const STATUS = {
@@ -7,6 +8,24 @@ export const STATUS = {
   IN_PROGRESS: 'in_progress',
   SUBMITTED: 'submitted',
 };
+
+/** Previous / next page controls; renders nothing for a single page. */
+export function Pager({ page, totalPages, onPage, t }) {
+  if (!totalPages || totalPages <= 1) return null;
+  return (
+    <nav className="flex items-center justify-center gap-3">
+      <Button variant="outline" size="sm" disabled={page === 0} onClick={() => onPage(page - 1)}>
+        <i className="fas fa-chevron-left" />{t('Previous')}
+      </Button>
+      <span className="text-sm text-muted-foreground">
+        {t('Page {{page}} of {{total}}', { page: page + 1, total: totalPages })}
+      </span>
+      <Button variant="outline" size="sm" disabled={page + 1 >= totalPages} onClick={() => onPage(page + 1)}>
+        {t('Next')}<i className="fas fa-chevron-right" />
+      </Button>
+    </nav>
+  );
+}
 
 export function ReviewStatusBadge({ status, t }) {
   if (status === STATUS.SUBMITTED) return <Badge variant="success">{t('Submitted')}</Badge>;

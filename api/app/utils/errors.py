@@ -35,6 +35,7 @@ RESPONSE_ALREADY_SUBMITTED = ({'message': 'A response has already been submitted
 UPDATE_CONFLICT = (
     {'message': 'The requested update conflicts with the existing resource'}, 409)
 DB_NOT_AVAILABLE = ({'message': 'Unable to access the database'}, 500)
+EVENT_STATS_NOT_AVAILABLE = ({'message': 'Unable to load event statistics'}, 500)
 EMAIL_NOT_VERIFIED = ({'message': 'The email address is not verified'}, 422)
 EMAIL_VERIFY_CODE_NOT_VALID = (
     {'message': 'Valid code is required to verify email'}, 419)
