@@ -134,6 +134,21 @@ export function validateForm(sections, languages, formName = {}, t) {
         }
       }
 
+      // The review score multiplies the selected option's value by the weight,
+      // and a value that isn't a number would count as 0.
+      if (question.type === 'radio' && settings.weight > 0) {
+        const nonNumeric = (question.options || [])
+          .map(o => o.value)
+          .filter(v => v === undefined || String(v).trim() === '' || Number.isNaN(Number(v)));
+        if (nonNumeric.length > 0) {
+          errors.push({
+            path: `sections[${sectionIndex}].questions[${questionIndex}].options`,
+            message: translate('{{where}}: a weighted score question needs numeric option values', { where }),
+            severity: 'error'
+          });
+        }
+      }
+
       const rangeChecks = [
         ['min_value', 'max_value', translate('minimum value must not exceed the maximum')],
         ['min_words', 'max_words', translate('minimum words must not exceed the maximum')],

@@ -4,9 +4,9 @@ from app import db
 from app.responses.models import Response, Answer, ResponseTag, ResponseReviewer
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.users.models import AppUser
-from sqlalchemy import func, cast, Date
 from sqlalchemy.orm import joinedload, noload
 import itertools
+from app.utils.timeseries import daily_counts
 
 
 class ResponseRepository():
@@ -120,13 +120,11 @@ class ResponseRepository():
 
     @staticmethod
     def get_submitted_timeseries_by_event(event_id):
-        return (db.session.query(cast(Response.submitted_timestamp, Date), func.count(Response.submitted_timestamp))
-                .filter(Response.is_submitted == True)
-                .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)
-                .filter(ApplicationForm.event_id == event_id)
-                .group_by(cast(Response.submitted_timestamp, Date))
-                .order_by(cast(Response.submitted_timestamp, Date))
-                .all())
+        submitted = (db.session.query(Response)
+                     .filter(Response.is_submitted == True)
+                     .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)
+                     .filter(ApplicationForm.event_id == event_id))
+        return daily_counts(submitted, Response.submitted_timestamp)
 
     @staticmethod
     def get_all_for_event(event_id, submitted_only=True, page=1, per_page=25, name=None, email=None, tag_id=None, load_answers=False):

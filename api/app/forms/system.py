@@ -23,6 +23,17 @@ REVIEW_SETTING_DEFAULTS = {
 }
 
 
+def validate_review_settings(settings):
+    """An error message if a review setting in `settings` is malformed, else None."""
+    if not isinstance(settings, dict):
+        return None
+    value = settings.get('num_reviews_required')
+    # bool is a subclass of int, so it has to be excluded explicitly.
+    if value is not None and (not isinstance(value, int) or isinstance(value, bool) or value < 1):
+        return 'settings.num_reviews_required must be a whole number of at least 1'
+    return None
+
+
 def review_setting(review_form, key):
     """A review form setting, falling back to the default it was created with."""
     settings = review_form.settings or {}

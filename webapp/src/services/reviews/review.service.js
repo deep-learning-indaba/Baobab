@@ -35,6 +35,8 @@ export const reviewService = {
   getAssignedReview,
   getMyReviewHistory,
   getReviewDashboard,
+  getReviewDashboardApplications,
+  getReviewDashboardReviews,
   getReviewStages,
   setActiveReviewStage
 };
@@ -755,6 +757,31 @@ function getReviewDashboard(reviewFormId, eventId, language) {
   return axios.get(baseUrl + `/api/v1/forms/${reviewFormId}/review-dashboard?${params}`, { headers: authHeader() })
     .then(_ok('data'))
     .catch(_fail('data'));
+}
+
+// `query`: { pageNumber, limit, search, sortColumn, sortDesc }; the reviews
+// endpoint ignores the sort.
+function _dashboardPage(path, reviewFormId, eventId, language, query) {
+  const params = new URLSearchParams({
+    event_id: eventId,
+    language: language || 'en',
+    page_number: query.pageNumber || 0,
+    limit: query.limit || 25,
+    search: query.search || '',
+  });
+  if (query.sortColumn) params.append('sort_column', query.sortColumn);
+  if (query.sortDesc !== undefined) params.append('sort_desc', query.sortDesc ? 'true' : 'false');
+  return axios.get(baseUrl + `/api/v1/forms/${reviewFormId}/review-dashboard/${path}?${params}`, { headers: authHeader() })
+    .then(_ok('data'))
+    .catch(_fail('data'));
+}
+
+function getReviewDashboardApplications(reviewFormId, eventId, language, query) {
+  return _dashboardPage('applications', reviewFormId, eventId, language, query);
+}
+
+function getReviewDashboardReviews(reviewFormId, eventId, language, query) {
+  return _dashboardPage('reviews', reviewFormId, eventId, language, query);
 }
 
 function getReviewStages(eventId, language) {

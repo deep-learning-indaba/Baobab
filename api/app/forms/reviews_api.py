@@ -15,11 +15,10 @@ from flask import g, request
 from app import db, LOGGER
 from app.forms import system as form_system
 from app.forms.api import serialize_form, serialize_response, _error
+from app.forms.review_dashboard import DEFAULT_PAGE_SIZE, ReviewDashboard, paginate
 from app.forms.linked_display import dependency_question_ids, filter_serialized_form, hidden_question_ids
 from app.forms.models import Form, FormResponse
-from app.forms.review_serializers import (
-    identifiers, numeric_answer, person, review_status, score_questions, serialize_review,
-)
+from app.forms.review_serializers import identifiers, review_status
 from app.users.repository import UserRepository as user_repository
 from app.utils import errors
 from app.utils.auth import auth_required, event_admin_required
@@ -214,73 +213,87 @@ class ReviewerHistoryAPI(restful.Resource):
         }, 200
 
 
+def _dashboard(form_id, event_id):
+    """The ReviewDashboard for review form `form_id` of `event_id`, or None."""
+    review_form = _review_form_for_event(form_id, event_id)
+    if review_form is None:
+        return None
+    return ReviewDashboard(review_form, _language())
+
+
+def _page_args():
+    return (request.args.get('page_number', 0, type=int),
+            request.args.get('limit', DEFAULT_PAGE_SIZE, type=int),
+            (request.args.get('search') or '').strip())
+
+
 class ReviewDashboardAPI(restful.Resource):
-    """Organisers' view of one review stage: every review with its scores, and
-    every submitted application with its average scores."""
+    """Organisers' view of one review stage: its score columns and headline
+    counts. The applications and reviews themselves are paginated by
+    ReviewDashboardApplicationsAPI and ReviewDashboardReviewsAPI."""
 
     @event_admin_required
     def get(self, form_id, event_id):
         try:
-            review_form = _review_form_for_event(form_id, event_id)
-            if review_form is None:
+            dashboard = _dashboard(form_id, event_id)
+            if dashboard is None:
                 return errors.FORM_NOT_FOUND
-
-            language = _language()
-            questions = score_questions(review_form, language)
-            num_reviews_required = form_system.review_setting(review_form, 'num_reviews_required')
-
-            reviews = (db.session.query(FormResponse)
-                       .filter(FormResponse.form_id == review_form.id,
-                               FormResponse.is_withdrawn == False)  # noqa: E712
-                       .order_by(FormResponse.linked_response_id, FormResponse.id)
-                       .all())
-            reviews_data = [serialize_review(r, language) for r in reviews]
-
-            applications = []
-            if review_form.linked_form_id:
-                submitted_apps = (db.session.query(FormResponse)
-                                  .filter(FormResponse.form_id == review_form.linked_form_id,
-                                          FormResponse.is_submitted == True,  # noqa: E712
-                                          FormResponse.is_withdrawn == False)  # noqa: E712
-                                  .order_by(FormResponse.id)
-                                  .all())
-                by_application = {}
-                for data in reviews_data:
-                    by_application.setdefault(data['application_response_id'], []).append(data)
-
-                for app in submitted_apps:
-                    app_reviews = by_application.get(app.id, [])
-                    submitted = [r for r in app_reviews if r['status'] == 'submitted']
-                    averages = {}
-                    for q in questions:
-                        values = [numeric_answer(r, q['question_id']) for r in submitted]
-                        values = [v for v in values if v is not None]
-                        averages[str(q['question_id'])] = sum(values) / len(values) if values else None
-                    average_total = (sum(r['total_score'] for r in submitted) / len(submitted)) if submitted else None
-                    applications.append({
-                        'application_response_id': app.id,
-                        'applicant': person(app.user),
-                        'identifiers': identifiers(app, language),
-                        'reviews_assigned': len(app_reviews),
-                        'reviews_submitted': len(submitted),
-                        'average_scores': averages,
-                        'average_total': average_total,
-                    })
-
-            name = translation_for(review_form, language)
+            review_form = dashboard.review_form
+            name = translation_for(review_form, dashboard.language)
             return {
                 'review_form_id': review_form.id,
                 'application_form_id': review_form.linked_form_id,
                 'form_name': name.name if name else None,
                 'stage': review_form.stage,
-                'num_reviews_required': num_reviews_required,
-                'score_questions': questions,
-                'reviews': reviews_data,
-                'applications': applications,
+                'num_reviews_required': dashboard.num_reviews_required,
+                'score_questions': dashboard.score_questions,
+                'counts': dashboard.summary(),
             }, 200
 
         except Exception as e:
             LOGGER.error('Error building review dashboard for form {}: {}'.format(form_id, e))
+            LOGGER.error(traceback.format_exc())
+            return errors.DB_NOT_AVAILABLE
+
+
+class ReviewDashboardApplicationsAPI(restful.Resource):
+    """One page of a review stage's submitted applications with their average
+    scores, searched and sorted across all of them."""
+
+    @event_admin_required
+    def get(self, form_id, event_id):
+        try:
+            dashboard = _dashboard(form_id, event_id)
+            if dashboard is None:
+                return errors.FORM_NOT_FOUND
+            page_number, limit, search = _page_args()
+            sort_column = request.args.get('sort_column') or 'average_total'
+            sort_desc = request.args.get('sort_desc', 'true').lower() != 'false'
+            rows = dashboard.search_applications(search, sort_column, sort_desc)
+            page, meta = paginate(rows, page_number, limit)
+            return {'applications': page, **meta}, 200
+
+        except Exception as e:
+            LOGGER.error('Error listing review dashboard applications for form {}: {}'.format(form_id, e))
+            LOGGER.error(traceback.format_exc())
+            return errors.DB_NOT_AVAILABLE
+
+
+class ReviewDashboardReviewsAPI(restful.Resource):
+    """One page of a review stage's reviews, with their answers."""
+
+    @event_admin_required
+    def get(self, form_id, event_id):
+        try:
+            dashboard = _dashboard(form_id, event_id)
+            if dashboard is None:
+                return errors.FORM_NOT_FOUND
+            page_number, limit, search = _page_args()
+            page, meta = paginate(dashboard.search_reviews(search), page_number, limit)
+            return {'reviews': dashboard.with_answers(page), **meta}, 200
+
+        except Exception as e:
+            LOGGER.error('Error listing review dashboard reviews for form {}: {}'.format(form_id, e))
             LOGGER.error(traceback.format_exc())
             return errors.DB_NOT_AVAILABLE
 

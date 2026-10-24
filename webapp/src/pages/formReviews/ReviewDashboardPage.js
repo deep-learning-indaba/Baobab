@@ -1,14 +1,64 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { reviewService } from "../../services/reviews/review.service";
 import { resolveContentLanguage } from "../../utils/eventLanguages";
 import { Button } from "../../components/ui/button";
 import {
-  STATUS, ReviewStatusBadge, identifierText, personName, formatScore, formatDate, ProgressBar, PageMessage, Spinner,
+  STATUS, ReviewStatusBadge, identifierText, personName, formatScore, formatDate, ProgressBar, PageMessage, Pager, Spinner,
 } from "./reviewUtils";
 
-const TABS = ['applications', 'reviews', 'reviewers'];
+const TABS = ['reviewers', 'reviews', 'applications'];
+const PAGE_SIZE = 25;
+const SEARCH_DELAY_MS = 300;
+
+/** `value`, once it has stopped changing for `delay` ms. */
+function useDebounced(value, delay) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debounced;
+}
+
+/**
+ * One server-side page of `fetchPage(query)`, refetched when `deps` change.
+ * Earlier rows stay on screen (dimmed) while the next page loads.
+ */
+function usePagedQuery(fetchPage, deps) {
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    fetchPage().then(response => {
+      if (cancelled) return;
+      setLoading(false);
+      if (response.error) setError(response.error);
+      else { setError(null); setResult(response.data); }
+    });
+    return () => { cancelled = true; };
+  }, deps); // eslint-disable-line react-hooks/exhaustive-deps
+  return { result, loading, error };
+}
+
+/**
+ * The current page, back on the first page whenever `search` changes. Derived
+ * during render rather than reset in an effect, which would first fetch the
+ * old page number for the new search.
+ */
+function usePageForSearch(search) {
+  const [state, setState] = useState({ search, page: 0 });
+  const page = state.search === search ? state.page : 0;
+  const setPage = useCallback(next => setState({ search, page: next }), [search]);
+  return [page, setPage];
+}
+
+function ResultCount({ count, t }) {
+  return <p className="text-xs text-muted-foreground">{t('{{count}} result(s)', { count })}</p>;
+}
 
 function StatCard({ label, value, hint }) {
   return (
@@ -38,157 +88,174 @@ function matches(search, ...values) {
   return values.some(v => v && String(v).toLowerCase().includes(needle));
 }
 
-function ApplicationsTable({ data, event, search, t }) {
+function ApplicationsTable({ summary, event, formId, language, search, t }) {
   const [sort, setSort] = useState({ column: 'average_total', desc: true });
-  const onSort = column => setSort(prev => ({ column, desc: prev.column === column ? !prev.desc : true }));
+  const [page, setPage] = usePageForSearch(search);
+  const onSort = column => {
+    setSort(prev => ({ column, desc: prev.column === column ? !prev.desc : true }));
+    setPage(0);
+  };
 
-  const rows = useMemo(() => {
-    const valueOf = (row) => {
-      if (sort.column === 'name') return personName(row.applicant).toLowerCase();
-      if (sort.column === 'reviews') return row.reviews_submitted;
-      if (sort.column === 'average_total') return row.average_total;
-      return row.average_scores[sort.column];
-    };
-    return data.applications
-      .filter(a => matches(search, personName(a.applicant), a.applicant.email,
-        identifierText(a.identifiers, a.application_response_id, t)))
-      .sort((a, b) => {
-        const x = valueOf(a), y = valueOf(b);
-        // Unscored applications always sink to the bottom.
-        if (x === null || x === undefined) return 1;
-        if (y === null || y === undefined) return -1;
-        return (x < y ? -1 : x > y ? 1 : 0) * (sort.desc ? -1 : 1);
-      });
-  }, [data.applications, search, sort, t]);
+  const { result, loading, error } = usePagedQuery(
+    () => reviewService.getReviewDashboardApplications(formId, event.id, language, {
+      pageNumber: page, limit: PAGE_SIZE, search, sortColumn: sort.column, sortDesc: sort.desc,
+    }),
+    [formId, event.id, language, page, search, sort.column, sort.desc]
+  );
 
-  if (rows.length === 0) return <p className="text-sm text-muted-foreground text-center py-10">{t('No applications found.')}</p>;
+  if (error) return <p className="text-sm text-error text-center py-10">{error}</p>;
+  if (!result) return <Spinner />;
+  if (result.num_entries === 0) return <p className="text-sm text-muted-foreground text-center py-10">{t('No applications found.')}</p>;
 
   return (
-    <div className="overflow-x-auto bg-white rounded-2xl border border-border shadow-sm">
-      <table className="min-w-full divide-y divide-border text-sm text-left">
-        <thead className="bg-slate-50">
-          <tr>
-            <SortHeader label={t('Applicant')} column="name" sort={sort} onSort={onSort} />
-            <SortHeader label={t('Reviews')} column="reviews" sort={sort} onSort={onSort} />
-            {data.score_questions.map(q => (
-              <SortHeader key={q.question_id} column={String(q.question_id)} sort={sort} onSort={onSort}
-                          label={<span title={q.headline}>{q.headline.length > 24 ? q.headline.slice(0, 24) + '…' : q.headline} ×{q.weight}</span>} />
-            ))}
-            <SortHeader label={t('Average total')} column="average_total" sort={sort} onSort={onSort} />
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {rows.map(row => (
-            <tr key={row.application_response_id} className="hover:bg-slate-50/50">
-              <td className="px-4 py-3">
-                <Link to={`/${event.key}/form-responses/${data.application_form_id}/${row.application_response_id}`}
-                      className="font-semibold text-action hover:underline">
-                  {personName(row.applicant)}
-                </Link>
-                <p className="text-xs text-muted-foreground truncate max-w-xs">
-                  {identifierText(row.identifiers, row.application_response_id, t)}
-                </p>
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap">
-                <span className={row.reviews_submitted >= data.num_reviews_required ? 'text-primary font-semibold' : ''}>
-                  {row.reviews_submitted}
-                </span>
-                <span className="text-muted-foreground"> / {row.reviews_assigned} ({t('{{count}} required', { count: data.num_reviews_required })})</span>
-              </td>
-              {data.score_questions.map(q => (
-                <td key={q.question_id} className="px-4 py-3 whitespace-nowrap">
-                  {formatScore(row.average_scores[String(q.question_id)])}
-                </td>
+    <div className="space-y-3">
+      <ResultCount count={result.num_entries} t={t} />
+      <div className={`overflow-x-auto bg-white rounded-2xl border border-border shadow-sm transition-opacity ${loading ? 'opacity-60' : ''}`}>
+        <table className="min-w-full divide-y divide-border text-sm text-left">
+          <thead className="bg-slate-50">
+            <tr>
+              <SortHeader label={t('Applicant')} column="name" sort={sort} onSort={onSort} />
+              <SortHeader label={t('Reviews')} column="reviews" sort={sort} onSort={onSort} />
+              {summary.score_questions.map(q => (
+                <SortHeader key={q.question_id} column={String(q.question_id)} sort={sort} onSort={onSort}
+                            label={<span title={q.headline}>{q.headline.length > 24 ? q.headline.slice(0, 24) + '…' : q.headline} ×{q.weight}</span>} />
               ))}
-              <td className="px-4 py-3 whitespace-nowrap font-bold text-foreground">{formatScore(row.average_total)}</td>
+              <SortHeader label={t('Average total')} column="average_total" sort={sort} onSort={onSort} />
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {result.applications.map(row => (
+              <tr key={row.application_response_id} className="hover:bg-slate-50/50">
+                <td className="px-4 py-3">
+                  <Link to={`/${event.key}/form-responses/${summary.application_form_id}/${row.application_response_id}`}
+                        className="font-semibold text-action hover:underline">
+                    {personName(row.applicant)}
+                  </Link>
+                  <p className="text-xs text-muted-foreground truncate max-w-xs">
+                    {identifierText(row.identifiers, row.application_response_id, t)}
+                  </p>
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap">
+                  <span className={row.reviews_submitted >= summary.num_reviews_required ? 'text-primary font-semibold' : ''}>
+                    {row.reviews_submitted}
+                  </span>
+                  <span className="text-muted-foreground"> / {row.reviews_assigned} ({t('{{count}} required', { count: summary.num_reviews_required })})</span>
+                </td>
+                {summary.score_questions.map(q => (
+                  <td key={q.question_id} className="px-4 py-3 whitespace-nowrap">
+                    {formatScore(row.average_scores[String(q.question_id)])}
+                  </td>
+                ))}
+                <td className="px-4 py-3 whitespace-nowrap font-bold text-foreground">{formatScore(row.average_total)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <Pager page={page} totalPages={result.total_pages} onPage={setPage} t={t} />
     </div>
   );
 }
 
-function ReviewsList({ data, search, t }) {
+function ReviewsList({ event, formId, language, search, t }) {
   const [expanded, setExpanded] = useState(null);
-  const rows = data.reviews.filter(r => matches(search,
-    personName(r.reviewer), r.reviewer.email, personName(r.applicant),
-    identifierText(r.identifiers, r.application_response_id, t)));
+  const [page, setPage] = usePageForSearch(search);
 
-  if (rows.length === 0) return <p className="text-sm text-muted-foreground text-center py-10">{t('No reviews found.')}</p>;
+  const { result, loading, error } = usePagedQuery(
+    () => reviewService.getReviewDashboardReviews(formId, event.id, language, { pageNumber: page, limit: PAGE_SIZE, search }),
+    [formId, event.id, language, page, search]
+  );
+
+  if (error) return <p className="text-sm text-error text-center py-10">{error}</p>;
+  if (!result) return <Spinner />;
+  const rows = result.reviews;
+  if (result.num_entries === 0) return <p className="text-sm text-muted-foreground text-center py-10">{t('No reviews found.')}</p>;
 
   return (
-    <ul className="bg-white rounded-2xl border border-border shadow-sm divide-y divide-border overflow-hidden">
-      {rows.map(r => {
-        const isOpen = expanded === r.review_response_id;
-        return (
-          <li key={r.review_response_id}>
-            <button type="button" onClick={() => setExpanded(isOpen ? null : r.review_response_id)}
-                    className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-surface-low transition-colors"
-                    aria-expanded={isOpen}>
-              <div className="flex-1 min-w-0 space-y-1">
-                <p className="font-semibold text-foreground truncate">
-                  {personName(r.applicant)}
-                  <span className="font-normal text-muted-foreground"> — {identifierText(r.identifiers, r.application_response_id, t)}</span>
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {t('Reviewed by {{name}}', { name: personName(r.reviewer) })}
-                  {r.submitted_timestamp && <> · {formatDate(r.submitted_timestamp)}</>}
-                </p>
-              </div>
-              {r.status === STATUS.SUBMITTED && (
-                <span className="text-sm text-muted-foreground whitespace-nowrap">
-                  {t('Score')}: <span className="font-bold text-foreground">{formatScore(r.total_score)}</span>
-                </span>
-              )}
-              <ReviewStatusBadge status={r.status} t={t} />
-              <i className={`fas fa-chevron-${isOpen ? 'up' : 'down'} text-xs text-muted-foreground`} />
-            </button>
-            {isOpen && (
-              <div className="px-5 pb-5 pt-1 bg-slate-50/50">
-                {r.answers.length === 0 ? (
-                  <p className="text-sm text-muted-foreground italic">{t('No answers yet.')}</p>
-                ) : (
-                  <dl className="grid gap-3">
-                    {r.answers.map(a => (
-                      <div key={a.question_id}>
-                        <dt className="text-xs font-semibold text-muted-foreground">
-                          {a.headline}{a.weight > 0 && <span className="ml-1">(×{a.weight})</span>}
-                        </dt>
-                        <dd className="text-sm text-foreground whitespace-pre-wrap">{a.display_value}</dd>
-                      </div>
-                    ))}
-                  </dl>
+    <div className="space-y-3">
+      <ResultCount count={result.num_entries} t={t} />
+      <ul className={`bg-white rounded-2xl border border-border shadow-sm divide-y divide-border overflow-hidden transition-opacity ${loading ? 'opacity-60' : ''}`}>
+        {rows.map(r => {
+          const isOpen = expanded === r.review_response_id;
+          return (
+            <li key={r.review_response_id}>
+              <button type="button" onClick={() => setExpanded(isOpen ? null : r.review_response_id)}
+                      className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-surface-low transition-colors"
+                      aria-expanded={isOpen}>
+                <div className="flex-1 min-w-0 space-y-1">
+                  <p className="font-semibold text-foreground truncate">
+                    {personName(r.applicant)}
+                    <span className="font-normal text-muted-foreground"> — {identifierText(r.identifiers, r.application_response_id, t)}</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {t('Reviewed by {{name}}', { name: personName(r.reviewer) })}
+                    {r.submitted_timestamp && <> · {formatDate(r.submitted_timestamp)}</>}
+                  </p>
+                </div>
+                {r.status === STATUS.SUBMITTED && (
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">
+                    {t('Score')}: <span className="font-bold text-foreground">{formatScore(r.total_score)}</span>
+                  </span>
                 )}
-              </div>
-            )}
-          </li>
-        );
-      })}
-    </ul>
+                <ReviewStatusBadge status={r.status} t={t} />
+                <i className={`fas fa-chevron-${isOpen ? 'up' : 'down'} text-xs text-muted-foreground`} />
+              </button>
+              {isOpen && (
+                <div className="px-5 pb-5 pt-1 bg-slate-50/50">
+                  {r.answers.length === 0 ? (
+                    <p className="text-sm text-muted-foreground italic">{t('No answers yet.')}</p>
+                  ) : (
+                    <dl className="grid gap-3">
+                      {r.answers.map(a => (
+                        <div key={a.question_id}>
+                          <dt className="text-xs font-semibold text-muted-foreground">
+                            {a.headline}{a.weight > 0 && <span className="ml-1">(×{a.weight})</span>}
+                          </dt>
+                          <dd className="text-sm text-foreground whitespace-pre-wrap">{a.display_value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  )}
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      <Pager page={page} totalPages={result.total_pages} onPage={setPage} t={t} />
+    </div>
   );
 }
 
+// Reviewers number in the hundreds at most, so they come in one request and
+// are paged here.
 function ReviewersTable({ reviewers, search, t }) {
+  const [page, setPage] = usePageForSearch(search);
   const rows = (reviewers || []).filter(r => matches(search, personName(r), r.email));
   if (rows.length === 0) return <p className="text-sm text-muted-foreground text-center py-10">{t('No reviewers assigned yet.')}</p>;
+  const totalPages = Math.ceil(rows.length / PAGE_SIZE);
+  const pageRows = rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   return (
-    <ul className="bg-white rounded-2xl border border-border shadow-sm divide-y divide-border overflow-hidden">
-      {rows.map(r => (
-        <li key={r.reviewer_user_id} className="flex flex-col sm:flex-row sm:items-center gap-3 px-5 py-4">
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-foreground">{personName(r)}</p>
-            <p className="text-xs text-muted-foreground truncate">{r.email}</p>
-          </div>
-          <div className="sm:w-64 space-y-1">
-            <p className="text-xs text-muted-foreground text-right">
-              {t('{{completed}} of {{allocated}} complete', { completed: r.reviews_completed, allocated: r.reviews_allocated })}
-            </p>
-            <ProgressBar value={r.reviews_completed} total={r.reviews_allocated} />
-          </div>
-        </li>
-      ))}
-    </ul>
+    <div className="space-y-3">
+      <ResultCount count={rows.length} t={t} />
+      <ul className="bg-white rounded-2xl border border-border shadow-sm divide-y divide-border overflow-hidden">
+        {pageRows.map(r => (
+          <li key={r.reviewer_user_id} className="flex flex-col sm:flex-row sm:items-center gap-3 px-5 py-4">
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-foreground">{personName(r)}</p>
+              <p className="text-xs text-muted-foreground truncate">{r.email}</p>
+            </div>
+            <div className="sm:w-64 space-y-1">
+              <p className="text-xs text-muted-foreground text-right">
+                {t('{{completed}} of {{allocated}} complete', { completed: r.reviews_completed, allocated: r.reviews_allocated })}
+              </p>
+              <ProgressBar value={r.reviews_completed} total={r.reviews_allocated} />
+            </div>
+          </li>
+        ))}
+      </ul>
+      <Pager page={page} totalPages={totalPages} onPage={setPage} t={t} />
+    </div>
   );
 }
 
@@ -201,8 +268,9 @@ export default function ReviewDashboardPage({ event }) {
   const [data, setData] = useState(null);
   const [reviewers, setReviewers] = useState(null);
   const [error, setError] = useState(null);
-  const [tab, setTab] = useState('applications');
+  const [tab, setTab] = useState(TABS[0]);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounced(search.trim(), SEARCH_DELAY_MS);
   const [switchingStage, setSwitchingStage] = useState(false);
 
   const loadStages = useCallback(() => reviewService.getReviewStages(event.id, language).then(result => {
@@ -251,8 +319,6 @@ export default function ReviewDashboardPage({ event }) {
   }
 
   const selectedStage = stages.stages.find(s => s.form_id === selectedFormId);
-  const submittedReviews = data ? data.reviews.filter(r => r.status === STATUS.SUBMITTED).length : 0;
-  const fullyReviewed = data ? data.applications.filter(a => a.reviews_submitted >= data.num_reviews_required).length : 0;
   const tabLabels = {
     applications: t('Applications'),
     reviews: t('Reviews'),
@@ -291,11 +357,11 @@ export default function ReviewDashboardPage({ event }) {
       {!data ? <Spinner /> : (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard label={t('Applications')} value={data.applications.length} />
-            <StatCard label={t('Fully reviewed')} value={fullyReviewed}
+            <StatCard label={t('Applications')} value={data.counts.applications} />
+            <StatCard label={t('Fully reviewed')} value={data.counts.fully_reviewed}
                       hint={t('{{count}} review(s) required each', { count: data.num_reviews_required })} />
-            <StatCard label={t('Reviews submitted')} value={submittedReviews}
-                      hint={t('of {{count}} assigned', { count: data.reviews.length })} />
+            <StatCard label={t('Reviews submitted')} value={data.counts.reviews_submitted}
+                      hint={t('of {{count}} assigned', { count: data.counts.reviews_assigned })} />
             <StatCard label={t('Reviewers')} value={(reviewers || []).length} />
           </div>
 
@@ -313,9 +379,14 @@ export default function ReviewDashboardPage({ event }) {
                    className="w-full sm:w-64 rounded-lg border border-border bg-white px-3 py-1.5 text-sm" />
           </div>
 
-          {tab === 'applications' && <ApplicationsTable data={data} event={event} search={search} t={t} />}
-          {tab === 'reviews' && <ReviewsList data={data} search={search} t={t} />}
-          {tab === 'reviewers' && <ReviewersTable reviewers={reviewers} search={search} t={t} />}
+          {tab === 'applications' && (
+            <ApplicationsTable summary={data} event={event} formId={selectedFormId} language={language}
+                               search={debouncedSearch} t={t} />
+          )}
+          {tab === 'reviews' && (
+            <ReviewsList event={event} formId={selectedFormId} language={language} search={debouncedSearch} t={t} />
+          )}
+          {tab === 'reviewers' && <ReviewersTable reviewers={reviewers} search={debouncedSearch} t={t} />}
         </>
       )}
     </div>

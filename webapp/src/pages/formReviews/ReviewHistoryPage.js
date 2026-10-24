@@ -3,8 +3,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { reviewService } from "../../services/reviews/review.service";
 import { resolveContentLanguage } from "../../utils/eventLanguages";
-import { Button } from "../../components/ui/button";
-import { identifierText, formatScore, formatDate, PageMessage, Spinner } from "./reviewUtils";
+import { identifierText, formatScore, formatDate, PageMessage, Pager, Spinner } from "./reviewUtils";
 
 const PAGE_SIZE = 20;
 
@@ -77,19 +76,7 @@ export default function ReviewHistoryPage({ event }) {
         </ul>
       )}
 
-      {data.total_pages > 1 && (
-        <nav className="flex items-center justify-center gap-3">
-          <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>
-            <i className="fas fa-chevron-left" />{t('Previous')}
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            {t('Page {{page}} of {{total}}', { page: page + 1, total: data.total_pages })}
-          </span>
-          <Button variant="outline" size="sm" disabled={page + 1 >= data.total_pages} onClick={() => setPage(page + 1)}>
-            {t('Next')}<i className="fas fa-chevron-right" />
-          </Button>
-        </nav>
-      )}
+      <Pager page={page} totalPages={data.total_pages} onPage={setPage} t={t} />
     </div>
   );
 }

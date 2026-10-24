@@ -163,7 +163,7 @@ const FormEditorPage = (props) => {
         languages={languages}
         onSave={handleSave}
         onCancel={handleCancel}
-        includeReviewTypes={false}
+        includeReviewTypes={!!initialData && initialData.form_type === 'review'}
         initialData={initialData}
       />
     </div>

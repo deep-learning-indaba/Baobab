@@ -24,7 +24,9 @@ from app.engagement.repository import EngagementRepository
 from app import db, bcrypt, LOGGER
 import pytz
 from app.utils.errors import (
+    DB_NOT_AVAILABLE,
     EVENT_NOT_FOUND,
+    EVENT_STATS_NOT_AVAILABLE,
     EVENT_FEE_NOT_FOUND,
     FORBIDDEN,
     EVENT_WITH_KEY_NOT_FOUND,
@@ -572,14 +574,27 @@ class EventStatsAPI(EventsMixin, restful.Resource):
             return EVENT_NOT_FOUND
 
         try:
+            # New-system forms open and close through their own is_open flag
+            # rather than the event's application/review/registration dates,
+            # so the dashboard's open/closed badges come from the forms.
+            form_statuses = None
             if event.uses_new_forms:
-                applications = form_stats.application_stats(form_system.get_application_form(event))
+                application_form = form_system.get_application_form(event)
+                review_form = form_system.get_active_review_form(event)
+                registration_form = form_system.get_registration_form(event)
+                form_statuses = {
+                    stage: {'is_open': bool(form and form.is_open), 'is_opening': False}
+                    for stage, form in (('application', application_form), ('review', review_form),
+                                        ('registration', registration_form))
+                }
+
+                applications = form_stats.application_stats(application_form)
                 num_responses = applications['total']
                 num_submitted_respones = applications['submitted']
                 num_withdrawn_responses = applications['withdrawn']
                 submitted_response_timeseries = _process_timeseries(applications['submitted_timeseries'])
 
-                reviews = form_stats.review_stats(form_system.get_active_review_form(event))
+                reviews = form_stats.review_stats(review_form)
                 required_reviews = reviews['required']
                 reviews_completed = reviews['completed']
                 reviews_incomplete = reviews['incomplete']
@@ -606,7 +621,7 @@ class EventStatsAPI(EventsMixin, restful.Resource):
             offers_timeseries = _process_timeseries(offer_repository.timeseries_offers_accepted(event_id))
 
             if event.uses_new_forms:
-                registrations = form_stats.registration_stats(event_id, form_system.get_registration_form(event))
+                registrations = form_stats.registration_stats(event_id, registration_form)
                 num_registrations = registrations['registrations']
                 num_guests = registrations['guests']
                 num_registered_guests = registrations['registered_guests']
@@ -680,13 +695,16 @@ class EventStatsAPI(EventsMixin, restful.Resource):
                 'announcements_sent': announcements_sent,
                 'announcements_delivered': announcements_delivered,
                 'announcements_opened': announcements_opened,
+                'form_statuses': form_statuses,
             }, 200
 
         except SQLAlchemyError as e:
             LOGGER.error("Database error encountered: {}".format(e))
-        except:
+            return DB_NOT_AVAILABLE
+        except Exception:
             LOGGER.error("Encountered unknown error: {}".format(
                 traceback.format_exc()))
+            return EVENT_STATS_NOT_AVAILABLE
 
 
 class EventsByKeyAPI(EventsKeyMixin, restful.Resource):

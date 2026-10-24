@@ -2,6 +2,47 @@ import React, { useState, useEffect } from 'react';
 import VisibilityExpressionEditor from './VisibilityExpressionEditor';
 import { formServices } from '../../../services/form/form.service';
 
+// Matches REVIEW_SETTING_DEFAULTS in api/app/forms/system.py, which applies
+// when the setting has never been saved.
+const DEFAULT_REVIEWS_REQUIRED = 3;
+
+const ReviewsRequiredField = ({ value, onChange, t }) => {
+  // Held as text so the field can be cleared while typing; only a whole number
+  // of at least 1 is written back to the form.
+  const [text, setText] = useState(String(value || DEFAULT_REVIEWS_REQUIRED));
+  const parsed = Number(text);
+  const valid = Number.isInteger(parsed) && parsed >= 1;
+
+  const handleChange = (e) => {
+    setText(e.target.value);
+    const next = Number(e.target.value);
+    if (Number.isInteger(next) && next >= 1) onChange(next);
+  };
+
+  return (
+    <div>
+      <label htmlFor="num-reviews-required" className="block text-sm font-medium text-foreground mb-2">
+        {t('Reviews required per application')}
+      </label>
+      <input
+        id="num-reviews-required"
+        type="number"
+        min="1"
+        step="1"
+        value={text}
+        onChange={handleChange}
+        aria-invalid={!valid}
+        className={`w-32 px-3 py-2 border rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-ring ${valid ? 'border-border' : 'border-error'}`}
+      />
+      <span className={`block text-xs mt-1 ${valid ? 'text-muted-foreground' : 'text-error'}`}>
+        {valid
+          ? t('Applications stop being offered for assignment once they have this many reviewers, and count as fully reviewed once this many reviews are submitted.')
+          : t('Enter a whole number of at least 1.')}
+      </span>
+    </div>
+  );
+};
+
 const FormSettingsPanel = ({ form, onChange, onClose, t, eventId }) => {
   const [availableForms, setAvailableForms] = useState([]);
   const [loadingForms, setLoadingForms] = useState(false);
@@ -75,6 +116,17 @@ const FormSettingsPanel = ({ form, onChange, onClose, t, eventId }) => {
               description={t('Users will navigate between sections using Next/Previous buttons')}
             />
           </section>
+
+          {form.form_type === 'review' && (
+            <section className="mb-8">
+              <h3 className={sectionHeadingCls}>{t('Review Settings')}</h3>
+              <ReviewsRequiredField
+                value={form.settings.num_reviews_required}
+                onChange={(v) => handleSettingsChange('num_reviews_required', v)}
+                t={t}
+              />
+            </section>
+          )}
 
           <section className="mb-8">
             <h3 className={sectionHeadingCls}>{t('Submission Settings')}</h3>

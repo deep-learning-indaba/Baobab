@@ -214,6 +214,10 @@ rest_api.add_resource(forms_reviews_api.ReviewerAssignmentListAPI, '/api/v1/revi
 rest_api.add_resource(forms_reviews_api.ReviewerHistoryAPI, '/api/v1/reviews/history')
 rest_api.add_resource(forms_reviews_api.ReviewerAssignmentDetailAPI, '/api/v1/reviews/assigned/<int:review_response_id>')
 rest_api.add_resource(forms_reviews_api.ReviewDashboardAPI, '/api/v1/forms/<int:form_id>/review-dashboard')
+rest_api.add_resource(forms_reviews_api.ReviewDashboardApplicationsAPI,
+                      '/api/v1/forms/<int:form_id>/review-dashboard/applications')
+rest_api.add_resource(forms_reviews_api.ReviewDashboardReviewsAPI,
+                      '/api/v1/forms/<int:form_id>/review-dashboard/reviews')
 rest_api.add_resource(forms_reviews_api.ReviewFormStageAPI, '/api/v1/review-stages')
 # Announcement routes — register static paths before the <int:id> route
 rest_api.add_resource(announcements_api.AnnouncementActiveAPI, '/api/v1/announcement/active')

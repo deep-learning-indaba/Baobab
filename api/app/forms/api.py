@@ -42,6 +42,11 @@ from app.tags.repository import TagRepository as tag_repository
 from app.utils.language import translation_for, user_language_for_event
 
 
+def _settings_error(settings):
+    """An error message if form `settings` are malformed, else None."""
+    return validate_linked_display(settings) or form_system.validate_review_settings(settings)
+
+
 def serialize_form(form, language='en', include_inactive=False):
     """Serialize a form with all sections and questions with all translations
     
@@ -392,7 +397,7 @@ class FormListAPI(restful.Resource):
             linked_form_id = args.get('linked_form_id')
             if linked_form_id and not _linked_form_is_in_event(linked_form_id, event_id):
                 return _error('Linked form must belong to the same event', 400)
-            settings_error = validate_linked_display(args.get('settings'))
+            settings_error = _settings_error(args.get('settings'))
             if settings_error:
                 return _error(settings_error, 400)
 
@@ -448,7 +453,7 @@ class FormAPI(restful.Resource):
         try:
             args = request.get_json()
 
-            settings_error = validate_linked_display(args.get('settings'))
+            settings_error = _settings_error(args.get('settings'))
             if settings_error:
                 return _error(settings_error, 400)
 
@@ -583,7 +588,7 @@ class FormStructureAPI(restful.Resource):
                 args['linked_form_id'], form.event_id
             ):
                 return _error('Linked form must belong to the same event', 400)
-            settings_error = validate_linked_display(args.get('settings'))
+            settings_error = _settings_error(args.get('settings'))
             if settings_error:
                 return _error(settings_error, 400)
 

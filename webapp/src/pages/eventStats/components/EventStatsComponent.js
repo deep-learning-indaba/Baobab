@@ -39,6 +39,16 @@ class EventStatsComponent extends Component {
     return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 tracking-wide">{this.props.t("Closed")}</span>
   }
 
+  // New-system events report each stage's state from its form; legacy events
+  // use the event's open/close dates.
+  stageStatus = (stage) => {
+    const { stats } = this.state;
+    const fromForms = stats && stats.form_statuses && stats.form_statuses[stage];
+    if (fromForms) return { isOpen: fromForms.is_open, isOpening: fromForms.is_opening };
+    const event = this.props.event;
+    return { isOpen: event[`is_${stage}_open`], isOpening: event[`is_${stage}_opening`] };
+  }
+
   pct = (num, denom) => (denom > 0 ? Math.round((num / denom) * 100) : 0);
 
   plotTimeSeries = (name, timeseries) => {
@@ -82,9 +92,9 @@ class EventStatsComponent extends Component {
       )
     }
 
-    if (error) {
+    if (error || !stats) {
       return <div className="bg-error/10 text-error border border-error/20 p-4 rounded-xl text-sm mb-6 mt-4">
-        {error}
+        {error || t('Unable to load event statistics')}
       </div>
     }
 
@@ -95,9 +105,9 @@ class EventStatsComponent extends Component {
         <div className="space-y-3">
           <div className="flex items-center gap-2 px-1">
             <h3 className="font-semibold text-foreground text-sm tracking-wider">{t("Applications")}</h3>
-            {this.getStatus(this.props.event.is_application_open, this.props.event.is_application_opening)}
+            {this.getStatus(this.stageStatus('application').isOpen, this.stageStatus('application').isOpening)}
           </div>
-          <div className={"bg-white rounded-2xl shadow-sm border border-border p-6 flex flex-col items-center text-center transition-opacity" + (this.props.event.is_application_opening ? " opacity-60" : "")}>
+          <div className={"bg-white rounded-2xl shadow-sm border border-border p-6 flex flex-col items-center text-center transition-opacity" + (this.stageStatus('application').isOpening ? " opacity-60" : "")}>
             <div className="text-4xl font-heading font-bold text-primary mb-1">{stats.num_submitted_responses}</div>
             <div className="text-sm font-semibold text-muted-foreground tracking-wider mb-6">{t("Submitted")}</div>
             
@@ -119,9 +129,9 @@ class EventStatsComponent extends Component {
         <div className="space-y-3">
           <div className="flex items-center gap-2 px-1">
             <h3 className="font-semibold text-foreground text-sm tracking-wider">{t("Reviews")}</h3>
-            {this.getStatus(this.props.event.is_review_open, this.props.event.is_review_opening)}
+            {this.getStatus(this.stageStatus('review').isOpen, this.stageStatus('review').isOpening)}
           </div>
-          <div className={"bg-white rounded-2xl shadow-sm border border-border p-6 flex flex-col items-center text-center transition-opacity" + (this.props.event.is_review_opening ? " opacity-60" : "")}>
+          <div className={"bg-white rounded-2xl shadow-sm border border-border p-6 flex flex-col items-center text-center transition-opacity" + (this.stageStatus('review').isOpening ? " opacity-60" : "")}>
             <div className="text-4xl font-heading font-bold text-primary mb-1">{stats.reviews_completed}</div>
             <div className="text-sm font-semibold text-muted-foreground tracking-wider mb-6">{t("Completed")}</div>
             
@@ -171,9 +181,9 @@ class EventStatsComponent extends Component {
         <div className="space-y-3">
           <div className="flex items-center gap-2 px-1">
             <h3 className="font-semibold text-foreground text-sm tracking-wider">{t("Registration")}</h3>
-            {this.getStatus(this.props.event.is_registration_open, this.props.event.is_registration_opening)}
+            {this.getStatus(this.stageStatus('registration').isOpen, this.stageStatus('registration').isOpening)}
           </div>
-          <div className={"bg-white rounded-2xl shadow-sm border border-border p-6 flex flex-col items-center text-center transition-opacity h-full" + (this.props.event.is_registration_opening ? " opacity-60" : "")}>
+          <div className={"bg-white rounded-2xl shadow-sm border border-border p-6 flex flex-col items-center text-center transition-opacity h-full" + (this.stageStatus('registration').isOpening ? " opacity-60" : "")}>
             <div className="text-4xl font-heading font-bold text-primary mb-1">{stats.num_registrations}</div>
             <div className="text-sm font-semibold text-muted-foreground tracking-wider mb-6">{t("Registrations")}</div>
             
