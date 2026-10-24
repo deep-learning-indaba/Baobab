@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="{{ language }}" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>{{ subject }}</title>
+<!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+<style>
+  a { color: {{ brand_colour }}; }
+  @media only screen and (max-width: 620px) {
+    .container { width: 100% !important; }
+    .content { padding: 24px 20px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#f4f5f7;-webkit-text-size-adjust:100%;">
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">{{ preheader }}</div>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f5f7;">
+  <tr>
+    <td align="center" style="padding:24px 12px;">
+      <!--[if mso]><table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0"><tr><td><![endif]-->
+      <table role="presentation" class="container" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:8px;border-top:4px solid {{ brand_colour }};">
+        {% if logo_url != blank or header_html != blank %}
+        <tr>
+          <td style="padding:28px 40px 0 40px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#4b5563;">
+            {% if logo_url != blank %}<img src="{{ logo_url }}" alt="{{ organisation_name }}" height="48" style="display:block;height:48px;width:auto;border:0;">{% endif %}
+            {{ header_html }}
+          </td>
+        </tr>
+        {% endif %}
+        <tr>
+          <td class="content" style="padding:28px 40px 32px 40px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;color:#1f2937;">
+            {{ body_html }}
+          </td>
+        </tr>
+      </table>
+      {% if footer_html != blank %}
+      <table role="presentation" class="container" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px;max-width:600px;">
+        <tr>
+          <td style="padding:16px 40px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.5;color:#6b7280;text-align:center;">
+            {{ footer_html }}
+          </td>
+        </tr>
+      </table>
+      {% endif %}
+      <!--[if mso]></td></tr></table><![endif]-->
+    </td>
+  </tr>
+</table>
+</body>
+</html>

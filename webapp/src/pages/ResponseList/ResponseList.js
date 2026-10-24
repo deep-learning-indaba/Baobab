@@ -2,17 +2,20 @@ import React, { Component } from 'react';
 import { withTranslation } from 'react-i18next';
 import ResponseListComponent from './components/ResponseListComponent';
 import FormResponseListComponent from '../formResponseList/components/FormResponseListComponent';
+import FormNotAvailable from '../../components/FormNotAvailable';
 
 class ResponseList extends Component {
     render() {
-        const { event } = this.props;
-        const applicationFormId = event && event.application_form_id;
+        const { event, t } = this.props;
 
-        if (applicationFormId) {
+        if (event && event.uses_new_forms) {
+            if (!event.application_form_id) {
+                return <FormNotAvailable message={t('Create the application form in Form Configuration to start receiving applications.')} />;
+            }
             return (
                 <FormResponseListComponent
                     {...this.props}
-                    formId={applicationFormId}
+                    formId={event.application_form_id}
                 />
             );
         }

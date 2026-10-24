@@ -15,7 +15,8 @@ from app.registration.models import RegistrationForm
 from app.users.models import AppUser
 from app.events.models import Event
 from app.utils.auth import auth_required
-from app.utils import errors, emailer, strings
+from app.utils import errors, strings
+from app.email_template.service import queue_email
 from app.users.repository import UserRepository as user_repository
 from app.events.repository import EventRepository as event_repository
 from app.registration.repository import RegistrationRepository as registration_repository
@@ -238,26 +239,16 @@ class GuestRegistrationApi(restful.Resource):
             LOGGER.warn(
                 'Found no questions associated with application form with id {form_id}'.format(form_id=user.id))
         try:
-            # Building the summary, where the summary is a dictionary whose key is the question headline, and the value
-            # is the relevant answer
-            summary = ""
+            pairs = []
             for answer in answers:
                 for question in questions:
                     if answer.registration_question_id == question.id:
-                        summary += "Question:" + question.headline + "\nAnswer:" + _get_answer_value(
-                            answer, question) + "\n"
+                        pairs.append({'question': question.headline,
+                                      'answer': _get_answer_value(answer, question)})
 
-            if len(summary) <= 0:
-                summary = '\nNo valid questions were answered'
-
-            emailer.email_user(
-                'guest-registration-confirmation',
-                template_parameters=dict(
-                    summary=summary,
-                ),
-                event=event,
-                user=user,
-            )
+            queue_email('guest-registration-confirmation', user, event=event,
+                        context={'registration': {'confirmed': True, 'answers': pairs}})
+            db.session.commit()
 
             return True
 

@@ -236,10 +236,10 @@ class Tag(Base):
     tag_type = db.Column(db.Enum(TagType), nullable=True)
     active = db.Column(db.Boolean(), nullable=False, default=True)
 
-class TagTranslation(db.Model):
+class TagTranslation(Base):
     __tablename__ = 'tag_translation'
     __table_args__ = (
-        db.UniqueConstraint('tag_id', 'language', name='uq_tag_id_language'),
+        sa.UniqueConstraint('tag_id', 'language', name='uq_tag_id_language'),
         {'extend_existing': True}
     )
     id = db.Column(db.Integer(), primary_key=True)

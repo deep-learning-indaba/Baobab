@@ -36,10 +36,6 @@
     font-weight: bold;   
 }
 
-.hidden {
-    visibility: hidden;
-}
-
 .flag-category {
     display: inline-block;
     color: darkred;

@@ -20,7 +20,6 @@ const QuestionRenderer = ({
   language,
   validationError,
   disabled = false,
-  linkedResponse = null,
   t
 }) => {
   const [uploading, setUploading] = useState(false);
@@ -107,30 +106,6 @@ const QuestionRenderer = ({
       <span>{message}</span>
     </div>
   );
-
-  const renderLinkedQuestion = () => {
-    if (!question.linked_question_id || !linkedResponse) {
-      return infoPanel(t('No linked response available'));
-    }
-
-    const linkedAnswer = linkedResponse.answers.find(ans => ans.question_id === question.linked_question_id);
-
-    if (!linkedAnswer || !linkedAnswer.value) {
-      return infoPanel(t('No answer provided in linked form'));
-    }
-
-    return (
-      <div className="p-4 bg-action/5 border border-action/30 rounded-md">
-        <div className="flex items-center gap-2 text-xs font-medium text-action mb-2">
-          <i className="fas fa-link"></i>
-          <span>{t('Value from linked form:')}</span>
-        </div>
-        <div className="p-3 bg-white border border-action/20 rounded text-sm text-foreground whitespace-pre-wrap break-words">
-          {linkedAnswer.value}
-        </div>
-      </div>
-    );
-  };
 
   const renderControl = () => {
     const options = getOptions();
@@ -225,8 +200,6 @@ const QuestionRenderer = ({
             <MarkdownRenderer source={description} />
           </div>
         ) : null;
-      case 'linked-form-question':
-        return renderLinkedQuestion();
       default:
         // Never show respondents a raw type name in red. An unrecognised type is
         // a form-configuration problem, not something they can act on.

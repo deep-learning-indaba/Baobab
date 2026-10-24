@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { reviewService } from "../../../services/reviews";
+import FormNotAvailable from "../../../components/FormNotAvailable";
 import { withRouter } from "react-router";
 import ReactTable from 'react-table'
 import { withTranslation } from 'react-i18next'
@@ -30,11 +31,16 @@ class ReviewAssignmentComponent extends Component {
   }
 
   isNewStyleEvent() {
-    return this.props.event && this.props.event.review_form_id;
+    return this.props.event && this.props.event.uses_new_forms;
   }
 
   componentDidMount() {
     const event_id = this.props.event ? this.props.event.id : 0;
+
+    if (this.isNewStyleEvent() && !this.props.event.review_form_id) {
+      this.setState({ loading: false, reviewFormMissing: true });
+      return;
+    }
 
     if (this.isNewStyleEvent()) {
       const reviewFormId = this.props.event.review_form_id;
@@ -372,6 +378,10 @@ class ReviewAssignmentComponent extends Component {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       );
+    }
+
+    if (this.state.reviewFormMissing) {
+      return <FormNotAvailable message={t('Create a review form in Form Configuration before assigning reviews.')} />;
     }
 
     const columns = [{

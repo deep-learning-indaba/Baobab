@@ -1,6 +1,6 @@
 import EventNav from '../../components/EventNav';
 import React, { Component } from "react";
-import { Link, Route, Switch } from "react-router-dom";
+import { Link, Redirect, Route, Switch } from "react-router-dom";
 import { eventService } from "../../services/events/events.service";
 import { announcementService } from "../../services/eventApp/announcement.service";
 import Application from "../applicationForm";
@@ -22,6 +22,7 @@ import CreateInvitedGuests from "../createInvitedGuest";
 import Registration from "../registration";
 import InvitedLetter from "../invitationLetter";
 import { DocumentsAdmin, DocumentTemplateEditor, UserDataAdmin, MyDocuments, DerivedPlaceholdersAdmin } from "../documents";
+import { EmailTemplatesAdmin, EmailTemplateEditor, EmailLayoutEditor } from "../emailTemplates";
 import RegistrationAdmin from "../registrationAdmin";
 import Offer from "../offer";
 import OfferAdmin from "../offerAdmin";
@@ -31,6 +32,7 @@ import { attendanceService } from '../../services/attendance';
 import ResponseList from "../ResponseList/ResponseList";
 import ResponsePage from "../ResponsePage/ResponsePage";
 import ReviewDashboard from "../reviewDashboard";
+import { ReviewQueuePage, ReviewPage, ReviewHistoryPage, ReviewDashboardPage } from "../formReviews";
 import { Attendance, Indemnity } from '../attendance';
 import EventRoleAdmin from "../eventRoleAdmin";
 import FormManagement from "../formManagement";
@@ -39,6 +41,8 @@ import FormResponseList from "../formResponseList";
 import FormResponseDetail from "../formResponseDetail";
 import ApplicationFormResponsePage from "../applicationFormResponse";
 import FormConfigPage from "../formConfig";
+import FormResponsesPage from "../formResponses";
+import { isEventAdmin } from "../../utils/user";
 import { withTranslation, useTranslation } from 'react-i18next';
 import { useInstall } from '../../context/InstallContext';
 import { isPushSupported, getNotificationPermission, registerPushSubscription } from '../../utils/push';
@@ -564,7 +568,9 @@ class EventHome extends Component {
         <Route
           exact
           path={`${match.path}/reviewDashboard`}
-          render={(props) => <ReviewDashboard {...props} event={event} user={this.props.user}/>}
+          render={(props) => event.uses_new_forms
+            ? <ReviewDashboardPage {...props} event={event} />
+            : <ReviewDashboard {...props} event={event} user={this.props.user}/>}
         />
         <Route
           exact
@@ -600,6 +606,21 @@ class EventHome extends Component {
           exact
           path={`${match.path}/documentsAdmin/:templateId(\\d+|new)`}
           render={(props) => <DocumentTemplateEditor {...props} event={event} organisation={this.props.organisation} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/emailTemplates`}
+          render={(props) => <EmailTemplatesAdmin {...props} event={event} organisation={this.props.organisation} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/emailTemplates/design`}
+          render={(props) => <EmailLayoutEditor {...props} event={event} organisation={this.props.organisation} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/emailTemplates/edit/:key([a-z0-9-]+)`}
+          render={(props) => <EmailTemplateEditor {...props} event={event} organisation={this.props.organisation} />}
         />
         <Route
           exact
@@ -639,7 +660,9 @@ class EventHome extends Component {
         <Route
           exact
           path={`${match.path}/reviewHistory`}
-          render={(props) => <ReviewHistory {...props} event={event} />}
+          render={(props) => event.uses_new_forms
+            ? <Redirect to={`/${event.key}/reviews/history`} />
+            : <ReviewHistory {...props} event={event} />}
         />
         <Route
           exact
@@ -654,17 +677,38 @@ class EventHome extends Component {
         <Route
           exact
           path={`${match.path}/review`}
-          render={(props) => <Review {...props} event={event} />}
+          render={(props) => event.uses_new_forms
+            ? <Redirect to={`/${event.key}/reviews`} />
+            : <Review {...props} event={event} />}
         />
         <Route
           exact
           path={`${match.path}/review/:id`}
-          render={(props) => <Review {...props} event={event} />}
+          render={(props) => event.uses_new_forms
+            ? <Redirect to={`/${event.key}/reviews`} />
+            : <Review {...props} event={event} />}
         />
         <Route
           exact
           path={`${match.path}/reviewlist`}
-          render={(props) => <ReviewList {...props} event={event} />}
+          render={(props) => event.uses_new_forms
+            ? <Redirect to={`/${event.key}/reviews`} />
+            : <ReviewList {...props} event={event} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/reviews`}
+          render={(props) => <ReviewQueuePage {...props} event={event} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/reviews/history`}
+          render={(props) => <ReviewHistoryPage {...props} event={event} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/reviews/:reviewResponseId(\\d+)`}
+          render={(props) => <ReviewPage {...props} event={event} />}
         />
         <Route
           exact
@@ -741,6 +785,11 @@ class EventHome extends Component {
         />
         <Route
           exact
+          path={`${match.path}/formResponses`}
+          render={(props) => <FormResponsesPage {...props} event={event} user={this.props.user} eventKey={this.state.eventKey}/>}
+        />
+        <Route
+          exact
           path={`${match.path}/formConfig`}
           render={(props) => <FormConfigPage {...props} event={event} user={this.props.user} eventKey={this.state.eventKey}/>}
         />
@@ -799,7 +848,9 @@ class EventHome extends Component {
           path={`${match.path}/form-responses/:formId/:responseId`}
           render={(props) => {
             const formId = parseInt(props.match.params.formId, 10);
-            if (event && event.application_form_id === formId) {
+            // Viewers get the plain read-only detail: the application page
+            // carries admin actions (status, outcome, tags, reviewers).
+            if (event && event.application_form_id === formId && isEventAdmin(this.props.user, event)) {
               return (
                 <ApplicationFormResponsePage
                   {...props}

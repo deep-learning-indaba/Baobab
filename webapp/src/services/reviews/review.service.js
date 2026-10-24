@@ -30,7 +30,15 @@ export const reviewService = {
   removeFormReviews,
   getFormReviewSummary,
   addFormResponseTag,
-  deleteFormResponseTag
+  deleteFormResponseTag,
+  getAssignedReviews,
+  getAssignedReview,
+  getMyReviewHistory,
+  getReviewDashboard,
+  getReviewDashboardApplications,
+  getReviewDashboardReviews,
+  getReviewStages,
+  setActiveReviewStage
 };
 
 function getReviewForm(eventId, skip) {
@@ -705,4 +713,86 @@ function deleteReviewerTag(reviewerUserId, tagId, eventId) {
       error: extractErrorMessage(error)
     };
   });
+}
+
+// --- New form system reviews -------------------------------------------------
+
+function _ok(key) {
+  return r => ({ [key]: r.data, error: '', statusCode: r.status });
+}
+
+function _fail(key) {
+  return e => ({ [key]: null, error: extractErrorMessage(e), statusCode: e.response && e.response.status });
+}
+
+function getAssignedReviews(eventId, language) {
+  const params = new URLSearchParams({ event_id: eventId, language: language || 'en' });
+  return axios.get(baseUrl + `/api/v1/reviews/assigned?${params}`, { headers: authHeader() })
+    .then(_ok('data'))
+    .catch(_fail('data'));
+}
+
+function getAssignedReview(reviewResponseId, eventId, language) {
+  const params = new URLSearchParams({ event_id: eventId, language: language || 'en' });
+  return axios.get(baseUrl + `/api/v1/reviews/assigned/${reviewResponseId}?${params}`, { headers: authHeader() })
+    .then(_ok('data'))
+    .catch(_fail('data'));
+}
+
+function getMyReviewHistory(eventId, pageNumber, limit, sortColumn, language) {
+  const params = new URLSearchParams({
+    event_id: eventId,
+    page_number: pageNumber,
+    limit: limit,
+    sort_column: sortColumn || 'submitted_timestamp',
+    language: language || 'en'
+  });
+  return axios.get(baseUrl + `/api/v1/reviews/history?${params}`, { headers: authHeader() })
+    .then(_ok('data'))
+    .catch(_fail('data'));
+}
+
+function getReviewDashboard(reviewFormId, eventId, language) {
+  const params = new URLSearchParams({ event_id: eventId, language: language || 'en' });
+  return axios.get(baseUrl + `/api/v1/forms/${reviewFormId}/review-dashboard?${params}`, { headers: authHeader() })
+    .then(_ok('data'))
+    .catch(_fail('data'));
+}
+
+// `query`: { pageNumber, limit, search, sortColumn, sortDesc }; the reviews
+// endpoint ignores the sort.
+function _dashboardPage(path, reviewFormId, eventId, language, query) {
+  const params = new URLSearchParams({
+    event_id: eventId,
+    language: language || 'en',
+    page_number: query.pageNumber || 0,
+    limit: query.limit || 25,
+    search: query.search || '',
+  });
+  if (query.sortColumn) params.append('sort_column', query.sortColumn);
+  if (query.sortDesc !== undefined) params.append('sort_desc', query.sortDesc ? 'true' : 'false');
+  return axios.get(baseUrl + `/api/v1/forms/${reviewFormId}/review-dashboard/${path}?${params}`, { headers: authHeader() })
+    .then(_ok('data'))
+    .catch(_fail('data'));
+}
+
+function getReviewDashboardApplications(reviewFormId, eventId, language, query) {
+  return _dashboardPage('applications', reviewFormId, eventId, language, query);
+}
+
+function getReviewDashboardReviews(reviewFormId, eventId, language, query) {
+  return _dashboardPage('reviews', reviewFormId, eventId, language, query);
+}
+
+function getReviewStages(eventId, language) {
+  const params = new URLSearchParams({ event_id: eventId, language: language || 'en' });
+  return axios.get(baseUrl + `/api/v1/review-stages?${params}`, { headers: authHeader() })
+    .then(_ok('data'))
+    .catch(_fail('data'));
+}
+
+function setActiveReviewStage(eventId, stage) {
+  return axios.put(baseUrl + '/api/v1/review-stages', { event_id: eventId, stage: stage }, { headers: authHeader() })
+    .then(_ok('data'))
+    .catch(_fail('data'));
 }

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import FormRenderer from '../formRenderer/FormRenderer';
+import LinkedResponsePanel from '../../components/form/LinkedResponsePanel';
+import { filterLinkedForm, getLinkedDisplay } from '../../utils/linkedDisplay';
 import { formServices } from '../../services/form';
 import './FormPreviewPage.css';
 import { resolveContentLanguage } from '../../utils/eventLanguages';
@@ -19,6 +21,7 @@ const FormPreviewPage = (props) => {
   const [previewComplete, setPreviewComplete] = useState(false);
   const [mockResponse, setMockResponse] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [linkedForm, setLinkedForm] = useState(null);
 
   // Load form structure - prefer draft from localStorage set by FormEditor
   const loadForm = useCallback(async () => {
@@ -67,6 +70,17 @@ const FormPreviewPage = (props) => {
   useEffect(() => {
     loadForm();
   }, [loadForm]);
+
+  const linkedFormId = form && form.linked_form_id;
+  useEffect(() => {
+    setLinkedForm(null);
+    if (!linkedFormId) return undefined;
+    let cancelled = false;
+    formServices.getForm(linkedFormId).then(result => {
+      if (!cancelled && result.form) setLinkedForm(result.form);
+    });
+    return () => { cancelled = true; };
+  }, [linkedFormId]);
 
   // Mock submit - doesn't actually save to database
   const handleMockSubmit = async (data) => {
@@ -243,7 +257,35 @@ const FormPreviewPage = (props) => {
         </div>
       )}
 
-      {form && (
+      {form && linkedForm && (
+        <div className="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          {/* What a reviewer sees beside the form: the linked form's shown
+              questions, with a placeholder where each answer would be. */}
+          <LinkedResponsePanel
+            title={t('Linked form answers')}
+            form={filterLinkedForm(linkedForm, getLinkedDisplay(form.settings))}
+            answers={[]}
+            language={resolveContentLanguage(props.event, i18n.language)}
+            emptyText={t("Respondent's answer")}
+            className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)]"
+          />
+          <div className="bg-white rounded-2xl border border-border shadow-sm">
+            <FormRenderer
+              form={form}
+              response={mockResponse}
+              language={resolveContentLanguage(props.event, i18n.language)}
+              onSubmit={handleMockSubmit}
+              onSave={handleMockSave}
+              onCancel={handleCancel}
+              showConfirmation={true}
+              autoSaveInterval={0}
+              isPreview={true}
+            />
+          </div>
+        </div>
+      )}
+
+      {form && !linkedForm && (
         <div className="form-preview-content">
           <FormRenderer
             form={form}

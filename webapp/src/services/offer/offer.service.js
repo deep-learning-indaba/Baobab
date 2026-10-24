@@ -8,7 +8,9 @@ export const offerServices = {
     addOffer,
     updateOffer,
     getOfferList,
-    updateOfferAdmin
+    getOfferCandidates,
+    updateOfferAdmin,
+    resetOffer
 }
 
 function getOffer(event_id){
@@ -35,32 +37,31 @@ function getOffer(event_id){
 
 }
 
-function addOffer(user_id, event_id, offer_date, expiry_date, payment_required, grant_tags, note_tags){
+function addOffer(user_id, event_id, offer_date, expiry_date, payment_required, grant_tags, note_tags, event_fee_id){
   const data = {
         user_id: user_id, 
         event_id: event_id,
         offer_date: offer_date,
         expiry_date: expiry_date,
         payment_required: payment_required,
-        grant_tags: grant_tags,
+        event_fee_id: event_fee_id,
+        grant_tags: grant_tags || [],
         note_tags: note_tags || []
     }
 
     return axios
-        .post(baseUrl + 'api/v1/offer',data,{headers:authHeader()})
+        .post(baseUrl + '/api/v1/offer', data, {headers: authHeader()})
         .then(function (response){
             return{
-                message:"succeeded",
+                message: "succeeded",
+                offer: response.data,
                 response: response
             }
         })
         .catch(function(error) {
             return {
               message: null,
-              error:
-                error.response && error.response.data
-                  ? error.response.data.message
-                  : error.message
+              error: extractErrorMessage(error)
             };
           });
 }
@@ -98,6 +99,7 @@ function updateOfferAdmin(offer) {
     .then((response) => {
         return {
           message: "succeeded",
+          offer: response.data,
           response: response
         }
     })
@@ -122,6 +124,48 @@ function getOfferList(eventId) {
     .catch((error) => {
         return {
           offers: null,
+          error: extractErrorMessage(error)
+        }
+    });
+}
+
+function resetOffer(offerId, eventId, expiryDate) {
+  const data = { id: offerId, event_id: eventId };
+  if (expiryDate) {
+    data.expiry_date = expiryDate;
+  }
+
+  return axios
+    .post(baseUrl + "/api/v1/offerReset", data, { headers: authHeader() })
+    .then((response) => {
+        return {
+          message: "succeeded",
+          offer: response.data,
+          error: ""
+        }
+    })
+    .catch((error) => {
+        return {
+          message: null,
+          error: extractErrorMessage(error)
+        }
+    });
+}
+
+function getOfferCandidates(eventId) {
+  return axios
+    .get(baseUrl + `/api/v1/offerCandidates?event_id=${eventId}`, { headers: authHeader() })
+    .then((response) => {
+        return {
+          candidates: response.data.candidates,
+          eventFees: response.data.event_fees,
+          error: ""
+        }
+    })
+    .catch((error) => {
+        return {
+          candidates: [],
+          eventFees: [],
           error: extractErrorMessage(error)
         }
     });

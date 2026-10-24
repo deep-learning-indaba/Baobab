@@ -21,6 +21,7 @@ from .tags import api as tag_api
 from .invoice import api as invoice_api
 from .reporting import api as reporting_api
 from .forms import api as forms_api
+from .forms import reviews_api as forms_reviews_api
 from .utils import translation_api
 from .profiles import api as profiles_api
 from .programme import api as programme_api
@@ -29,6 +30,8 @@ from .connections import api as connections_api
 from .discussion import api as discussion_api
 from .engagement import api as engagement_api
 from .outbox import api as outbox_api
+from .outbox import history as outbox_history_api
+from .email_template import api as email_template_api
 from .documents import api as documents_api
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
@@ -166,6 +169,8 @@ rest_api.add_resource(reporting_api.ReviewReportAPI, '/api/v1/reporting/reviews'
 rest_api.add_resource(reporting_api.RegistrationsReportAPI, '/api/v1/reporting/registrations')
 rest_api.add_resource(reviews_api.ReviewerTagAPI, '/api/v1/reviewertag')
 rest_api.add_resource(offer_api.OfferAdminAPI, '/api/v1/offerAdmin')
+rest_api.add_resource(offer_api.OfferResetAPI, '/api/v1/offerReset')
+rest_api.add_resource(offer_api.OfferCandidatesAPI, '/api/v1/offerCandidates')
 rest_api.add_resource(events_api.EventRoleAPI, '/api/v1/event-roles')
 rest_api.add_resource(events_api.EventResourceLinkAPI, '/api/v1/event-resource-links')
 rest_api.add_resource(invitation_letter_api.InvitationLetterAvailableAPI, '/api/v1/invitation-letter/available')
@@ -199,11 +204,21 @@ rest_api.add_resource(programme_api.TrackListAPI, '/api/v1/programme/tracks')
 rest_api.add_resource(programme_api.PublicProgrammeAPI, '/api/v1/public/programme/<string:event_key>')
 rest_api.add_resource(forms_api.EventFormConfigAPI, '/api/v1/form-config')
 rest_api.add_resource(forms_api.EventSurveyFormAPI, '/api/v1/event-survey-form')
+rest_api.add_resource(forms_api.EventFormResponsesSummaryAPI, '/api/v1/form-responses-summary')
 rest_api.add_resource(forms_api.FormReviewAssignmentAPI, '/api/v1/forms/<int:form_id>/review-assignments')
 rest_api.add_resource(forms_api.FormResponseTagAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/tags')
 rest_api.add_resource(forms_api.FormReviewSummaryAPI, '/api/v1/forms/<int:form_id>/review-summary')
 rest_api.add_resource(forms_api.FormResponseAdminUpdateAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/admin-status')
 rest_api.add_resource(forms_api.FormResponseReviewsAdminAPI, '/api/v1/forms/<int:form_id>/responses/<int:response_id>/reviews')
+rest_api.add_resource(forms_reviews_api.ReviewerAssignmentListAPI, '/api/v1/reviews/assigned')
+rest_api.add_resource(forms_reviews_api.ReviewerHistoryAPI, '/api/v1/reviews/history')
+rest_api.add_resource(forms_reviews_api.ReviewerAssignmentDetailAPI, '/api/v1/reviews/assigned/<int:review_response_id>')
+rest_api.add_resource(forms_reviews_api.ReviewDashboardAPI, '/api/v1/forms/<int:form_id>/review-dashboard')
+rest_api.add_resource(forms_reviews_api.ReviewDashboardApplicationsAPI,
+                      '/api/v1/forms/<int:form_id>/review-dashboard/applications')
+rest_api.add_resource(forms_reviews_api.ReviewDashboardReviewsAPI,
+                      '/api/v1/forms/<int:form_id>/review-dashboard/reviews')
+rest_api.add_resource(forms_reviews_api.ReviewFormStageAPI, '/api/v1/review-stages')
 # Announcement routes — register static paths before the <int:id> route
 rest_api.add_resource(announcements_api.AnnouncementActiveAPI, '/api/v1/announcement/active')
 rest_api.add_resource(announcements_api.AnnouncementAdminAPI, '/api/v1/announcement/admin')
@@ -215,6 +230,44 @@ rest_api.add_resource(announcements_api.PushSubscriptionTestAPI, '/api/v1/push-s
 rest_api.add_resource(engagement_api.EngagementInstallAPI, '/api/v1/engagement/install')
 # Scheduled task routes — driven by App Engine cron, see api/cron.yaml
 rest_api.add_resource(outbox_api.OutboxWorkerAPI, '/api/v1/tasks/outbox')
+rest_api.add_resource(outbox_history_api.EmailRetentionWorkerAPI, '/api/v1/tasks/email-retention')
+rest_api.add_resource(outbox_history_api.UserEmailHistoryAPI,
+                      '/api/v1/events/<int:event_id>/users/<int:user_id>/emails')
+rest_api.add_resource(outbox_history_api.UserEmailDetailAPI,
+                      '/api/v1/events/<int:event_id>/users/<int:user_id>/emails/<int:message_id>')
+rest_api.add_resource(outbox_history_api.UserEmailResendAPI,
+                      '/api/v1/events/<int:event_id>/users/<int:user_id>/emails/<int:message_id>/resend')
+
+rest_api.add_resource(email_template_api.EventEmailTypeListAPI, '/api/v1/events/<int:event_id>/email-types')
+rest_api.add_resource(email_template_api.EventEmailTypeAPI, '/api/v1/events/<int:event_id>/email-types/<string:key>')
+rest_api.add_resource(email_template_api.EventEmailTemplateAPI,
+                      '/api/v1/events/<int:event_id>/email-templates/<string:key>')
+rest_api.add_resource(email_template_api.EventEmailTemplateRevisionsAPI,
+                      '/api/v1/events/<int:event_id>/email-templates/<string:key>/revisions')
+rest_api.add_resource(email_template_api.EventEmailTemplatePreviewAPI,
+                      '/api/v1/events/<int:event_id>/email-templates/<string:key>/preview')
+rest_api.add_resource(email_template_api.EventEmailTemplateTestSendAPI,
+                      '/api/v1/events/<int:event_id>/email-templates/<string:key>/test-send')
+rest_api.add_resource(email_template_api.EventEmailTemplateTranslateAPI,
+                      '/api/v1/events/<int:event_id>/email-templates/<string:key>/translate')
+rest_api.add_resource(email_template_api.EventEmailLayoutAPI, '/api/v1/events/<int:event_id>/email-layout')
+rest_api.add_resource(email_template_api.EventEmailLayoutPreviewAPI,
+                      '/api/v1/events/<int:event_id>/email-layout/preview')
+rest_api.add_resource(email_template_api.OrganisationEmailTypeListAPI, '/api/v1/organisation/email-types')
+rest_api.add_resource(email_template_api.OrganisationEmailTypeAPI, '/api/v1/organisation/email-types/<string:key>')
+rest_api.add_resource(email_template_api.OrganisationEmailTemplateAPI,
+                      '/api/v1/organisation/email-templates/<string:key>')
+rest_api.add_resource(email_template_api.OrganisationEmailTemplateRevisionsAPI,
+                      '/api/v1/organisation/email-templates/<string:key>/revisions')
+rest_api.add_resource(email_template_api.OrganisationEmailTemplatePreviewAPI,
+                      '/api/v1/organisation/email-templates/<string:key>/preview')
+rest_api.add_resource(email_template_api.OrganisationEmailTemplateTestSendAPI,
+                      '/api/v1/organisation/email-templates/<string:key>/test-send')
+rest_api.add_resource(email_template_api.OrganisationEmailTemplateTranslateAPI,
+                      '/api/v1/organisation/email-templates/<string:key>/translate')
+rest_api.add_resource(email_template_api.OrganisationEmailLayoutAPI, '/api/v1/organisation/email-layout')
+rest_api.add_resource(email_template_api.OrganisationEmailLayoutPreviewAPI,
+                      '/api/v1/organisation/email-layout/preview')
 # Connection routes — static paths before dynamic
 rest_api.add_resource(connections_api.ConnectionResolveAPI, '/api/v1/connection/resolve')
 rest_api.add_resource(connections_api.ConnectionRespondAPI, '/api/v1/connection/respond')
@@ -234,6 +287,7 @@ rest_api.add_resource(discussion_api.DiscussionSubscriptionAPI,     '/api/v1/dis
 rest_api.add_resource(discussion_api.DiscussionPinAPI,             '/api/v1/discussion/thread/<int:thread_id>/pin')
 rest_api.add_resource(discussion_api.DiscussionMessageAPI,          '/api/v1/discussion/message/<int:message_id>')
 rest_api.add_resource(discussion_api.DiscussionReportAPI,           '/api/v1/discussion/message/<int:message_id>/report')
+rest_api.add_resource(discussion_api.DiscussionReactionAPI,         '/api/v1/discussion/message/<int:message_id>/reaction')
 rest_api.add_resource(connections_api.ConnectionAPI, '/api/v1/connection')
 
 # Document generation routes

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { formServices } from '../../../services/form/form.service';
+import React, { useState, useEffect, useMemo } from 'react';
+import useLinkedForm from '../utils/useLinkedForm';
 import { ALL_COUNTRIES } from '../../../utils/countryData';
 
 const COMPARISON_OPERATORS = [
@@ -68,8 +68,7 @@ const DependencyEditor = ({
   const [rawValueInput, setRawValueInput] = useState('');
   const [isInitialized, setIsInitialized] = useState(false);
   const [showJsonPreview, setShowJsonPreview] = useState(false);
-  const [linkedFormQuestions, setLinkedFormQuestions] = useState([]);
-  const [, setLoadingLinkedQuestions] = useState(false);
+  const { form: linkedForm } = useLinkedForm(linkedFormId);
 
   useEffect(() => {
     if (!isInitialized) {
@@ -89,31 +88,16 @@ const DependencyEditor = ({
     }
   }, [dependencyExpression, isInitialized]);
 
-  useEffect(() => {
-    if (!linkedFormId) { setLinkedFormQuestions([]); return; }
-    const fetchLinkedFormQuestions = async () => {
-      setLoadingLinkedQuestions(true);
-      try {
-        const response = await formServices.getForm(linkedFormId);
-        if (response.form && response.form.sections) {
-          const allQuestions = [];
-          response.form.sections.forEach((section) => {
-            const sectionName = typeof section.name === 'object' ? (section.name.en || Object.values(section.name)[0]) : section.name;
-            section.questions.forEach((question) => {
-              const questionHeadline = typeof question.headline === 'object' ? (question.headline.en || Object.values(question.headline)[0]) : question.headline;
-              allQuestions.push({ id: question.id, headline: questionHeadline || `Question ${question.order}`, sectionName, sectionOrder: section.order, order: question.order, type: question.type, options: question.options || [], isLinked: true });
-            });
-          });
-          setLinkedFormQuestions(allQuestions);
-        }
-      } catch (err) {
-        console.error('Error fetching linked form questions:', err);
-      } finally {
-        setLoadingLinkedQuestions(false);
-      }
-    };
-    fetchLinkedFormQuestions();
-  }, [linkedFormId]);
+  const linkedFormQuestions = useMemo(() => {
+    if (!linkedForm || !linkedForm.sections) return [];
+    return linkedForm.sections.flatMap((section) => {
+      const sectionName = typeof section.name === 'object' ? (section.name.en || Object.values(section.name)[0]) : section.name;
+      return section.questions.map((question) => {
+        const questionHeadline = typeof question.headline === 'object' ? (question.headline.en || Object.values(question.headline)[0]) : question.headline;
+        return { id: question.id, headline: questionHeadline || `Question ${question.order}`, sectionName, sectionOrder: section.order, order: question.order, type: question.type, options: question.options || [], isLinked: true };
+      });
+    });
+  }, [linkedForm]);
 
   const getAvailableQuestions = () => {
     const currentFormQuestions = availableQuestions.filter(q => {

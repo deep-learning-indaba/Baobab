@@ -8,6 +8,7 @@ import { ConfirmModal } from '../../components/Modal';
 import TagSelectorDialog from '../../components/TagSelectorDialog';
 import FormTextBox from '../../components/form/FormTextBox';
 import moment from 'moment';
+import { formatUserName } from "../../utils/userName";
 
 const OUTCOME_OPTIONS = {
   JOURNAL: [
@@ -49,6 +50,7 @@ class ApplicationFormResponsePage extends Component {
       reviewerError: null,
       reviewerSuccess: false,
       assigningReviewer: false,
+      expandedReviewer: null,
     };
   }
 
@@ -305,25 +307,60 @@ class ApplicationFormResponsePage extends Component {
           {reviewers.length === 0 && (
             <p className="text-xs text-muted-foreground">{t('No reviewers assigned.')}</p>
           )}
-          {reviewers.map((r, i) => (
-            <div key={r.reviewer_user_id} className="flex items-center justify-between text-sm">
-              <div>
-                <span className="font-medium">{r.user_title} {r.firstname} {r.lastname}</span>
-                <span className={`ml-2 text-xs font-semibold ${r.is_submitted ? 'text-green-600' : 'text-muted-foreground'}`}>
-                  {r.is_submitted ? t('Completed') : t('Not Started')}
-                </span>
+          {reviewers.map(r => {
+            const answers = r.answers || [];
+            const isExpanded = this.state.expandedReviewer === r.reviewer_user_id;
+            const statusLabel = r.is_submitted ? t('Completed') : r.status === 'in_progress' ? t('In progress') : t('Not Started');
+            return (
+              <div key={r.reviewer_user_id} className="text-sm border border-border/60 rounded-lg">
+                <div className="flex items-center justify-between gap-2 px-3 py-2">
+                  <button
+                    type="button"
+                    className="flex-1 min-w-0 text-left disabled:cursor-default"
+                    onClick={() => this.setState({ expandedReviewer: isExpanded ? null : r.reviewer_user_id })}
+                    disabled={answers.length === 0}
+                    aria-expanded={isExpanded}
+                  >
+                    <span className="block font-medium">{formatUserName(r.user_title, r.firstname, r.lastname)}</span>
+                    <span className="flex items-center gap-2 text-xs">
+                      <span className={`font-semibold ${r.is_submitted ? 'text-green-600' : 'text-muted-foreground'}`}>
+                        {statusLabel}
+                      </span>
+                      {r.is_submitted && r.total_score !== undefined && (
+                        <span className="text-muted-foreground">
+                          {t('Score')}: <span className="font-bold text-foreground">{r.total_score}</span>
+                        </span>
+                      )}
+                      {answers.length > 0 && (
+                        <i className={`fas fa-chevron-${isExpanded ? 'up' : 'down'} ml-auto text-[0.65rem] text-muted-foreground`} />
+                      )}
+                    </span>
+                  </button>
+                  {!r.is_submitted && (
+                    <button
+                      onClick={() => this.setState({ confirmRemoveReviewerVisible: true, reviewerToRemove: r.reviewer_user_id })}
+                      className="text-muted-foreground hover:text-error transition-colors"
+                      title={t('Remove reviewer')}
+                    >
+                      <i className="far fa-trash-alt text-xs"></i>
+                    </button>
+                  )}
+                </div>
+                {isExpanded && (
+                  <dl className="px-3 pb-3 space-y-2 border-t border-border/40 pt-2">
+                    {answers.map(a => (
+                      <div key={a.question_id}>
+                        <dt className="text-xs font-semibold text-muted-foreground">
+                          {a.headline}{a.weight > 0 && <span className="ml-1">(×{a.weight})</span>}
+                        </dt>
+                        <dd className="text-sm text-foreground whitespace-pre-wrap">{a.display_value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
               </div>
-              {!r.is_submitted && (
-                <button
-                  onClick={() => this.setState({ confirmRemoveReviewerVisible: true, reviewerToRemove: r.reviewer_user_id })}
-                  className="text-muted-foreground hover:text-error transition-colors ml-2"
-                  title={t('Remove reviewer')}
-                >
-                  <i className="far fa-trash-alt text-xs"></i>
-                </button>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="space-y-2 pt-2 border-t border-border/40">

@@ -64,6 +64,10 @@ class Event(db.Model):
     # Ordered language codes the event's content is authored in; the first is the
     # primary language. Fixed at creation. NULL inherits the organisation's languages.
     languages = db.Column(db.JSON(), nullable=True)
+    # Selects which form system drives the event's application, review and
+    # registration flows: the generic Form model (True) or the legacy
+    # ApplicationForm / ReviewForm / RegistrationForm models (False).
+    uses_new_forms = db.Column(db.Boolean(), nullable=False, default=True, server_default='true')
 
     organisation = db.relationship('Organisation', foreign_keys=[organisation_id])
     survey_form = db.relationship('Form', foreign_keys=[survey_form_id])
@@ -101,7 +105,8 @@ class Event(db.Model):
         timezone='UTC',
         checkin_mode='per_event',
         survey_form_id=None,
-        languages=None
+        languages=None,
+        uses_new_forms=True
     ):
         self.start_date = start_date
         self.end_date = None if event_type == EventType.JOURNAL else end_date
@@ -130,6 +135,7 @@ class Event(db.Model):
         self.survey_form_id = survey_form_id
         self.event_fees = []
         self.languages = list(languages) if languages else None
+        self.uses_new_forms = uses_new_forms
 
         self.add_event_translations(names, descriptions)
 

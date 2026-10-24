@@ -157,6 +157,7 @@ class VisibilityEvaluator:
                 ]
             }
         """
+        expression = VisibilityEvaluator.prune_blank_conditions(expression)
         if not expression:
             return True
 
@@ -183,6 +184,36 @@ class VisibilityEvaluator:
             return VisibilityEvaluator._evaluate_answer(expression, context)
 
         return False
+
+    @staticmethod
+    def prune_blank_conditions(expression):
+        """`expression` without unfinished conditions, or None if nothing is left.
+
+        The rule builder inserts `{"tag": ""}` as soon as a rule is started, and
+        that placeholder can be saved without a tag ever being chosen. Taken
+        literally it matches nobody, so a form, section or question would be
+        hidden from every respondent while still looking unrestricted in the
+        editor. A tag leaf with no tag, and a group left with no conditions,
+        therefore impose no restriction.
+        """
+        if not expression or not isinstance(expression, dict):
+            return expression or None
+
+        if expression.get('operator') in ('AND', 'OR', 'NOT'):
+            conditions = [
+                pruned for pruned in (
+                    VisibilityEvaluator.prune_blank_conditions(c)
+                    for c in expression.get('conditions') or []
+                ) if pruned
+            ]
+            if not conditions:
+                return None
+            return {**expression, 'conditions': conditions}
+
+        if 'tag' in expression and not str(expression.get('tag') or '').strip():
+            return None
+
+        return expression
 
     @staticmethod
     def _evaluate_answer(expression, context):

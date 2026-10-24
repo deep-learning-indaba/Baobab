@@ -6,10 +6,13 @@ from app.invoice import generator
 from flask import g
 from typing import Sequence
 from datetime import datetime
-from app.utils import emailer
+from app.email_template.service import Attachment, queue_email, upload_attachment
 from app.utils import storage
-from app import LOGGER
+from app import LOGGER, db
 import os
+
+
+INVOICE_BUCKET = "indaba-invoices"  # TODO: Replace bucket name with config from organisation
 
 
 class OfferAlreadyHasInvoiceError(ValueError):
@@ -72,28 +75,21 @@ def issue_invoice_for_offer(offer: Offer, event_fees: Sequence[EventFee], due_da
     invoice_pdf, invoice_number = generator.from_invoice_model(invoice, g.organisation)
     filename = f"invoice_{invoice_number}.pdf"
     try:
-        emailer.email_user(
-            'invoice',
-            event=offer.event,
-            user=offer.user,
-            file_name=filename,
-            file_path=invoice_pdf,
-            template_parameters=dict(
-                system_url=g.organisation.system_url,
-                invoice_id=invoice.id,
-                due_date=invoice.due_date.strftime('%d %B %Y'),
-            )
-        )
+        with open(invoice_pdf, 'rb') as file:
+            bytes_file = file.read()
 
-        # Save invoice to Cloud storage
+        # Saved to its own bucket to keep a copy; the email attaches that copy.
         try:
-            bucket = storage.get_storage_bucket("indaba-invoices")  # TODO: Replace bucket name with config from organisation
-            blob = bucket.blob(filename)
-            with open(invoice_pdf, 'rb') as file:
-                bytes_file = file.read()
-                blob.upload_from_string(bytes_file, content_type="application/pdf")
+            bucket = storage.get_storage_bucket(INVOICE_BUCKET)
+            bucket.blob(filename).upload_from_string(bytes_file, content_type="application/pdf")
+            attachment = Attachment(filename, filename, bucket=INVOICE_BUCKET)
         except Exception as e:
             LOGGER.error("Could not upload invoice to cloud storage: " + str(e))
+            attachment = upload_attachment(bytes_file, filename)
+
+        queue_email('invoice', offer.user, event=offer.event, attachments=[attachment],
+                    context={'invoice': invoice, 'offer': offer})
+        db.session.commit()
     finally:
         os.remove(invoice_pdf)
 

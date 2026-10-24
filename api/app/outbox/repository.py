@@ -18,8 +18,8 @@ RETRY_BACKOFF_MINUTES = 5
 class OutboxRepository:
 
     @staticmethod
-    def enqueue_many(messages, source_type=None, source_id=None):
-        """Queue messages, skipping any already queued for the same source.
+    def enqueue_many(messages):
+        """Queue messages, skipping any whose idempotency_key is already queued.
 
         `messages` are plain dicts of OutboxMessage column values. Nothing is
         committed: the caller commits so that the queued rows and whatever they
@@ -30,26 +30,40 @@ class OutboxRepository:
         if not messages:
             return 0
 
-        if source_type is not None:
-            already_queued = OutboxRepository.queued_keys(source_type, source_id)
-            messages = [
-                m for m in messages
-                if (m.get('channel'), m.get('user_id')) not in already_queued
-            ]
+        keys = [m['idempotency_key'] for m in messages if m.get('idempotency_key')]
+        if keys:
+            already_queued = OutboxRepository.existing_idempotency_keys(keys)
+            seen = set()
+            kept = []
+            for m in messages:
+                key = m.get('idempotency_key')
+                if key and (key in already_queued or key in seen):
+                    continue
+                if key:
+                    seen.add(key)
+                kept.append(m)
+            messages = kept
             if not messages:
                 return 0
 
+        for m in messages:
+            m.setdefault('sensitive', False)
         db.session.bulk_insert_mappings(OutboxMessage, messages)
         return len(messages)
 
     @staticmethod
-    def queued_keys(source_type, source_id):
-        """(channel, user_id) pairs already present for a source, in any status."""
-        rows = (db.session.query(OutboxMessage.channel, OutboxMessage.user_id)
-                .filter(OutboxMessage.source_type == source_type,
-                        OutboxMessage.source_id == source_id)
-                .all())
-        return {(row[0], row[1]) for row in rows}
+    def existing_idempotency_keys(keys):
+        existing = set()
+        keys = list(keys)
+        # Chunked: an announcement to a few thousand guests would otherwise put
+        # thousands of bound parameters in one IN clause.
+        for start in range(0, len(keys), 1000):
+            chunk = keys[start:start + 1000]
+            existing.update(row[0] for row in (
+                db.session.query(OutboxMessage.idempotency_key)
+                .filter(OutboxMessage.idempotency_key.in_(chunk))
+                .all()))
+        return existing
 
     @staticmethod
     def claim_batch(limit, now=None):
@@ -81,6 +95,26 @@ class OutboxRepository:
                  synchronize_session=False))
         db.session.commit()
 
+        return (db.session.query(OutboxMessage)
+                .filter(OutboxMessage.claim_token == token)
+                .order_by(OutboxMessage.id)
+                .all())
+
+    @staticmethod
+    def claim_ids(message_ids, now=None):
+        """Take exclusive ownership of specific pending messages - the send_now
+        path. Same exclusivity rule as claim_batch, so a cron run that picked the
+        same rows can't deliver them a second time."""
+        if not message_ids:
+            return []
+        now = now or datetime.utcnow()
+        token = str(uuid.uuid4())
+        (db.session.query(OutboxMessage)
+         .filter(OutboxMessage.id.in_(list(message_ids)),
+                 OutboxMessage.status == OutboxStatus.PENDING)
+         .update({'status': OutboxStatus.SENDING, 'claimed_at': now, 'claim_token': token},
+                 synchronize_session=False))
+        db.session.commit()
         return (db.session.query(OutboxMessage)
                 .filter(OutboxMessage.claim_token == token)
                 .order_by(OutboxMessage.id)
@@ -126,6 +160,38 @@ class OutboxRepository:
         message.attempts += 1
         message.claim_token = None
         message.last_error = None
+        OutboxRepository._purge_if_sensitive(message)
+
+    @staticmethod
+    def _purge_if_sensitive(message):
+        """A terminal sensitive message no longer needs its body, and keeping it
+        would leave a working reset or login link in the database."""
+        if message.sensitive and message.status in OutboxStatus.TERMINAL:
+            OutboxRepository._clear_body(message)
+
+    @staticmethod
+    def _clear_body(message, now=None):
+        message.body_text = None
+        message.body_html = None
+        if message.channel == 'email':
+            message.payload = None
+        message.body_purged_at = now or datetime.utcnow()
+
+    @staticmethod
+    def purge_bodies_older_than(cutoff, limit=20000):
+        """Clear the content of terminal messages created before `cutoff`,
+        keeping who/when/what-type/status. Returns how many were cleared."""
+        rows = (db.session.query(OutboxMessage)
+                .filter(OutboxMessage.created_at < cutoff,
+                        OutboxMessage.status.in_(OutboxStatus.TERMINAL),
+                        OutboxMessage.body_purged_at.is_(None))
+                .order_by(OutboxMessage.id)
+                .limit(limit)
+                .all())
+        now = datetime.utcnow()
+        for message in rows:
+            OutboxRepository._clear_body(message, now)
+        return len(rows)
 
     @staticmethod
     def mark_skipped(message, reason):
@@ -134,6 +200,7 @@ class OutboxRepository:
         message.attempts += 1
         message.claim_token = None
         message.last_error = str(reason)[:2000]
+        OutboxRepository._purge_if_sensitive(message)
 
     @staticmethod
     def mark_failed(message, error):
@@ -143,6 +210,7 @@ class OutboxRepository:
         message.last_error = str(error)[:2000]
         if message.attempts >= MAX_ATTEMPTS:
             message.status = OutboxStatus.FAILED
+            OutboxRepository._purge_if_sensitive(message)
         else:
             message.status = OutboxStatus.PENDING
             message.scheduled_at = (datetime.utcnow()

@@ -5,7 +5,7 @@ from unittest.mock import patch
 from app import db
 from app.discussion.models import (
     DiscussionThread, DiscussionMessage, DiscussionSubscription, DiscussionReport, DiscussionSpace,
-    NO_SUBJECT_PLACEHOLDER)
+    DiscussionReaction, NO_SUBJECT_PLACEHOLDER)
 from app.discussion.repository import DiscussionRepository
 from app.invitedGuest.models import InvitedGuest
 from app.utils.testing import ApiTestCase
@@ -687,6 +687,151 @@ class DiscussionApiTest(ApiTestCase):
             headers=self.g2_header)
         space_data = next(s for s in json.loads(resp.data) if s['id'] == space_id)
         self.assertTrue(space_data['has_unread'])  # g2 has never viewed either thread
+
+    # ---------- Reactions ----------
+
+    def _react(self, header, message_id, emoji='heart', event_id=None):
+        return self.app.put(
+            '/api/v1/discussion/message/{}/reaction'.format(message_id),
+            data=json.dumps({'event_id': event_id or self.event_id, 'emoji': emoji}),
+            content_type='application/json', headers=header)
+
+    def _unreact(self, header, message_id, emoji='heart'):
+        return self.app.delete(
+            '/api/v1/discussion/message/{}/reaction?event_id={}&emoji={}'.format(
+                message_id, self.event_id, emoji),
+            headers=header)
+
+    def _thread_messages(self, header, thread_id):
+        resp = self.app.get(
+            '/api/v1/discussion/thread/{}?event_id={}'.format(thread_id, self.event_id),
+            headers=header)
+        return json.loads(resp.data)['messages']
+
+    def test_add_reaction_returns_updated_reactions(self):
+        _, message_id = self._create_thread_ids(self.g1_header)
+        resp = self._react(self.g2_header, message_id, 'heart')
+        self.assertEqual(resp.status_code, 200)
+        reactions = json.loads(resp.data)['reactions']
+        self.assertEqual(len(reactions), 1)
+        self.assertEqual(reactions[0]['emoji'], 'heart')
+        self.assertEqual(reactions[0]['count'], 1)
+        self.assertTrue(reactions[0]['reacted_by_me'])
+        self.assertEqual(reactions[0]['users'][0]['user_id'], self.g2_id)
+
+    def test_add_reaction_is_idempotent(self):
+        _, message_id = self._create_thread_ids(self.g1_header)
+        self._react(self.g2_header, message_id)
+        resp = self._react(self.g2_header, message_id)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(json.loads(resp.data)['reactions'][0]['count'], 1)
+        self.assertEqual(db.session.query(DiscussionReaction).count(), 1)
+
+    def test_one_user_can_add_several_emojis_to_one_message(self):
+        _, message_id = self._create_thread_ids(self.g1_header)
+        self._react(self.g2_header, message_id, 'heart')
+        resp = self._react(self.g2_header, message_id, 'clap')
+        emojis = [r['emoji'] for r in json.loads(resp.data)['reactions']]
+        self.assertEqual(emojis, ['heart', 'clap'])  # fixed display order
+
+    def test_remove_reaction_only_removes_own(self):
+        _, message_id = self._create_thread_ids(self.g1_header)
+        self._react(self.g1_header, message_id)
+        self._react(self.g2_header, message_id)
+        resp = self._unreact(self.g2_header, message_id)
+        self.assertEqual(resp.status_code, 200)
+        reactions = json.loads(resp.data)['reactions']
+        self.assertEqual(reactions[0]['count'], 1)
+        self.assertFalse(reactions[0]['reacted_by_me'])
+        self.assertEqual(reactions[0]['users'][0]['user_id'], self.g1_id)
+
+    def test_remove_missing_reaction_is_a_noop(self):
+        _, message_id = self._create_thread_ids(self.g1_header)
+        resp = self._unreact(self.g2_header, message_id)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(json.loads(resp.data)['reactions'], [])
+
+    def test_invalid_emoji_rejected(self):
+        _, message_id = self._create_thread_ids(self.g1_header)
+        self.assertEqual(self._react(self.g2_header, message_id, 'skull').status_code, 400)
+        self.assertEqual(self._unreact(self.g2_header, message_id, 'skull').status_code, 400)
+
+    def test_non_guest_cannot_react(self):
+        _, message_id = self._create_thread_ids(self.g1_header)
+        self.assertEqual(self._react(self.out_header, message_id).status_code, 403)
+
+    def test_cannot_react_to_message_in_another_event(self):
+        _, message_id = self._create_thread_ids(self.g1_header)
+        other_event = self.add_event(key='OTHER2026')
+        other_event_id = other_event.id
+        _invited_guest(other_event_id, self.g2_id)
+        resp = self._react(self.g2_header, message_id, event_id=other_event_id)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_cannot_react_to_deleted_message(self):
+        _, message_id = self._create_thread_ids(self.g1_header)
+        self.app.delete(
+            '/api/v1/discussion/message/{}?event_id={}'.format(message_id, self.event_id),
+            headers=self.g1_header)
+        self.assertEqual(self._react(self.g2_header, message_id).status_code, 403)
+
+    def test_thread_detail_includes_reactions_per_caller(self):
+        thread_id, message_id = self._create_thread_ids(self.g1_header)
+        self._react(self.g1_header, message_id, 'heart')
+        self._react(self.g2_header, message_id, 'heart')
+        self._react(self.g2_header, message_id, 'thumbs_up')
+
+        as_g1 = self._thread_messages(self.g1_header, thread_id)[0]['reactions']
+        self.assertEqual([r['emoji'] for r in as_g1], ['thumbs_up', 'heart'])
+        by_emoji = {r['emoji']: r for r in as_g1}
+        self.assertEqual(by_emoji['heart']['count'], 2)
+        self.assertTrue(by_emoji['heart']['reacted_by_me'])
+        self.assertFalse(by_emoji['thumbs_up']['reacted_by_me'])
+        self.assertEqual([u['user_id'] for u in by_emoji['heart']['users']], [self.g1_id, self.g2_id])
+        self.assertEqual([u['is_me'] for u in by_emoji['heart']['users']], [True, False])
+
+    def test_deleted_message_has_no_reactions(self):
+        thread_id, message_id = self._create_thread_ids(self.g1_header)
+        self._react(self.g2_header, message_id)
+        self.app.delete(
+            '/api/v1/discussion/message/{}?event_id={}'.format(message_id, self.event_id),
+            headers=self.g1_header)
+        message = self._thread_messages(self.g2_header, thread_id)[0]
+        self.assertEqual(message['reactions'], [])
+
+    def test_thread_list_reports_reaction_totals(self):
+        thread_id, root_id = self._create_thread_ids(self.g1_header)
+        self._reply(self.g2_header, thread_id)
+        reply_id = self._thread_messages(self.g1_header, thread_id)[1]['id']
+        self._react(self.g1_header, root_id, 'heart')
+        self._react(self.g2_header, root_id, 'heart')
+        self._react(self.g2_header, reply_id, 'clap')
+
+        resp = self.app.get(
+            '/api/v1/discussion/thread?event_id={}&space_id={}'.format(self.event_id, self.space_id),
+            headers=self.g1_header)
+        summary = json.loads(resp.data)[0]
+        self.assertEqual(summary['reaction_count'], 3)
+        self.assertEqual(summary['top_reactions'], ['heart', 'clap'])
+
+        self.app.delete(
+            '/api/v1/discussion/message/{}?event_id={}'.format(reply_id, self.event_id),
+            headers=self.g2_header)
+        resp = self.app.get(
+            '/api/v1/discussion/thread?event_id={}&space_id={}'.format(self.event_id, self.space_id),
+            headers=self.g1_header)
+        summary = json.loads(resp.data)[0]
+        self.assertEqual(summary['reaction_count'], 2)
+        self.assertEqual(summary['top_reactions'], ['heart'])
+
+    def test_thread_without_reactions_reports_zero(self):
+        self._create_thread_ids(self.g1_header)
+        resp = self.app.get(
+            '/api/v1/discussion/thread?event_id={}&space_id={}'.format(self.event_id, self.space_id),
+            headers=self.g1_header)
+        summary = json.loads(resp.data)[0]
+        self.assertEqual(summary['reaction_count'], 0)
+        self.assertEqual(summary['top_reactions'], [])
 
     # ---------- helpers ----------
 

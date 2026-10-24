@@ -21,10 +21,10 @@ class FormTypeCard extends Component {
             );
         }
 
-        var isNew = formTypeData.system === 'new';
-        var isOld = formTypeData.system === 'old';
-        var hasLegacyForm = isOld && formTypeData.legacy_form_id != null;
-        var isNoForm = isOld && !formTypeData.legacy_form_id;
+        var isNewSystem = formTypeData.system === 'new';
+        var isNew = isNewSystem && formTypeData.form_id != null;
+        var hasLegacyForm = !isNewSystem && formTypeData.legacy_form_id != null;
+        var isNoForm = !isNew && !hasLegacyForm;
 
         return (
             <div className={"bg-white rounded-2xl shadow-sm border p-6 mb-3 transition-colors " + (isNew ? "border-green-200 bg-green-50/5" : hasLegacyForm ? "border-amber-200 bg-amber-50/5" : "border-slate-200 bg-slate-50/5")}>
@@ -70,8 +70,8 @@ class FormTypeCard extends Component {
                                 </Link>
                             )}
 
-                            {/* No form yet: offer to create new-system form */}
-                            {isNoForm && onCreateNew && (
+                            {/* No form yet: offer to create one in the event's system */}
+                            {isNoForm && isNewSystem && onCreateNew && (
                                 <button
                                     className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold border border-green-500 text-green-600 hover:bg-green-50 transition-colors"
                                     onClick={onCreateNew}
@@ -81,15 +81,12 @@ class FormTypeCard extends Component {
                                 </button>
                             )}
 
-                            {/* Offer the legacy editor when a new-system form
-                                exists, i.e. when there is actually something to
-                                move away from. */}
-                            {isNew && legacyEditUrl && (
+                            {isNoForm && !isNewSystem && legacyEditUrl && (
                                 <Link
                                     to={legacyEditUrl}
-                                    className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-300 text-slate-500 hover:bg-slate-50 transition-colors"
+                                    className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold border border-amber-500 text-amber-700 hover:bg-amber-50 transition-colors"
                                 >
-                                    {t('Use Legacy Editor')}
+                                    {t('Create Legacy Form')}
                                 </Link>
                             )}
                         </div>

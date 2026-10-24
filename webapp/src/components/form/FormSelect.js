@@ -59,6 +59,7 @@ class FormSelect extends React.Component {
             value={value}
             onChange={e => onChange(id, e)}
             isSearchable={searchable}
+            isClearable={this.props.clearable}
             className={
               this.shouldDisplayError()
                 ? "select-control is-invalid"

@@ -316,7 +316,7 @@ class PlaceholderResolver:
         if key == 'fullname':
             return user.full_name
         if key == 'title':
-            return user.user_title
+            return user.user_title or ''
         if key == 'email':
             return user.email
         if key == 'nationality':

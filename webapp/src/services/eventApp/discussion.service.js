@@ -43,6 +43,12 @@ export var discussionService = {
   reportMessage: function (eventId, messageId, reason) {
     return axios.post(baseUrl + '/api/v1/discussion/message/' + messageId + '/report', { event_id: eventId, reason: reason }, { headers: authHeader() }).then(ok).catch(fail);
   },
+  addReaction: function (eventId, messageId, emoji) {
+    return axios.put(baseUrl + '/api/v1/discussion/message/' + messageId + '/reaction', { event_id: eventId, emoji: emoji }, { headers: authHeader() }).then(ok).catch(fail);
+  },
+  removeReaction: function (eventId, messageId, emoji) {
+    return axios.delete(baseUrl + '/api/v1/discussion/message/' + messageId + '/reaction?event_id=' + eventId + '&emoji=' + encodeURIComponent(emoji), { headers: authHeader() }).then(ok).catch(fail);
+  },
   setSubscription: function (eventId, threadId, subscribed) {
     return axios.post(baseUrl + '/api/v1/discussion/thread/' + threadId + '/subscription', { event_id: eventId, subscribed: subscribed }, { headers: authHeader() }).then(ok).catch(fail);
   },

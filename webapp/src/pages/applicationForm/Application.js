@@ -1,12 +1,18 @@
 import React, { Component } from "react";
 import { Redirect } from "react-router-dom";
+import { withTranslation } from "react-i18next";
 import "./Application.css";
 import ApplicationForm from "./components/ApplicationForm"
+import FormNotAvailable from "../../components/FormNotAvailable";
 
-export default class Application extends Component {
+class Application extends Component {
   render() {
-    if (this.props.event && this.props.event.application_form_id) {
-      return <Redirect to={"/" + this.props.event.key + "/forms/" + this.props.event.application_form_id} />;
+    const { event, t } = this.props;
+    if (event && event.uses_new_forms) {
+      if (event.application_form_id) {
+        return <Redirect to={"/" + event.key + "/forms/" + event.application_form_id} />;
+      }
+      return <FormNotAvailable message={t('The application form for this event has not been published yet.')} />;
     }
 
     return (
@@ -15,3 +21,5 @@ export default class Application extends Component {
     );
   }
 }
+
+export default withTranslation()(Application);

@@ -2,10 +2,9 @@ import React, { Component } from "react";
 import { withTranslation } from "react-i18next";
 import { formResponseService } from "../../../services/formResponse";
 import { formServices } from "../../../services/form/form.service";
-import { getDownloadURL } from "../../../utils/files";
-import { formatAnswerForDisplay } from "../../formRenderer/utils/answerDisplay";
-
-const DISPLAY_ONLY_TYPES = ['information', 'sub-heading'];
+import ResponseAnswers from "../../../components/form/ResponseAnswers";
+import { ConfirmModal } from "../../../components/Modal";
+import { isEventAdmin } from "../../../utils/user";
 
 class FormResponseDetailComponent extends Component {
   constructor(props) {
@@ -14,7 +13,10 @@ class FormResponseDetailComponent extends Component {
       response: null,
       form: null,
       loading: true,
-      error: null
+      error: null,
+      confirmDeleteVisible: false,
+      deleting: false,
+      deleteError: null
     };
   }
 
@@ -79,133 +81,26 @@ class FormResponseDetailComponent extends Component {
     this.props.history.goBack();
   };
 
-  getQuestionText(question, lang) {
-    if (!question) return '';
-    const headline = question.headline;
-    if (!headline) return '';
-    if (typeof headline === 'string') return headline;
-    return headline[lang] || headline['en'] || Object.values(headline)[0] || '';
+  canDelete() {
+    const { form } = this.state;
+    // Review responses are managed through reviewer assignment instead.
+    return isEventAdmin(this.props.user, this.props.event) && form && form.form_type !== 'review';
   }
 
-  getQuestionOptions(question, lang) {
-    if (!question || !question.options) return [];
-    const opts = question.options;
-    if (Array.isArray(opts)) return opts;
-    return opts[lang] || opts['en'] || Object.values(opts)[0] || [];
-  }
-
-  renderAnswerValue(answer, question) {
-    const { t } = this.props;
-    if (!answer || answer.value === null || answer.value === undefined || answer.value === '') {
-      return <span className="text-muted-foreground italic">{t('No answer provided.')}</span>;
+  handleDelete = async () => {
+    const formId = this.getFormId();
+    const eventId = this.props.event.id;
+    this.setState({ confirmDeleteVisible: false, deleting: true, deleteError: null });
+    const result = await formResponseService.deleteResponseAdmin(eventId, formId, this.getResponseId());
+    if (result.error) {
+      this.setState({ deleting: false, deleteError: result.error });
+      return;
     }
-
-    const type = question ? question.type : null;
-    const value = answer.value;
-    const lang = this.props.language || 'en';
-
-    if (type === 'file') {
-      return (
-        <a href={getDownloadURL(value)} target="_blank" rel="noopener noreferrer"
-           className="text-primary hover:underline">
-          {t('Uploaded File')}
-        </a>
-      );
-    }
-
-    if (type === 'multi-file') {
-      try {
-        const files = JSON.parse(value);
-        if (Array.isArray(files) && files.length > 0) {
-          return (
-            <div className="space-y-1">
-              {files.map(f => (
-                <div key={f.name}>
-                  <a href={getDownloadURL(JSON.stringify(f))} target="_blank" rel="noopener noreferrer"
-                     className="text-primary hover:underline">{f.name}</a>
-                </div>
-              ))}
-            </div>
-          );
-        }
-      } catch (_) {}
-      return <span className="text-muted-foreground italic">{t('No files uploaded')}</span>;
-    }
-
-    // Shared with the response renderer's review page so both show the same
-    // thing: option labels rather than stored values, Yes/No for checkboxes.
-    const formatted = formatAnswerForDisplay(question, value, lang, t);
-    if (formatted !== null && formatted !== value) {
-      return <span>{formatted}</span>;
-    }
-
-    return <span className="whitespace-pre-wrap">{value}</span>;
-  }
-
-  buildQuestionMap() {
-    const map = {};
-    if (!this.state.form) return map;
-    for (const section of this.state.form.sections || []) {
-      for (const q of section.questions || []) {
-        map[q.id] = q;
-      }
-    }
-    return map;
-  }
-
-  renderFormContent() {
-    const { t } = this.props;
-    const { form, response } = this.state;
-    if (!form || !response) return null;
-
-    const lang = this.props.language || 'en';
-    const answersByQuestionId = {};
-    for (const a of response.answers || []) {
-      answersByQuestionId[a.question_id] = a;
-    }
-
-    return (form.sections || []).map(section => {
-      const sectionName = section.name
-        ? (typeof section.name === 'string' ? section.name : section.name[lang] || section.name['en'] || '')
-        : '';
-      // Display-only questions carry no answer, so listing them would just add
-      // "No answer provided." noise to a review page.
-      const visibleQuestions = (section.questions || [])
-        .filter(q => !DISPLAY_ONLY_TYPES.includes(q.type));
-      if (visibleQuestions.length === 0) return null;
-
-      return (
-        <div key={section.id} className="space-y-4">
-          {sectionName && (
-            <h3 className="text-base font-bold text-foreground border-b border-border pb-2">{sectionName}</h3>
-          )}
-          {visibleQuestions.map(q => {
-            const questionText = this.getQuestionText(q, lang);
-            const answer = answersByQuestionId[q.id];
-            // A question that has since been removed from the form still has to
-            // show its answer, but should say so.
-            const isRemoved = q.is_active === false;
-            if (isRemoved && !answer) return null;
-            return (
-              <div key={q.id} className="space-y-1">
-                <p className="text-sm font-semibold text-foreground/90">
-                  {questionText}
-                  {isRemoved && (
-                    <span className="ml-2 text-xs font-normal text-muted-foreground italic">
-                      ({t('removed from form')})
-                    </span>
-                  )}
-                </p>
-                <div className="text-sm text-foreground pl-2">
-                  {this.renderAnswerValue(answer, q)}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      );
+    this.props.history.replace({
+      pathname: `/${this.props.event.key}/form-responses/${formId}`,
+      state: { deletedResponse: { emailSent: result.emailSent } }
     });
-  }
+  };
 
   render() {
     const { t, renderAdminContent } = this.props;
@@ -266,7 +161,35 @@ class FormResponseDetailComponent extends Component {
               {response.user.user_title} {response.user.firstname} {response.user.lastname}
             </h1>
           )}
+          {this.canDelete() && (
+            <button
+              onClick={() => this.setState({ confirmDeleteVisible: true })}
+              disabled={this.state.deleting}
+              className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-error/40 text-error hover:bg-error/5 transition-colors disabled:opacity-40"
+            >
+              <i className="fas fa-trash-alt" />
+              {this.state.deleting ? t('Deleting…') : t('Delete Response')}
+            </button>
+          )}
         </div>
+
+        {this.state.deleteError && (
+          <div className="bg-error/10 text-error border border-error/20 px-4 py-3 rounded-xl text-sm">
+            {this.state.deleteError}
+          </div>
+        )}
+
+        <ConfirmModal
+          visible={this.state.confirmDeleteVisible}
+          onOK={this.handleDelete}
+          onCancel={() => this.setState({ confirmDeleteVisible: false })}
+          okText={t('Delete')}
+          cancelText={t('Cancel')}
+          danger
+        >
+          <p className="font-semibold mb-2">{t('Delete this response?')}</p>
+          <p>{t('This permanently deletes the response and its answers, along with any reviews of it. This cannot be undone. The respondent will be emailed to let them know.')}</p>
+        </ConfirmModal>
 
         <div className="flex flex-wrap gap-2 text-sm">
           <span className={`inline-flex items-center px-3 py-1 rounded-full font-semibold text-xs border ${
@@ -282,9 +205,11 @@ class FormResponseDetailComponent extends Component {
           )}
         </div>
 
-        <div className="space-y-6">
-          {this.renderFormContent()}
-        </div>
+        <ResponseAnswers
+          form={this.state.form}
+          answers={response.answers}
+          language={this.props.language || 'en'}
+        />
       </div>
     );
 

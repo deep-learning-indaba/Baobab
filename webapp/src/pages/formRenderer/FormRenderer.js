@@ -39,7 +39,8 @@ const FormRenderer = ({
   showConfirmation = true,
   autoSaveInterval = 0,
   userTags = [],
-  isPreview = false
+  isPreview = false,
+  onAnswersChange = null
 }) => {
   const { t } = useTranslation();
 
@@ -86,6 +87,10 @@ const FormRenderer = ({
   useEffect(() => {
     if (response && response.answers) setAnswers(response.answers.filter(a => a.is_active !== false));
   }, [response]);
+
+  useEffect(() => {
+    if (onAnswersChange) onAnswersChange(answers);
+  }, [answers, onAnswersChange]);
 
   useEffect(() => {
     // Never autosave a response that has already been submitted - a timer
@@ -417,7 +422,7 @@ const FormRenderer = ({
         <SectionRenderer section={currentSection} answers={answers} answersDict={answersDict}
           onAnswerChange={handleAnswerChange} validationErrors={validationErrors} language={language}
           isQuestionVisible={(q) => isQuestionVisible(q, currentSection)}
-          disabled={isReadOnly} linkedResponse={linkedResponse} t={t} />
+          disabled={isReadOnly} t={t} />
       );
     }
     return (
@@ -425,7 +430,7 @@ const FormRenderer = ({
         {visibleSections.map(section => (
           <SectionRenderer key={section.id} section={section} answers={answers} answersDict={answersDict}
             onAnswerChange={handleAnswerChange} validationErrors={validationErrors} language={language}
-            isQuestionVisible={isQuestionVisible} disabled={isReadOnly} linkedResponse={linkedResponse} t={t} />
+            isQuestionVisible={isQuestionVisible} disabled={isReadOnly} t={t} />
         ))}
       </div>
     );

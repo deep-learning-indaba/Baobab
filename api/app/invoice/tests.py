@@ -214,7 +214,12 @@ class InvoiceAdminApiTest(BaseInvoiceApiTest):
 
     def setUp(self):
         super().setUp()
-    
+        # Issuing an invoice stores a copy of the PDF in cloud storage; keep the
+        # tests off the network (and off real credentials, which CI doesn't have).
+        storage_patcher = patch('app.utils.storage.get_storage_bucket')
+        storage_patcher.start()
+        self.addCleanup(storage_patcher.stop)
+
     def test_get_invoices_for_event(self):
         line_items = self.get_default_line_items()
         invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items, self.applicant_email)

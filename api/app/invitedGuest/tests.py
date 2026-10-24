@@ -9,6 +9,7 @@ from app.events.models import Event, EventRole
 from app.applicationModel.models import ApplicationForm
 from app.responses.models import Response
 from app.organisation.models import Organisation
+from app.outbox.models import OutboxMessage
 
 
 INVITED_GUEST = {
@@ -68,10 +69,6 @@ class InvitedGuestTest(ApiTestCase):
         self.headers = self.get_auth_header_for("something@email.com")
         self.adminHeaders = self.get_auth_header_for("event_admin@ea.com")
 
-        self.add_email_template('guest-invitation-with-registration')
-        self.add_email_template('guest-invitation')
-        self.add_email_template('new-guest-registration')
-        self.add_email_template('new-guest-no-registration')
 
         db.session.flush()
 
@@ -114,6 +111,24 @@ class InvitedGuestTest(ApiTestCase):
         data = json.loads(response.data)
         assert response.status_code == 201
         assert data['fullname'] == '{} {} {}'.format(USER_DATA["user_title"], USER_DATA["firstname"], USER_DATA["lastname"])
+
+    def test_create_invitedGuest_create_user_without_title(self):
+        self.seed_static_data()
+        self.add_email_template('new-guest', 'Dear {{ recipient.salutation }}, [{{ recipient.title }}]',
+                                event_id=self.event1_id)
+        user_data = dict(USER_DATA)
+        del user_data['user_title']
+
+        response = self.app.post(
+            '/api/v1/invitedGuest/create', data=user_data, headers=self.headers)
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(data['fullname'], 'Some Thing')
+
+        user = AppUser.query.filter_by(email=USER_DATA['email']).one()
+        self.assertIsNone(user.user_title)
+        email = db.session.query(OutboxMessage).filter_by(template_key='new-guest').one()
+        self.assertEqual(email.body_text, 'Dear Some Thing, []')
 
     def test_create_invitedGuest_list(self):
         self.seed_static_data()

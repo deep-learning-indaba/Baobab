@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Redirect } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import FormRenderer from '../formRenderer/FormRenderer';
 import { formServices } from '../../services/form';
 import { formResponseService } from '../../services/formResponse';
 import history from '../../History';
 import { resolveContentLanguage } from '../../utils/eventLanguages';
+import { ConfirmModal } from '../../components/Modal';
 
 /**
  * FormPage - Main page for responding to forms
@@ -22,6 +24,8 @@ const FormPage = (props) => {
   const [view, setView] = useState('loading'); // loading, list, form
   const [error, setError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [confirmWithdrawVisible, setConfirmWithdrawVisible] = useState(false);
+  const [withdrawError, setWithdrawError] = useState(null);
 
   // Load form and user's responses
   const loadFormAndResponses = useCallback(async () => {
@@ -333,6 +337,20 @@ const FormPage = (props) => {
     setView('form');
   };
 
+  const isApplicationForm = !!form && form.form_type === 'application';
+
+  const handleWithdraw = async () => {
+    setConfirmWithdrawVisible(false);
+    setWithdrawError(null);
+    const result = await formResponseService.withdrawResponse(formId, currentResponse.id);
+    if (result.error) {
+      setWithdrawError(result.error);
+      return;
+    }
+    setSubmitSuccess(false);
+    loadFormAndResponses();
+  };
+
   // Render success message
   const renderSuccess = () => {
     const allowEdits = formAllowsEdits;
@@ -370,7 +388,31 @@ const FormPage = (props) => {
               {t('Go Back')}
             </button>
           </div>
+
+          {isApplicationForm && currentResponse && (
+            <div className="pt-4 border-t border-border space-y-2">
+              <button
+                className="text-sm font-semibold text-error hover:underline"
+                onClick={() => setConfirmWithdrawVisible(true)}
+              >
+                {t('Withdraw application')}
+              </button>
+              {withdrawError && <p className="text-sm text-error">{withdrawError}</p>}
+            </div>
+          )}
         </div>
+
+        <ConfirmModal
+          visible={confirmWithdrawVisible}
+          onOK={handleWithdraw}
+          onCancel={() => setConfirmWithdrawVisible(false)}
+          okText={t('Withdraw')}
+          cancelText={t('Cancel')}
+          danger
+        >
+          <p className="font-semibold mb-2">{t('Withdraw your application?')}</p>
+          <p>{t('You will not be considered unless you submit your application again before the deadline.')}</p>
+        </ConfirmModal>
       </div>
     );
   };
@@ -413,10 +455,23 @@ const FormPage = (props) => {
     );
   }
 
+  // Reviews are assigned, and need the application alongside them, so a
+  // review form is only ever filled in from the review pages.
+  if (form && form.form_type === 'review' && props.event) {
+    return <Redirect to={`/${props.event.key}/reviews`} />;
+  }
+
   // Render main content
   return (
     <div className="w-full max-w-5xl mx-auto pt-6">
       {view === 'list' && renderResponseList()}
+
+      {view === 'form' && isApplicationForm && currentResponse && currentResponse.is_withdrawn && (
+        <div className="mx-4 mb-2 flex items-center gap-3 p-4 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-sm text-left">
+          <i className="fas fa-info-circle" />
+          {t('Your application has been withdrawn. Submit it again to be considered.')}
+        </div>
+      )}
       
       {view === 'form' && form && (
         <FormRenderer

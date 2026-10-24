@@ -6,12 +6,14 @@ import MarkdownRenderer from '../../components/MarkdownRenderer';
 import Attachments from '../../components/Attachments';
 import LightboxImage from '../../components/LightboxImage';
 import { extractAttachments, buildBodyMarkdown } from '../../utils/attachments';
+import MessageReactions from './MessageReactions';
 
 var MESSAGE_COMPONENTS = { img: LightboxImage };
 
 function MessageCard(props) {
   var msg = props.msg, t = props.t, timezone = props.timezone;
   var onEdit = props.onEdit, onDelete = props.onDelete, onReport = props.onReport;
+  var onAddReaction = props.onAddReaction, onRemoveReaction = props.onRemoveReaction;
   var reported = props.reported;
 
   var [menuOpen, setMenuOpen] = useState(false);
@@ -135,6 +137,14 @@ function MessageCard(props) {
           <MarkdownRenderer source={msg.body_markdown} components={MESSAGE_COMPONENTS} />
         </div>
       )}
+
+      {!editing && (
+        <MessageReactions
+          reactions={msg.reactions} t={t}
+          onAdd={function (emoji) { return onAddReaction(msg.id, emoji); }}
+          onRemove={function (emoji) { return onRemoveReaction(msg.id, emoji); }}
+        />
+      )}
     </div>
   );
 }
@@ -192,6 +202,27 @@ function DiscussionThread(props) {
     });
   }
 
+  function applyReactionResult(messageId, request) {
+    return request.then(function (r) {
+      if (r.error) { load(); return; }
+      setThread(function (prev) {
+        return Object.assign({}, prev, {
+          messages: prev.messages.map(function (m) {
+            return m.id === messageId ? Object.assign({}, m, { reactions: r.data.reactions }) : m;
+          }),
+        });
+      });
+    });
+  }
+
+  function handleAddReaction(messageId, emoji) {
+    return applyReactionResult(messageId, discussionService.addReaction(eventId, messageId, emoji));
+  }
+
+  function handleRemoveReaction(messageId, emoji) {
+    return applyReactionResult(messageId, discussionService.removeReaction(eventId, messageId, emoji));
+  }
+
   function handleSubscriptionToggle() {
     setSubToggling(true);
     discussionService.setSubscription(eventId, threadId, !thread.is_subscribed).then(function (r) {
@@ -232,6 +263,7 @@ function DiscussionThread(props) {
           <MessageCard
             msg={root} t={t} timezone={timezone}
             onEdit={handleEdit} onDelete={handleDelete} onReport={handleReport}
+            onAddReaction={handleAddReaction} onRemoveReaction={handleRemoveReaction}
             reported={!!reportedIds[root.id]}
           />
         )}
@@ -241,6 +273,7 @@ function DiscussionThread(props) {
               key={msg.id}
               msg={msg} t={t} timezone={timezone}
               onEdit={handleEdit} onDelete={handleDelete} onReport={handleReport}
+              onAddReaction={handleAddReaction} onRemoveReaction={handleRemoveReaction}
               reported={!!reportedIds[msg.id]}
             />
           );

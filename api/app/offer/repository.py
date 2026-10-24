@@ -1,6 +1,6 @@
 from app import db
 from app.offer.models import Offer, OfferTag
-from sqlalchemy import func, cast, Date
+from app.utils.timeseries import daily_counts
 
 class OfferRepository():
 
@@ -67,12 +67,8 @@ class OfferRepository():
  
     @staticmethod
     def timeseries_offers_accepted(event_id):
-        timeseries = (db.session.query(cast(Offer.responded_at, Date), func.count(Offer.responded_at))
-                        .filter_by(event_id=event_id, candidate_response=True)
-                        .group_by(cast(Offer.responded_at, Date))
-                        .order_by(cast(Offer.responded_at, Date))
-                        .all())
-        return timeseries
+        accepted = db.session.query(Offer).filter_by(event_id=event_id, candidate_response=True)
+        return daily_counts(accepted, Offer.responded_at)
     
     @staticmethod
     def tag_offer(offer_id, tag_id, accepted):

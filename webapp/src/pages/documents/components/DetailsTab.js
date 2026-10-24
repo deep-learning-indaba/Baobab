@@ -15,7 +15,7 @@ function translationValues(template, field, languages) {
   }, {});
 }
 
-const DetailsTab = ({ template, isNew, eventId, languages, autoTranslateEnabled, tags, onCreated, onSaved }) => {
+const DetailsTab = ({ template, isNew, eventId, eventKey, languages, autoTranslateEnabled, tags, onCreated, onSaved }) => {
   const { t } = useTranslation();
   const [key, setKey] = useState(template ? template.key : '');
   const [name, setName] = useState(() => translationValues(template, 'name', languages));
@@ -154,7 +154,12 @@ const DetailsTab = ({ template, isNew, eventId, languages, autoTranslateEnabled,
           <input className={FIELD} value={emailTemplateKey} onChange={(e) => setEmailTemplateKey(e.target.value)}
                  placeholder="generated-document" />
           <p className="text-xs text-muted-foreground mt-1">
-            {t('Matches the key of an Email Template configured for this event. Leave blank to use the default.')}
+            {t('Leave blank to send the standard "Generated document" email. Enter a key (lowercase letters, digits and hyphens) to give this document its own email.')}{' '}
+            {eventKey && (
+              <a className="text-action hover:underline" href={`/${eventKey}/emailTemplates/edit/${emailTemplateKey.trim() || 'generated-document'}`}>
+                {t('Edit this email')}
+              </a>
+            )}
           </p>
         </div>
       )}

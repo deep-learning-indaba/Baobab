@@ -110,3 +110,25 @@ class DiscussionReport(db.Model):
     __table_args__ = (
         db.UniqueConstraint('message_id', 'reporter_user_id', name='uq_discussion_report_msg_reporter'),
     )
+
+
+# Allowed reaction keys, in display order. Stored by key so a glyph or label can
+# change without touching rows; the frontend maps each key to its emoji and label.
+REACTION_EMOJIS = (
+    'thumbs_up', 'heart', 'clap', 'celebrate', 'smile', 'insightful', 'thanks', 'rocket',
+)
+
+
+class DiscussionReaction(db.Model):
+    __tablename__ = 'discussion_reaction'
+    id = db.Column(db.Integer(), primary_key=True)
+    message_id = db.Column(db.Integer(), db.ForeignKey('discussion_message.id'), nullable=False)
+    # event_id is denormalised (also on the message), mirroring DiscussionMessage.
+    event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
+    user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
+    emoji = db.Column(db.String(32), nullable=False)   # a key from REACTION_EMOJIS
+    created_at = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow)
+    __table_args__ = (
+        db.UniqueConstraint('message_id', 'user_id', 'emoji', name='uq_discussion_reaction_msg_user_emoji'),
+        db.Index('ix_discussion_reaction_message', 'message_id'),
+    )

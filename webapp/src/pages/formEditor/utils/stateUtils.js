@@ -190,7 +190,7 @@ export function hasValidation(type) {
 
 export function hasTypeSettings(type) {
   if (!type) return false;
-  return ['file', 'multi-file', 'numeric', 'short-text', 'long-text', 'markdown'].includes(type);
+  return ['file', 'multi-file', 'numeric', 'radio', 'short-text', 'long-text', 'markdown'].includes(type);
 }
 
 export function isDisplayOnly(type) {
@@ -202,6 +202,7 @@ const SETTINGS_KEYS_BY_TYPE = {
   file: ['accepted_extensions', 'max_file_size_mb'],
   'multi-file': ['accepted_extensions', 'max_file_size_mb', 'max_files'],
   numeric: ['min_value', 'max_value', 'decimal_places', 'weight'],
+  radio: ['weight'],
   'short-text': ['min_words', 'max_words'],
   'long-text': ['min_words', 'max_words'],
   markdown: ['min_words', 'max_words'],

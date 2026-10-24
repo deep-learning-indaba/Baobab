@@ -7,7 +7,7 @@ from app import app, db, LOGGER
 from app.events.models import Event, EventFee, EventResourceLink
 from app.utils.testing import ApiTestCase
 from app.responses.models import Response, Answer
-from app.email_template.models import EmailTemplate
+from app.outbox.models import OutboxMessage
 from app.events.models import Event, EventRole
 from app.users.models import AppUser, Country, UserCategory
 from app.applicationModel.models import ApplicationForm, Section, Question
@@ -296,6 +296,70 @@ class EventsStatsAPITest(ApiTestCase):
         self.assertEqual(response.status_code, 400)
 
 
+class LegacyEventStatsCountsTest(ApiTestCase):
+    """Application, review, offer and registration counts on the event
+    dashboard for an event on the legacy form system."""
+
+    def test_counts(self):
+        admin = self.add_user('admin@test.com')
+        applicants = [self.add_user('applicant{}@test.com'.format(i)) for i in range(4)]
+        reviewer1 = self.add_user('reviewer1@test.com')
+        reviewer2 = self.add_user('reviewer2@test.com')
+        guest1 = self.add_user('guest1@test.com')
+        guest2 = self.add_user('guest2@test.com')
+        event = self.add_event(key='LEGACYSTATS')
+        event_id = event.id
+        self.add_event_role('admin', admin.id, event_id)
+
+        app_form = self.create_application_form(event_id)
+        submitted1 = self.add_response(app_form.id, applicants[0].id, is_submitted=True)
+        submitted2 = self.add_response(app_form.id, applicants[1].id, is_submitted=True)
+        self.add_response(app_form.id, applicants[2].id)
+        withdrawn = self.add_response(app_form.id, applicants[3].id, is_withdrawn=True)
+
+        review_form = self.add_review_form(app_form.id)
+        self.add_review_config(review_form.id, num_reviews_required=2, num_optional_reviews=0)
+        self.add_response_reviewer(submitted1.id, reviewer1.id)
+        self.add_response_reviewer(submitted1.id, reviewer2.id)
+        self.add_response_reviewer(submitted2.id, reviewer1.id)
+        # Withdrawn applications leave reviewers' queues, so this assignment
+        # can never be completed and isn't counted as incomplete.
+        self.add_response_reviewer(withdrawn.id, reviewer2.id)
+        self.add_review_response(reviewer1.id, submitted1.id, review_form.id, is_submitted=True)
+        self.add_review_response(reviewer2.id, submitted1.id, review_form.id)
+
+        accepted = self.add_offer(applicants[0].id, event_id, candidate_response=True)
+        self.add_offer(applicants[1].id, event_id, candidate_response=False)
+        self.add_offer(applicants[2].id, event_id)
+
+        registration_form = self.create_registration_form(event_id)
+        self.add_registration_response(accepted.id, registration_form.id)
+        self.add_invited_guest(guest1.id, event_id)
+        self.add_invited_guest(guest2.id, event_id)
+        self.add_guest_registration(guest1.id, registration_form.id)
+
+        response = self.app.get('/api/v1/eventstats', headers=self.get_auth_header_for('admin@test.com'),
+                                query_string={'event_id': event_id})
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(
+            {k: data[k] for k in (
+                'num_responses', 'num_submitted_responses', 'num_withdrawn_responses',
+                'reviews_completed', 'review_incomplete', 'reviews_unallocated',
+                'offers_allocated', 'offers_accepted', 'offers_confirmed', 'offers_rejected',
+                'num_registrations', 'num_guests', 'num_registered_guests')},
+            {
+                'num_responses': 4, 'num_submitted_responses': 2, 'num_withdrawn_responses': 1,
+                'reviews_completed': 1, 'review_incomplete': 2, 'reviews_unallocated': 1,
+                'offers_allocated': 3, 'offers_accepted': 1, 'offers_confirmed': 1, 'offers_rejected': 1,
+                'num_registrations': 1, 'num_guests': 2, 'num_registered_guests': 1,
+            })
+        self.assertEqual(len(data['submitted_timeseries']), 1)
+        self.assertEqual(len(data['reviews_complete_timeseries']), 1)
+        # Legacy events keep using the event's open/close dates.
+        self.assertIsNone(data['form_statuses'])
+
+
 class EventEngagementStatsAPITest(ApiTestCase):
     """Covers the engagement/attendance/discussion/announcement fields added
     to EventStatsAPI. Kept separate from EventsStatsAPITest (and free of any
@@ -465,12 +529,6 @@ class RemindersAPITest(ApiTestCase):
         db.session.add(event)
         db.session.commit()
 
-        email_templates = [
-            EmailTemplate('application-not-submitted', None, 'Application Not Submitted', '', 'en'),
-            EmailTemplate('application-not-started', None, 'Application Not Started', '', 'en')]
-        db.session.add_all(email_templates)
-        db.session.commit()
-
         event_role = EventRole('admin', event_admin.id, event.id)
         db.session.add(event_role)
 
@@ -483,8 +541,8 @@ class RemindersAPITest(ApiTestCase):
         self.add_response(application_form.id, self.test_users[1].id)
         self.add_response(application_form.id, self.test_users[4].id)
 
-        self.add_email_template('application-not-submitted')
-        self.add_email_template('application-not-started')
+    def _reminders_queued(self, key):
+        return db.session.query(OutboxMessage).filter_by(template_key=key).count()
 
     def get_auth_header_for(self, email):
         body = {
@@ -506,6 +564,7 @@ class RemindersAPITest(ApiTestCase):
         data = json.loads(response.data)
         LOGGER.warning(data)
         self.assertEqual(data['unsubmitted_responses'], 1)
+        self.assertEqual(self._reminders_queued('application-not-submitted'), 1)
 
     def test_not_started_reminder(self):
         self.seed_static_data()
@@ -517,6 +576,7 @@ class RemindersAPITest(ApiTestCase):
         data = json.loads(response.data)
         LOGGER.warning(data)
         self.assertEqual(data['not_started_responses'], 2)
+        self.assertEqual(self._reminders_queued('application-not-started'), 2)
 
     def test_non_event_admin_blocked_from_sending_reminders(self):
         self.seed_static_data()
@@ -1357,7 +1417,7 @@ class EventsByKeyRegistrationFormIdTest(ApiTestCase):
 
     def seed_static_data(self):
         self.user = self.add_user('user@test.com', 'Test', 'User')
-        self.event = self.add_event(key='TESTEVENT')
+        self.event = self.add_event(key='TESTEVENT', uses_new_forms=True)
 
     def _get_event_by_key(self):
         header = self.get_auth_header_for('user@test.com')
@@ -2304,3 +2364,67 @@ class EventLanguagesTest(ApiTestCase):
         event = db.session.query(Event).get(event_id)
         self.assertEqual(event.effective_languages, ['en', 'fr'])
         self.assertEqual(event.primary_language, 'en')
+
+
+class EventScopedRemindersTest(ApiTestCase):
+    """Reminders reach only this event's organisation and this event's applicants."""
+
+    def setUp(self):
+        super().setUp()
+        other_org = self.add_organisation(name='Other Org', domain='otherorg')
+        self.event_id = self.add_event(key='MAIN').id
+        self.other_event_id = self.add_event(key='OTHERMAIN').id
+
+        self.admin_id = self.add_user('admin@x.org').id
+        self.add_event_role('admin', self.admin_id, self.event_id)
+        self.unsubmitted_id = self.add_user('unsubmitted@x.org').id
+        self.submitted_id = self.add_user('submitted@x.org').id
+        self.both_id = self.add_user('both@x.org').id
+        self.other_event_only_id = self.add_user('otherevent@x.org').id
+        self.guest_id = self.add_user('guest@x.org').id
+        self.add_invited_guest(self.guest_id, event_id=self.event_id)
+        self.other_org_user_id = self.add_user('elsewhere@x.org', organisation_id=other_org.id).id
+
+        form_id = self.create_application_form(self.event_id, True, False).id
+        other_form_id = self.create_application_form(self.other_event_id, True, False).id
+        self.add_response(form_id, self.unsubmitted_id)
+        self.add_response(form_id, self.submitted_id, is_submitted=True)
+        self.add_response(form_id, self.both_id, is_submitted=True)
+        self.add_response(form_id, self.both_id)
+        self.add_response(other_form_id, self.other_event_only_id)
+        self.headers = self.get_auth_header_for('admin@x.org')
+
+    def _recipients(self, key):
+        return {m.user_id for m in db.session.query(OutboxMessage).filter_by(template_key=key)}
+
+    def test_not_submitted_only_this_events_unfinished_applications(self):
+        response = self.app.post('/api/v1/reminder-unsubmitted', headers=self.headers,
+                                 data={'event_id': self.event_id})
+        self.assertEqual(json.loads(response.data)['unsubmitted_responses'], 1)
+        self.assertEqual(self._recipients('application-not-submitted'), {self.unsubmitted_id})
+
+    def test_not_started_only_this_organisation_without_an_application(self):
+        response = self.app.post('/api/v1/reminder-not-started', headers=self.headers,
+                                 data={'event_id': self.event_id})
+        recipients = self._recipients('application-not-started')
+        self.assertEqual(json.loads(response.data)['not_started_responses'], len(recipients))
+        # Someone who applied only to another event hasn't started this one.
+        self.assertIn(self.other_event_only_id, recipients)
+        self.assertIn(self.admin_id, recipients)
+        for excluded in (self.unsubmitted_id, self.submitted_id, self.both_id, self.guest_id,
+                         self.other_org_user_id):
+            self.assertNotIn(excluded, recipients)
+
+    def test_forms_system_applications_are_used_when_the_event_uses_new_forms(self):
+        from app.forms.models import Form, FormResponse
+        db.session.query(Event).get(self.event_id).uses_new_forms = True
+        form = Form(event_id=self.event_id, created_by_user_id=self.admin_id, form_type='application',
+                    is_open=True)
+        db.session.add(form)
+        db.session.flush()
+        new_user_id = self.add_user('newsystem@x.org').id
+        db.session.add(FormResponse(form_id=form.id, user_id=new_user_id))
+        db.session.commit()
+
+        self.app.post('/api/v1/reminder-unsubmitted', headers=self.headers, data={'event_id': self.event_id})
+        self.assertEqual(self._recipients('application-not-submitted'), {new_user_id})

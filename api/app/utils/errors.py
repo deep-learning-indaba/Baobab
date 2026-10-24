@@ -35,6 +35,7 @@ RESPONSE_ALREADY_SUBMITTED = ({'message': 'A response has already been submitted
 UPDATE_CONFLICT = (
     {'message': 'The requested update conflicts with the existing resource'}, 409)
 DB_NOT_AVAILABLE = ({'message': 'Unable to access the database'}, 500)
+EVENT_STATS_NOT_AVAILABLE = ({'message': 'Unable to load event statistics'}, 500)
 EMAIL_NOT_VERIFIED = ({'message': 'The email address is not verified'}, 422)
 EMAIL_VERIFY_CODE_NOT_VALID = (
     {'message': 'Valid code is required to verify email'}, 419)
@@ -89,6 +90,12 @@ APPLICATIONS_CLOSED = (
     {'message': 'Applications are now closed'}, 403)
 DUPLICATE_OFFER = (
     {'message': 'An offer already exists for the user_id and event_id'}, 409)
+OFFER_NOT_REJECTED = (
+    {'message': 'Only a rejected offer can be reset'}, 409)
+OFFER_HAS_PAID_INVOICE = (
+    {'message': 'This offer has a paid invoice and cannot be reset'}, 409)
+OFFER_EXPIRY_DATE_REQUIRED = (
+    {'message': 'A new expiry date is required because the current one has passed'}, 400)
 CREATING_INVITATION_FAILED = (
     {'message': 'Invitation Letter creation failed'}, 502)
 SENDING_INVITATION_FAILED = (
@@ -199,3 +206,9 @@ USER_EVENT_DATA_KEY_REQUIRED = ({'message': 'A key is required.'}, 400)
 # Form response export
 INVALID_EXPORT_FORMAT = ({'message': "Invalid export format. Must be 'csv' or 'sheets'."}, 400)
 EXPORT_GOOGLE_SHEETS_FAILED = ({'message': 'Failed to create the Google Sheet. Please try again.'}, 502)
+# Email templates and history
+EMAIL_TYPE_NOT_FOUND = ({'message': 'No email of that type can be edited here.'}, 404)
+EMAIL_MESSAGE_NOT_FOUND = ({'message': 'No email with that ID was sent to this person for this event.'}, 404)
+EMAIL_CONTENT_UNAVAILABLE = ({'message': 'This email cannot be resent: its content was removed, '
+                                         'either because it contained a login or reset link or '
+                                         'because it is older than the retention period.'}, 400)
