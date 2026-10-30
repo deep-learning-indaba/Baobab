@@ -60,14 +60,10 @@
   },
   "scripts": {
     "start": "vite",
-    "start-integration": "vite --mode integration",
     "build": "vite build",
     "build-test": "vite build --mode test",
     "build-dev": "vite build --mode development",
     "preview": "vite preview",
-    "test": "vitest",
-    "test-ci": "vitest run --coverage",
-    "cypress": "cypress open",
     "typecheck": "tsc --noEmit"
   },
   "eslintConfig": {
@@ -105,14 +101,8 @@
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
-    "@vitest/coverage-v8": "^2.1.9",
-    "cypress": "^4.0.2",
-    "enzyme": "^3.8.0",
-    "enzyme-adapter-react-16": "^1.15.5",
-    "jsdom": "^25.0.1",
     "tailwindcss": "^4.3.0",
     "typescript": "^5.7.2",
-    "vite": "^6.0.7",
-    "vitest": "^2.1.9"
+    "vite": "^6.0.7"
   }
 }

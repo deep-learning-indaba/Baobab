@@ -140,12 +140,6 @@ dmypy.json
 api/prod.yaml
 api/app.yaml
 
-# Cypress
-integration-tests/cypress/support/
-integration-tests/cypress/videos/
-integration-tests/cypress/screenshots/
-integration-tests/cypress/plugins/
-
 # Temporary Docs
 # /docs/temp/
 
