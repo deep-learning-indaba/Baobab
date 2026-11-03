@@ -4,6 +4,7 @@ from datetime import datetime
 import pytz
 
 from app import db
+from app.utils.datetime_utils import event_local_to_utc
 from enum import Enum
 
 class EventType(Enum):
@@ -13,8 +14,11 @@ class EventType(Enum):
     PROGRAMME = 'programme'
     JOURNAL = 'journal'
 
-def check_open(open, close):
-    now = datetime.now()
+def check_open(open, close, tz_name):
+    """open and close are naive wall-clock times in the event's timezone."""
+    now = datetime.utcnow()
+    open = event_local_to_utc(open, tz_name) if open else None
+    close = event_local_to_utc(close, tz_name) if close else None
     if open and close:
         return now >= open and now < close
     elif open:
@@ -23,10 +27,10 @@ def check_open(open, close):
         return now < close
     return True
 
-def check_opening(open):
-    now = datetime.now()
+def check_opening(open, tz_name):
+    now = datetime.utcnow()
     if open:
-        return now < open
+        return now < event_local_to_utc(open, tz_name)
     return True
 
 class Event(db.Model):
@@ -322,51 +326,51 @@ class Event(db.Model):
 
     @property
     def is_application_open(self):
-        return check_open(self.application_open, self.application_close)
+        return check_open(self.application_open, self.application_close, self.timezone)
 
     @property
     def is_application_opening(self):  
-        return check_opening(self.application_open)
+        return check_opening(self.application_open, self.timezone)
 
     @property
     def is_review_open(self):
-        return check_open(self.review_open, self.review_close)
+        return check_open(self.review_open, self.review_close, self.timezone)
 
     @property
     def is_review_opening(self): 
-        return check_opening(self.review_open)
+        return check_opening(self.review_open, self.timezone)
 
     @property
     def is_selection_open(self):
-        return check_open(self.selection_open, self.selection_close)
+        return check_open(self.selection_open, self.selection_close, self.timezone)
 
     @property
     def is_selection_opening(self):
-        return check_opening(self.selection_open)
+        return check_opening(self.selection_open, self.timezone)
 
     @property
     def is_offer_open(self):
-        return check_open(self.offer_open, self.offer_close)
+        return check_open(self.offer_open, self.offer_close, self.timezone)
 
     @property
     def is_offer_opening(self):
-        return check_opening(self.offer_open)
+        return check_opening(self.offer_open, self.timezone)
 
     @property
     def is_registration_open(self):
-        return check_open(self.registration_open, self.registration_close)
+        return check_open(self.registration_open, self.registration_close, self.timezone)
 
     @property
     def is_registration_opening(self):
-        return check_opening(self.registration_open)
+        return check_opening(self.registration_open, self.timezone)
 
     @property
     def is_event_open(self):
-        return check_open(self.start_date, self.end_date)
+        return check_open(self.start_date, self.end_date, self.timezone)
 
     @property
     def is_event_opening(self):
-        return check_opening(self.start_date)
+        return check_opening(self.start_date, self.timezone)
 
     @property
     def is_survey_time(self):
