@@ -7,11 +7,19 @@
 const fs = require('fs');
 const path = require('path');
 
+// Accounts created by `flask seed-agent` (api/app/utils/seed_agent.py), all
+// sharing the password in BAOBAB_TEST_PASSWORD.
+const ROLES = ['admin', 'user', 'event-admin', 'reviewer', 'applicant', 'guest'];
+
 async function openSession(chromium, opts = {}) {
+  const role = opts.as || 'admin';
+  if (!opts.email && !ROLES.includes(role)) {
+    throw new Error(`Unknown role "${role}"; expected one of ${ROLES.join(', ')}, or pass { email, password }.`);
+  }
   const {
     baseUrl = process.env.BAOBAB_WEB_URL || 'http://localhost:8080',
     apiUrl = process.env.BAOBAB_API_URL || 'http://localhost:5000',
-    email = process.env.BAOBAB_TEST_EMAIL,
+    email = `claude-${role}@baobab.test`,
     password = process.env.BAOBAB_TEST_PASSWORD,
     viewport = { width: 1280, height: 900 },
     shotDir = '/tmp/pw_test/shots',
@@ -52,7 +60,7 @@ async function openSession(chromium, opts = {}) {
   if (login) {
     try {
       if (!email || !password) {
-        throw new Error('Set BAOBAB_TEST_EMAIL and BAOBAB_TEST_PASSWORD, or pass { email, password }, or { login: false }.');
+        throw new Error('Set BAOBAB_TEST_PASSWORD (run `flask seed-agent` to create the accounts), or pass { email, password }, or { login: false }.');
       }
       const resp = await page.request.post(`${apiUrl}/api/v1/authenticate`, {
         headers: { 'Content-Type': 'application/json', Origin: baseUrl },
@@ -121,4 +129,4 @@ async function openSession(chromium, opts = {}) {
   return { browser, context, page, goto, settle, shot, report, resetLog, close: () => browser.close() };
 }
 
-module.exports = { openSession };
+module.exports = { openSession, ROLES };

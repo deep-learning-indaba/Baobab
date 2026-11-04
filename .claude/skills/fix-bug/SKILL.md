@@ -59,5 +59,5 @@ Fixes #<issue>
 <related issues spotted, or "None">
 ```
 
-2. For UI fixes, add before/after screenshots as a PR comment.
+2. For UI fixes, publish the before/after screenshots with `scripts/agent/publish-screenshots.sh` (see "Where things go" in the workflow doc) and post the links as a PR comment.
 3. Comment on the issue with a one-line summary and the PR link. Swap `claude:in-progress` for `claude:pr-review`.

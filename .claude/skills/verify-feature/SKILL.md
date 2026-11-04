@@ -10,17 +10,29 @@ This checks behaviour the way a user experiences it. Frontend changes have no un
 
 ## Setup
 
-- The stack must be running: `docker-compose ps` should show `web` (port 5000) and `webapp` (port 8080). If they aren't up, start them with `docker-compose up -d web webapp` and wait for `curl -s -o /dev/null -w "%{http_code}" http://localhost:8080` to return 200.
+- **The stack must be running.** Locally that's your dev stack: `docker-compose ps` shows `web` (port 5000) and `webapp` (port 8080). Headless runs start a fresh one with `scripts/agent/start-env.sh` before you begin. That script runs migrations, seeds test data and installs Playwright; run it yourself if `curl -s -o /dev/null -w "%{http_code}" http://localhost:8080` doesn't return 200.
+- **Seed data** comes from `flask seed-agent` (`api/app/utils/seed_agent.py`). It creates the event `agent-test` ("Agent Test Event", always open for applications and reviews, new form system, en and fr), with an application form and a linked review form, plus one account per role, all with the password in `BAOBAB_TEST_PASSWORD`:
+
+| Role (`as:`) | Account | What they have |
+| --- | --- | --- |
+| `admin` (default) | `claude-admin@baobab.test` | Site admin |
+| `user` | `claude-user@baobab.test` | No roles; for permission and negative cases |
+| `event-admin` | `claude-event-admin@baobab.test` | Event admin of `agent-test` |
+| `reviewer` | `claude-reviewer@baobab.test` | Reviewer of `agent-test`, with one assigned review (not started) |
+| `applicant` | `claude-applicant@baobab.test` | A submitted application to `agent-test` |
+| `guest` | `claude-guest@baobab.test` | Confirmed invited guest of `agent-test`, so the event app pages are available |
+
+  Prefer `agent-test` over older events for new scenarios. If a scenario needs data the seed doesn't have (a second applicant, a tag, a submitted review), create it through the app's own API or UI. Fall back to `psql` (see `.claude/CLAUDE.md`), and record every row you add or change so you can revert it at the end.
 - Playwright lives in `/tmp/pw_test`. Install it if missing, as described in the Setup section of `.claude/commands/screenshot.md`. Write and run scripts **inside `/tmp/pw_test`** so `require('playwright')` resolves.
-- Use the session helper `.claude/skills/verify-feature/baobab_pw.js`. It sets the cookie-consent cookie, logs in through the API, and records console errors and failed API calls. Require it by absolute path:
+- Use the session helper `.claude/skills/verify-feature/baobab_pw.js`. It sets the cookie-consent cookie, logs in through the API as a seeded role, and records console errors and failed API calls. Require it by absolute path:
 
 ```js
 const { chromium } = require('playwright');
 const { openSession } = require('<repo>/.claude/skills/verify-feature/baobab_pw.js');
 (async () => {
-  const s = await openSession(chromium, { shotDir: '/tmp/pw_test/shots/<run>' });
+  const s = await openSession(chromium, { as: 'event-admin', shotDir: '/tmp/pw_test/shots/<run>' });
   try {
-    await s.goto('/test2021/someFeature');
+    await s.goto('/agent-test/someFeature');
     await s.page.getByRole('button', { name: 'Save' }).click();
     await s.settle();
     await s.shot('01-after-save');
@@ -31,7 +43,13 @@ const { openSession } = require('<repo>/.claude/skills/verify-feature/baobab_pw.
 })();
 ```
 
-- Login credentials come from `BAOBAB_TEST_EMAIL` / `BAOBAB_TEST_PASSWORD` (a site admin). `BAOBAB_TEST_USER_EMAIL` / `BAOBAB_TEST_USER_PASSWORD` is an ordinary user with no roles, for permission and negative cases; pass `{ email, password }` to `openSession` to log in as them or any other account. If a scenario needs a role or data that doesn't exist in the dev DB (a reviewer with assignments, an applicant with a submitted response), create it through the app's own API or UI where possible. Fall back to `psql` (see `.claude/CLAUDE.md`), and record every row you add or change so you can revert it at the end.
+  Other options: `{ email, password }` for any other account, `{ login: false }` for logged-out pages, `{ viewport: { width: 390, height: 844 } }` for mobile, and `baseUrl` / `apiUrl` (or `BAOBAB_WEB_URL` / `BAOBAB_API_URL`) when the app isn't on ports 8080 and 5000.
+
+### What can't be checked in a seeded environment
+
+- **Email** is never delivered (SMTP settings are placeholders). Check that the right message was queued instead: query the `outbox_message` table (recipient, subject, status) after the action.
+- **Google Docs/Drive** (document generation, invitation letters) needs real Google credentials, which only a developer's local `docker-compose.override.yml` has. In headless runs, mark these scenarios ⚠️ Not run and say why.
+- **Stripe payments** can't be completed. Verify up to the point of redirecting to Stripe.
 
 ## For each scenario
 
@@ -50,7 +68,13 @@ Also run one French-locale pass over new screens (append `?lng=fr` to the URL; t
 
 ## Report
 
-Write the report in markdown, with the screenshots saved alongside it:
+Write the report in markdown. Reference screenshots by file name while drafting. When the report is going on GitHub, publish the images and swap in the links:
+
+```bash
+scripts/agent/publish-screenshots.sh /tmp/pw_test/shots/<run> issue-<n>/<yyyy-mm-dd>-<slug>
+```
+
+This commits them to the `agent-artifacts` branch (never merged) and prints a markdown image link per file. Only publish in headless runs, or locally when the developer asks: the repo is public.
 
 ```markdown
 ## Verification report

@@ -73,5 +73,5 @@ Design: docs/designs/<issue>-<slug>.md
 <or "None">
 ```
 
-2. Post the verifier's report as a PR comment, with screenshots committed under `docs/designs/<issue>-<slug>/screenshots/` and linked from the report.
+2. Publish the screenshots with `scripts/agent/publish-screenshots.sh` (see "Where things go" in the workflow doc), swap the links into the verifier's report, and post it as a PR comment.
 3. Mark the PR ready for review (`gh pr ready`). Comment on the issue with a summary and the PR link. Swap `claude:in-progress` for `claude:pr-review`.

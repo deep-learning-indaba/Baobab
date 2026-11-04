@@ -35,7 +35,7 @@ Map out what exists before proposing anything. Baobab has a lot of existing mach
    - the tests to add (backend) or the verification scenario it unlocks (frontend);
    - dependencies on earlier tasks.
    Order the tasks so the backend comes first and each task builds on finished ones.
-5. **Verification scenarios.** List the end-to-end flows `verify-feature` will drive in the browser: role, starting page, steps, expected result. Include at least one permission or negative case.
+5. **Verification scenarios.** List the end-to-end flows `verify-feature` will drive in the browser: role, starting page, steps, expected result. Use the seeded roles and the `agent-test` event where they fit (see the table in the `verify-feature` skill), and say what extra data a scenario needs if the seed doesn't provide it. Include at least one permission or negative case. Mark scenarios that depend on email delivery, Google Docs or Stripe, since those can only be partly checked in a seeded environment.
 
 ## 4. Submit for review
 

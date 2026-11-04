@@ -35,14 +35,7 @@ const { openSession } = require('<repo>/.claude/skills/verify-feature/baobab_pw.
 
 Replace `<repo>` with the output of `git rev-parse --show-toplevel`.
 
-**Credentials** come from environment variables, set locally in `.claude/settings.local.json` under `env`:
-
-| Variable | Account |
-| --- | --- |
-| `BAOBAB_TEST_EMAIL` / `BAOBAB_TEST_PASSWORD` | Site admin (default login) |
-| `BAOBAB_TEST_USER_EMAIL` / `BAOBAB_TEST_USER_PASSWORD` | Ordinary user, no roles |
-
-To view a page as the ordinary user, pass `{ email: process.env.BAOBAB_TEST_USER_EMAIL, password: process.env.BAOBAB_TEST_USER_PASSWORD }` to `openSession`. For a logged-out page, pass `{ login: false }`.
+**Logging in:** the helper logs in as one of the accounts created by `flask seed-agent`, all with the password in `BAOBAB_TEST_PASSWORD` (set locally in `.claude/settings.local.json` under `env`). The default is the site admin; pass `{ as: '<role>' }` for `user` (no roles), `event-admin`, `reviewer`, `applicant` or `guest`. The roles are described in the `verify-feature` skill. For a logged-out page, pass `{ login: false }`.
 
 Use `{ viewport: { width: 390, height: 844 } }` for a mobile check.
 

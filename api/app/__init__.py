@@ -19,6 +19,8 @@ from . import routes
 
 migrate = Migrate(app, db)
 
+from .utils import seed_agent  # registers `flask seed-agent`
+
 manager = Manager(app)
 manager.add_command('db', MigrateCommand)
 

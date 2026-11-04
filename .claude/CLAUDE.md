@@ -46,7 +46,14 @@ There is no frontend unit-test suite. Verify frontend changes with `pnpm run bui
 
 ## Automated workflow
 
-Skills for working from GitHub issues: `fix-bug`, `design-feature`, `implement-feature`, `verify-feature`, in `.claude/skills/`. Subagents are in `.claude/agents/`. The shared rules (labels, branches, budgets, headless behaviour, safety) are in `.claude/agent-workflow.md`.
+Skills for working from GitHub issues: `fix-bug`, `design-feature`, `implement-feature`, `verify-feature`, in `.claude/skills/`. Subagents are in `.claude/agents/`. The shared rules (labels, branches, budgets, headless behaviour, safety) are in `.claude/agent-workflow.md`. GitHub runs them from `.github/workflows/claude-agent.yml`.
+
+Supporting scripts in `scripts/agent/`:
+
+- `start-env.sh` / `stop-env.sh`: start a complete environment (compose services, migrations, seed data, Vite, Playwright). Used by the workflow; locally it can run beside the dev stack under its own `COMPOSE_PROJECT_NAME` and ports (see the script header).
+- `publish-screenshots.sh`: commits screenshots to the `agent-artifacts` branch and prints image links for PR comments.
+
+`flask seed-agent` (`api/app/utils/seed_agent.py`) creates the `agent-test` event and one account per role, all with the password in `BAOBAB_TEST_PASSWORD`. It is safe to re-run; it refreshes the event dates so the event stays open. Locally: `docker-compose exec -T -e BAOBAB_TEST_PASSWORD web sh -c "cd /code/api && flask seed-agent"`.
 
 ## Line endings
 

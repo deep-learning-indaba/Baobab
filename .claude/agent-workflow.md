@@ -28,6 +28,8 @@ You are headless when `GITHUB_ACTIONS=true` or `CI=true` is set. Headless runs h
 
 Interactively, ask the developer directly rather than posting comments.
 
+On GitHub, `.github/workflows/claude-agent.yml` runs you with the repository's Actions token, so you appear as `github-actions[bot]`. Labels, comments and pushes made with that token don't trigger other workflows, so changing a label never starts another agent run. The workflow has already started the full environment (`scripts/agent/start-env.sh`) for bug fixes and implementation, but not for design work.
+
 ## Branches, commits and PRs
 
 - Branch from `develop`: `claude/bug-<issue>-<slug>`, `claude/feature-<issue>-<slug>`. The design doc and the implementation share the feature branch.
@@ -39,7 +41,7 @@ Interactively, ask the developer directly rather than posting comments.
 ## Where things go
 
 - Design docs: `docs/designs/<issue>-<slug>.md`, from the template in `.claude/skills/design-feature/template.md`.
-- Verification reports: posted as a PR comment, with screenshots committed to the branch under `docs/designs/<issue>-<slug>/screenshots/` for features and attached as a PR comment for bugs. Headless runs also upload screenshots as a workflow artifact.
+- Verification reports: posted as a PR comment. Publish the screenshots with `scripts/agent/publish-screenshots.sh <dir> issue-<n>/<yyyy-mm-dd>-<slug>`, which commits them to the `agent-artifacts` branch (never merged, so PR diffs stay clean) and prints image links to paste into the report. Headless runs also upload the screenshot folder as a workflow artifact.
 
 ## Budget
 
