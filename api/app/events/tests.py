@@ -1980,6 +1980,59 @@ class EventSurveyTimeTest(ApiTestCase):
             self.assertTrue(self.event.is_survey_time)
 
 
+class EventPhaseWindowTimezoneTest(ApiTestCase):
+    """Phase open/close datetimes are event-local wall times, compared against the current UTC time."""
+
+    def seed_static_data(self, timezone):
+        self.event = self.add_event(
+            application_open=datetime(2026, 6, 1, 0, 0, 0),
+            application_close=datetime(2026, 6, 30, 23, 59, 59),
+        )
+        self.event.timezone = timezone
+        db.session.commit()
+
+    def _at_utc(self, utc_now):
+        """Patches the clock to a server running in UTC, where now() and utcnow() agree."""
+        patcher = mock.patch('app.events.models.datetime')
+        mock_dt = patcher.start()
+        self.addCleanup(patcher.stop)
+        mock_dt.now.return_value = utc_now
+        mock_dt.utcnow.return_value = utc_now
+
+    def test_utc_event_closes_at_utc_close_time(self):
+        self.seed_static_data('UTC')
+        self._at_utc(datetime(2026, 6, 30, 23, 59, 58))
+        self.assertTrue(self.event.is_application_open)
+        self._at_utc(datetime(2026, 7, 1, 0, 0, 0))
+        self.assertFalse(self.event.is_application_open)
+
+    def test_close_follows_event_timezone_ahead_of_utc(self):
+        """23:59:59 in Africa/Johannesburg (UTC+2) is 21:59:59 UTC."""
+        self.seed_static_data('Africa/Johannesburg')
+        self._at_utc(datetime(2026, 6, 30, 21, 59, 58))
+        self.assertTrue(self.event.is_application_open)
+        self._at_utc(datetime(2026, 6, 30, 22, 0, 0))
+        self.assertFalse(self.event.is_application_open)
+
+    def test_close_follows_anywhere_on_earth(self):
+        """23:59:59 Anywhere on Earth (UTC-12) is 11:59:59 UTC the next day."""
+        self.seed_static_data('Etc/GMT+12')
+        self._at_utc(datetime(2026, 7, 1, 11, 59, 58))
+        self.assertTrue(self.event.is_application_open)
+        self._at_utc(datetime(2026, 7, 1, 12, 0, 0))
+        self.assertFalse(self.event.is_application_open)
+
+    def test_open_follows_event_timezone(self):
+        """00:00 in Africa/Johannesburg (UTC+2) is 22:00 UTC the previous day."""
+        self.seed_static_data('Africa/Johannesburg')
+        self._at_utc(datetime(2026, 5, 31, 21, 59, 59))
+        self.assertTrue(self.event.is_application_opening)
+        self.assertFalse(self.event.is_application_open)
+        self._at_utc(datetime(2026, 5, 31, 22, 0, 0))
+        self.assertFalse(self.event.is_application_opening)
+        self.assertTrue(self.event.is_application_open)
+
+
 class EventStatusSurveyTest(ApiTestCase):
     """Tests for EventStatus.survey_status."""
 

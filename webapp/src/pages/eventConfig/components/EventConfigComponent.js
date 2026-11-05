@@ -717,6 +717,7 @@ class EventConfigComponent extends Component {
                   defaultValue={updatedEvent.timezone || "UTC"}
                   onChange={this.updateEventDropDown}
                   options={[
+                    { value: "Etc/GMT+12", label: `(GMT-12) ${t("Anywhere on Earth (AoE)")}` },
                     { value: "Pacific/Honolulu", label: "(GMT-10) Pacific/Honolulu" },
                     { value: "America/Anchorage", label: "(GMT-9) America/Anchorage" },
                     { value: "America/Los_Angeles", label: "(GMT-8) America/Los_Angeles" },
