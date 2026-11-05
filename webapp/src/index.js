@@ -56,27 +56,32 @@ class Bootstrap extends Component {
   }
 
   _injectOrgManifest(org) {
+    // A manifest served from a blob: URL has no base to resolve relative URLs
+    // against, so every URL in it must be absolute.
+    const absolute = path => new URL(path, window.location.origin).href;
+
     const icons = [];
     if (org.pwa_icon_192) {
-      icons.push({ src: org.pwa_icon_192, sizes: '192x192', type: 'image/png', purpose: 'any maskable' });
+      icons.push({ src: absolute(org.pwa_icon_192), sizes: '192x192', type: 'image/png', purpose: 'any' });
     }
     if (org.pwa_icon_512) {
-      icons.push({ src: org.pwa_icon_512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' });
+      icons.push({ src: absolute(org.pwa_icon_512), sizes: '512x512', type: 'image/png', purpose: 'any' });
     }
     // Fall back to shared icons if org hasn't configured PWA-specific ones
     if (icons.length === 0) {
       icons.push(
-        { src: '/favicon/android-icon-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
-        { src: '/favicon/icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+        { src: absolute('/favicon/android-icon-192x192.png'), sizes: '192x192', type: 'image/png', purpose: 'any' },
+        { src: absolute('/favicon/icon-512x512.png'), sizes: '512x512', type: 'image/png', purpose: 'any' }
       );
     }
 
     const manifest = {
+      id: absolute('/'),
       name: org.system_name,
       short_name: org.system_name,
       description: 'Your companion app for community events: check-in, programme, networking and announcements.',
-      start_url: '/',
-      scope: '/',
+      start_url: absolute('/'),
+      scope: absolute('/'),
       display: 'standalone',
       orientation: 'portrait',
       background_color: '#ffffff',
