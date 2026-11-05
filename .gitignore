@@ -11,7 +11,8 @@ __pycache__/
 # Distribution / packaging
 .idea/
 .windsurf/
-.claude/
+.claude/settings.local.json
+.claude/worktrees/
 .Python
 build/
 develop-eggs/
@@ -139,12 +140,6 @@ dmypy.json
 # Decrypted environment files
 api/prod.yaml
 api/app.yaml
-
-# Cypress
-integration-tests/cypress/support/
-integration-tests/cypress/videos/
-integration-tests/cypress/screenshots/
-integration-tests/cypress/plugins/
 
 # Temporary Docs
 # /docs/temp/

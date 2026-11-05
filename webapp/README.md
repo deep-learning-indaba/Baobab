@@ -37,13 +37,8 @@ yarn
 yarn start
 ```
 
-## Running the tests
-
-### Running Locally
-- Run Test
-```
-yarn test
-```
+## Testing
+There is no frontend unit-test suite. Frontend changes are verified by running `pnpm run build` and by driving the running app with Playwright and reviewing screenshots (see the `/screenshot` and `verify-feature` skills in `.claude/`). Backend behaviour is covered by the pytest suite in `api/`.
 
 ## Connect to local database
 ```
@@ -63,25 +58,10 @@ User: docker Password: docker
 ## Adding Code
 Add a new folder for each component/page. Name the folder according to the item/feature you are building. Do not include the item type in the name. Example: `Home` **not** `HomePage`.
 
-In each item folder, create a `[item].js`, `[item].css` and `__tests__/[item].test.js`. Also create a  `components` folder where you will be break up parts of a page into re-usable components. A page should just be a collection of components, with each component (as far as possible) handling its own logic.
+In each item folder, create a `[item].js` (and a `[item].css` only if Tailwind utilities are not enough). Also create a  `components` folder where you will be break up parts of a page into re-usable components. A page should just be a collection of components, with each component (as far as possible) handling its own logic.
 
 When wanting to call a service, create a folder in the `services` folder with the name of the service and `[service].js` that handles the service calls. 
 
-## Adding Tests
-We are using Jest + Enzyme as a testing framework. Read this [article](https://hackernoon.com/testing-react-components-with-jest-and-enzyme-41d592c174f), which explains how to use jest and enzyme. Note we are not doing snapshot testing - simply testing rendering, props and events.
-
-Example
-```javascript
-import React from 'react';
-import {shallow} from 'enzyme';
-import Home from '../Home.js';
-
-test('Check if Home component renders.', () => {
-  // Render Home main component.
-  const wrapper = shallow(<Home />);
-  expect(wrapper.length).toEqual(1);
-});
-```
 ## Styling
 We use [Tailwind CSS](https://tailwindcss.com/) as a CSS framework, with custom design tokens defined in `src/App.css`.
 

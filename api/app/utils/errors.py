@@ -131,10 +131,6 @@ OUTCOME_STATUS_NOT_VALID = (
 CANDIDATE_REJECTED = (
     {'message': 'The candidate has already been rejected for the event'}, 400)
 
-FAILED_CREATE_INTEGRATION_TEST_USER = (
-    {'message': 'Failed to create integration test user.'}, 500)
-FAILED_DELETE_INTEGRATION_TEST_USER = (
-    {'message': 'Failed to delete integration test user'}, 500)
 DUPLICATE_RESPONSE = ({'message': 'A response has already been submitted for this application form'}, 409)
 BAD_CONFIGURATION = ({'message': 'There is an error with the form configuration'}, 500)
 TAG_NOT_FOUND = (

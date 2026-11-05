@@ -57,9 +57,5 @@ export default defineConfig(({ mode, command }) => {
         loader: { '.js': 'jsx' },
       },
     },
-    test: {
-      globals: true,
-      environment: 'jsdom',
-    },
   }
 })
