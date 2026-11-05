@@ -192,6 +192,7 @@ jobs:
         run: scripts/agent/start-env.sh
 
       - name: Run Claude
+        id: claude
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -216,6 +217,22 @@ jobs:
         if: failure() || cancelled()
         env:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
         run: |
+          # The action hides Claude's output, so surface just its final result text
+          # (e.g. an authentication or usage-limit error). The file is either a JSON
+          # array of messages or one message per line; slurping handles both.
+          reason=""
+          if [ -n "$EXECUTION_FILE" ] && [ -f "$EXECUTION_FILE" ]; then
+            reason=$(jq -rs 'flatten | map(select(.type == "result")) | last | .result // empty' "$EXECUTION_FILE" 2>/dev/null | head -c 1500) || reason=""
+          fi
+          [ -n "$reason" ] && echo "::error title=Claude result::$(printf '%s' "$reason" | head -c 500 | tr '\n' ' ')"
+
+          body="The agent run for \`$TASK\` failed or timed out: $RUN_URL"
+          if [ -n "$reason" ]; then
+            body="$body"$'\n\n'"Claude's final message:"$'\n\n'"$(printf '%s' "$reason" | sed 's/^/> /')"
+          fi
+          body="$body"$'\n\n'"Remove the \`claude:blocked\` label to retry."
+
           gh issue edit "$ISSUE" --remove-label claude:in-progress --add-label claude:blocked || true
-          gh issue comment "$ISSUE" --body "The agent run for \`$TASK\` failed or timed out: $RUN_URL. Remove the \`claude:blocked\` label to retry." || true
+          gh issue comment "$ISSUE" --body "$body" || true
