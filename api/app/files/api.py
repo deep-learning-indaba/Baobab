@@ -47,11 +47,17 @@ class FileUploadAPI(FileUploadMixin, restful.Resource):
         blob = bucket.blob(args['filename'])
         with tempfile.NamedTemporaryFile() as temp:
             blob.download_to_filename(temp.name)
-            return send_file(
+            response = send_file(
                 temp.name,
                 mimetype=content_type,
                 as_attachment=(disposition == 'attachment'),
                 attachment_filename=args['rename'] or args['filename'])
+
+        # Branding images (logo, favicon) are fetched on every page load; the
+        # blob name is a unique upload id, so a day of public caching is safe.
+        if disposition == 'inline' and (content_type or '').startswith('image/'):
+            response.headers['Cache-Control'] = 'public, max-age=86400'
+        return response
 
 
     def post(self):

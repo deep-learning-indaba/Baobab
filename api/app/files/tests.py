@@ -62,3 +62,25 @@ class FileDownloadApiTest(ApiTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(response.headers.get('Content-Disposition'))
         self.assertEqual(response.headers['Content-Type'], 'image/jpeg')
+
+    def test_inline_image_download_is_publicly_cacheable(self):
+        with mock.patch('app.files.api.storage.get_storage_bucket') as mock_get_bucket:
+            self._mock_bucket(mock_get_bucket, 'image/png')
+            response = self.app.get('/api/v1/file?filename=abc123')
+
+        self.assertEqual(response.headers['Cache-Control'], 'public, max-age=86400')
+
+    def test_attachment_download_is_not_publicly_cacheable(self):
+        with mock.patch('app.files.api.storage.get_storage_bucket') as mock_get_bucket:
+            self._mock_bucket(mock_get_bucket, 'image/png')
+            response = self.app.get('/api/v1/file?filename=abc123&disposition=attachment')
+
+        self.assertNotEqual(response.headers.get('Cache-Control'), 'public, max-age=86400')
+
+    def test_inline_non_image_download_is_not_publicly_cacheable(self):
+        with mock.patch('app.files.api.storage.get_storage_bucket') as mock_get_bucket:
+            self._mock_bucket(mock_get_bucket, 'application/pdf')
+            response = self.app.get('/api/v1/file?filename=abc123&disposition=inline')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotEqual(response.headers.get('Cache-Control'), 'public, max-age=86400')
