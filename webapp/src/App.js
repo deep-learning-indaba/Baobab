@@ -280,9 +280,9 @@ class AppComponent extends Component {
                     />
                   )}
                 />
+                <PrivateRoute exact path="/organisationSettings" component={OrganisationSettings} />
                 {/* Organisation-wide email settings, for system admins; the API refuses
                     anyone else. Above /:eventKey so it isn't taken for an event key. */}
-                <PrivateRoute exact path="/organisationSettings" component={OrganisationSettings} />
                 <PrivateRoute exact path="/emailSettings" component={EmailTemplatesAdmin} />
                 <PrivateRoute exact path="/emailSettings/design" component={EmailLayoutEditor} />
                 <PrivateRoute exact path="/emailSettings/edit/:key([a-z0-9-]+)" component={EmailTemplateEditor} />
