@@ -17,7 +17,7 @@ Site admins (`app_user.is_admin = True`) get an **Organisation settings** page w
 
 - **Editing `domain`.** It is the key `OrganisationResolver` uses to identify the organisation on every request, and it also has to match DNS and `webapp/dispatch.yaml`. Changing it from the UI would lock everyone out. It is shown read-only.
 - **Creating organisations, or a super-admin across organisations.** `is_admin` is scoped to the user's own organisation (see Permissions).
-- **Full theming** (fonts, surfaces, border radius, dark mode, the dark navbar). Only the brand colour tokens change.
+- **Full theming** (fonts, surfaces, border radius, dark mode). Only the brand colour tokens change.
 - **Per-event branding.** Events keep using the organisation's branding.
 - **Rendering the favicon on the server.** The SPA is static, so the browser shows the default favicon until JS runs (see Edge cases).
 
@@ -37,7 +37,7 @@ Site admins (`app_user.is_admin = True`) get an **Organisation settings** page w
 | Static head | `webapp/index.html` | Hardcoded Baobab `<link rel="icon">`/`shortcut icon`/`apple-touch-icon` tags under `/favicon/`, and `<meta name="theme-color" content="#0f172a">`. |
 | Images | `webapp/src/utils/images.js` | `getImage(filename)` looks the name up in `import.meta.glob('../images/*')`, so logos must be committed to `webapp/src/images/`. It is used in `App.js` (navbar, `icon_logo`), `Home.js` (`large_logo`), `LoginForm.js` and `CreateAccountForm.js` (`small_logo`). |
 | Theme tokens | `webapp/src/index.css` `@theme` | Tailwind v4 tokens such as `--color-primary` (#0f5238), `--color-primary-container`, `--color-on-primary-container`, `--color-secondary*`, `--color-action*` (#0132c5, buttons and links) and `--color-ring`. Tailwind v4 utilities read these as CSS variables, so overriding them on `:root` at runtime restyles `bg-primary`, `text-action` and so on. |
-| Legacy tokens | `webapp/src/App.css` `:root` | A parallel set, `--clr-primary`, `--clr-action`, `--clr-action-glow` and others, used about 50 times in legacy CSS. There's no Bootstrap dependency: `.navbar`/`.bg-dark` are reimplemented in `App.css` ~L130–178. A few brand hex literals are hardcoded outside the tokens: `#0f5238` in `index.html` (loader), `EventStatsComponent.js` (chart), and `EmailLayoutEditor.js`. |
+| Legacy tokens | `webapp/src/App.css` `:root` | A parallel set, `--clr-primary`, `--clr-action`, `--clr-action-glow` and others, used about 50 times in legacy CSS. There's no Bootstrap dependency: `.navbar`/`.bg-dark` are reimplemented in `App.css` ~L130–210. The top navbar (`.bg-dark`) is already painted with `var(--clr-primary)` and its brand text uses `--clr-on-primary`, but its nav links (`rgba(255, 255, 255, 0.82)`, ~L202) and the language switcher divider (`rgba(255, 255, 255, 0.22)`, ~L254) are hardcoded white. A few brand hex literals are hardcoded outside the tokens: `#0f5238` in `index.html` (loader), `EventStatsComponent.js` (chart), and `EmailLayoutEditor.js`. |
 | Admin UI | `webapp/src/pages/home/Home.js` ~L430 | When `user.is_admin`, Home shows "Create New Event" and "Email settings" buttons. That is the only org-admin entry point. Routes are in `webapp/src/App.js` (`/emailSettings` etc. via `PrivateRoute`). |
 | Upload UI | `webapp/src/components/FileUpload.js`, `services/file/file.service.js`, `utils/files.js`, `components/Attachments.js` | `fileService.uploadFile(file, onProgress)` returns `{fileId, error}`. `getFileURL(fileId, disposition)` (`utils/files.js:34`) builds the `/api/v1/file?filename=…&disposition=inline` URL. `Attachments.js` ~L88 is an existing image-upload pattern, with resizing. |
 | i18n | `webapp/public/locales/{en,fr}/translation.json` | Keys are English sentences (`"Email settings": "Paramètres des courriels"`). Only `en` and `fr` exist. |
@@ -184,11 +184,19 @@ After a successful save, the page shows a success toast and re-applies branding 
 - **Shades derived in JS, not with `color-mix`**: predictable across browsers and testable in one helper.
 - **The organisation primary colour becomes the email fallback**: one place to set the brand, while email layouts can still override it.
 - **The page lives at `/organisationSettings` and is linked from Home's admin buttons**: this matches how `/emailSettings` is reached today.
-- **The navbar (`.navbar.bg-dark` in `App.css`) stays dark**: recolouring it is a visual-design change beyond "brand colour", and dark works with any logo.
+- **The top navbar follows the primary colour** (maintainer answer to question 2): `.bg-dark` already reads `--clr-primary`, so it recolours with the other primary tokens. Its hardcoded white link and divider colours are replaced by tokens that `applyBranding` derives from the readable foreground, so text stays legible on a light primary.
 - **Hardcoded brand literals are left alone, except the stats chart**: `EventStatsComponent.js` reads `--color-primary` via `getComputedStyle`, so charts follow the brand. The rest are the loader (shown before the organisation loads) or editor placeholders.
 - **Languages are limited to locales the webapp ships (`en`, `fr`)**: any other code would give an empty UI.
 
 ## 5. Open questions
+
+Answered by the maintainer on #1431:
+
+1. **A**: reuse `POST/GET /api/v1/file` and add the cache header for inline images (Task 5 is in scope).
+2. **A**, and the top header/navbar also uses the primary colour (see Decisions and Task 6).
+3. **A**: the Payments section is included, with write-only secrets.
+
+The original options are kept below for reference.
 
 1. **How should uploaded images be hosted?** Logos and favicons are loaded on every page view by every user.
    - A: Reuse `POST /api/v1/file` and store the file id. Serve it through `GET /api/v1/file`, adding a `Cache-Control: public, max-age=86400` header for inline images. No new infrastructure, but every first view still proxies through the API, and the file id is guessable only if leaked (ids are uuid4).
@@ -252,7 +260,7 @@ After a successful save, the page shows a success toast and re-applies branding 
 
 ### Task 5: Uploaded image serving
 
-- **Depends on:** none (only needed if open question 1 is answered **A**)
+- **Depends on:** none
 - **Files:** `api/app/files/api.py`, `api/app/files/tests.py`
 - **Change:** In `FileUploadAPI.get`, when the resolved disposition is `inline` and the content type starts with `image/`, set `Cache-Control: public, max-age=86400` on the response.
 - **Acceptance criteria:** an inline image response has the header, and an attachment download doesn't.
@@ -261,25 +269,27 @@ After a successful save, the page shows a success toast and re-applies branding 
 ### Task 6: Frontend branding helper and start-up wiring
 
 - **Depends on:** Task 1
-- **Files:** `webapp/src/utils/branding.js` (new), `webapp/src/utils/images.js`, `webapp/src/index.js`, `webapp/src/pages/eventStats/components/EventStatsComponent.js`
+- **Files:** `webapp/src/utils/branding.js` (new), `webapp/src/utils/images.js`, `webapp/src/index.js`, `webapp/src/pages/eventStats/components/EventStatsComponent.js`, `webapp/src/App.css`
 - **Change:**
   - `getImage(value)` resolves a bundled filename, an absolute URL or an uploaded file id (`/^[0-9a-f]{32}$/` → `getFileURL(id, 'inline')` from `utils/files.js`). It returns `undefined` for empty values.
   - `branding.js` exports `applyBranding(org)`, which:
     - sets or removes the colour CSS variables for the primary role (`--color-primary`, `--color-primary-container`, `--color-primary-foreground`, `--clr-primary`, `--clr-primary-container`, `--clr-on-primary`) and for the secondary role (per the answer to open question 2; by default the action role, `--color-action`, `--color-action-container`, `--color-action-foreground`, `--color-ring`, `--clr-action`, `--clr-action-container`, `--clr-on-action`, `--clr-action-glow`);
+    - also sets `--clr-on-primary-muted` (the primary foreground at 82% alpha) and `--clr-on-primary-divider` (the foreground at 22% alpha), and removes them when primary is null;
     - updates `meta[name=theme-color]`;
     - repoints the favicon and apple-touch-icon links.
     It also exports `contrastRatio(hexA, hexB)` and `readableForeground(hex)` for the editor. It ignores invalid hex values.
   - `index.js` calls `applyBranding(org)` after `i18nInit`, and `_injectOrgManifest` uses `org.primary_colour || '#0f172a'` for `theme_color`. `_injectOrgManifest` runs its `pwa_icon_*` values through `getImage` so uploaded ids work there too.
   - `EventStatsComponent.js` replaces its hardcoded `'#0f5238'` chart colour with the computed `--color-primary`.
+  - In `webapp/src/App.css`, define `--clr-on-primary-muted: rgba(255, 255, 255, 0.82)` and `--clr-on-primary-divider: rgba(255, 255, 255, 0.22)` in `:root`, and use them for the navbar nav links (~L202) and the language switcher divider (~L254) instead of the literals, so the navbar text follows the primary colour's foreground.
 - **Acceptance criteria:**
   - `pnpm run build` passes.
-  - With `primary_colour` and `secondary_colour` set in the dev DB, `/` shows the new colours on primary and action elements, and the tab shows the configured favicon.
+  - With `primary_colour` and `secondary_colour` set in the dev DB, `/` shows the new colours on primary and action elements, the top navbar is the primary colour with readable text, and the tab shows the configured favicon.
   - With all three null, the app looks exactly as before.
 - **Verification:** scenarios 4 and 5.
 
 ### Task 7: Organisation settings page
 
-- **Depends on:** Tasks 3 and 6 (and Task 5 if open question 1 is **A**)
+- **Depends on:** Tasks 3, 5 and 6
 - **Files:** `webapp/src/pages/organisationSettings/OrganisationSettings.js` (new, plus small subcomponents in `components/` as needed), `webapp/src/services/organisation/organisation.service.js`, `webapp/src/App.js`, `webapp/src/pages/home/Home.js`, `webapp/public/locales/{en,fr}/translation.json`
 - **Change:**
   - Add `getSettings` and `updateSettings` to the service.
@@ -301,8 +311,8 @@ These use the seeded `agent-test` environment (`flask seed-agent`). The organisa
 | --- | --- | --- | --- | --- |
 | 1 | admin | `/` | Click "Organisation settings" | The page loads with the current values. The domain is read-only. The Stripe secret fields show "set"/"Not set", never the value. |
 | 2 | admin | `/organisationSettings` | Change the system name, save, reload | A success message appears. After the reload, the navbar and the browser tab title show the new system name. |
-| 3 | admin | `/organisationSettings` | Set primary `#7b1fa2` and accent `#e65100`, check the preview, save | The preview updates as the values are typed. After saving, the page's buttons and links are orange and the primary elements purple, without a reload. |
-| 4 | user | `/` (new session, after scenario 3) | Log in as the plain user and browse Home and an event page | The same colours show on every page. Text on coloured buttons is readable. |
+| 3 | admin | `/organisationSettings` | Set primary `#7b1fa2` and accent `#e65100`, check the preview, save | The preview updates as the values are typed. After saving, the page's buttons and links are orange, and the top navbar and primary elements purple, without a reload. |
+| 4 | user | `/` (new session, after scenario 3) | Log in as the plain user and browse Home and an event page | The same colours show on every page, including the navbar. Text on coloured buttons and in the navbar is readable. |
 | 5 | admin | `/organisationSettings` | Upload a PNG as the favicon and another as the navbar icon, save, reload | The tab shows the uploaded favicon (after JS runs) and the navbar shows the new icon. |
 | 6 | admin | `/organisationSettings` | Enter `#12345` as the primary colour; clear the name; untick every language | Save is disabled or the field errors show; nothing is saved. |
 | 7 | admin | `/organisationSettings` | Click "Reset to default" on both colours and remove the favicon, save, reload | The Baobab green and blue return and the default favicon shows. |
