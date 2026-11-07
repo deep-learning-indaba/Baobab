@@ -123,6 +123,7 @@ rest_api.add_resource(invitation_letter_api.InvitationLetterAPI,
                       '/api/v1/invitation-letter')
 rest_api.add_resource(attendance_api.AttendanceAPI, '/api/v1/attendance')
 rest_api.add_resource(organisation_api.OrganisationApi, '/api/v1/organisation')
+rest_api.add_resource(organisation_api.OrganisationSettingsApi, '/api/v1/organisation/settings')
 rest_api.add_resource(organisation_api.StripeSettingsApi, '/api/v1/stripe-settings')
 rest_api.add_resource(users_api.PrivacyPolicyAPI, '/api/v1/privacypolicy')
 rest_api.add_resource(outcome_api.OutcomeAPI, '/api/v1/outcome')
