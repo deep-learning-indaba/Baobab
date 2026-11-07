@@ -7,6 +7,8 @@ import i18nInit from './i18n';
 import Loading from "./components/Loading";
 import { organisationService } from "./services/organisation/organisation.service";
 import ContextProvider from './context/ContextProvider';
+import { applyBranding } from './utils/branding';
+import { getImage } from './utils/images';
 
 // Retry lazy-loaded chunks to avoid stale-deploy chunk errors
 const lazyRetry = function(componentImport) {
@@ -40,6 +42,7 @@ class Bootstrap extends Component {
   }
 
   componentDidMount() {
+    window.addEventListener("organisation-updated", this.handleOrganisationUpdated);
     organisationService.getOrganisation().then(response => {
       this.setState({
         organisation: response.organisation,
@@ -50,22 +53,38 @@ class Bootstrap extends Component {
         const org = response.organisation;
         document.title = org.system_name + " | " + org.name;
         i18nInit(org);
+        applyBranding(org);
         this._injectOrgManifest(org);
       }
     });
   }
+
+  componentWillUnmount() {
+    window.removeEventListener("organisation-updated", this.handleOrganisationUpdated);
+  }
+
+  // The settings page announces a saved change so the header and title follow it without a reload.
+  handleOrganisationUpdated = (event) => {
+    const org = event.detail;
+    if (!org) return;
+    this.setState(state => ({ organisation: { ...state.organisation, ...org } }));
+    document.title = org.system_name + " | " + org.name;
+  };
 
   _injectOrgManifest(org) {
     // A manifest served from a blob: URL has no base to resolve relative URLs
     // against, so every URL in it must be absolute.
     const absolute = path => new URL(path, window.location.origin).href;
 
+    // Values that aren't a bundled image or an upload id are paths relative to the site.
+    const icon192 = getImage(org.pwa_icon_192) || org.pwa_icon_192;
+    const icon512 = getImage(org.pwa_icon_512) || org.pwa_icon_512;
     const icons = [];
-    if (org.pwa_icon_192) {
-      icons.push({ src: absolute(org.pwa_icon_192), sizes: '192x192', type: 'image/png', purpose: 'any' });
+    if (icon192) {
+      icons.push({ src: absolute(icon192), sizes: '192x192', type: 'image/png', purpose: 'any' });
     }
-    if (org.pwa_icon_512) {
-      icons.push({ src: absolute(org.pwa_icon_512), sizes: '512x512', type: 'image/png', purpose: 'any' });
+    if (icon512) {
+      icons.push({ src: absolute(icon512), sizes: '512x512', type: 'image/png', purpose: 'any' });
     }
     // Fall back to shared icons if org hasn't configured PWA-specific ones
     if (icons.length === 0) {
@@ -85,7 +104,7 @@ class Bootstrap extends Component {
       display: 'standalone',
       orientation: 'portrait',
       background_color: '#ffffff',
-      theme_color: '#0f172a',
+      theme_color: org.primary_colour || '#0f172a',
       icons,
     };
 
