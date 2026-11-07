@@ -65,7 +65,7 @@ class EventStatsComponent extends Component {
         options={
           {
             legend: { position: "none" },
-            colors: ['#0f5238'],
+            colors: [getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#0f5238'],
             backgroundColor: 'transparent',
             chartArea: { left: 0, top: 0, width: '100%', height: '100%' },
             hAxis: { textPosition: 'none', gridlines: { color: 'transparent' }, baselineColor: 'transparent' },

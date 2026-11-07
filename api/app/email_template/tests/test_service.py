@@ -4,11 +4,12 @@ from unittest.mock import patch
 from app import db
 from app.email_template.engine import EmailRenderError
 from app.email_template.models import EmailLayout
-from app.email_template.repository import EmailTemplateRepository
+from app.email_template.repository import DEFAULT_BRAND_COLOUR, EmailLayoutRepository, EmailTemplateRepository
 from app.email_template.service import (
     Attachment, MissingContextError, queue_email, queue_emails, sample_context)
 from app.email_template.registry import EMAIL_TYPES
 from app.email_template.views import Recipient
+from app.organisation.models import Organisation
 from app.outbox.models import OutboxMessage, OutboxStatus
 from app.outbox.repository import OutboxRepository
 from app.outbox.sender import deliver_pending
@@ -141,6 +142,34 @@ class EmailServiceTest(ApiTestCase):
         self.assertIn('Sent by <strong>My Org</strong>', message.body_html)
         self.assertIn('src="https://example.org/logo.png"', message.body_html)
         self.assertTrue(message.body_text.endswith('--\nSent by My Org'))
+
+    def _set_organisation_colour(self, colour):
+        organisation = db.session.query(Organisation).get(1)
+        organisation.primary_colour = colour
+        db.session.commit()
+
+    def test_button_uses_organisation_primary_colour_without_layout_colour(self):
+        self._set_organisation_colour('#123456')
+        queue_email('offer', self.user, event=self.event, context={'offer': self._offer()})
+        self.assertIn('background:#123456', self._messages()[0].body_html)
+
+    def test_layout_colour_overrides_organisation_primary_colour(self):
+        self._set_organisation_colour('#123456')
+        db.session.add(EmailLayout(organisation_id=1, event_id=None, language='en', brand_colour='#aa0000'))
+        db.session.commit()
+        queue_email('offer', self.user, event=self.event, context={'offer': self._offer()})
+        html = self._messages()[0].body_html
+        self.assertIn('background:#aa0000', html)
+        self.assertNotIn('#123456', html)
+
+    def test_button_uses_default_colour_when_nothing_is_set(self):
+        queue_email('offer', self.user, event=self.event, context={'offer': self._offer()})
+        self.assertIn('background:' + DEFAULT_BRAND_COLOUR, self._messages()[0].body_html)
+
+    def test_inherited_layout_colour_follows_organisation_primary_colour(self):
+        self._set_organisation_colour('#123456')
+        resolved = EmailLayoutRepository.resolve(1, self.event, 'en', below='event')
+        self.assertEqual(resolved.brand_colour, '#123456')
 
     def test_attachments_go_in_payload(self):
         queue_email('invitation-letter', self.user, event=self.event,

@@ -6,6 +6,7 @@ from sqlalchemy import func
 
 from app import db
 from app.email_template.models import EmailLayout, EmailTemplate, EmailTemplateRevision
+from app.organisation.models import Organisation
 
 
 DEFAULTS_DIR = os.path.join(os.path.dirname(__file__), 'defaults')
@@ -208,7 +209,9 @@ class EmailLayoutRepository:
                 rows.append(EmailLayoutRepository.get(organisation_id, None, language_option))
         rows = [row for row in rows if row is not None]
 
-        resolved = ResolvedLayout()
+        organisation = db.session.query(Organisation).get(organisation_id)
+        resolved = ResolvedLayout(brand_colour=(organisation.primary_colour if organisation else None)
+                                  or DEFAULT_BRAND_COLOUR)
         for field in EmailLayout.EDITABLE_FIELDS:
             for row in rows:
                 value = getattr(row, field)

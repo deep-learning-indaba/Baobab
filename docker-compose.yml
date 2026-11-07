@@ -3,7 +3,7 @@ services:
   db:
     image: postgres
     ports:
-      - 5432:5432
+      - "${BAOBAB_DB_PORT:-5432}:5432"
     environment:
       POSTGRES_USER: docker
       POSTGRES_PASSWORD: docker
@@ -11,7 +11,7 @@ services:
   storage:
     image: fsouza/fake-gcs-server
     ports:
-      - 4443:4443
+      - "${BAOBAB_STORAGE_PORT:-4443}:4443"
   web:
     build: ./api
     command: python ./api/run.py runserver -h 0.0.0.0 -p 5000
@@ -19,7 +19,7 @@ services:
       - .:/code
       - ~/.config/gcloud:/root/.config/gcloud
     ports:
-      - 5000:5000
+      - "${BAOBAB_API_PORT:-5000}:5000"
     links:
       - db
       - storage
@@ -50,41 +50,9 @@ services:
       - ./webapp:/webapp
       - /webapp/node_modules
     ports:
-      - "8080:3000"
+      - "${BAOBAB_WEB_PORT:-8080}:3000"
     environment:
       - NODE_ENV=development
       - CI=true
     links:
       - web
-
-  test-ci:
-    build:
-      context: ./webapp
-      dockerfile: Dockerfile-test
-    command: pnpm test-ci
-
-  webappintegration:
-    build: ./webapp
-    command: sh -c "pnpm install --no-frozen-lockfile && pnpm start-integration"
-    volumes:
-      - ./webapp:/webapp
-      - /webapp/node_modules
-    ports:
-      - "8081:3000"
-    environment:
-      - NODE_ENV=development
-      - CI=true
-
-  cypress:
-    ipc: host
-    image: "cypress/included:4.2.0"
-    links:
-      - webappintegration
-      - web
-    environment:
-      # pass base url to test pointing at the web application
-      - CYPRESS_baseUrl=http://webappintegration:3000
-    # share the current folder as volume to avoid copying
-    working_dir: /integration-tests
-    volumes:
-      - ./integration-tests/:/integration-tests

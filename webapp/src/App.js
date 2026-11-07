@@ -30,6 +30,7 @@ import { withTranslation } from 'react-i18next';
 import { userService } from "./services/user";
 import { changeSiteLanguage } from "./utils/siteLanguage";
 import { registerPushSubscription } from "./utils/push";
+import OrganisationSettings from "./pages/organisationSettings/OrganisationSettings";
 import { EmailTemplatesAdmin, EmailTemplateEditor, EmailLayoutEditor } from "./pages/emailTemplates";
 
 
@@ -279,6 +280,7 @@ class AppComponent extends Component {
                     />
                   )}
                 />
+                <PrivateRoute exact path="/organisationSettings" component={OrganisationSettings} />
                 {/* Organisation-wide email settings, for system admins; the API refuses
                     anyone else. Above /:eventKey so it isn't taken for an event key. */}
                 <PrivateRoute exact path="/emailSettings" component={EmailTemplatesAdmin} />

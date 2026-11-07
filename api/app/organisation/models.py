@@ -1,6 +1,9 @@
 from app import db
 import dataclasses
 
+SUPPORTED_LANGUAGES = ('en', 'fr')
+
+
 class Organisation(db.Model):
 
     __tablename__ = "organisation"
@@ -8,9 +11,9 @@ class Organisation(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(50), nullable=False)
     system_name = db.Column(db.String(50), nullable=False)
-    small_logo = db.Column(db.String(100), nullable=False)
-    large_logo = db.Column(db.String(100), nullable=False)
-    icon_logo = db.Column(db.String(100), nullable=False)
+    small_logo = db.Column(db.String(255), nullable=False)
+    large_logo = db.Column(db.String(255), nullable=False)
+    icon_logo = db.Column(db.String(255), nullable=False)
     domain = db.Column(db.String(100), nullable=False)
     url = db.Column(db.String(100), nullable=False)
     email_from = db.Column(db.String(100), nullable=True)
@@ -23,6 +26,9 @@ class Organisation(db.Model):
     stripe_webhook_secret_key = db.Column(db.String(200), nullable=True)
     pwa_icon_192 = db.Column(db.String(255), nullable=True)
     pwa_icon_512 = db.Column(db.String(255), nullable=True)
+    primary_colour = db.Column(db.String(7), nullable=True)
+    secondary_colour = db.Column(db.String(7), nullable=True)
+    favicon = db.Column(db.String(255), nullable=True)
 
     events = db.relationship('Event')
 
@@ -83,6 +89,9 @@ class PlainOrganisation:
     stripe_webhook_secret_key: str
     pwa_icon_192: str
     pwa_icon_512: str
+    primary_colour: str
+    secondary_colour: str
+    favicon: str
 
     @classmethod
     def from_organisation_model(cls, organisation: Organisation):
@@ -105,4 +114,7 @@ class PlainOrganisation:
             stripe_webhook_secret_key=str(organisation.stripe_webhook_secret_key),
             pwa_icon_192=organisation.pwa_icon_192,
             pwa_icon_512=organisation.pwa_icon_512,
+            primary_colour=organisation.primary_colour,
+            secondary_colour=organisation.secondary_colour,
+            favicon=organisation.favicon,
         )

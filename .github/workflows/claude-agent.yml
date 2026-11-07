@@ -1,0 +1,238 @@
+# Runs the Claude Code agent on GitHub issues. See .claude/agent-workflow.md for the
+# label flow. Each run picks at most one piece of work, in this order:
+#   1. "@claude revise" from a maintainer on a design PR -> /design-feature <issue> revise
+#   2. claude:approved                                    -> /implement-feature <issue>
+#   3. claude:bug                                         -> /fix-bug <issue>
+#   4. claude:design                                      -> /design-feature <issue>
+# skipping issues that are in progress, blocked or waiting for review.
+#
+# Every trigger just wakes the picker: the work queue is read from labels and PR
+# comments each time, so a run that GitHub's concurrency queue drops (it keeps only
+# one pending run) is picked up by the next run or the schedule.
+#
+# Repository variables (Settings > Secrets and variables > Actions > Variables):
+#   CLAUDE_AGENT_ENABLED      must be "true" for anything to run (kill switch)
+#   CLAUDE_AGENT_DAILY_LIMIT  max agent runs per UTC day (default 4)
+# Secrets: CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_API_KEY.
+
+name: Claude agent
+
+on:
+  issues:
+    types: [labeled, unlabeled]
+  issue_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+  schedule:
+    - cron: '17 */3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: claude-agent
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  pick:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: read
+      pull-requests: read
+      actions: read
+    outputs:
+      task: ${{ steps.pick.outputs.task }}
+      issue: ${{ steps.pick.outputs.issue }}
+      prompt: ${{ steps.pick.outputs.prompt }}
+      model: ${{ steps.pick.outputs.model }}
+      max_turns: ${{ steps.pick.outputs.max_turns }}
+      timeout: ${{ steps.pick.outputs.timeout }}
+      needs_env: ${{ steps.pick.outputs.needs_env }}
+    steps:
+      - id: pick
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          ENABLED: ${{ vars.CLAUDE_AGENT_ENABLED }}
+          DAILY_LIMIT: ${{ vars.CLAUDE_AGENT_DAILY_LIMIT || '4' }}
+        run: |
+          set -euo pipefail
+          out() { echo "$1=$2" >> "$GITHUB_OUTPUT"; }
+
+          if [ "$ENABLED" != "true" ]; then
+            echo "CLAUDE_AGENT_ENABLED is not \"true\"; nothing to do."
+            exit 0
+          fi
+
+          # A design PR needs revising when a maintainer has asked "@claude revise"
+          # (comment or review) since the branch's last commit. Deriving this from
+          # the PR rather than the triggering event means a run that GitHub drops
+          # from the concurrency queue is picked up by the next one.
+          revise_issue=""
+          for pr in $(gh pr list --repo "$REPO" --state open --limit 50 --json number,headRefName \
+                        --jq '.[] | select(.headRefName | test("^claude/feature-[0-9]+-")) | .number'); do
+            pending=$(gh pr view "$pr" --repo "$REPO" --json commits,comments,reviews --jq '
+              (.commits | last | .committedDate) as $last
+              | [(.comments[] | {body, at: .createdAt, who: .authorAssociation}),
+                 (.reviews[]  | {body, at: .submittedAt, who: .authorAssociation})]
+              | map(select((.body | contains("@claude revise"))
+                           and (.who == "OWNER" or .who == "MEMBER" or .who == "COLLABORATOR")
+                           and .at > $last))
+              | length')
+            if [ "$pending" -gt 0 ]; then
+              head=$(gh pr view "$pr" --repo "$REPO" --json headRefName -q .headRefName)
+              [[ "$head" =~ ^claude/feature-([0-9]+)- ]] && revise_issue=${BASH_REMATCH[1]}
+              break
+            fi
+          done
+
+          today=$(date -u +%Y-%m-%d)
+          used=0
+          # gh prints the error body on stdout when this 404s (no runs exist before the first one).
+          run_ids=$(gh api "repos/$REPO/actions/workflows/claude-agent.yml/runs?created=>=$today&per_page=100" \
+                      --jq '.workflow_runs[].id' 2>/dev/null) || run_ids=""
+          for run_id in $run_ids; do
+            n=$(gh api "repos/$REPO/actions/runs/$run_id/jobs" \
+                  --jq '[.jobs[] | select(.name == "work" and .conclusion != null and .conclusion != "skipped")] | length') || n=0
+            used=$((used + n))
+          done
+          if [ "$used" -ge "$DAILY_LIMIT" ]; then
+            echo "Daily limit reached ($used/$DAILY_LIMIT runs today)."
+            exit 0
+          fi
+
+          # Oldest open issue with label $1 and none of the labels in the JSON array $2.
+          oldest() {
+            gh issue list --repo "$REPO" --state open --label "$1" --limit 100 --json number,labels,createdAt \
+              --jq "[.[] | select(([.labels[].name] - $2 | length) == (.labels | length))]
+                    | sort_by(.createdAt) | .[0].number // empty"
+          }
+
+          task="" issue=""
+          if [ -n "$revise_issue" ]; then
+            task=revise issue=$revise_issue
+          elif issue=$(oldest "claude:approved" '["claude:in-progress","claude:blocked","claude:pr-review"]') && [ -n "$issue" ]; then
+            task=implement
+          elif issue=$(oldest "claude:bug" '["claude:in-progress","claude:blocked","claude:pr-review"]') && [ -n "$issue" ]; then
+            task=fix-bug
+          elif issue=$(oldest "claude:design" '["claude:in-progress","claude:blocked","claude:design-review","claude:approved","claude:pr-review"]') && [ -n "$issue" ]; then
+            task=design
+          fi
+
+          if [ -z "$task" ]; then
+            echo "No work queued."
+            exit 0
+          fi
+
+          case "$task" in
+            fix-bug)   out prompt "/fix-bug $issue";              out model claude-sonnet-5-5; out max_turns 150; out timeout 120; out needs_env true ;;
+            design)    out prompt "/design-feature $issue";       out model claude-opus-5-5;   out max_turns 120; out timeout 60;  out needs_env false ;;
+            revise)    out prompt "/design-feature $issue revise"; out model claude-opus-5-5;  out max_turns 80;  out timeout 45;  out needs_env false ;;
+            implement) out prompt "/implement-feature $issue";    out model claude-opus-5-5;   out max_turns 400; out timeout 300; out needs_env true ;;
+          esac
+          out task "$task"
+          out issue "$issue"
+          echo "Picked $task for #$issue ($used/$DAILY_LIMIT runs used today)."
+
+  work:
+    needs: pick
+    if: needs.pick.outputs.task != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ fromJSON(needs.pick.outputs.timeout || '30') }}
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ISSUE: ${{ needs.pick.outputs.issue }}
+      TASK: ${{ needs.pick.outputs.task }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0
+
+      - name: Mark in progress
+        if: env.TASK != 'revise'
+        run: gh issue edit "$ISSUE" --add-label claude:in-progress
+
+      - name: Generate test account password
+        run: |
+          pw=$(openssl rand -hex 16)
+          echo "::add-mask::$pw"
+          echo "BAOBAB_TEST_PASSWORD=$pw" >> "$GITHUB_ENV"
+
+      - uses: pnpm/action-setup@v4
+        if: needs.pick.outputs.needs_env == 'true'
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        if: needs.pick.outputs.needs_env == 'true'
+        with:
+          node-version-file: webapp/.nvmrc
+          cache: pnpm
+          cache-dependency-path: webapp/pnpm-lock.yaml
+
+      # CLAUDE.md and the skills use `docker-compose`; the runners only ship the
+      # `docker compose` plugin.
+      - name: Provide docker-compose
+        run: |
+          command -v docker-compose >/dev/null || {
+            printf '#!/bin/sh\nexec docker compose "$@"\n' | sudo tee /usr/local/bin/docker-compose >/dev/null
+            sudo chmod +x /usr/local/bin/docker-compose
+          }
+
+      - name: Start Baobab
+        if: needs.pick.outputs.needs_env == 'true'
+        run: scripts/agent/start-env.sh
+
+      - name: Run Claude
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ github.token }}
+          prompt: ${{ needs.pick.outputs.prompt }}
+          claude_args: >-
+            --model ${{ needs.pick.outputs.model }}
+            --max-turns ${{ needs.pick.outputs.max_turns }}
+            --allowedTools Bash,Read,Edit,Write,Glob,Grep,Agent,Skill,TodoWrite,WebFetch,WebSearch
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-${{ needs.pick.outputs.task }}-${{ needs.pick.outputs.issue }}
+          path: /tmp/pw_test/shots
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Flag failed run
+        if: failure() || cancelled()
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
+        run: |
+          # The action hides Claude's output, so surface just its final result text
+          # (e.g. an authentication or usage-limit error). The file is either a JSON
+          # array of messages or one message per line; slurping handles both.
+          reason=""
+          if [ -n "$EXECUTION_FILE" ] && [ -f "$EXECUTION_FILE" ]; then
+            reason=$(jq -rs 'flatten | map(select(.type == "result")) | last | .result // empty' "$EXECUTION_FILE" 2>/dev/null | head -c 1500) || reason=""
+          fi
+          [ -n "$reason" ] && echo "::error title=Claude result::$(printf '%s' "$reason" | head -c 500 | tr '\n' ' ')"
+
+          body="The agent run for \`$TASK\` failed or timed out: $RUN_URL"
+          if [ -n "$reason" ]; then
+            body="$body"$'\n\n'"Claude's final message:"$'\n\n'"$(printf '%s' "$reason" | sed 's/^/> /')"
+          fi
+          body="$body"$'\n\n'"Remove the \`claude:blocked\` label to retry."
+
+          gh issue edit "$ISSUE" --remove-label claude:in-progress --add-label claude:blocked || true
+          gh issue comment "$ISSUE" --body "$body" || true
