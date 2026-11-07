@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import SectionRenderer from './components/SectionRenderer';
 import MarkdownRenderer from '../../components/MarkdownRenderer';
@@ -6,6 +6,20 @@ import { evaluateDependency, buildAnswersDict } from './utils/dependencyEvaluato
 import { validateAllAnswers, hasErrors, getErrorCount, firstErrorQuestionId } from './utils/validation';
 import { evaluateVisibilityExpression } from './utils/visibilityEvaluator';
 import { formatAnswerForDisplay } from './utils/answerDisplay';
+
+// The app renders routed pages inside an overflow-y: auto content pane, so
+// the window itself never scrolls; reset the nearest scrollable ancestor too.
+const scrollToTop = (el) => {
+  let node = el && el.parentElement;
+  while (node && node !== document.body) {
+    const overflowY = window.getComputedStyle(node).overflowY;
+    if ((overflowY === 'auto' || overflowY === 'scroll') && node.scrollHeight > node.clientHeight) {
+      node.scrollTop = 0;
+    }
+    node = node.parentElement;
+  }
+  window.scrollTo(0, 0);
+};
 
 // The submit endpoint reports failures as codes (see ValidationError in
 // app/forms/models.py) - map them to real messages rather than passing the
@@ -43,6 +57,7 @@ const FormRenderer = ({
   onAnswersChange = null
 }) => {
   const { t } = useTranslation();
+  const rootRef = useRef(null);
 
   const [answers, setAnswers] = useState([]);
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
@@ -207,17 +222,17 @@ const FormRenderer = ({
     if (!validate(true)) return;
     if (currentSectionIndex < visibleSections.length - 1) {
       setCurrentSectionIndex(prev => prev + 1);
-      window.scrollTo(0, 0);
+      scrollToTop(rootRef.current);
     } else if (showConfirmation) {
       setShowConfirmationPage(true);
-      window.scrollTo(0, 0);
+      scrollToTop(rootRef.current);
     }
   }, [currentSectionIndex, showConfirmation, validate, visibleSections.length]);
 
   const handlePreviousSection = useCallback(() => {
     if (showConfirmationPage) setShowConfirmationPage(false);
     else if (pagePerSection && currentSectionIndex > 0) setCurrentSectionIndex(prev => prev - 1);
-    window.scrollTo(0, 0);
+    scrollToTop(rootRef.current);
   }, [currentSectionIndex, pagePerSection, showConfirmationPage]);
 
   const visibilityFor = useCallback(
@@ -302,7 +317,7 @@ const FormRenderer = ({
     // controlled by the same `showConfirmation` prop.
     if (showConfirmation && !showConfirmationPage) {
       setShowConfirmationPage(true);
-      window.scrollTo(0, 0);
+      scrollToTop(rootRef.current);
       return;
     }
 
@@ -505,7 +520,7 @@ const FormRenderer = ({
   const errorCount = getErrorCount(validationErrors);
 
   return (
-    <div className="mx-auto p-4 md:px-8 md:pt-4 md:pb-8 text-left">
+    <div ref={rootRef} className="mx-auto p-4 md:px-8 md:pt-4 md:pb-8 text-left">
       {/* Edit Warning Dialog */}
       {showEditWarning && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000]" onClick={() => setShowEditWarning(false)}>
