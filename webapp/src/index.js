@@ -63,8 +63,9 @@ class Bootstrap extends Component {
     // against, so every URL in it must be absolute.
     const absolute = path => new URL(path, window.location.origin).href;
 
-    const icon192 = getImage(org.pwa_icon_192);
-    const icon512 = getImage(org.pwa_icon_512);
+    // Values that aren't a bundled image or an upload id are paths relative to the site.
+    const icon192 = getImage(org.pwa_icon_192) || org.pwa_icon_192;
+    const icon512 = getImage(org.pwa_icon_512) || org.pwa_icon_512;
     const icons = [];
     if (icon192) {
       icons.push({ src: absolute(icon192), sizes: '192x192', type: 'image/png', purpose: 'any' });

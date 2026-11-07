@@ -116,5 +116,5 @@ export const applyBranding = (org) => {
 
   const favicon = getImage(o.favicon)
   setLinks('link[rel="icon"], link[rel="shortcut icon"]', favicon)
-  setLinks('link[rel="apple-touch-icon"]', getImage(o.pwa_icon_192))
+  setLinks('link[rel="apple-touch-icon"]', getImage(o.pwa_icon_192) || o.pwa_icon_192)
 }
