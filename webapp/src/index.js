@@ -7,6 +7,8 @@ import i18nInit from './i18n';
 import Loading from "./components/Loading";
 import { organisationService } from "./services/organisation/organisation.service";
 import ContextProvider from './context/ContextProvider';
+import { applyBranding } from './utils/branding';
+import { getImage } from './utils/images';
 
 // Retry lazy-loaded chunks to avoid stale-deploy chunk errors
 const lazyRetry = function(componentImport) {
@@ -50,6 +52,7 @@ class Bootstrap extends Component {
         const org = response.organisation;
         document.title = org.system_name + " | " + org.name;
         i18nInit(org);
+        applyBranding(org);
         this._injectOrgManifest(org);
       }
     });
@@ -60,12 +63,14 @@ class Bootstrap extends Component {
     // against, so every URL in it must be absolute.
     const absolute = path => new URL(path, window.location.origin).href;
 
+    const icon192 = getImage(org.pwa_icon_192);
+    const icon512 = getImage(org.pwa_icon_512);
     const icons = [];
-    if (org.pwa_icon_192) {
-      icons.push({ src: absolute(org.pwa_icon_192), sizes: '192x192', type: 'image/png', purpose: 'any' });
+    if (icon192) {
+      icons.push({ src: absolute(icon192), sizes: '192x192', type: 'image/png', purpose: 'any' });
     }
-    if (org.pwa_icon_512) {
-      icons.push({ src: absolute(org.pwa_icon_512), sizes: '512x512', type: 'image/png', purpose: 'any' });
+    if (icon512) {
+      icons.push({ src: absolute(icon512), sizes: '512x512', type: 'image/png', purpose: 'any' });
     }
     // Fall back to shared icons if org hasn't configured PWA-specific ones
     if (icons.length === 0) {
@@ -85,7 +90,7 @@ class Bootstrap extends Component {
       display: 'standalone',
       orientation: 'portrait',
       background_color: '#ffffff',
-      theme_color: '#0f172a',
+      theme_color: org.primary_colour || '#0f172a',
       icons,
     };
 

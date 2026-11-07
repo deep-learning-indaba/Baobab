@@ -10,6 +10,8 @@
   --clr-on-primary:         #ffffff;
   --clr-primary-container:  #2d6a4f;
   --clr-on-primary-container: #a8e7c5;
+  --clr-on-primary-muted:   rgba(255, 255, 255, 0.82);
+  --clr-on-primary-divider: rgba(255, 255, 255, 0.22);
 
   /* Secondary green */
   --clr-secondary:          #3f6653;
@@ -199,7 +201,7 @@ code {
 }
 
 .navbar-dark .navbar-nav .nav-link {
-  color: rgba(255, 255, 255, 0.82) !important;
+  color: var(--clr-on-primary-muted) !important;
   font-size: 0.875rem;
   font-weight: 500;
   padding: 0.875rem 0.625rem !important;
@@ -251,7 +253,7 @@ code {
 /* ── 5. Language Selector ──────────────────────────────────── */
 .language-navbar {
   padding-right: 1rem;
-  border-right: 1px solid rgba(255, 255, 255, 0.22);
+  border-right: 1px solid var(--clr-on-primary-divider);
   margin-right: 0.75rem;
 }
 
