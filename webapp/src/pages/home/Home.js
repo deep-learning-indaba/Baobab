@@ -437,6 +437,10 @@ class Home extends Component {
                   <i className="fas fa-envelope" style={{ fontSize: 14 }} />
                   {t('Email settings')}
                 </a>
+                <a href="../organisationSettings" className="ml-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors border border-action !text-action hover:bg-surface-low">
+                  <i className="fas fa-cog" style={{ fontSize: 14 }} />
+                  {t('Organisation settings')}
+                </a>
               </div>
             )}
 

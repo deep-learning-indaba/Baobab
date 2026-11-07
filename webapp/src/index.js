@@ -42,6 +42,7 @@ class Bootstrap extends Component {
   }
 
   componentDidMount() {
+    window.addEventListener("organisation-updated", this.handleOrganisationUpdated);
     organisationService.getOrganisation().then(response => {
       this.setState({
         organisation: response.organisation,
@@ -57,6 +58,18 @@ class Bootstrap extends Component {
       }
     });
   }
+
+  componentWillUnmount() {
+    window.removeEventListener("organisation-updated", this.handleOrganisationUpdated);
+  }
+
+  // The settings page announces a saved change so the header and title follow it without a reload.
+  handleOrganisationUpdated = (event) => {
+    const org = event.detail;
+    if (!org) return;
+    this.setState(state => ({ organisation: { ...state.organisation, ...org } }));
+    document.title = org.system_name + " | " + org.name;
+  };
 
   _injectOrgManifest(org) {
     // A manifest served from a blob: URL has no base to resolve relative URLs
