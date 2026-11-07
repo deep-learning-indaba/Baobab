@@ -1,6 +1,7 @@
 import json
+from unittest import mock
 from app.organisation.models import Organisation
-from app.organisation.resolver import OrganisationResolver
+from app.organisation.resolver import OrganisationResolver, ORGANISATION_CACHE_TTL_SECONDS
 from app.utils.errors import FORBIDDEN
 from app.utils.testing import ApiTestCase
 from app import app, db
@@ -78,6 +79,56 @@ class OrganisationApiTest(ApiTestCase):
                 '/api/v1/organisation',
                 headers={'Origin': '', 'referer': ''})
             self.assertEqual(response.status_code, 400)
+
+class OrganisationResolverCacheTest(ApiTestCase):
+    def setUp(self):
+        super().setUp()
+        self.add_organisation(name='Old Name', domain='ttl-org', webhook_secret_key='ttl-secret')
+        OrganisationResolver.reset_cache()
+
+    def tearDown(self):
+        OrganisationResolver.reset_cache()
+        super().tearDown()
+
+    def test_cache_refreshes_only_after_ttl(self):
+        with app.app_context():
+            self.assertEqual(OrganisationResolver.resolve_from_domain('ttl-org').name, 'Old Name')
+
+            org = Organisation.query.filter_by(domain='ttl-org').one()
+            org.name = 'New Name'
+            db.session.commit()
+
+            self.assertEqual(OrganisationResolver.resolve_from_domain('ttl-org').name, 'Old Name')
+
+            expired = OrganisationResolver._loaded_at + ORGANISATION_CACHE_TTL_SECONDS + 1
+            with mock.patch('app.organisation.resolver.time.monotonic', return_value=expired):
+                self.assertEqual(OrganisationResolver.resolve_from_domain('ttl-org').name, 'New Name')
+
+    def test_stripe_signature_resolution_refreshes_after_ttl(self):
+        with app.app_context():
+            OrganisationResolver.resolve_from_domain('ttl-org')
+
+            org = Organisation.query.filter_by(domain='ttl-org').one()
+            org.name = 'New Name'
+            db.session.commit()
+
+            with mock.patch('app.organisation.resolver.verify_payload',
+                            side_effect=lambda payload, secret, sig: secret == 'ttl-secret'):
+                self.assertEqual(
+                    OrganisationResolver.resolve_from_stripe_signature('payload', 'sig').name, 'Old Name')
+
+                expired = OrganisationResolver._loaded_at + ORGANISATION_CACHE_TTL_SECONDS + 1
+                with mock.patch('app.organisation.resolver.time.monotonic', return_value=expired):
+                    self.assertEqual(
+                        OrganisationResolver.resolve_from_stripe_signature('payload', 'sig').name, 'New Name')
+
+    def test_reset_cache_clears_loaded_at(self):
+        with app.app_context():
+            OrganisationResolver.resolve_from_domain('ttl-org')
+            self.assertIsNotNone(OrganisationResolver._loaded_at)
+            OrganisationResolver.reset_cache()
+            self.assertIsNone(OrganisationResolver._loaded_at)
+
 
 class StripeSettingsApiTest(ApiTestCase):
     def __init__(self, *args, **kwargs):
