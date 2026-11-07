@@ -26,6 +26,9 @@ class OrganisationApi(restful.Resource):
         'iso_currency_code': fields.String,
         'pwa_icon_192': fields.String,
         'pwa_icon_512': fields.String,
+        'primary_colour': fields.String,
+        'secondary_colour': fields.String,
+        'favicon': fields.String,
     }
 
     @marshal_with(organisation_fields)

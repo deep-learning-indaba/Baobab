@@ -1,4 +1,5 @@
 import json
+from app.organisation.models import Organisation
 from app.organisation.resolver import OrganisationResolver
 from app.utils.errors import FORBIDDEN
 from app.utils.testing import ApiTestCase
@@ -34,6 +35,27 @@ class OrganisationApiTest(ApiTestCase):
             self.assertEqual(data['domain'], 'deeplearningindaba')
             self.assertEqual(data['languages'][0]['code'], 'en')
             self.assertEqual(data['languages'][0]['description'], 'English')
+            for key in ('primary_colour', 'secondary_colour', 'favicon'):
+                self.assertIn(key, data)
+                self.assertIsNone(data[key])
+
+    def test_organisation_returns_branding_fields(self):
+        org = Organisation.query.filter_by(domain='deeplearningindaba').one()
+        org.primary_colour = '#112233'
+        org.secondary_colour = '#445566'
+        org.favicon = 'favicon.ico'
+        db.session.commit()
+        OrganisationResolver.bust_cache()
+
+        response = self.app.get(
+            '/api/v1/organisation',
+            headers={'Origin': 'https://baobab.deeplearningindaba.com/apply'})
+        self.assertEqual(response.status_code, 200)
+
+        data = json.loads(response.data)
+        self.assertEqual(data['primary_colour'], '#112233')
+        self.assertEqual(data['secondary_colour'], '#445566')
+        self.assertEqual(data['favicon'], 'favicon.ico')
 
     def test_organisation_from_referer(self):
         with app.app_context():
