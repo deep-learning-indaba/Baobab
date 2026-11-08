@@ -212,7 +212,9 @@ const QuestionCard = memo(({
           autoTranslateEnabled={autoTranslateEnabled}
           multiline={true}
           markdown={true}
-          previewClassName="text-muted-foreground leading-relaxed"
+          previewClassName={displayOnly
+            ? 'text-muted-foreground leading-relaxed'
+            : 'text-muted-foreground text-[0.9375rem] leading-relaxed'}
         />
 
         {showPlaceholder && (

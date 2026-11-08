@@ -49,10 +49,16 @@ function MarkdownEditor({
     const handled = edit.text === ''
       ? document.execCommand('delete')
       : document.execCommand('insertText', false, edit.text);
-    if (!handled) {
-      onChange(value.slice(0, edit.replaceStart) + edit.text + value.slice(edit.replaceEnd));
+    if (handled) {
+      // The DOM value already matches what React will render, so the
+      // selection can be set straight away and survives the re-render.
+      textarea.setSelectionRange(edit.selectionStart, edit.selectionEnd);
+      return;
     }
 
+    onChange(value.slice(0, edit.replaceStart) + edit.text + value.slice(edit.replaceEnd));
+    // The fallback changes the value through React, so wait for the
+    // controlled textarea to re-render before placing the selection.
     requestAnimationFrame(() => {
       if (textareaRef.current) {
         textareaRef.current.setSelectionRange(edit.selectionStart, edit.selectionEnd);
