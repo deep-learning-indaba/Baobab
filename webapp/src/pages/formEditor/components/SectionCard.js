@@ -145,6 +145,8 @@ const SectionCard = memo(({
             languages={languages}
             onChange={(lang, value) => handleFieldChange('description', lang, value)}
             multiline={true}
+            markdown={true}
+            previewClassName="text-muted-foreground text-base leading-relaxed"
             autoTranslateEnabled={autoTranslateEnabled}
           />
 

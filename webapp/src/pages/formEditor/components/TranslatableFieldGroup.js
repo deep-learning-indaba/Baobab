@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { translationService } from '../../../services/translation';
+import MarkdownEditor from '../../../components/MarkdownEditor';
 
 const TranslatableFieldGroup = memo(({
   label,
@@ -13,7 +14,9 @@ const TranslatableFieldGroup = memo(({
   placeholder = '',
   disabled = false,
   autoTranslateEnabled = true,
-  showErrors = false
+  showErrors = false,
+  markdown = false,
+  previewClassName
 }) => {
   const { t } = useTranslation();
   const [touched, setTouched] = useState({});
@@ -126,6 +129,9 @@ const TranslatableFieldGroup = memo(({
           </span>
         )}
       </label>
+      {markdown && multiline && (
+        <p className="text-xs text-muted-foreground mb-2">{t('Markdown is supported.')}</p>
+      )}
 
       <div className="flex gap-4 flex-wrap">
         {languages.map((language, index) => {
@@ -143,7 +149,18 @@ const TranslatableFieldGroup = memo(({
               <span className="text-xs font-semibold text-muted-foreground uppercase px-2 py-0.5 bg-surface-mid rounded w-fit">
                 {language.code.toUpperCase()}
               </span>
-              {multiline ? (
+              {markdown && multiline ? (
+                <MarkdownEditor
+                  value={value}
+                  onChange={(newValue) => handleChange(language.code, newValue)}
+                  onBlur={() => setTouched(prev => ({ ...prev, [language.code]: true }))}
+                  placeholder={placeholder}
+                  disabled={disabled || isTranslatingThisField}
+                  hasError={hasError}
+                  ariaLabel={`${label} (${language.code.toUpperCase()})`}
+                  previewClassName={previewClassName}
+                />
+              ) : multiline ? (
                 <textarea
                   className={`${inputCls(hasError)} resize-y min-h-[80px]`}
                   value={value}

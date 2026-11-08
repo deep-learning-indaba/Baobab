@@ -117,7 +117,7 @@ const handleSave = async (editorState) => {
 ## Components
 
 ### TranslatableFieldGroup
-Displays input fields for each language side-by-side.
+Displays input fields for each language side-by-side. With `multiline`, the optional `markdown` prop swaps the textarea for the shared `MarkdownEditor` (Write/Preview tabs and a formatting toolbar), and `previewClassName` styles the preview to match how the text is displayed. Both are used for form, section and question descriptions.
 
 ### OptionsEditor
 Manages options with unified values and translated labels.

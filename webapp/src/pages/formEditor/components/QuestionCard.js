@@ -211,6 +211,8 @@ const QuestionCard = memo(({
           onChange={(lang, value) => handleFieldChange('description', lang, value)}
           autoTranslateEnabled={autoTranslateEnabled}
           multiline={true}
+          markdown={true}
+          previewClassName="text-muted-foreground leading-relaxed"
         />
 
         {showPlaceholder && (
