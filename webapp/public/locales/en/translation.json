@@ -1869,5 +1869,15 @@
     "A link": "A link",
     "Primary colour": "Primary colour",
     "Accent colour": "Accent colour",
-    "Text on this colour may be hard to read.": "Text on this colour may be hard to read."
+    "Text on this colour may be hard to read.": "Text on this colour may be hard to read.",
+    "Write": "Write",
+    "Nothing to preview": "Nothing to preview",
+    "Numbered list": "Numbered list",
+    "Bulleted list": "Bulleted list",
+    "Quote": "Quote",
+    "italic text": "italic text",
+    "list item": "list item",
+    "quote": "quote",
+    "Markdown is supported.": "Markdown is supported.",
+    "Formatting": "Formatting"
 }
