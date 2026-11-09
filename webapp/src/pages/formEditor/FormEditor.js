@@ -286,6 +286,8 @@ const FormEditor = ({
           languages={languages}
           onChange={handleFormDescriptionChange}
           multiline={true}
+          markdown={true}
+          previewClassName="text-muted-foreground leading-relaxed"
           autoTranslateEnabled={autoTranslateEnabled}
           placeholder={t('Enter form description (optional)')}
         />

@@ -1868,5 +1868,15 @@
     "A link": "Un lien",
     "Primary colour": "Couleur principale",
     "Accent colour": "Couleur d'accent",
-    "Text on this colour may be hard to read.": "Le texte sur cette couleur peut être difficile à lire."
+    "Text on this colour may be hard to read.": "Le texte sur cette couleur peut être difficile à lire.",
+    "Write": "Écrire",
+    "Nothing to preview": "Rien à prévisualiser",
+    "Numbered list": "Liste numérotée",
+    "Bulleted list": "Liste à puces",
+    "Quote": "Citation",
+    "italic text": "texte en italique",
+    "list item": "élément de liste",
+    "quote": "citation",
+    "Markdown is supported.": "Le Markdown est pris en charge.",
+    "Formatting": "Mise en forme"
 }
