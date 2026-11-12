@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { profileService } from '../../services/eventApp/profile.service';
+import Avatar from '../../components/Avatar';
 
 function withProtocol(url) {
   if (!url) return url;
@@ -56,9 +57,7 @@ function ViewMemberProfile(props) {
     return (
       <div className="max-w-lg mx-auto py-8 px-4">
         <div className="bg-white rounded-2xl border border-border shadow-sm p-6 flex flex-col items-center gap-3">
-          {profile.photo_url && (
-            <img src={profile.photo_url} alt="" className="w-20 h-20 rounded-full object-cover" />
-          )}
+          <Avatar photoUrl={profile.photo_url} firstname={profile.firstname} lastname={profile.lastname} size="lg" />
           <h2 className="text-xl font-bold text-foreground">{profile.firstname} {profile.lastname}</h2>
           {profile.role && <p className="text-sm text-foreground/60">{profile.role}</p>}
           <p className="text-sm text-foreground/50 italic">{t('This member has hidden their profile.')}</p>
@@ -70,9 +69,7 @@ function ViewMemberProfile(props) {
   return (
     <div className="max-w-lg mx-auto py-8 px-4 space-y-4">
       <div className="bg-white rounded-2xl border border-border shadow-sm p-6 flex flex-col items-center gap-3">
-        {profile.photo_url && (
-          <img src={profile.photo_url} alt="" className="w-24 h-24 rounded-full object-cover" />
-        )}
+        <Avatar photoUrl={profile.photo_url} firstname={profile.firstname} lastname={profile.lastname} size="xl" />
         <h2 className="text-2xl font-bold text-foreground">{profile.firstname} {profile.lastname}</h2>
         {profile.role && <p className="text-sm font-medium text-foreground/60">{profile.role}</p>}
         {profile.pronouns && <p className="text-xs text-foreground/50">{profile.pronouns}</p>}

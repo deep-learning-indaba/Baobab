@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { profileService } from '../../services/eventApp/profile.service';
+import Avatar from '../../components/Avatar';
 
 function ProfileBrowser(props) {
   const event = props.event;
@@ -100,13 +101,7 @@ function ProfileBrowser(props) {
               to={'/' + eventKey + '/app/profile/' + p.user_id}
               className="bg-white rounded-2xl border border-border shadow-sm p-4 flex gap-4 items-start hover:border-primary/50 transition-all"
             >
-              {p.photo_url ? (
-                <img src={p.photo_url} alt="" className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
-              ) : (
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary font-bold text-lg">
-                  {p.firstname ? p.firstname[0] : '?'}
-                </div>
-              )}
+              <Avatar photoUrl={p.photo_url} firstname={p.firstname} lastname={p.lastname} size="md" />
               <div className="min-w-0">
                 <p className="font-semibold text-foreground truncate">{p.firstname} {p.lastname}</p>
                 {p.role && <p className="text-xs text-foreground/60">{p.role}</p>}
