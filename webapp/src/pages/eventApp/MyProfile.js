@@ -1,7 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import CreatableSelect from 'react-select/lib/Creatable';
 import { profileService } from '../../services/eventApp/profile.service';
+import { fileService } from '../../services/file/file.service';
+import { resizeImage } from '../../utils/imageResize';
+import Avatar from '../../components/Avatar';
 
 function extractHandle(url, pattern) {
   if (!url) return '';
@@ -49,6 +52,10 @@ function MyProfile(props) {
   const [visibility, setVisibility] = useState('community');
   const [selectedInterests, setSelectedInterests] = useState([]);
   const [links, setLinks] = useState({ linkedin: '', twitter: '', scholar: '', website: '' });
+
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoError, setPhotoError] = useState('');
+  const fileInputRef = useRef(null);
 
   const eventId = event && event.id;
 
@@ -106,6 +113,55 @@ function MyProfile(props) {
     });
   }, [eventId]);
 
+  // Only the photo fields are taken from the response, so unsaved edits to the text fields are kept.
+  const applyPhotoResult = useCallback(function(result) {
+    setPhotoBusy(false);
+    if (result.error) {
+      setPhotoError(result.error || t('Photo upload failed.'));
+      return;
+    }
+    setProfile(function(prev) {
+      return Object.assign({}, prev, {
+        photo_url: result.data.photo_url,
+        photo_removed_at: result.data.photo_removed_at,
+      });
+    });
+  }, [t]);
+
+  const handlePhotoPick = useCallback(function(e) {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    setPhotoError('');
+    setPhotoBusy(true);
+    resizeImage(file, { squareCrop: true, maxDimension: 512, quality: 0.85, rejectOnFailure: true })
+      .then(function(resized) {
+        return fileService.uploadFile(resized).then(function(response) {
+          if (!response || !response.fileId) {
+            setPhotoBusy(false);
+            setPhotoError(t('Photo upload failed.'));
+            return;
+          }
+          return profileService.updateMyProfile({ event_id: eventId, photo_url: response.fileId })
+            .then(applyPhotoResult);
+        });
+      }, function() {
+        setPhotoBusy(false);
+        setPhotoError(t("We couldn't process this image. Try a JPEG or PNG."));
+      })
+      .catch(function() {
+        setPhotoBusy(false);
+        setPhotoError(t('Photo upload failed.'));
+      });
+  }, [eventId, t, applyPhotoResult]);
+
+  const handlePhotoRemove = useCallback(function() {
+    if (!window.confirm(t('Remove your profile photo?'))) return;
+    setPhotoError('');
+    setPhotoBusy(true);
+    profileService.updateMyProfile({ event_id: eventId, photo_url: '' }).then(applyPhotoResult);
+  }, [eventId, t, applyPhotoResult]);
+
   const handleSave = useCallback(function() {
     setIsSaving(true);
     setSaveSuccess(false);
@@ -156,6 +212,67 @@ function MyProfile(props) {
       )}
 
       <div className="bg-white rounded-2xl border border-border p-5 space-y-4">
+        {profile && (
+          <div>
+            <p className="block text-sm font-medium text-foreground mb-2">{t('Profile photo')}</p>
+            {profile.photo_removed_at && !profile.photo_url && (
+              <div className="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900" role="status">
+                {t("A moderator removed your photo. Please choose a picture that follows the event's code of conduct.")}
+              </div>
+            )}
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Avatar
+                  photoUrl={profile.photo_url}
+                  firstname={profile.firstname}
+                  lastname={profile.lastname}
+                  size="xl"
+                  alt={t('Profile photo of {{name}}', { name: profile.firstname + ' ' + profile.lastname })}
+                />
+                {photoBusy && (
+                  <div className="absolute inset-0 flex items-center justify-center rounded-full bg-white/70">
+                    <div className="spinner-border spinner-border-sm" role="status">
+                      <span className="sr-only">{t('Loading...')}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    className="px-4 py-2 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-gray-50 disabled:opacity-50"
+                    onClick={function() { fileInputRef.current && fileInputRef.current.click(); }}
+                    disabled={photoBusy}
+                  >
+                    {profile.photo_url ? t('Change photo') : t('Upload photo')}
+                  </button>
+                  {profile.photo_url && (
+                    <button
+                      type="button"
+                      className="text-sm text-red-600 hover:underline disabled:opacity-50"
+                      onClick={handlePhotoRemove}
+                      disabled={photoBusy}
+                    >
+                      {t('Remove')}
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs text-foreground/60">{t("Square photos work best. We'll resize large images for you.")}</p>
+              </div>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept="image/jpeg,image/png,image/webp,image/heic"
+              aria-label={t('Upload profile photo')}
+              onChange={handlePhotoPick}
+            />
+            {photoError && <p className="mt-2 text-sm text-red-600" role="alert">{photoError}</p>}
+          </div>
+        )}
+
         <div>
           <label className="block text-sm font-medium text-foreground mb-1">{t('Headline')}</label>
           <input

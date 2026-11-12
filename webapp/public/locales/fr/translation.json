@@ -1878,5 +1878,15 @@
     "list item": "élément de liste",
     "quote": "citation",
     "Markdown is supported.": "Le Markdown est pris en charge.",
-    "Formatting": "Mise en forme"
+    "Formatting": "Mise en forme",
+    "Profile photo": "Photo de profil",
+    "Profile photo of {{name}}": "Photo de profil de {{name}}",
+    "Upload photo": "Téléverser une photo",
+    "Change photo": "Changer de photo",
+    "Square photos work best. We'll resize large images for you.": "Les photos carrées donnent les meilleurs résultats. Nous redimensionnons les grandes images pour vous.",
+    "Upload profile photo": "Téléverser la photo de profil",
+    "Remove your profile photo?": "Retirer votre photo de profil ?",
+    "We couldn't process this image. Try a JPEG or PNG.": "Nous n'avons pas pu traiter cette image. Essayez un fichier JPEG ou PNG.",
+    "Photo upload failed.": "Échec du téléversement de la photo.",
+    "A moderator removed your photo. Please choose a picture that follows the event's code of conduct.": "Un modérateur a retiré votre photo. Veuillez choisir une image conforme au code de conduite de l'événement."
 }
