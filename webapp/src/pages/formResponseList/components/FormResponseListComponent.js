@@ -252,12 +252,9 @@ class FormResponseListComponent extends Component {
         <div className="bg-white rounded-2xl shadow-sm border border-border p-8 space-y-6">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
-              <h1 className="font-heading text-2xl font-bold text-foreground">{t("Response List")}</h1>
-              {/* Name the form: an event can have several, and the heading alone
-                  gave no clue which one you were looking at. */}
-              {this.state.formName && (
-                <p className="text-sm text-muted-foreground mt-0.5">{this.state.formName}</p>
-              )}
+              {/* An event can have several forms, so the heading names the form;
+                  the generic title shows until the name has loaded. */}
+              <h1 className="font-heading text-2xl font-bold text-foreground">{this.state.formName || t("Response List")}</h1>
             </div>
             <div className="flex items-center gap-2">
               <button
