@@ -40,7 +40,9 @@ class LoginForm extends Component {
           this.props.loggedIn(user);
         }
         const from = this.props.location.state && this.props.location.state.from;
-        this.props.history.push(from || '/');
+        // Returning to the login page itself would leave the user on it.
+        const returnTo = from && from.pathname !== '/login' ? from : '/';
+        this.props.history.push(returnTo);
 
       },
       e =>
