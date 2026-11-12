@@ -17,3 +17,4 @@ export { default as DiscussionBoard } from './DiscussionBoard';
 export { default as DiscussionThread } from './DiscussionThread';
 export { default as NewDiscussionThread } from './NewDiscussionThread';
 export { default as DiscussionReportsAdmin } from './DiscussionReportsAdmin';
+export { default as ProfileReportsAdmin } from './ProfileReportsAdmin';

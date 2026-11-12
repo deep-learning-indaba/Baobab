@@ -1889,5 +1889,15 @@
     "Remove your profile photo?": "Remove your profile photo?",
     "We couldn't process this image. Try a JPEG or PNG.": "We couldn't process this image. Try a JPEG or PNG.",
     "Photo upload failed.": "Photo upload failed.",
-    "A moderator removed your photo. Please choose a picture that follows the event's code of conduct.": "A moderator removed your photo. Please choose a picture that follows the event's code of conduct."
+    "A moderator removed your photo. Please choose a picture that follows the event's code of conduct.": "A moderator removed your photo. Please choose a picture that follows the event's code of conduct.",
+    "Report profile": "Report profile",
+    "What's the problem?": "What's the problem?",
+    "Photo": "Photo",
+    "Profile content": "Profile content",
+    "Thanks. The event's moderators will review this.": "Thanks. The event's moderators will review this.",
+    "Reported people": "Reported people",
+    "No reported people.": "No reported people.",
+    "Current photo": "Current photo",
+    "Remove photo": "Remove photo",
+    "Remove this photo?": "Remove this photo?"
 }

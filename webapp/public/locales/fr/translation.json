@@ -1888,5 +1888,15 @@
     "Remove your profile photo?": "Retirer votre photo de profil ?",
     "We couldn't process this image. Try a JPEG or PNG.": "Nous n'avons pas pu traiter cette image. Essayez un fichier JPEG ou PNG.",
     "Photo upload failed.": "Échec du téléversement de la photo.",
-    "A moderator removed your photo. Please choose a picture that follows the event's code of conduct.": "Un modérateur a retiré votre photo. Veuillez choisir une image conforme au code de conduite de l'événement."
+    "A moderator removed your photo. Please choose a picture that follows the event's code of conduct.": "Un modérateur a retiré votre photo. Veuillez choisir une image conforme au code de conduite de l'événement.",
+    "Report profile": "Signaler le profil",
+    "What's the problem?": "Quel est le problème ?",
+    "Photo": "Photo",
+    "Profile content": "Contenu du profil",
+    "Thanks. The event's moderators will review this.": "Merci. Les modérateurs de l'événement vont examiner ce signalement.",
+    "Reported people": "Personnes signalées",
+    "No reported people.": "Aucune personne signalée.",
+    "Current photo": "Photo actuelle",
+    "Remove photo": "Retirer la photo",
+    "Remove this photo?": "Retirer cette photo ?"
 }
