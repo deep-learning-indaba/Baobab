@@ -261,6 +261,66 @@ class ConnectionApiTest(ApiTestCase):
         self.assertIsNotNone(row)
         self.assertEqual(row.reason, 'spam')
 
+    def _report(self, hdr, reported_id, **extra):
+        body = {'event_id': self.event_id, 'reported_user_id': reported_id}
+        body.update(extra)
+        return self.app.post('/api/v1/connection/report', data=json.dumps(body),
+                             content_type='application/json', headers=hdr)
+
+    def test_report_default_category_and_body(self):
+        resp = self._report(self.hdr_a, self.user_b_id)
+        self.assertEqual(resp.status_code, 201)
+        data = json.loads(resp.data)
+        self.assertEqual(data['status'], 'reported')
+        row = db.session.query(ConnectionReport).get(data['id'])
+        self.assertEqual(row.category, 'person')
+        self.assertEqual(row.status, 'open')
+
+    def test_report_photo_snapshots_photo(self):
+        from app.profiles.models import MemberProfile
+        db.session.add(MemberProfile(user_id=self.user_b_id, photo_url='a' * 32))
+        db.session.commit()
+        resp = self._report(self.hdr_a, self.user_b_id, category='photo')
+        self.assertEqual(resp.status_code, 201)
+        row = db.session.query(ConnectionReport).get(json.loads(resp.data)['id'])
+        self.assertEqual(row.category, 'photo')
+        self.assertEqual(row.reported_photo_url, 'a' * 32)
+
+    def test_report_invalid_category(self):
+        self.assertEqual(self._report(self.hdr_a, self.user_b_id, category='bogus').status_code, 400)
+
+    def test_report_self(self):
+        self.assertEqual(self._report(self.hdr_a, self.user_a_id).status_code, 400)
+
+    def test_report_user_not_at_event(self):
+        resp = self._report(self.hdr_a, self.non_guest_id)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_report_reporter_not_guest(self):
+        resp = self._report(self.hdr_ng, self.user_b_id)
+        self.assertEqual(resp.status_code, 403)
+
+    def test_report_duplicate_open_is_idempotent(self):
+        first = json.loads(self._report(self.hdr_a, self.user_b_id, category='photo').data)
+        resp = self._report(self.hdr_a, self.user_b_id, category='photo')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(json.loads(resp.data)['id'], first['id'])
+        self.assertEqual(db.session.query(ConnectionReport).count(), 1)
+
+    def test_report_other_category_creates_new_row(self):
+        self._report(self.hdr_a, self.user_b_id, category='photo')
+        resp = self._report(self.hdr_a, self.user_b_id, category='profile')
+        self.assertEqual(resp.status_code, 201)
+
+    def test_report_after_dismissal_creates_new_row(self):
+        first = json.loads(self._report(self.hdr_a, self.user_b_id).data)
+        row = db.session.query(ConnectionReport).get(first['id'])
+        row.status = 'dismissed'
+        db.session.commit()
+        resp = self._report(self.hdr_a, self.user_b_id)
+        self.assertEqual(resp.status_code, 201)
+        self.assertNotEqual(json.loads(resp.data)['id'], first['id'])
+
     # ── resolve shows connection state ────────────────────────────────────────
 
     @patch('app.connections.api.push_to_user', return_value=0)

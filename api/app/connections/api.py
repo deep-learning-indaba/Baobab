@@ -2,7 +2,8 @@ from flask import g, request
 import flask_restful as restful
 from flask_restful import reqparse
 
-from app import db
+from app import db, LOGGER
+from app.engagement.models import EngagementEvent
 from app.utils.auth import auth_required
 from app.utils import errors
 from app.utils.push import push_to_user
@@ -13,6 +14,26 @@ from app.profiles.repository import ProfileRepository
 from app.invitedGuest.repository import InvitedGuestRepository
 from app.users.repository import UserRepository
 from app.events.repository import EventRepository
+
+
+REPORT_CATEGORIES = ('photo', 'profile', 'person')
+MAX_REPORT_REASON_LEN = 1000
+
+
+def _emit_engagement(event, user_id, event_type, metadata=None):
+    """Best-effort engagement event. Never let analytics break a request."""
+    try:
+        db.session.add(EngagementEvent(
+            organisation_id=event.organisation_id,
+            event_id=event.id,
+            user_id=user_id,
+            event_type=event_type,
+            event_metadata=metadata or {},
+        ))
+        db.session.commit()
+    except Exception as e:  # noqa: BLE001
+        LOGGER.warning('engagement emit failed (%s): %s', event_type, e)
+        db.session.rollback()
 
 
 def _connection_state(event_id, me_id, other_id):
@@ -274,12 +295,41 @@ class ConnectionReportAPI(restful.Resource):
         req_parser.add_argument('event_id', type=int, required=True)
         req_parser.add_argument('reported_user_id', type=int, required=True)
         req_parser.add_argument('reason', type=str, required=False)
+        req_parser.add_argument('category', type=str, required=False)
         args = req_parser.parse_args()
         event_id = args['event_id']
         me_id = g.current_user['id']
+        reported_id = args['reported_user_id']
+        category = args.get('category') or 'person'
+        reason = args.get('reason')
+
+        if category not in REPORT_CATEGORIES:
+            return {'message': 'category must be photo, profile, or person'}, 400
+        if reason and len(reason) > MAX_REPORT_REASON_LEN:
+            return {'message': 'reason must be at most {} characters'.format(MAX_REPORT_REASON_LEN)}, 400
 
         if not AttendanceRepository.is_confirmed_guest(event_id, me_id):
             return errors.NOT_A_GUEST
 
-        ConnectionRepository.create_report(event_id, me_id, args['reported_user_id'], args.get('reason'))
-        return {'status': 'reported'}, 201
+        if reported_id == me_id:
+            return {'message': 'You cannot report yourself'}, 400
+
+        if not AttendanceRepository.is_confirmed_guest(event_id, reported_id):
+            return errors.USER_NOT_FOUND
+
+        existing = ConnectionRepository.get_open_report(event_id, me_id, reported_id, category)
+        if existing is not None:
+            return {'id': existing.id, 'status': 'reported'}, 200
+
+        profile = ProfileRepository.get(reported_id)
+        report = ConnectionRepository.create_report(
+            event_id, me_id, reported_id, reason, category=category,
+            reported_photo_url=profile.photo_url if profile else None)
+        report_id = report.id
+
+        event = EventRepository.get_by_id(event_id)
+        if event:
+            _emit_engagement(event, me_id, 'profile_reported',
+                             {'reported_user_id': reported_id, 'category': category})
+
+        return {'id': report_id, 'status': 'reported'}, 201

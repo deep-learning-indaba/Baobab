@@ -54,10 +54,17 @@ class ConnectionRepository:
         ).order_by(Connection.updated_at.desc()).all()
 
     @staticmethod
-    def create_report(event_id, reporter_id, reported_id, reason):
+    def create_report(event_id, reporter_id, reported_id, reason, category='person', reported_photo_url=None):
         r = ConnectionReport(
             event_id=event_id, reporter_user_id=reporter_id,
-            reported_user_id=reported_id, reason=reason)
+            reported_user_id=reported_id, reason=reason,
+            category=category, reported_photo_url=reported_photo_url)
         db.session.add(r)
         db.session.commit()
         return r
+
+    @staticmethod
+    def get_open_report(event_id, reporter_id, reported_id, category):
+        return db.session.query(ConnectionReport).filter_by(
+            event_id=event_id, reporter_user_id=reporter_id,
+            reported_user_id=reported_id, category=category, status='open').first()
