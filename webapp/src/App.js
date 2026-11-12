@@ -126,6 +126,12 @@ class AppComponent extends Component {
   };
 
   componentDidMount() {
+    // Without a stored session there is nothing to refresh, and the resulting
+    // 401 would send anonymous visitors of public pages to the login page.
+    if (!localStorage.getItem("user")) {
+      return;
+    }
+
     userService.authRefresh().then(user => {
       if (!user.error) {
         localStorage.setItem("user", JSON.stringify(user));
@@ -136,6 +142,7 @@ class AppComponent extends Component {
       }
       else {
         localStorage.removeItem("user");
+        this.setState({ user: null });
       }
     });
   }
