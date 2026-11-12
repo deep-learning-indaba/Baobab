@@ -68,3 +68,42 @@ class ConnectionRepository:
         return db.session.query(ConnectionReport).filter_by(
             event_id=event_id, reporter_user_id=reporter_id,
             reported_user_id=reported_id, category=category, status='open').first()
+
+    @staticmethod
+    def list_open_reports(event_id):
+        return db.session.query(ConnectionReport).filter_by(
+            event_id=event_id, status='open').order_by(
+            ConnectionReport.created_at.asc(), ConnectionReport.id.asc()).all()
+
+    @staticmethod
+    def get_report(event_id, report_id):
+        return db.session.query(ConnectionReport).filter_by(
+            id=report_id, event_id=event_id).first()
+
+    @staticmethod
+    def dismiss_report(report, resolver_id):
+        if report.status == 'open':
+            report.status = 'dismissed'
+            report.resolved_by_user_id = resolver_id
+            report.resolved_at = datetime.utcnow()
+            db.session.commit()
+        return report
+
+    @staticmethod
+    def action_photo_reports(event_id, reported_id, resolver_id, extra_report=None):
+        """Mark every open photo report for the user (plus extra_report) as actioned.
+
+        Returns the ids of the reports that were actioned.
+        """
+        rows = db.session.query(ConnectionReport).filter_by(
+            event_id=event_id, reported_user_id=reported_id,
+            category='photo', status='open').all()
+        if extra_report is not None and extra_report.status == 'open' and extra_report not in rows:
+            rows.append(extra_report)
+        now = datetime.utcnow()
+        for r in rows:
+            r.status = 'actioned'
+            r.resolved_by_user_id = resolver_id
+            r.resolved_at = now
+        db.session.commit()
+        return sorted(r.id for r in rows)

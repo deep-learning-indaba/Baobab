@@ -272,6 +272,8 @@ rest_api.add_resource(connections_api.ConnectionRespondAPI, '/api/v1/connection/
 rest_api.add_resource(connections_api.ConnectionWithdrawAPI, '/api/v1/connection/withdraw')
 rest_api.add_resource(connections_api.ConnectionListAPI, '/api/v1/connection/list')
 rest_api.add_resource(connections_api.ConnectionReportAPI, '/api/v1/connection/report')
+rest_api.add_resource(connections_api.ConnectionReportDismissAPI, '/api/v1/connection/report/<int:report_id>/dismiss')
+rest_api.add_resource(connections_api.ConnectionReportRemovePhotoAPI, '/api/v1/connection/report/<int:report_id>/remove-photo')
 # Discussion board routes — register static paths before <int:id> routes
 rest_api.add_resource(discussion_api.DiscussionSpaceListAPI,        '/api/v1/discussion/space')
 rest_api.add_resource(discussion_api.DiscussionSpaceAPI,            '/api/v1/discussion/space/<int:space_id>')

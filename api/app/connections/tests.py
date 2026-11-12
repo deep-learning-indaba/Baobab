@@ -321,6 +321,179 @@ class ConnectionApiTest(ApiTestCase):
         self.assertEqual(resp.status_code, 201)
         self.assertNotEqual(json.loads(resp.data)['id'], first['id'])
 
+    # ── moderation queue ──────────────────────────────────────────────────────
+
+    def _make_moderator(self, email, role):
+        from app.events.models import EventRole
+        user = self.add_user(email)
+        db.session.add(EventRole(role, user.id, self.event_id))
+        db.session.commit()
+        return self.get_auth_header_for(email)
+
+    def _queue(self, hdr, event_id=None):
+        return self.app.get('/api/v1/connection/report?event_id={}'.format(event_id or self.event_id),
+                            headers=hdr)
+
+    def _resolve(self, action, hdr, report_id, event_id=None):
+        return self.app.post(
+            '/api/v1/connection/report/{}/{}'.format(report_id, action),
+            data=json.dumps({'event_id': event_id or self.event_id}),
+            content_type='application/json', headers=hdr)
+
+    def _give_photo(self, user_id, photo):
+        from app.profiles.models import MemberProfile
+        db.session.add(MemberProfile(user_id=user_id, photo_url=photo, headline='hi', about='abt'))
+        db.session.commit()
+
+    def test_queue_as_comms_officer(self):
+        hdr = self._make_moderator('co@test.com', 'comms-officer')
+        self._give_photo(self.user_b_id, 'a' * 32)
+        first = json.loads(self._report(self.hdr_a, self.user_b_id, category='photo', reason='bad').data)['id']
+        second = json.loads(self._report(self.hdr_c, self.user_b_id, category='profile').data)['id']
+        resp = self._queue(hdr)
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.data)
+        self.assertEqual([r['report_id'] for r in data], [first, second])
+        r = data[0]
+        self.assertEqual(r['category'], 'photo')
+        self.assertEqual(r['reason'], 'bad')
+        self.assertEqual(r['reporter']['user_id'], self.user_a_id)
+        self.assertEqual(r['reported']['user_id'], self.user_b_id)
+        self.assertEqual(r['reported']['photo_url'], 'a' * 32)
+        self.assertEqual(r['reported']['headline'], 'hi')
+        self.assertEqual(r['reported']['about'], 'abt')
+        self.assertEqual(r['reported']['visibility'], 'community')
+        self.assertEqual(r['reported_photo_url'], 'a' * 32)
+        self.assertTrue(r['created_at'].endswith('Z'))
+
+    def test_queue_user_without_profile(self):
+        hdr = self._make_moderator('co@test.com', 'comms-officer')
+        self._report(self.hdr_a, self.user_b_id)
+        data = json.loads(self._queue(hdr).data)
+        self.assertIsNone(data[0]['reported']['photo_url'])
+        self.assertIsNone(data[0]['reported']['headline'])
+        self.assertEqual(data[0]['reported']['visibility'], 'community')
+        self.assertFalse(data[0]['photo_changed'])
+
+    def test_queue_as_event_admin(self):
+        hdr = self._make_moderator('adm@test.com', 'admin')
+        self._report(self.hdr_a, self.user_b_id)
+        resp = self._queue(hdr)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(json.loads(resp.data)), 1)
+
+    def test_queue_as_guest_forbidden(self):
+        self.assertEqual(self._queue(self.hdr_a).status_code, 403)
+
+    def test_queue_role_in_other_event_forbidden(self):
+        other = self.add_event(key='OTHER2025')
+        other_id = other.id
+        from app.events.models import EventRole
+        user = self.add_user('oco@test.com')
+        db.session.add(EventRole('comms-officer', user.id, other_id))
+        db.session.commit()
+        hdr = self.get_auth_header_for('oco@test.com')
+        self.assertEqual(self._queue(hdr).status_code, 403)
+
+    def test_photo_changed_flag(self):
+        hdr = self._make_moderator('co@test.com', 'comms-officer')
+        self._give_photo(self.user_b_id, 'a' * 32)
+        self._report(self.hdr_a, self.user_b_id, category='photo')
+        self.assertFalse(json.loads(self._queue(hdr).data)[0]['photo_changed'])
+        from app.profiles.models import MemberProfile
+        db.session.query(MemberProfile).filter_by(user_id=self.user_b_id).update({'photo_url': 'b' * 32})
+        db.session.commit()
+        data = json.loads(self._queue(hdr).data)
+        self.assertTrue(data[0]['photo_changed'])
+        self.assertEqual(data[0]['reported_photo_url'], 'a' * 32)
+        self.assertEqual(data[0]['reported']['photo_url'], 'b' * 32)
+
+    def test_dismiss_removes_from_queue(self):
+        hdr = self._make_moderator('co@test.com', 'comms-officer')
+        rid = json.loads(self._report(self.hdr_a, self.user_b_id).data)['id']
+        resp = self._resolve('dismiss', hdr, rid)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(json.loads(self._queue(hdr).data), [])
+        row = db.session.query(ConnectionReport).get(rid)
+        self.assertEqual(row.status, 'dismissed')
+        self.assertIsNotNone(row.resolved_by_user_id)
+        self.assertIsNotNone(row.resolved_at)
+
+    def test_dismiss_already_resolved_is_idempotent(self):
+        hdr = self._make_moderator('co@test.com', 'comms-officer')
+        rid = json.loads(self._report(self.hdr_a, self.user_b_id, category='photo').data)['id']
+        self._resolve('remove-photo', hdr, rid)
+        resp = self._resolve('dismiss', hdr, rid)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(db.session.query(ConnectionReport).get(rid).status, 'actioned')
+
+    def test_dismiss_other_event_404(self):
+        hdr = self._make_moderator('co@test.com', 'comms-officer')
+        other = self.add_event(key='OTHER2025')
+        other_id = other.id
+        from app.events.models import EventRole
+        admin = self.add_user('oadm@test.com')
+        db.session.add(EventRole('admin', admin.id, other_id))
+        db.session.commit()
+        other_hdr = self.get_auth_header_for('oadm@test.com')
+        rid = json.loads(self._report(self.hdr_a, self.user_b_id).data)['id']
+        self.assertEqual(self._resolve('dismiss', other_hdr, rid, event_id=other_id).status_code, 404)
+        self.assertEqual(self._resolve('dismiss', hdr, 99999).status_code, 404)
+        self.assertEqual(db.session.query(ConnectionReport).get(rid).status, 'open')
+
+    def test_resolve_as_guest_forbidden(self):
+        rid = json.loads(self._report(self.hdr_a, self.user_b_id, category='photo').data)['id']
+        self.assertEqual(self._resolve('dismiss', self.hdr_c, rid).status_code, 403)
+        self.assertEqual(self._resolve('remove-photo', self.hdr_c, rid).status_code, 403)
+        self.assertEqual(db.session.query(ConnectionReport).get(rid).status, 'open')
+
+    def test_remove_photo_actions_only_open_photo_reports(self):
+        from app.profiles.models import MemberProfile
+        hdr = self._make_moderator('co@test.com', 'comms-officer')
+        self._give_photo(self.user_b_id, 'a' * 32)
+        p1 = json.loads(self._report(self.hdr_a, self.user_b_id, category='photo').data)['id']
+        p2 = json.loads(self._report(self.hdr_c, self.user_b_id, category='photo').data)['id']
+        prof = json.loads(self._report(self.hdr_a, self.user_b_id, category='profile').data)['id']
+        person = json.loads(self._report(self.hdr_a, self.user_b_id, category='person').data)['id']
+        old = json.loads(self._report(self.hdr_c, self.user_a_id, category='photo').data)['id']
+        resp = self._resolve('remove-photo', hdr, p1)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(json.loads(resp.data)['actioned_report_ids'], sorted([p1, p2]))
+        profile = db.session.query(MemberProfile).filter_by(user_id=self.user_b_id).first()
+        self.assertIsNone(profile.photo_url)
+        self.assertIsNotNone(profile.photo_removed_at)
+        status = {r.id: r.status for r in db.session.query(ConnectionReport).all()}
+        self.assertEqual(status[p1], 'actioned')
+        self.assertEqual(status[p2], 'actioned')
+        self.assertEqual(status[prof], 'open')
+        self.assertEqual(status[person], 'open')
+        self.assertEqual(status[old], 'open')
+        self.assertIsNotNone(db.session.query(ConnectionReport).get(p1).resolved_by_user_id)
+        from app.engagement.models import EngagementEvent
+        self.assertEqual(db.session.query(EngagementEvent).filter_by(
+            event_type='profile_photo_moderated').count(), 1)
+
+    def test_remove_photo_already_gone_returns_200(self):
+        hdr = self._make_moderator('co@test.com', 'comms-officer')
+        self._give_photo(self.user_b_id, None)
+        rid = json.loads(self._report(self.hdr_a, self.user_b_id, category='photo').data)['id']
+        resp = self._resolve('remove-photo', hdr, rid)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(json.loads(resp.data)['actioned_report_ids'], [rid])
+
+    def test_remove_photo_on_profile_report_actions_it_too(self):
+        hdr = self._make_moderator('co@test.com', 'comms-officer')
+        self._give_photo(self.user_b_id, 'a' * 32)
+        photo = json.loads(self._report(self.hdr_a, self.user_b_id, category='photo').data)['id']
+        prof = json.loads(self._report(self.hdr_a, self.user_b_id, category='profile').data)['id']
+        resp = self._resolve('remove-photo', hdr, prof)
+        self.assertEqual(json.loads(resp.data)['actioned_report_ids'], sorted([photo, prof]))
+
+    def test_remove_photo_without_profile_row(self):
+        hdr = self._make_moderator('co@test.com', 'comms-officer')
+        rid = json.loads(self._report(self.hdr_a, self.user_b_id, category='photo').data)['id']
+        self.assertEqual(self._resolve('remove-photo', hdr, rid).status_code, 200)
+
     # ── resolve shows connection state ────────────────────────────────────────
 
     @patch('app.connections.api.push_to_user', return_value=0)
