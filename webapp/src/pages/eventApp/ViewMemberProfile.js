@@ -165,7 +165,7 @@ function ViewMemberProfile(props) {
         <div className="text-center">
           <button
             onClick={openReport}
-            className="text-xs text-muted-foreground/60 hover:text-destructive transition-colors"
+            className="text-sm text-foreground/60 hover:text-red-600 hover:underline transition-colors"
           >
             {t('Report profile')}
           </button>
@@ -210,7 +210,7 @@ function ViewMemberProfile(props) {
             <button
               onClick={sendReport}
               disabled={reportSending}
-              className="flex-1 py-1.5 rounded-lg bg-destructive text-white text-sm font-medium disabled:opacity-50"
+              className="flex-1 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium disabled:opacity-50"
             >
               {t('Send report')}
             </button>
