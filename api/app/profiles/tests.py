@@ -1,4 +1,6 @@
 import json
+import mock
+from google.api_core.exceptions import NotFound
 from datetime import datetime, timedelta
 
 from app import db
@@ -114,6 +116,134 @@ class ProfileAPITest(ApiTestCase):
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertEqual(data['visibility'], 'hidden')
+
+    PHOTO_ID = 'a' * 32
+
+    def _put_profile(self, payload):
+        header = self.get_auth_header_for('guest@test.com')
+        payload = dict(payload, event_id=self.event_id)
+        return self.app.put(
+            '/api/v1/profile',
+            data=json.dumps(payload),
+            headers=dict(header, **{'Content-Type': 'application/json'}),
+        )
+
+    def _stored_photo(self):
+        profile = db.session.query(MemberProfile).filter_by(user_id=self.guest_id).first()
+        return profile.photo_url
+
+    def _set_photo(self, photo_url, removed_at=None):
+        profile = profile_repository.get_or_create(self.guest_id)
+        profile.photo_url = photo_url
+        profile.photo_removed_at = removed_at
+        db.session.commit()
+
+    def _put_with_blob(self, payload, content_type='image/jpeg', size=1000):
+        with mock.patch('app.profiles.repository.storage.get_storage_bucket') as mock_bucket:
+            blob = mock_bucket.return_value.blob.return_value
+            blob.content_type = content_type
+            blob.size = size
+            return self._put_profile(payload)
+
+    def test_put_valid_photo_stores_and_returns_it(self):
+        self.seed_static_data()
+        response = self._put_with_blob({'photo_url': self.PHOTO_ID})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.data)['photo_url'], self.PHOTO_ID)
+        self.assertEqual(self._stored_photo(), self.PHOTO_ID)
+
+    def test_put_empty_photo_clears_it(self):
+        self.seed_static_data()
+        self._set_photo(self.PHOTO_ID)
+        response = self._put_profile({'photo_url': ''})
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(json.loads(response.data)['photo_url'])
+        self.assertIsNone(self._stored_photo())
+
+    def _assert_photo_rejected(self, response):
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.data)
+        self.assertEqual(data['field'], 'photo_url')
+        self.assertEqual(data['message'], 'Profile photo must be a JPEG, PNG or WebP image under 2 MB')
+        self.assertEqual(self._stored_photo(), 'b' * 32)
+        profile = db.session.query(MemberProfile).filter_by(user_id=self.guest_id).first()
+        self.assertIsNone(profile.headline)
+
+    def test_put_photo_url_rejected(self):
+        self.seed_static_data()
+        self._set_photo('b' * 32)
+        response = self._put_profile({'photo_url': 'https://example.com/me.png', 'headline': 'Changed'})
+        self._assert_photo_rejected(response)
+
+    def test_put_photo_bad_format_rejected(self):
+        self.seed_static_data()
+        self._set_photo('b' * 32)
+        response = self._put_profile({'photo_url': 'not-a-hex-id', 'headline': 'Changed'})
+        self._assert_photo_rejected(response)
+
+    def test_put_photo_missing_blob_rejected(self):
+        self.seed_static_data()
+        self._set_photo('b' * 32)
+        with mock.patch('app.profiles.repository.storage.get_storage_bucket') as mock_bucket:
+            mock_bucket.return_value.blob.return_value.reload.side_effect = NotFound('missing')
+            response = self._put_profile({'photo_url': self.PHOTO_ID, 'headline': 'Changed'})
+        self._assert_photo_rejected(response)
+
+    def test_put_photo_wrong_type_rejected(self):
+        self.seed_static_data()
+        self._set_photo('b' * 32)
+        with mock.patch('app.profiles.repository.storage.get_storage_bucket') as mock_bucket:
+            blob = mock_bucket.return_value.blob.return_value
+            blob.content_type = 'application/pdf'
+            blob.size = 1000
+            response = self._put_profile({'photo_url': self.PHOTO_ID, 'headline': 'Changed'})
+        self._assert_photo_rejected(response)
+
+    def test_put_photo_too_large_rejected(self):
+        self.seed_static_data()
+        self._set_photo('b' * 32)
+        with mock.patch('app.profiles.repository.storage.get_storage_bucket') as mock_bucket:
+            blob = mock_bucket.return_value.blob.return_value
+            blob.content_type = 'image/png'
+            blob.size = 3 * 1024 * 1024
+            response = self._put_profile({'photo_url': self.PHOTO_ID, 'headline': 'Changed'})
+        self._assert_photo_rejected(response)
+
+    def test_put_without_photo_key_leaves_it_unchanged(self):
+        self.seed_static_data()
+        self._set_photo(self.PHOTO_ID)
+        response = self._put_profile({'headline': 'Hello'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self._stored_photo(), self.PHOTO_ID)
+
+    def test_put_null_photo_leaves_it_unchanged(self):
+        self.seed_static_data()
+        self._set_photo(self.PHOTO_ID)
+        response = self._put_profile({'photo_url': None, 'headline': 'Hello'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self._stored_photo(), self.PHOTO_ID)
+
+    def test_put_valid_photo_resets_photo_removed_at(self):
+        self.seed_static_data()
+        self._set_photo(None, removed_at=datetime(2026, 11, 1, 12, 0, 0))
+        header = self.get_auth_header_for('guest@test.com')
+        response = self.app.get('/api/v1/profile?event_id={}'.format(self.event_id), headers=header)
+        self.assertEqual(json.loads(response.data)['photo_removed_at'], '2026-11-01T12:00:00Z')
+
+        response = self._put_with_blob({'photo_url': self.PHOTO_ID})
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(json.loads(response.data)['photo_removed_at'])
+        profile = db.session.query(MemberProfile).filter_by(user_id=self.guest_id).first()
+        self.assertIsNone(profile.photo_removed_at)
+
+    def test_photo_removed_at_not_in_view_response(self):
+        self.seed_static_data()
+        self._set_photo(None, removed_at=datetime(2026, 11, 1, 12, 0, 0))
+        header = self.get_auth_header_for('guest@test.com')
+        response = self.app.get(
+            '/api/v1/profile/view?event_id={}&user_id={}'.format(self.event_id, self.guest_id), headers=header)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('photo_removed_at', json.loads(response.data))
 
     def test_list_community_excludes_hidden_profiles(self):
         self.seed_static_data()

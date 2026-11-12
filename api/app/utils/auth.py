@@ -124,3 +124,9 @@ def form_response_viewer_required(func):
         return FORBIDDEN
 
     return wrapper
+
+
+def is_event_moderator(user_id, event_id):
+    """True for a comms officer or event admin of the event, or a site admin."""
+    user = user_repository.get_by_id(user_id)
+    return bool(user and user.is_comms_officer(event_id))

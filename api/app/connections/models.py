@@ -37,3 +37,14 @@ class ConnectionReport(db.Model):
     reported_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
     reason = db.Column(db.String(1000), nullable=True)
     created_at = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow)
+    # 'photo' | 'profile' | 'person' (Scan & Connect reports are 'person')
+    category = db.Column(db.String(16), nullable=False, default='person', server_default='person')
+    # Snapshot of member_profile.photo_url at report time, so moderators see the reported picture
+    # even if the user changes it afterwards.
+    reported_photo_url = db.Column(db.String(512), nullable=True)
+    # 'open' | 'dismissed' | 'actioned'
+    status = db.Column(db.String(16), nullable=False, default='open', server_default='open')
+    resolved_by_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=True)
+    resolved_at = db.Column(db.DateTime(), nullable=True)
+
+    __table_args__ = (db.Index('ix_connection_report_event_status', 'event_id', 'status'),)

@@ -15,6 +15,7 @@ class MemberProfile(db.Model):
     country = db.Column(db.String(120), nullable=True)
     affiliation = db.Column(db.String(255), nullable=True)
     photo_url = db.Column(db.String(512), nullable=True)
+    photo_removed_at = db.Column(db.DateTime(), nullable=True)
     visibility = db.Column(db.String(20), nullable=False, default='community')
     created_at = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
