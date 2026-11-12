@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { connectionService } from '../../services/eventApp/connection.service';
 import { formatInEventTz } from '../../utils/datetime';
 import Avatar from '../../components/Avatar';
@@ -31,7 +32,7 @@ function ProfileReportsAdmin(props) {
       if (r.error) setError(r.error); else setReports(r.data || []);
     });
   }
-  useEffect(load, [eventId]);
+  useEffect(function () { load(); }, [eventId]);
 
   function act(request) {
     setBusy(true);
@@ -133,12 +134,12 @@ function ProfileReportsAdmin(props) {
                   {r.reported.about && (
                     <p className="text-sm text-foreground/70 mt-1 whitespace-pre-line">{excerpt(r.reported.about)}</p>
                   )}
-                  <a
-                    href={'/' + eventKey + '/app/profile/' + r.reported.user_id}
+                  <Link
+                    to={'/' + eventKey + '/app/profile/' + r.reported.user_id}
                     className="inline-block mt-2 text-xs text-primary hover:underline"
                   >
                     {t('View profile')}
-                  </a>
+                  </Link>
                 </div>
               </div>
             </div>
