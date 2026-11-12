@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import FormRenderer from "../formRenderer/FormRenderer";
@@ -9,6 +9,7 @@ import { reviewService } from "../../services/reviews/review.service";
 import { formResponseService } from "../../services/formResponse";
 import { userService } from "../../services/user/user.service";
 import { resolveContentLanguage } from "../../utils/eventLanguages";
+import { scrollToTop } from "../../utils/scroll";
 import {
   STATUS, ReviewStatusBadge, identifierText, weightedScore, weightedQuestions, formatScore, PageMessage, Spinner,
 } from "./reviewUtils";
@@ -59,6 +60,7 @@ export default function ReviewPage({ event, match, history }) {
   const [justSubmitted, setJustSubmitted] = useState(false);
   const [flagVisible, setFlagVisible] = useState(false);
   const [mobileTab, setMobileTab] = useState('application');
+  const rootRef = useRef(null);
 
   useEffect(() => {
     setData(null);
@@ -67,9 +69,13 @@ export default function ReviewPage({ event, match, history }) {
     reviewService.getAssignedReview(reviewResponseId, event.id, language).then(result => {
       if (result.error) setError(result.error);
       else setData(result.data);
-      window.scrollTo(0, 0);
     });
   }, [reviewResponseId, event.id, language]);
+
+  // After the new review has rendered, so the scroll pane has its content.
+  useEffect(() => {
+    if (data) scrollToTop(rootRef.current);
+  }, [data]);
 
   const reviewFormId = data && data.review_form.id;
 
@@ -95,7 +101,7 @@ export default function ReviewPage({ event, match, history }) {
       return { success: false, error: result.error, validationErrors: result.validationErrors };
     }
     setJustSubmitted(true);
-    window.scrollTo(0, 0);
+    scrollToTop(rootRef.current);
     return { success: true, data: result.response };
   }, [save, reviewFormId, reviewResponseId]);
 
@@ -120,7 +126,7 @@ export default function ReviewPage({ event, match, history }) {
   const goToNext = () => history.push(`/${event.key}/reviews/${nextId}`);
 
   return (
-    <div className="w-full max-w-7xl mx-auto pt-6 px-4 space-y-5 text-left">
+    <div ref={rootRef} className="w-full max-w-7xl mx-auto pt-6 px-4 space-y-5 text-left">
       <header className="flex flex-col lg:flex-row lg:items-start gap-4 justify-between">
         <div className="space-y-1 min-w-0">
           <Link to={`/${event.key}/reviews`} className="text-sm font-medium text-action hover:underline">

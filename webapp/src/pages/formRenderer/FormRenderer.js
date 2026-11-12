@@ -6,20 +6,7 @@ import { evaluateDependency, buildAnswersDict } from './utils/dependencyEvaluato
 import { validateAllAnswers, hasErrors, getErrorCount, firstErrorQuestionId } from './utils/validation';
 import { evaluateVisibilityExpression } from './utils/visibilityEvaluator';
 import { formatAnswerForDisplay } from './utils/answerDisplay';
-
-// The app renders routed pages inside an overflow-y: auto content pane, so
-// the window itself never scrolls; reset the nearest scrollable ancestor too.
-const scrollToTop = (el) => {
-  let node = el && el.parentElement;
-  while (node && node !== document.body) {
-    const overflowY = window.getComputedStyle(node).overflowY;
-    if ((overflowY === 'auto' || overflowY === 'scroll') && node.scrollHeight > node.clientHeight) {
-      node.scrollTop = 0;
-    }
-    node = node.parentElement;
-  }
-  window.scrollTo(0, 0);
-};
+import { scrollToTop } from '../../utils/scroll';
 
 // The submit endpoint reports failures as codes (see ValidationError in
 // app/forms/models.py) - map them to real messages rather than passing the

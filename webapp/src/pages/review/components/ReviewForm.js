@@ -13,6 +13,7 @@ import { reviewService } from "../../../services/reviews";
 import { userService } from "../../../services/user";
 
 import { Link } from "react-router-dom";
+import { scrollToTop } from "../../../utils/scroll";
 import { ConfirmModal } from "../../../components/Modal";
 import { Trans, withTranslation } from 'react-i18next'
 
@@ -227,7 +228,7 @@ class ReviewForm extends Component {
             totalScore: 0,
             stale: false
         }
-
+        this.rootRef = React.createRef();
     }
 
     processResponse = (response) => {
@@ -285,7 +286,7 @@ class ReviewForm extends Component {
             totalScore: totalScore,
             stale: false
         }, () => {
-            window.scrollTo(0, 0);
+            scrollToTop(this.rootRef.current);
         });
     }
 
@@ -593,7 +594,7 @@ class ReviewForm extends Component {
         const reviewsRemainingCount = form.reviews_remaining_count;
 
         return (
-            <div className="w-full max-w-5xl mx-auto pt-6 text-left space-y-6">
+            <div ref={this.rootRef} className="w-full max-w-5xl mx-auto pt-6 text-left space-y-6">
                 {questionModels && questionModels.map(section =>
                     <div className="bg-white rounded-2xl shadow-sm border border-border p-8 space-y-6" key={"s_" + section.id}>
                         {section.headline && <h2 className="text-xl font-bold text-foreground pb-2 border-b border-border/50">{section.headline}</h2>}
