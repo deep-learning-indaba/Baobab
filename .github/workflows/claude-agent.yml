@@ -1,6 +1,6 @@
 # Runs the Claude Code agent on GitHub issues. See .claude/agent-workflow.md for the
 # label flow. Each run picks at most one piece of work, in this order:
-#   1. "@claude revise" from a maintainer on a design PR -> /design-feature <issue> revise
+#   1. "Request changes" review from a maintainer on a design PR -> /design-feature <issue> revise
 #   2. claude:approved                                    -> /implement-feature <issue>
 #   3. claude:bug                                         -> /fix-bug <issue>
 #   4. claude:design                                      -> /design-feature <issue>
@@ -66,26 +66,33 @@ jobs:
             exit 0
           fi
 
-          # A design PR needs revising when a maintainer has asked "@claude revise"
-          # (comment or review) since the branch's last commit. Deriving this from
-          # the PR rather than the triggering event means a run that GitHub drops
-          # from the concurrency queue is picked up by the next one.
+          # A design PR needs revising when someone with write access has submitted a
+          # "Request changes" review since the branch's last commit. Deriving this from
+          # the PR rather than the triggering event means a run that GitHub drops from
+          # the concurrency queue is picked up by the next one.
+          #
+          # Permission is checked per reviewer rather than through author_association,
+          # which reports private org members as CONTRIBUTOR to the Actions token.
+          has_write() {
+            case "$(gh api "repos/$REPO/collaborators/$1/permission" --jq .permission 2>/dev/null)" in
+              admin|maintain|write) return 0 ;;
+              *) return 1 ;;
+            esac
+          }
           revise_issue=""
           for pr in $(gh pr list --repo "$REPO" --state open --limit 50 --json number,headRefName \
                         --jq '.[] | select(.headRefName | test("^claude/feature-[0-9]+-")) | .number'); do
-            pending=$(gh pr view "$pr" --repo "$REPO" --json commits,comments,reviews --jq '
+            reviewers=$(gh pr view "$pr" --repo "$REPO" --json commits,reviews --jq '
               (.commits | last | .committedDate) as $last
-              | [(.comments[] | {body, at: .createdAt, who: .authorAssociation}),
-                 (.reviews[]  | {body, at: .submittedAt, who: .authorAssociation})]
-              | map(select((.body | contains("@claude revise"))
-                           and (.who == "OWNER" or .who == "MEMBER" or .who == "COLLABORATOR")
-                           and .at > $last))
-              | length')
-            if [ "$pending" -gt 0 ]; then
-              head=$(gh pr view "$pr" --repo "$REPO" --json headRefName -q .headRefName)
-              [[ "$head" =~ ^claude/feature-([0-9]+)- ]] && revise_issue=${BASH_REMATCH[1]}
-              break
-            fi
+              | [.reviews[] | select(.state == "CHANGES_REQUESTED" and .submittedAt > $last) | .author.login]
+              | unique | .[]')
+            for reviewer in $reviewers; do
+              if has_write "$reviewer"; then
+                head=$(gh pr view "$pr" --repo "$REPO" --json headRefName -q .headRefName)
+                [[ "$head" =~ ^claude/feature-([0-9]+)- ]] && revise_issue=${BASH_REMATCH[1]}
+                break 2
+              fi
+            done
           done
 
           today=$(date -u +%Y-%m-%d)
