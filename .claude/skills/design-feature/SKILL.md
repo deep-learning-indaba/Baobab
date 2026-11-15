@@ -39,14 +39,14 @@ Map out what exists before proposing anything. Baobab has a lot of existing mach
 
 ## 4. Submit for review
 
-1. Commit the doc, push, and open a **draft** PR titled `Design: <feature>` with body `Design for #<issue>. Review comments on the doc are welcome; reply "@claude revise" when ready for a new draft, or add claude:approved to the issue to start implementation.` followed by the open questions copied as a numbered list.
+1. Commit the doc, push, and open a **draft** PR titled `Design: <feature>` with body `Design for #<issue>. Review the doc with line comments and submit the review as "Request changes" to get a revised draft, or add claude:approved to the issue to start implementation.` followed by the open questions copied as a numbered list.
 2. Comment on the issue with the PR link and the open questions.
 3. Swap `claude:in-progress` for `claude:design-review`.
 
 ## Revising
 
 1. Find the design PR for the issue (`gh pr list --search "<issue> in:body" --state open`), check out its branch, and read the doc.
-2. Read all review comments and PR conversation since the last revision: `gh api repos/{owner}/{repo}/pulls/<pr>/comments` (line comments) and `gh pr view <pr> --comments`. Only maintainer comments count (see Safety in the workflow doc).
+2. Read the feedback since the branch's last commit: the "Request changes" review(s) and their summaries (`gh pr view <pr> --json reviews`), the line comments (`gh api repos/{owner}/{repo}/pulls/<pr>/comments`), and the PR conversation (`gh pr view <pr> --comments`). Only feedback from people with write access counts (see Safety in the workflow doc).
 3. Update the doc. Move answered open questions into Decisions, recording the answer. Answers can raise new questions, which is fine.
-4. Commit with a message summarising what changed. Reply to each line comment you resolved, saying briefly how. Leave a PR comment listing the remaining open questions.
+4. Commit with a message summarising what changed; the new commit is what marks the review as handled. Reply to each line comment you resolved, saying briefly how. Leave a PR comment listing what changed and the remaining open questions, and asking for another review.
 5. Keep `claude:design-review`.
