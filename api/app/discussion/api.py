@@ -3,7 +3,7 @@ import flask_restful as restful
 from flask_restful import reqparse
 
 from app import db, LOGGER
-from app.utils.auth import auth_required
+from app.utils.auth import auth_required, is_event_moderator
 from app.utils import errors
 from app.utils.push import push_to_user
 from app.discussion.models import REACTION_EMOJIS
@@ -28,9 +28,7 @@ def _is_confirmed_guest(event_id, user_id):
 
 
 def _is_moderator(user_id, event_id):
-    # Comms officer OR event admin (is_comms_officer already returns True for admins).
-    user = user_repository.get_by_id(user_id)
-    return bool(user and user.is_comms_officer(event_id))
+    return is_event_moderator(user_id, event_id)
 
 
 def _emit(event, user_id, event_type, metadata=None):

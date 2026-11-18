@@ -2,72 +2,16 @@ import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { fileService } from '../services/file/file.service';
 import { getFileURL } from '../utils/files';
+import { resizeImage } from '../utils/imageResize';
 
 var MAX_DIMENSION = 1600;
 var JPEG_QUALITY = 0.82;
 // Below this, and already within MAX_DIMENSION, re-encoding isn't worth the quality loss.
 var SKIP_COMPRESSION_BYTES = 1.5 * 1024 * 1024;
-// Re-encoding via <canvas> only ever captures a single frame, so animated
-// formats must be left untouched rather than "compressed" into a still image.
-var UNCOMPRESSIBLE_TYPES = ['image/gif', 'image/svg+xml'];
-// Formats browsers commonly can't decode at all (e.g. HEIC straight off an
-// iPhone camera). createImageBitmap() rejects fairly reliably for these, but
-// this timeout is the real backstop: it guarantees resizeIfNeeded() always
-// settles and the upload button never gets stuck spinning.
-var RESIZE_TIMEOUT_MS = 8000;
 var ACCEPTED_NON_IMAGE_TYPES = ['application/pdf'];
 
 function isAcceptedFile(file) {
   return (!!file.type && file.type.startsWith('image/')) || ACCEPTED_NON_IMAGE_TYPES.indexOf(file.type) !== -1;
-}
-
-function renameExtension(name, ext) {
-  return (name || 'image').replace(/\.[^./\\]+$/, '') + '.' + ext;
-}
-
-/**
- * Downscale and re-encode an image client-side before upload, so a multi-MB,
- * several-thousand-pixel-wide phone photo doesn't get shipped and stored at
- * full size for what's typically a small inline thread image. Falls back to
- * the original file whenever resizing isn't applicable, isn't supported, or
- * fails or stalls for any reason - it must never block the upload.
- */
-function resizeIfNeeded(file) {
-  if (UNCOMPRESSIBLE_TYPES.indexOf(file.type) !== -1 || typeof createImageBitmap !== 'function') {
-    return Promise.resolve(file);
-  }
-
-  var resized = createImageBitmap(file).then(function (bitmap) {
-    var withinBounds = bitmap.width <= MAX_DIMENSION && bitmap.height <= MAX_DIMENSION;
-    if (withinBounds && file.size <= SKIP_COMPRESSION_BYTES) {
-      bitmap.close();
-      return file;
-    }
-
-    var scale = Math.min(1, MAX_DIMENSION / Math.max(bitmap.width, bitmap.height));
-    var canvas = document.createElement('canvas');
-    canvas.width = Math.round(bitmap.width * scale);
-    canvas.height = Math.round(bitmap.height * scale);
-    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    bitmap.close();
-
-    var outputType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
-    return new Promise(function (resolve) {
-      canvas.toBlob(function (blob) {
-        if (!blob) { resolve(file); return; }
-        var name = renameExtension(file.name, outputType === 'image/png' ? 'png' : 'jpg');
-        resolve(new File([blob], name, { type: outputType }));
-      }, outputType, outputType === 'image/jpeg' ? JPEG_QUALITY : undefined);
-    });
-  }).catch(function () {
-    return file;
-  });
-
-  var timeout = new Promise(function (resolve) {
-    setTimeout(function () { resolve(file); }, RESIZE_TIMEOUT_MS);
-  });
-
-  return Promise.race([resized, timeout]);
 }
 
 /**
@@ -97,7 +41,7 @@ function Attachments(props) {
     var isImage = file.type.startsWith('image/');
     setError('');
     setUploading(true);
-    (isImage ? resizeIfNeeded(file) : Promise.resolve(file)).then(function (processedFile) {
+    (isImage ? resizeImage(file, { maxDimension: MAX_DIMENSION, quality: JPEG_QUALITY, skipBelowBytes: SKIP_COMPRESSION_BYTES }) : Promise.resolve(file)).then(function (processedFile) {
       return fileService.uploadFile(processedFile);
     }).then(function (response) {
       setUploading(false);

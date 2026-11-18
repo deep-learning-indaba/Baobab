@@ -46,7 +46,7 @@ import { isEventAdmin } from "../../utils/user";
 import { withTranslation, useTranslation } from 'react-i18next';
 import { useInstall } from '../../context/InstallContext';
 import { isPushSupported, getNotificationPermission, registerPushSubscription } from '../../utils/push';
-import { EventAppProgramme, ProgrammeEditor, EventAppAnnouncements, AnnouncementDetail, AnnouncementsAdmin, MyTicket, CheckinConsole, BadgeExport, MyProfile, ViewMemberProfile, ProfileBrowser, ScanConnect, Connections, ConnectLanding, DiscussionSpaces, DiscussionBoard, DiscussionThread, NewDiscussionThread, DiscussionReportsAdmin } from '../eventApp';
+import { EventAppProgramme, ProgrammeEditor, EventAppAnnouncements, AnnouncementDetail, AnnouncementsAdmin, MyTicket, CheckinConsole, BadgeExport, MyProfile, ViewMemberProfile, ProfileBrowser, ScanConnect, Connections, ConnectLanding, DiscussionSpaces, DiscussionBoard, DiscussionThread, NewDiscussionThread, DiscussionReportsAdmin, ProfileReportsAdmin } from '../eventApp';
 import EventDashboard from '../eventDashboard';
 import ResourceLinksAdmin from '../resourceLinks';
 import { getEventLanguages } from '../../utils/eventLanguages';
@@ -985,6 +985,17 @@ class EventHome extends Component {
           path={`${match.path}/discussionReportsAdmin`}
           render={(props) => (
             <DiscussionReportsAdmin
+              {...props}
+              event={event}
+              user={this.props.user}
+            />
+          )}
+        />
+        <Route
+          exact
+          path={`${match.path}/profileReportsAdmin`}
+          render={(props) => (
+            <ProfileReportsAdmin
               {...props}
               event={event}
               user={this.props.user}

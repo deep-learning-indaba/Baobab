@@ -122,6 +122,7 @@ class EventNav extends Component {
           <SidebarSection title={t('Communications')}>
             <SidebarLink to={`/${this.props.eventKey}/announcementsAdmin`} label={t('Announcements Admin')} />
             <SidebarLink to={`/${this.props.eventKey}/discussionReportsAdmin`} label={t('Reported messages')} />
+            <SidebarLink to={`/${this.props.eventKey}/profileReportsAdmin`} label={t('Reported people')} />
           </SidebarSection>
         )}
 

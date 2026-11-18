@@ -1,9 +1,35 @@
+import re
+
+from google.api_core.exceptions import NotFound
+
 from app import db
 from app.profiles.models import MemberProfile, MemberProfileLink, MemberProfileInterest
 from app.tags.models import Tag, TagTranslation
 from app.users.models import UserConsent
 from app.attendance.repository import AttendanceRepository
 from app.utils.language import translation_for
+from app.utils import storage
+
+PROFILE_PHOTO_MAX_BYTES = 2 * 1024 * 1024
+PROFILE_PHOTO_CONTENT_TYPES = ('image/jpeg', 'image/png', 'image/webp')
+PROFILE_PHOTO_ERROR = 'Profile photo must be a JPEG, PNG or WebP image under 2 MB'
+_FILE_ID_PATTERN = re.compile(r'^[0-9a-f]{32}$')
+
+
+def validate_profile_photo(file_id):
+    """Returns an error message if file_id is not an acceptable profile photo, otherwise None."""
+    if not _FILE_ID_PATTERN.match(file_id or ''):
+        return PROFILE_PHOTO_ERROR
+    blob = storage.get_storage_bucket().blob(file_id)
+    try:
+        blob.reload()
+    except NotFound:
+        return PROFILE_PHOTO_ERROR
+    if blob.content_type not in PROFILE_PHOTO_CONTENT_TYPES:
+        return PROFILE_PHOTO_ERROR
+    if blob.size is None or blob.size > PROFILE_PHOTO_MAX_BYTES:
+        return PROFILE_PHOTO_ERROR
+    return None
 
 
 class ProfileRepository:

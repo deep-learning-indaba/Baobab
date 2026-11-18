@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import QrScanner from '../../components/QrScanner';
 import { connectionService } from '../../services/eventApp/connection.service';
+import Avatar from '../../components/Avatar';
 
 const SCAN_DEBOUNCE_MS = 3000;
 
@@ -12,24 +13,6 @@ function extractToken(decodedText) {
     if (t) return t;
   } catch (e) {}
   return decodedText;
-}
-
-function Avatar({ photoUrl, firstname, lastname }) {
-  if (photoUrl) {
-    return (
-      <img
-        src={photoUrl}
-        alt={firstname + ' ' + lastname}
-        className="w-20 h-20 rounded-full object-cover ring-2 ring-primary/20"
-      />
-    );
-  }
-  var initials = (firstname || '?')[0].toUpperCase() + (lastname || '?')[0].toUpperCase();
-  return (
-    <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
-      {initials}
-    </div>
-  );
 }
 
 function ConnectionCard({ target, connectionState, eventKey, eventId, onStateChange, t }) {
@@ -73,7 +56,7 @@ function ConnectionCard({ target, connectionState, eventKey, eventId, onStateCha
   return (
     <div className="bg-white rounded-2xl border border-border shadow-sm p-6 space-y-4">
       <div className="flex items-center gap-4">
-        <Avatar photoUrl={target.photo_url} firstname={target.firstname} lastname={target.lastname} />
+        <Avatar photoUrl={target.photo_url} firstname={target.firstname} lastname={target.lastname} size="lg" />
         <div className="min-w-0 flex-1">
           <p className="text-lg font-bold text-foreground">{target.firstname} {target.lastname}</p>
           {target.role && <p className="text-sm text-primary font-medium">{target.role}</p>}

@@ -1,32 +1,14 @@
 import React, { Component } from 'react';
 import { withTranslation } from 'react-i18next';
 import { connectionService } from '../../services/eventApp/connection.service';
+import Avatar from '../../components/Avatar';
 
 var TABS = { REQUESTS: 'requests', SENT: 'sent', CONNECTED: 'connected', SCANNED: 'scanned' };
-
-function Avatar({ photoUrl, firstname, lastname, size }) {
-  var sz = size === 'sm' ? 'w-10 h-10 text-base' : 'w-12 h-12 text-lg';
-  if (photoUrl) {
-    return (
-      <img
-        src={photoUrl}
-        alt={firstname + ' ' + lastname}
-        className={sz + ' rounded-full object-cover flex-shrink-0'}
-      />
-    );
-  }
-  var initials = (firstname || '?')[0].toUpperCase() + (lastname || '?')[0].toUpperCase();
-  return (
-    <div className={sz + ' rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary flex-shrink-0'}>
-      {initials}
-    </div>
-  );
-}
 
 function PersonRow({ item, eventKey, actions, t }) {
   return (
     <div className="flex items-center gap-3 bg-white rounded-2xl border border-border shadow-sm p-4">
-      <Avatar photoUrl={item.photo_url} firstname={item.firstname} lastname={item.lastname} size="sm" />
+      <Avatar photoUrl={item.photo_url} firstname={item.firstname} lastname={item.lastname} size="md" />
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-foreground text-sm">{item.firstname} {item.lastname}</p>
         {item.role && <p className="text-xs text-primary">{item.role}</p>}

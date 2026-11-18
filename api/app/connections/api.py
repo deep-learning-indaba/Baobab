@@ -1,9 +1,12 @@
+from datetime import datetime
+
 from flask import g, request
 import flask_restful as restful
 from flask_restful import reqparse
 
-from app import db
-from app.utils.auth import auth_required
+from app import db, LOGGER
+from app.engagement.models import EngagementEvent
+from app.utils.auth import auth_required, is_event_moderator
 from app.utils import errors
 from app.utils.push import push_to_user
 from app.connections.models import ConnectionStatus
@@ -13,6 +16,26 @@ from app.profiles.repository import ProfileRepository
 from app.invitedGuest.repository import InvitedGuestRepository
 from app.users.repository import UserRepository
 from app.events.repository import EventRepository
+
+
+REPORT_CATEGORIES = ('photo', 'profile', 'person')
+MAX_REPORT_REASON_LEN = 1000
+
+
+def _emit_engagement(event, user_id, event_type, metadata=None):
+    """Best-effort engagement event. Never let analytics break a request."""
+    try:
+        db.session.add(EngagementEvent(
+            organisation_id=event.organisation_id,
+            event_id=event.id,
+            user_id=user_id,
+            event_type=event_type,
+            event_metadata=metadata or {},
+        ))
+        db.session.commit()
+    except Exception as e:  # noqa: BLE001
+        LOGGER.warning('engagement emit failed (%s): %s', event_type, e)
+        db.session.rollback()
 
 
 def _connection_state(event_id, me_id, other_id):
@@ -269,17 +292,151 @@ class ConnectionListAPI(restful.Resource):
 
 class ConnectionReportAPI(restful.Resource):
     @auth_required
+    def get(self):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
+        args = req_parser.parse_args()
+        event_id = args['event_id']
+
+        if not is_event_moderator(g.current_user['id'], event_id):
+            return errors.FORBIDDEN
+
+        reports = ConnectionRepository.list_open_reports(event_id)
+        return [_serialize_report(r) for r in reports], 200
+
+    @auth_required
     def post(self):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('event_id', type=int, required=True)
         req_parser.add_argument('reported_user_id', type=int, required=True)
         req_parser.add_argument('reason', type=str, required=False)
+        req_parser.add_argument('category', type=str, required=False)
         args = req_parser.parse_args()
         event_id = args['event_id']
         me_id = g.current_user['id']
+        reported_id = args['reported_user_id']
+        category = args.get('category') or 'person'
+        reason = args.get('reason')
+
+        if category not in REPORT_CATEGORIES:
+            return {'message': 'category must be photo, profile, or person'}, 400
+        if reason and len(reason) > MAX_REPORT_REASON_LEN:
+            return {'message': 'reason must be at most {} characters'.format(MAX_REPORT_REASON_LEN)}, 400
 
         if not AttendanceRepository.is_confirmed_guest(event_id, me_id):
             return errors.NOT_A_GUEST
 
-        ConnectionRepository.create_report(event_id, me_id, args['reported_user_id'], args.get('reason'))
-        return {'status': 'reported'}, 201
+        if reported_id == me_id:
+            return {'message': 'You cannot report yourself'}, 400
+
+        if not AttendanceRepository.is_confirmed_guest(event_id, reported_id):
+            return errors.USER_NOT_FOUND
+
+        existing = ConnectionRepository.get_open_report(event_id, me_id, reported_id, category)
+        if existing is not None:
+            return {'id': existing.id, 'status': 'reported'}, 200
+
+        profile = ProfileRepository.get(reported_id)
+        report = ConnectionRepository.create_report(
+            event_id, me_id, reported_id, reason, category=category,
+            reported_photo_url=profile.photo_url if profile else None)
+        report_id = report.id
+
+        event = EventRepository.get_by_id(event_id)
+        if event:
+            _emit_engagement(event, me_id, 'profile_reported',
+                             {'reported_user_id': reported_id, 'category': category})
+
+        return {'id': report_id, 'status': 'reported'}, 201
+
+
+def _report_user(user_id):
+    user = UserRepository.get_by_id(user_id)
+    profile = ProfileRepository.get(user_id)
+    return user, profile
+
+
+def _serialize_report(report):
+    reporter, reporter_profile = _report_user(report.reporter_user_id)
+    reported, reported_profile = _report_user(report.reported_user_id)
+    current_photo = reported_profile.photo_url if reported_profile else None
+    return {
+        'report_id': report.id,
+        'category': report.category,
+        'reason': report.reason,
+        'created_at': report.created_at.isoformat() + 'Z',
+        'reporter': {
+            'user_id': report.reporter_user_id,
+            'firstname': reporter.firstname if reporter else '',
+            'lastname': reporter.lastname if reporter else '',
+            'photo_url': reporter_profile.photo_url if reporter_profile else None,
+        },
+        'reported': {
+            'user_id': report.reported_user_id,
+            'firstname': reported.firstname if reported else '',
+            'lastname': reported.lastname if reported else '',
+            'photo_url': current_photo,
+            'headline': reported_profile.headline if reported_profile else None,
+            'about': reported_profile.about if reported_profile else None,
+            'visibility': reported_profile.visibility if reported_profile else 'community',
+        },
+        'reported_photo_url': report.reported_photo_url,
+        'photo_changed': report.reported_photo_url != current_photo,
+    }
+
+
+def _moderated_report(event_id, report_id):
+    """Return (report, None) for a moderator, or (None, error) otherwise."""
+    if not is_event_moderator(g.current_user['id'], event_id):
+        return None, errors.FORBIDDEN
+    report = ConnectionRepository.get_report(event_id, report_id)
+    if report is None:
+        return None, errors.CONNECTION_REPORT_NOT_FOUND
+    return report, None
+
+
+class ConnectionReportDismissAPI(restful.Resource):
+    @auth_required
+    def post(self, report_id):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
+        args = req_parser.parse_args()
+
+        report, error = _moderated_report(args['event_id'], report_id)
+        if error:
+            return error
+
+        # Resolving an already-resolved report is a no-op.
+        ConnectionRepository.dismiss_report(report, g.current_user['id'])
+        return {'status': 'dismissed'}, 200
+
+
+class ConnectionReportRemovePhotoAPI(restful.Resource):
+    @auth_required
+    def post(self, report_id):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
+        args = req_parser.parse_args()
+        event_id = args['event_id']
+        me_id = g.current_user['id']
+
+        report, error = _moderated_report(event_id, report_id)
+        if error:
+            return error
+
+        reported_id = report.reported_user_id
+        profile = ProfileRepository.get(reported_id)
+        if profile is not None:
+            profile.photo_url = None
+            profile.photo_removed_at = datetime.utcnow()
+            db.session.commit()
+
+        actioned_ids = ConnectionRepository.action_photo_reports(
+            event_id, reported_id, me_id, extra_report=report)
+
+        event = EventRepository.get_by_id(event_id)
+        if event:
+            _emit_engagement(event, me_id, 'profile_photo_moderated',
+                             {'reported_user_id': reported_id, 'report_ids': actioned_ids})
+
+        return {'actioned_report_ids': actioned_ids}, 200

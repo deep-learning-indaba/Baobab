@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { profileService } from '../../services/eventApp/profile.service';
+import { connectionService } from '../../services/eventApp/connection.service';
+import Avatar from '../../components/Avatar';
 
 function withProtocol(url) {
   if (!url) return url;
@@ -15,6 +17,12 @@ function ViewMemberProfile(props) {
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showReport, setShowReport] = useState(false);
+  const [reportCategory, setReportCategory] = useState(null);
+  const [reportReason, setReportReason] = useState('');
+  const [reportError, setReportError] = useState(null);
+  const [reportSending, setReportSending] = useState(false);
+  const [reported, setReported] = useState(false);
 
   const eventId = event && event.id;
 
@@ -33,6 +41,29 @@ function ViewMemberProfile(props) {
       }
     });
   }, [eventId, userId]);
+
+  const currentUserId = props.user && props.user.id;
+  const isOwnProfile = currentUserId != null && String(currentUserId) === String(userId);
+
+  function openReport() {
+    setReportCategory(profile.photo_url ? 'photo' : 'profile');
+    setReportError(null);
+    setShowReport(true);
+  }
+
+  function sendReport() {
+    setReportSending(true);
+    setReportError(null);
+    connectionService.report(eventId, profile.user_id || Number(userId), reportReason, reportCategory).then(function(result) {
+      setReportSending(false);
+      if (result.error) {
+        setReportError(result.error);
+      } else {
+        setShowReport(false);
+        setReported(true);
+      }
+    });
+  }
 
   if (isLoading) {
     return (
@@ -56,9 +87,7 @@ function ViewMemberProfile(props) {
     return (
       <div className="max-w-lg mx-auto py-8 px-4">
         <div className="bg-white rounded-2xl border border-border shadow-sm p-6 flex flex-col items-center gap-3">
-          {profile.photo_url && (
-            <img src={profile.photo_url} alt="" className="w-20 h-20 rounded-full object-cover" />
-          )}
+          <Avatar photoUrl={profile.photo_url} firstname={profile.firstname} lastname={profile.lastname} size="lg" />
           <h2 className="text-xl font-bold text-foreground">{profile.firstname} {profile.lastname}</h2>
           {profile.role && <p className="text-sm text-foreground/60">{profile.role}</p>}
           <p className="text-sm text-foreground/50 italic">{t('This member has hidden their profile.')}</p>
@@ -70,9 +99,7 @@ function ViewMemberProfile(props) {
   return (
     <div className="max-w-lg mx-auto py-8 px-4 space-y-4">
       <div className="bg-white rounded-2xl border border-border shadow-sm p-6 flex flex-col items-center gap-3">
-        {profile.photo_url && (
-          <img src={profile.photo_url} alt="" className="w-24 h-24 rounded-full object-cover" />
-        )}
+        <Avatar photoUrl={profile.photo_url} firstname={profile.firstname} lastname={profile.lastname} size="xl" />
         <h2 className="text-2xl font-bold text-foreground">{profile.firstname} {profile.lastname}</h2>
         {profile.role && <p className="text-sm font-medium text-foreground/60">{profile.role}</p>}
         {profile.pronouns && <p className="text-xs text-foreground/50">{profile.pronouns}</p>}
@@ -132,6 +159,73 @@ function ViewMemberProfile(props) {
             </a>
           )}
         </div>
+      )}
+
+      {!isOwnProfile && !reported && !showReport && (
+        <div className="text-center">
+          <button
+            onClick={openReport}
+            className="text-sm text-foreground/60 hover:text-red-600 hover:underline transition-colors"
+          >
+            {t('Report profile')}
+          </button>
+        </div>
+      )}
+      {!isOwnProfile && showReport && (
+        <div className="space-y-2 pt-2 border-t border-border">
+          <fieldset className="space-y-1">
+            <legend className="text-sm font-medium text-foreground">{t("What's the problem?")}</legend>
+            {profile.photo_url && (
+              <label className="flex items-center gap-2 text-sm text-foreground">
+                <input
+                  type="radio"
+                  name="report-category"
+                  checked={reportCategory === 'photo'}
+                  onChange={function() { setReportCategory('photo'); }}
+                />
+                {t('Photo')}
+              </label>
+            )}
+            <label className="flex items-center gap-2 text-sm text-foreground">
+              <input
+                type="radio"
+                name="report-category"
+                checked={reportCategory === 'profile'}
+                onChange={function() { setReportCategory('profile'); }}
+              />
+              {t('Profile content')}
+            </label>
+          </fieldset>
+          <textarea
+            className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            rows={2}
+            maxLength={1000}
+            placeholder={t('Optional: describe the issue')}
+            aria-label={t('Reason')}
+            value={reportReason}
+            onChange={function(e) { setReportReason(e.target.value); }}
+          />
+          {reportError && <p className="text-sm text-destructive">{reportError}</p>}
+          <div className="flex gap-2">
+            <button
+              onClick={sendReport}
+              disabled={reportSending}
+              className="flex-1 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium disabled:opacity-50"
+            >
+              {t('Send report')}
+            </button>
+            <button
+              onClick={function() { setShowReport(false); }}
+              disabled={reportSending}
+              className="flex-1 py-1.5 rounded-lg border border-border text-sm text-foreground"
+            >
+              {t('Cancel')}
+            </button>
+          </div>
+        </div>
+      )}
+      {reported && (
+        <p className="text-xs text-muted-foreground text-center">{t("Thanks. The event's moderators will review this.")}</p>
       )}
     </div>
   );

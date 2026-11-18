@@ -180,6 +180,7 @@ MISSING_FIELDS = ({'message': 'Required fields are missing.'}, 400)
 CANNOT_CONNECT_SELF = ({'message': 'You cannot connect with yourself.'}, 400)
 CONNECTION_BLOCKED = ({'message': 'Unable to send a request.'}, 403)
 CONNECTION_NOT_FOUND = ({'message': 'Connection not found.'}, 404)
+CONNECTION_REPORT_NOT_FOUND = ({'message': 'Report not found.'}, 404)
 
 # Document generation
 DOCUMENT_TEMPLATE_NOT_FOUND = ({'message': 'No document template exists with that ID.'}, 404)

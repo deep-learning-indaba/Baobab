@@ -5,6 +5,7 @@ from flask_restful import reqparse
 from app.profiles.models import MemberProfile
 from app.profiles.repository import ProfileRepository as profile_repository
 from app.profiles.repository import ConsentRepository as consent_repository
+from app.profiles.repository import validate_profile_photo
 from app.attendance.repository import AttendanceRepository as attendance_repository
 from app.invitedGuest.repository import InvitedGuestRepository as invited_guest_repository
 from app.tags.models import Tag, TagTranslation, TagType
@@ -45,6 +46,13 @@ def _profile_to_dict(user, profile):
     return data
 
 
+def _own_profile_to_dict(user, profile):
+    data = _profile_to_dict(user, profile)
+    removed_at = profile.photo_removed_at if profile else None
+    data['photo_removed_at'] = removed_at.isoformat() + 'Z' if removed_at else None
+    return data
+
+
 class ProfileAPI(restful.Resource):
     @auth_required
     def get(self):
@@ -58,7 +66,7 @@ class ProfileAPI(restful.Resource):
             return USER_NOT_FOUND
 
         profile = profile_repository.get_or_create(current_user_id)
-        return _profile_to_dict(user, profile), 200
+        return _own_profile_to_dict(user, profile), 200
 
     @auth_required
     def put(self):
@@ -82,6 +90,12 @@ class ProfileAPI(restful.Resource):
         if user is None:
             return USER_NOT_FOUND
 
+        photo_url = args['photo_url']
+        if photo_url:
+            photo_error = validate_profile_photo(photo_url)
+            if photo_error:
+                return {'message': photo_error, 'field': 'photo_url'}, 400
+
         profile = profile_repository.get_or_create(current_user_id)
         is_first_save = not any([
             profile.headline, profile.about, profile.pronouns,
@@ -102,8 +116,11 @@ class ProfileAPI(restful.Resource):
             profile.country = args['country']
         if args['affiliation'] is not None:
             profile.affiliation = args['affiliation']
-        if args['photo_url'] is not None:
-            profile.photo_url = args['photo_url']
+        if photo_url == '':
+            profile.photo_url = None
+        elif photo_url:
+            profile.photo_url = photo_url
+            profile.photo_removed_at = None
         if args['visibility'] in ('community', 'hidden'):
             profile.visibility = args['visibility']
 
@@ -122,7 +139,7 @@ class ProfileAPI(restful.Resource):
         if is_first_save and fields_filled > 0:
             pass  # engagement event hook: profile_confirmed
 
-        return _profile_to_dict(user, profile), 200
+        return _own_profile_to_dict(user, profile), 200
 
 
 class ProfileViewAPI(restful.Resource):

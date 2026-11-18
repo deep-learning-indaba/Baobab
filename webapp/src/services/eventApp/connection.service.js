@@ -10,6 +10,9 @@ export var connectionService = {
   withdraw: withdraw,
   listConnections: listConnections,
   report: report,
+  listReports: listReports,
+  dismissReport: dismissReport,
+  removePhoto: removePhoto,
 };
 
 function resolve(eventId, token) {
@@ -57,11 +60,32 @@ function listConnections(eventId) {
     .catch(function(e) { return { data: null, error: extractErrorMessage(e) }; });
 }
 
-function report(eventId, reportedUserId, reason) {
+function report(eventId, reportedUserId, reason, category) {
+  var body = { event_id: eventId, reported_user_id: reportedUserId, reason: reason };
+  if (category !== undefined) body.category = category;
   return axios
-    .post(baseUrl + '/api/v1/connection/report', {
-      event_id: eventId, reported_user_id: reportedUserId, reason: reason,
-    }, { headers: authHeader() })
+    .post(baseUrl + '/api/v1/connection/report', body, { headers: authHeader() })
+    .then(function(r) { return { data: r.data, error: null }; })
+    .catch(function(e) { return { data: null, error: extractErrorMessage(e) }; });
+}
+
+function listReports(eventId) {
+  return axios
+    .get(baseUrl + '/api/v1/connection/report?event_id=' + eventId, { headers: authHeader() })
+    .then(function(r) { return { data: r.data, error: null }; })
+    .catch(function(e) { return { data: null, error: extractErrorMessage(e) }; });
+}
+
+function dismissReport(eventId, reportId) {
+  return axios
+    .post(baseUrl + '/api/v1/connection/report/' + reportId + '/dismiss', { event_id: eventId }, { headers: authHeader() })
+    .then(function(r) { return { data: r.data, error: null }; })
+    .catch(function(e) { return { data: null, error: extractErrorMessage(e) }; });
+}
+
+function removePhoto(eventId, reportId) {
+  return axios
+    .post(baseUrl + '/api/v1/connection/report/' + reportId + '/remove-photo', { event_id: eventId }, { headers: authHeader() })
     .then(function(r) { return { data: r.data, error: null }; })
     .catch(function(e) { return { data: null, error: extractErrorMessage(e) }; });
 }
